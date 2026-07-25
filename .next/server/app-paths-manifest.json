@@ -1,4 +1,18 @@
 {
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api-docs/page": "app/api-docs/page.js",
+  "/billing/page": "app/billing/page.js",
+  "/bookings/page": "app/bookings/page.js",
+  "/cms/page": "app/cms/page.js",
+  "/customers/page": "app/customers/page.js",
+  "/inspections/page": "app/inspections/page.js",
+  "/login/page": "app/login/page.js",
+  "/media/page": "app/media/page.js",
+  "/notifications/page": "app/notifications/page.js",
+  "/page": "app/page.js",
+  "/rbac/page": "app/rbac/page.js",
   "/settings/page": "app/settings/page.js",
-  "/page": "app/page.js"
+  "/settlements/page": "app/settlements/page.js",
+  "/technicians/page": "app/technicians/page.js"
 }
