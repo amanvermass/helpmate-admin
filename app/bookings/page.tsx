@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
-import { initialBookings, initialTechnicians, Booking, Technician } from "@/lib/mockData";
+import { initialBookings, Booking, BookingStatus, Technician } from "@/lib/mockData";
 import {
   CalendarCheck,
   CheckCircle2,
@@ -14,531 +14,311 @@ import {
   DollarSign,
   AlertCircle,
   ShieldCheck,
-  RefreshCw,
-  Send,
-  X,
-  Printer,
-  Download,
+  Wrench,
   KeyRound,
-  RotateCcw,
+  Eye,
+  Edit2,
+  UserPlus,
 } from "lucide-react";
+import { BookingWizardModal } from "@/components/bookings/BookingWizardModal";
+import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
+import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
+import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal";
+import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
+import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
 
   // Modals & Drawers
-  const [inspectionBooking, setInspectionBooking] = useState<Booking | null>(null);
-  const [invoiceBooking, setInvoiceBooking] = useState<Booking | null>(null);
-  const [refundBooking, setRefundBooking] = useState<Booking | null>(null);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [assignBooking, setAssignBooking] = useState<Booking | null>(null);
+  const [inspectionBooking, setInspectionBooking] = useState<Booking | null>(null);
+  const [otpBooking, setOtpBooking] = useState<Booking | null>(null);
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
-  // State for Inspection Form
-  const [updatedQuote, setUpdatedQuote] = useState<number>(699);
-  const [otpInput, setOtpInput] = useState("");
-  const [otpMessage, setOtpMessage] = useState("");
+  const filteredBookings = bookings.filter((b) => {
+    if (activeStatusFilter === "All") return true;
+    return b.status.toLowerCase() === activeStatusFilter.toLowerCase();
+  });
 
-  // State for Refund Form
-  const [refundAmount, setRefundAmount] = useState<number>(0);
-  const [refundReason, setRefundReason] = useState("Service Satisfaction Issue");
-
-  const handleUpdateInspectionPrice = (b: Booking) => {
-    const updated = bookings.map((item) => {
-      if (item.id === b.id) {
-        return {
-          ...item,
-          updatedInspectionQuote: updatedQuote,
-          basePrice: updatedQuote,
-          totalAmount: Math.round(updatedQuote * 1.18 + 49),
-          inspectionApprovedByCustomer: true,
-        };
-      }
-      return item;
-    });
-    setBookings(updated);
-    alert(`Updated final quote to ₹${updatedQuote} and sent customer approval link to ${b.customerPhone}`);
-    setInspectionBooking(null);
+  const handleBookingCreated = (newBooking: Booking) => {
+    setBookings([newBooking, ...bookings]);
   };
 
-  const handleVerifyOtp = (b: Booking) => {
-    if (otpInput !== (b.otpCode || "8821")) {
-      setOtpMessage("Invalid 4-digit OTP. Please ask customer for correct code.");
-      return;
-    }
-
-    const updated = bookings.map((item) => {
-      if (item.id === b.id) {
-        return {
-          ...item,
-          isOtpVerified: true,
-          status: "Completed" as const,
-        };
-      }
-      return item;
-    });
-    setBookings(updated);
-    setOtpMessage("OTP Verified! Job successfully closed & completed.");
-    setTimeout(() => {
-      setInspectionBooking(null);
-      setOtpMessage("");
-    }, 1500);
+  const handlePartnerAssigned = (bookingId: string, technician: Technician) => {
+    setBookings(
+      bookings.map((b) =>
+        b.id === bookingId
+          ? {
+              ...b,
+              status: "Assigned",
+              technicianName: technician.name,
+              technicianId: technician.id,
+            }
+          : b
+      )
+    );
   };
 
-  const handleRecordRefund = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!refundBooking) return;
-
-    const updated = bookings.map((item) => {
-      if (item.id === refundBooking.id) {
-        return {
-          ...item,
-          isRefunded: true,
-          refundAmount,
-          refundReason,
-          status: "Cancelled" as const,
-        };
-      }
-      return item;
-    });
-    setBookings(updated);
-    alert(`Recorded refund of ₹${refundAmount} for ${refundBooking.id}`);
-    setRefundBooking(null);
+  const handleInspectionApproved = (bookingId: string, updatedQuote: number, remarks: string) => {
+    setBookings(
+      bookings.map((b) =>
+        b.id === bookingId
+          ? {
+              ...b,
+              basePrice: updatedQuote,
+              totalAmount: Math.round(updatedQuote * 1.18 + 49),
+              inspectionRemarks: remarks,
+              status: "Customer Approval Pending",
+            }
+          : b
+      )
+    );
   };
 
-  const handleAssignPartner = (tech: Technician) => {
-    if (!assignBooking) return;
-    const updated = bookings.map((item) => {
-      if (item.id === assignBooking.id) {
-        return {
-          ...item,
-          technicianId: tech.id,
-          technicianName: tech.name,
-          status: "Assigned" as const,
-        };
-      }
-      return item;
-    });
-    setBookings(updated);
-    alert(`Manually assigned partner ${tech.name} to ${assignBooking.id}`);
-    setAssignBooking(null);
+  const handleJobCompleted = (bookingId: string) => {
+    setBookings(
+      bookings.map((b) =>
+        b.id === bookingId
+          ? {
+              ...b,
+              isOtpVerified: true,
+              status: "Completed",
+            }
+          : b
+      )
+    );
+  };
+
+  const handleBookingUpdated = (updated: Booking) => {
+    setBookings(bookings.map((b) => (b.id === updated.id ? updated : b)));
   };
 
   const columns: Column<Booking>[] = [
     {
       key: "id",
-      header: "Booking ID & GST",
-      accessor: (row) => (
-        <div className="flex flex-col">
-          <span className="font-mono font-extrabold text-brand-600 text-xs">
-            {row.id}
-          </span>
-          <span className="text-[9px] font-bold text-slate-400 uppercase">
-            {row.invoiceType} Invoice {row.customerGstin ? `(${row.customerGstin})` : ""}
-          </span>
-        </div>
-      ),
+      header: "Booking ID",
+      accessor: (row) => <span className="font-mono font-bold text-brand-600 dark:text-brand-400">{row.id}</span>,
+      sortable: true,
     },
     {
       key: "customerName",
-      header: "Customer & Varanasi Locality",
+      header: "Customer",
       accessor: (row) => (
         <div className="flex flex-col">
-          <span className="font-extrabold text-slate-900">{row.customerName}</span>
-          <span className="text-[10px] text-slate-500 flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-brand-600" /> {row.locality} ({row.pincode})
-          </span>
+          <span className="font-bold text-slate-900 dark:text-white">{row.customerName}</span>
+          <span className="text-[10px] text-slate-500">{row.customerPhone}</span>
         </div>
       ),
+      sortable: true,
     },
+    { key: "category", header: "Category", sortable: true },
+    { key: "serviceTitle", header: "Service Title", sortable: true },
     {
-      key: "serviceTitle",
-      header: "Service & Add-ons",
+      key: "city",
+      header: "City / Locality",
       accessor: (row) => (
-        <div className="flex flex-col">
-          <span className="font-bold text-slate-800">{row.serviceTitle}</span>
-          {row.isInspectionBased && (
-            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded w-fit border border-amber-200">
-              Inspection Diagnostic Flow
-            </span>
-          )}
+        <div className="flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-brand-600 shrink-0" />
+          <span className="truncate max-w-[120px] font-semibold">{row.locality}</span>
         </div>
       ),
+      sortable: true,
     },
     {
       key: "totalAmount",
-      header: "Total & 25% Comm.",
-      accessor: (row) => (
-        <div className="flex flex-col">
-          <span className="font-extrabold text-slate-900">
-            ₹{row.totalAmount}
-          </span>
-          <span className="text-[9px] font-semibold text-emerald-600">
-            Comm: ₹{row.commissionAmount} (25%)
-          </span>
-        </div>
-      ),
+      header: "Amount (₹)",
+      accessor: (row) => <span className="font-extrabold text-slate-900 dark:text-white">₹{row.totalAmount}</span>,
+      sortable: true,
     },
     {
       key: "technicianName",
-      header: "Assigned Tech",
-      accessor: (row) => (
-        <div className="flex items-center gap-1.5">
-          {row.technicianName ? (
-            <span className="font-bold text-slate-900 text-xs">
-              {row.technicianName}
-            </span>
-          ) : (
-            <button
-              onClick={() => setAssignBooking(row)}
-              className="text-[10px] font-bold px-2 py-1 rounded bg-brand-50 text-brand-600 hover:bg-brand-100 border border-brand-200 cursor-pointer"
-            >
-              + Assign Tech
-            </button>
-          )}
-        </div>
-      ),
+      header: "Assigned Partner",
+      accessor: (row) =>
+        row.technicianName ? (
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            {row.technicianName}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAssignBooking(row)}
+            className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 cursor-pointer"
+          >
+            Assign Partner
+          </button>
+        ),
+      sortable: true,
     },
     {
       key: "status",
-      header: "Status & OTP",
+      header: "Booking Status",
       accessor: (row) => (
-        <div className="flex flex-col gap-1">
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold w-fit ${
-              row.status === "Completed"
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : row.status === "In Progress"
-                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                : row.status === "Assigned"
-                ? "bg-purple-50 text-purple-700 border border-purple-200"
-                : "bg-amber-50 text-amber-700 border border-amber-200"
-            }`}
-          >
-            {row.status}
-          </span>
-          {row.isOtpVerified ? (
-            <span className="text-[9px] font-bold text-emerald-600 flex items-center gap-0.5">
-              <CheckCircle2 className="w-2.5 h-2.5" /> OTP Verified
-            </span>
-          ) : (
-            <button
-              onClick={() => {
-                setInspectionBooking(row);
-                setUpdatedQuote(row.basePrice);
-              }}
-              className="text-[9px] font-bold text-brand-600 hover:underline flex items-center gap-0.5 cursor-pointer"
-            >
-              <KeyRound className="w-2.5 h-2.5" /> Enter OTP Code
-            </button>
-          )}
-        </div>
+        <span
+          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+            row.status === "Completed"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+              : row.status === "In Progress" || row.status === "Assigned"
+              ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+              : row.status === "Cancelled"
+              ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+              : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+          }`}
+        >
+          {row.status}
+        </span>
       ),
+      sortable: true,
     },
+    { key: "date", header: "Schedule Slot", sortable: true },
+  ];
+
+  const statusTabs: BookingStatus[] = [
+    "Pending",
+    "Waiting For Assignment",
+    "Assigned",
+    "Partner Accepted",
+    "Inspection Pending",
+    "Price Approval Pending",
+    "Customer Approval Pending",
+    "Confirmed",
+    "In Progress",
+    "Completed",
+    "Cancelled",
+    "Refunded",
   ];
 
   return (
     <div className="space-y-6">
+      {/* Header & New Booking Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
+            <CalendarCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Booking Dispatch & Management</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Enterprise multi-service booking lifecycle engine & partner dispatch</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsWizardOpen(true)}
+          className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lux flex items-center justify-center gap-2"
+        >
+          <CalendarCheck className="w-4 h-4" />
+          <span>Launch 9-Step Booking Wizard</span>
+        </button>
+      </div>
+
+      {/* KPI Cards Bar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+          <span className="text-xs font-semibold text-slate-500">Total Bookings</span>
+          <h3 className="text-xl font-black text-slate-900 dark:text-white">{bookings.length} Orders</h3>
+        </div>
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+          <span className="text-xs font-semibold text-amber-600">Waiting Partner</span>
+          <h3 className="text-xl font-black text-amber-600">{bookings.filter((b) => !b.technicianName).length} Unassigned</h3>
+        </div>
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+          <span className="text-xs font-semibold text-blue-600">In Progress</span>
+          <h3 className="text-xl font-black text-blue-600">{bookings.filter((b) => b.status === "In Progress" || b.status === "Assigned").length} Jobs</h3>
+        </div>
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+          <span className="text-xs font-semibold text-emerald-600">Completed Jobs</span>
+          <h3 className="text-xl font-black text-emerald-600">{bookings.filter((b) => b.status === "Completed").length} Closed</h3>
+        </div>
+      </div>
+
+      {/* Status Lifecycle Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+        <button
+          type="button"
+          onClick={() => setActiveStatusFilter("All")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            activeStatusFilter === "All"
+              ? "bg-brand-500 text-white shadow-lux"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+          }`}
+        >
+          All ({bookings.length})
+        </button>
+        {statusTabs.map((st) => {
+          const count = bookings.filter((b) => b.status.toLowerCase() === st.toLowerCase()).length;
+          return (
+            <button
+              key={st}
+              type="button"
+              onClick={() => setActiveStatusFilter(st)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                activeStatusFilter === st
+                  ? "bg-brand-500 text-white shadow-lux"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+              }`}
+            >
+              {st} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main DataTable */}
       <DataTable
-        title="Bookings & Dispatch Command Center"
-        description="Manual dispatch, inspection diagnostic quotes, OTP job completion & GST invoicing."
+        title="Multi-Service Booking Directory"
+        description="Comprehensive dispatch grid with real-time lifecycle actions"
         columns={columns}
-        data={bookings}
-        searchPlaceholder="Search booking ID, customer name, or Varanasi locality..."
-        onRowEdit={(row) => {
-          setInvoiceBooking(row);
-        }}
+        data={filteredBookings}
+        addButtonLabel="New Booking Wizard"
+        onAddClick={() => setIsWizardOpen(true)}
+        onRowEdit={(row) => setEditingBooking(row)}
       />
 
-      {/* INSPECTION DIAGNOSTIC & OTP JOB CLOSURE DRAWER */}
-      {inspectionBooking && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white border-l border-slate-200 h-full p-6 space-y-6 overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">
-                  Inspection Quote & OTP Job Closure
-                </h3>
-                <p className="text-xs text-slate-500 font-mono">Ref: {inspectionBooking.id}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setInspectionBooking(null)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* MODALS & DRAWERS */}
+      <BookingWizardModal
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        onBookingCreated={handleBookingCreated}
+      />
 
-            {/* Step 1: Inspection Quote Adjustment */}
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
-              <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                <AlertCircle className="w-4 h-4 text-amber-600" /> Partner Inspection Diagnostic Update
-              </h4>
-              <p className="text-[11px] text-amber-800">
-                Partner inspected site at {inspectionBooking.locality}. Update total repair quote for customer approval.
-              </p>
+      <AssignPartnerModal
+        booking={assignBooking}
+        isOpen={!!assignBooking}
+        onClose={() => setAssignBooking(null)}
+        onPartnerAssigned={handlePartnerAssigned}
+      />
 
-              <div className="space-y-1.5 pt-1">
-                <label className="text-[11px] font-bold text-slate-700 block">
-                  Final Validated Base Quote (₹)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={updatedQuote}
-                    onChange={(e) => setUpdatedQuote(Number(e.target.value))}
-                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateInspectionPrice(inspectionBooking)}
-                    className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm"
-                  >
-                    Send Approval Link
-                  </button>
-                </div>
-              </div>
-            </div>
+      <InspectionFlowModal
+        booking={inspectionBooking}
+        isOpen={!!inspectionBooking}
+        onClose={() => setInspectionBooking(null)}
+        onInspectionApproved={handleInspectionApproved}
+      />
 
-            {/* Step 2: OTP Job Closure Verification */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-              <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                <KeyRound className="w-4 h-4 text-brand-600" /> Verify Customer 4-Digit OTP Code
-              </h4>
-              <p className="text-[11px] text-slate-500">
-                Ask customer <strong className="text-slate-900">{inspectionBooking.customerName}</strong> ({inspectionBooking.customerPhone}) for security completion OTP.
-              </p>
+      <OtpVerificationModal
+        booking={otpBooking}
+        isOpen={!!otpBooking}
+        onClose={() => setOtpBooking(null)}
+        onJobCompleted={handleJobCompleted}
+      />
 
-              {otpMessage && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                  {otpMessage}
-                </div>
-              )}
+      <BookingDetailsDrawer
+        booking={viewingBooking}
+        isOpen={!!viewingBooking}
+        onClose={() => setViewingBooking(null)}
+      />
 
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    maxLength={4}
-                    value={otpInput}
-                    onChange={(e) => setOtpInput(e.target.value)}
-                    placeholder="e.g. 8821"
-                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-extrabold text-center text-slate-900 tracking-widest"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleVerifyOtp(inspectionBooking)}
-                    className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux"
-                  >
-                    Verify & Close Job
-                  </button>
-                </div>
-                <span className="text-[10px] text-slate-400 block text-center">
-                  Demo Customer OTP Code: <strong className="text-slate-700">{inspectionBooking.otpCode || "8821"}</strong>
-                </span>
-              </div>
-            </div>
-
-            {/* Refund Trigger Button */}
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  setRefundBooking(inspectionBooking);
-                  setRefundAmount(inspectionBooking.totalAmount);
-                  setInspectionBooking(null);
-                }}
-                className="w-full py-2.5 rounded-xl bg-red-50 text-red-600 border border-red-200 text-xs font-bold hover:bg-red-100 flex items-center justify-center gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Record Booking Refund</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* B2C / B2B GST TAX INVOICE MODAL */}
-      {invoiceBooking && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div className="flex items-center gap-2">
-                <img src="https://helpmate-theta.vercel.app/logo.png" alt="HelpMate" className="h-6 w-auto" />
-                <span className="font-extrabold text-sm text-slate-900">Official GST Tax Invoice</span>
-              </div>
-              <button type="button" onClick={() => setInvoiceBooking(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Invoice Printable Body */}
-            <div className="space-y-4 text-xs">
-              <div className="flex justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block">Billed To</span>
-                  <span className="font-bold text-slate-900 block">{invoiceBooking.customerName}</span>
-                  <span className="text-slate-500 block">{invoiceBooking.address}</span>
-                  {invoiceBooking.customerGstin && (
-                    <span className="text-[10px] font-mono text-brand-600 font-bold block">
-                      GSTIN: {invoiceBooking.customerGstin}
-                    </span>
-                  )}
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block">Invoice Details</span>
-                  <span className="font-mono font-extrabold text-brand-600 block">INV-{invoiceBooking.id}</span>
-                  <span className="text-slate-500 block">{invoiceBooking.date}</span>
-                  <span className="text-[10px] font-bold text-emerald-600 block">{invoiceBooking.invoiceType} Tax Invoice</span>
-                </div>
-              </div>
-
-              {/* Line Items */}
-              <div className="space-y-2">
-                <div className="flex justify-between font-bold text-slate-500 text-[10px] uppercase border-b pb-1">
-                  <span>Description</span>
-                  <span>Amount (₹)</span>
-                </div>
-                <div className="flex justify-between font-medium">
-                  <span>{invoiceBooking.serviceTitle} ({invoiceBooking.locality})</span>
-                  <span>₹{invoiceBooking.basePrice}</span>
-                </div>
-                <div className="flex justify-between text-slate-500">
-                  <span>Platform Convenience Fee</span>
-                  <span>₹{invoiceBooking.convenienceFee}</span>
-                </div>
-                <div className="flex justify-between text-slate-500">
-                  <span>CGST (9%)</span>
-                  <span>₹{invoiceBooking.cgst}</span>
-                </div>
-                <div className="flex justify-between text-slate-500">
-                  <span>SGST (9%)</span>
-                  <span>₹{invoiceBooking.sgst}</span>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 flex justify-between items-center text-sm font-extrabold">
-                <span className="text-slate-900">Total Amount Paid</span>
-                <span className="text-brand-600">₹{invoiceBooking.totalAmount}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 flex items-center justify-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Invoice</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  alert(`Downloaded INV-${invoiceBooking.id}.pdf`);
-                  setInvoiceBooking(null);
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download PDF</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MANUAL REFUND MODAL */}
-      {refundBooking && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <form
-            onSubmit={handleRecordRefund}
-            className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl"
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h3 className="text-sm font-extrabold text-slate-900">Record Manual Refund</h3>
-              <button type="button" onClick={() => setRefundBooking(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">Refund Amount (₹)</label>
-              <input
-                type="number"
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(Number(e.target.value))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">Reason</label>
-              <select
-                value={refundReason}
-                onChange={(e) => setRefundReason(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900"
-              >
-                <option value="Customer Cancellation">Customer Cancellation</option>
-                <option value="Service Satisfaction Issue">Service Satisfaction Issue</option>
-                <option value="Technician Unavailability">Technician Unavailability</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md"
-            >
-              Submit Refund Record
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* MANUAL PARTNER ASSIGNMENT DRAWER */}
-      {assignBooking && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white border-l border-slate-200 h-full p-6 space-y-6 overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">
-                  Manual Partner Assignment
-                </h3>
-                <p className="text-xs text-slate-500 font-mono">Target Locality: {assignBooking.locality}</p>
-              </div>
-              <button type="button" onClick={() => setAssignBooking(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <span className="text-xs font-bold text-slate-700 block">
-                Available Verified Varanasi Technicians
-              </span>
-
-              {initialTechnicians.map((tech) => (
-                <div
-                  key={tech.id}
-                  className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <img src={tech.avatar} alt={tech.name} className="w-10 h-10 rounded-xl object-cover" />
-                    <div>
-                      <span className="font-bold text-xs text-slate-900 block">{tech.name}</span>
-                      <span className="text-[10px] text-slate-400 block">{tech.role} ({tech.locality})</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleAssignPartner(tech)}
-                    className="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-xs"
-                  >
-                    Assign Now
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <EditBookingModal
+        booking={editingBooking}
+        isOpen={!!editingBooking}
+        onClose={() => setEditingBooking(null)}
+        onBookingUpdated={handleBookingUpdated}
+      />
     </div>
   );
 }

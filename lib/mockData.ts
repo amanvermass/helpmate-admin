@@ -141,21 +141,45 @@ export interface Technician {
   payoutProofUrl?: string;
 }
 
+export type BookingStatus =
+  | "Draft"
+  | "Pending"
+  | "Waiting For Assignment"
+  | "Assigned"
+  | "Partner Accepted"
+  | "Inspection Pending"
+  | "Price Approval Pending"
+  | "Customer Approval Pending"
+  | "Confirmed"
+  | "In Progress"
+  | "Completed"
+  | "Cancelled"
+  | "Refunded"
+  | "Rejected";
+
 export interface Booking {
   id: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   customerGstin?: string;
+  city: string;
   locality: string;
   pincode: string;
   address: string;
   serviceTitle: string;
   category: string;
+  subCategory?: string;
+  packageTitle?: string;
+  addons?: string[];
   systemType?: string;
 
   // Pricing & GST Engine
   basePrice: number;
+  addonPrice?: number;
   convenienceFee: number; // Fixed ₹49
+  discountAmount?: number;
+  couponCode?: string;
   cgst: number; // 9%
   sgst: number; // 9%
   totalAmount: number;
@@ -169,21 +193,35 @@ export interface Booking {
   isInspectionBased?: boolean;
   initialInspectionQuote?: number;
   updatedInspectionQuote?: number;
+  materialCost?: number;
+  labourCost?: number;
+  inspectionImages?: string[];
+  inspectionRemarks?: string;
   inspectionApprovedByCustomer?: boolean;
   otpCode?: string;
   isOtpVerified?: boolean;
+
+  // Notes & Attachments
+  notes?: string;
+  internalNotes?: string;
+  customerImages?: string[];
 
   // Refund Management
   isRefunded?: boolean;
   refundAmount?: number;
   refundReason?: string;
 
-  status: "Pending" | "Assigned" | "In Progress" | "Completed" | "Cancelled";
+  // Rating & Feedback
+  rating?: number;
+  reviewComment?: string;
+
+  status: BookingStatus;
   technicianName?: string;
   technicianId?: string;
   date: string;
   timeSlot: string;
-  paymentMethod: "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet";
+  paymentMethod: "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet" | "Online" | "Partial Payment";
+  createdAt?: string;
 }
 
 export interface Customer {
@@ -348,6 +386,7 @@ export const initialBookings: Booking[] = [
     customerName: "Rajesh Kumar Agrawal",
     customerPhone: "+91 77050 04040",
     customerGstin: "09AABCH1234H1Z5",
+    city: "Varanasi",
     locality: "Sigra",
     pincode: "221002",
     address: "D-58/16C Shashtri Nagar Colony, Sigra, Varanasi",
@@ -379,6 +418,7 @@ export const initialBookings: Booking[] = [
     id: "HM-VAR-8820",
     customerName: "Dr. Ananya Mukherjee",
     customerPhone: "+91 94501 22910",
+    city: "Varanasi",
     locality: "Lanka / Assi Ghat",
     pincode: "221005",
     address: "Plot 12, Assi Ghat Road, Near BHU Gate, Lanka, Varanasi",
@@ -405,6 +445,7 @@ export const initialBookings: Booking[] = [
     id: "HM-VAR-8819",
     customerName: "Vikram Singh",
     customerPhone: "+91 99180 55432",
+    city: "Varanasi",
     locality: "Bhelupur",
     pincode: "221010",
     address: "B-22/41 Sonarpura, Bhelupur, Varanasi",

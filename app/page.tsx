@@ -57,6 +57,7 @@ export default function ExecutiveDashboard() {
       id: `HM-VAR-${Math.floor(8822 + Math.random() * 900)}`,
       customerName: newBooking.customerName,
       customerPhone: newBooking.customerPhone,
+      city: "Varanasi",
       locality: newBooking.locality,
       pincode: "221002",
       address: newBooking.address,
@@ -456,7 +457,7 @@ export default function ExecutiveDashboard() {
 
       {/* Assign Technician Modal */}
       {selectedBookingForDispatch && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
               <div>
@@ -532,7 +533,7 @@ export default function ExecutiveDashboard() {
 
       {/* New Booking Modal */}
       {isDispatchModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
           <form
             onSubmit={handleCreateBooking}
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200"
