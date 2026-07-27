@@ -9,6 +9,11 @@
   --foreground: #0F172A;
 }
 
+.dark {
+  --background: #020617;
+  --foreground: #F8FAFC;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -24,6 +29,9 @@ body {
 ::-webkit-scrollbar-track {
   background: #F8FAFC;
 }
+.dark ::-webkit-scrollbar-track {
+  background: #020617;
+}
 ::-webkit-scrollbar-thumb {
   background: rgba(141, 57, 126, 0.25);
   border-radius: 4px;
@@ -32,13 +40,19 @@ body {
   background: rgba(141, 57, 126, 0.7);
 }
 
-/* Glassmorphism Light Card Utilities */
+/* Glassmorphism Utilities (Light & Dark Compatible) */
 .glass-panel {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid #E2E8F0;
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
+}
+
+.dark .glass-panel {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: #1E293B;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
 }
 
 .glass-panel-hover {
@@ -49,6 +63,12 @@ body {
   border-color: rgba(141, 57, 126, 0.3);
   transform: translateY(-2px);
   box-shadow: 0 12px 30px -10px rgba(141, 57, 126, 0.15);
+}
+
+.dark .glass-panel-hover:hover {
+  background: #0F172A;
+  border-color: rgba(163, 62, 147, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(163, 62, 147, 0.3);
 }
 
 .brand-glow {

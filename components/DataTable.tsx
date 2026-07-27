@@ -12,17 +12,18 @@ import {
   Copy,
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   X,
   Plus,
   Filter,
   FileSpreadsheet,
-  History,
   AlertTriangle,
+  Printer,
+  RotateCcw,
+  Calendar,
+  SlidersHorizontal,
+  Clock,
+  UserCheck,
 } from "lucide-react";
 
 export interface Column<T> {
@@ -42,7 +43,6 @@ export interface DataTableProps<T extends Record<string, any>> {
   addButtonLabel?: string;
   onRowEdit?: (row: T) => void;
   onRowDelete?: (row: T) => void;
-  onStatusToggle?: (row: T) => void;
   statusField?: string;
   idField?: string;
 }
@@ -61,6 +61,7 @@ export function DataTable<T extends Record<string, any>>({
   idField = "id",
 }: DataTableProps<T>) {
   const [data, setData] = useState<T[]>(initialData);
+  const [deletedTrash, setDeletedTrash] = useState<T[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatusFilter, setSelectedStatusFilter] = useState("All");
 
@@ -75,6 +76,10 @@ export function DataTable<T extends Record<string, any>>({
   const [deletingRow, setDeletingRow] = useState<T | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isBulkStatusModalOpen, setIsBulkStatusModalOpen] = useState(false);
+  const [isTrashOpen, setIsTrashOpen] = useState(false);
+  const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
+  const [showMetadata, setShowMetadata] = useState(false);
 
   React.useEffect(() => {
     setData(initialData);
@@ -83,7 +88,7 @@ export function DataTable<T extends Record<string, any>>({
   const filteredData = useMemo(() => {
     return data.filter((row) => {
       if (selectedStatusFilter !== "All" && row[statusField]) {
-        if (row[statusField] !== selectedStatusFilter) return false;
+        if (String(row[statusField]).toLowerCase() !== selectedStatusFilter.toLowerCase()) return false;
       }
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -157,10 +162,43 @@ export function DataTable<T extends Record<string, any>>({
     document.body.removeChild(link);
   };
 
-  const handleBulkDelete = () => {
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSoftDeleteRow = (row: T) => {
+    const targetId = String(row[idField]);
+    setDeletedTrash([row, ...deletedTrash]);
+    setData(data.filter((r) => String(r[idField]) !== targetId));
+    if (onRowDelete) onRowDelete(row);
+    setDeletingRow(null);
+  };
+
+  const handleRestoreRow = (row: T) => {
+    const targetId = String(row[idField]);
+    setDeletedTrash(deletedTrash.filter((r) => String(r[idField]) !== targetId));
+    setData([row, ...data]);
+  };
+
+  const handleBulkSoftDelete = () => {
+    const toDelete = data.filter((row) => selectedIds.has(String(row[idField])));
+    setDeletedTrash([...toDelete, ...deletedTrash]);
     setData(data.filter((row) => !selectedIds.has(String(row[idField]))));
     setSelectedIds(new Set());
     setIsBulkDeleteModalOpen(false);
+  };
+
+  const handleBulkStatusChange = (newStatus: string) => {
+    setData(
+      data.map((row) => {
+        if (selectedIds.has(String(row[idField]))) {
+          return { ...row, [statusField]: newStatus };
+        }
+        return row;
+      })
+    );
+    setSelectedIds(new Set());
+    setIsBulkStatusModalOpen(false);
   };
 
   const handleDuplicateRow = (row: T) => {
@@ -181,33 +219,47 @@ export function DataTable<T extends Record<string, any>>({
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {title}
           </h2>
           {description && (
-            <p className="text-xs text-slate-500 mt-1">{description}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
           )}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            type="button"
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-xs"
+            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
-            <Download className="w-4 h-4 text-slate-500" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
 
           <button
-            onClick={() => setIsImportOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-xs"
+            type="button"
+            onClick={handlePrint}
+            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
-            <Upload className="w-4 h-4 text-slate-500" />
-            <span>Import CSV</span>
+            <Printer className="w-3.5 h-3.5 text-slate-500" />
+            <span>Print</span>
           </button>
+
+          {deletedTrash.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsTrashOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Trash Bin ({deletedTrash.length})</span>
+            </button>
+          )}
 
           {onAddClick && (
             <button
+              type="button"
               onClick={onAddClick}
               className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-2 cursor-pointer"
             >
@@ -219,7 +271,7 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border border-slate-200">
+      <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -230,38 +282,60 @@ export function DataTable<T extends Record<string, any>>({
               setCurrentPage(1);
             }}
             placeholder={searchPlaceholder}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-all font-medium"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-all font-medium"
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <Filter className="w-3.5 h-3.5 text-brand-600" />
-            <span className="text-xs text-slate-500 font-semibold">Status:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Status:</span>
             <select
               value={selectedStatusFilter}
               onChange={(e) => {
                 setSelectedStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
+              className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none cursor-pointer"
             >
               <option value="All">All Statuses</option>
               <option value="Active">Active</option>
               <option value="Approved">Approved</option>
               <option value="Pending">Pending</option>
               <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
 
+          <button
+            type="button"
+            onClick={() => setShowMetadata(!showMetadata)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              showMetadata
+                ? "bg-brand-50 border-brand-300 text-brand-600 dark:bg-brand-950/60 dark:border-brand-800 dark:text-brand-400"
+                : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Audit Metadata</span>
+          </button>
+
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+              <span className="text-xs font-bold text-brand-600 bg-brand-50 dark:bg-brand-950/80 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
                 {selectedIds.size} Selected
               </span>
               <button
+                type="button"
+                onClick={() => setIsBulkStatusModalOpen(true)}
+                className="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold cursor-pointer"
+              >
+                Change Status
+              </button>
+              <button
+                type="button"
                 onClick={() => setIsBulkDeleteModalOpen(true)}
-                className="p-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
+                className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -270,11 +344,11 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200">
+      {/* Main Table Container */}
+      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="py-3.5 px-4 w-10">
                   <input
@@ -288,7 +362,7 @@ export function DataTable<T extends Record<string, any>>({
                   <th
                     key={col.key}
                     onClick={() => col.sortable !== false && handleSort(col.key)}
-                    className="py-3.5 px-4 cursor-pointer"
+                    className="py-3.5 px-4 cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-1.5">
                       <span>{col.header}</span>
@@ -296,15 +370,22 @@ export function DataTable<T extends Record<string, any>>({
                     </div>
                   </th>
                 ))}
+                {showMetadata && (
+                  <>
+                    <th className="py-3.5 px-4">Created By / Date</th>
+                    <th className="py-3.5 px-4">Updated By / Date</th>
+                  </>
+                )}
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + 2} className="py-12 text-center text-slate-400">
-                    <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                    <p className="font-bold text-slate-700 text-sm">No records found</p>
+                  <td colSpan={columns.length + (showMetadata ? 4 : 2)} className="py-12 text-center text-slate-400">
+                    <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                    <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No matching records found</p>
+                    <p className="text-xs text-slate-400 mt-1">Try resetting filters or adding new data.</p>
                   </td>
                 </tr>
               ) : (
@@ -313,7 +394,7 @@ export function DataTable<T extends Record<string, any>>({
                   const isSelected = selectedIds.has(idStr);
 
                   return (
-                    <tr key={idStr} className="hover:bg-slate-50 transition-colors">
+                    <tr key={idStr} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-4 px-4">
                         <input
                           type="checkbox"
@@ -329,31 +410,52 @@ export function DataTable<T extends Record<string, any>>({
                         </td>
                       ))}
 
+                      {showMetadata && (
+                        <>
+                          <td className="py-4 px-4 text-[11px]">
+                            <span className="font-bold block text-slate-800 dark:text-slate-200">{row.createdBy || "Admin"}</span>
+                            <span className="text-[9px] text-slate-400">{row.createdDate || "2026-07-25"}</span>
+                          </td>
+                          <td className="py-4 px-4 text-[11px]">
+                            <span className="font-bold block text-slate-800 dark:text-slate-200">{row.updatedBy || "System"}</span>
+                            <span className="text-[9px] text-slate-400">{row.updatedDate || "Just Now"}</span>
+                          </td>
+                        </>
+                      )}
+
                       <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => setViewingRow(row)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                            title="View Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           {onRowEdit && (
                             <button
+                              type="button"
                               onClick={() => onRowEdit(row)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 cursor-pointer"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 cursor-pointer"
+                              title="Edit Record"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                           )}
                           <button
+                            type="button"
                             onClick={() => handleDuplicateRow(row)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 cursor-pointer"
+                            title="Duplicate Record"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => setDeletingRow(row)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 cursor-pointer"
+                            title="Delete Record"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -367,23 +469,25 @@ export function DataTable<T extends Record<string, any>>({
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-600">
-          <span>Showing page {currentPage} of {totalPages}</span>
+        {/* Pagination Bar */}
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <span>Showing page {currentPage} of {totalPages} ({sortedData.length} records)</span>
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-40"
+              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 disabled:opacity-40"
             >
-              <ChevronLeft className="w-4 h-4 text-slate-600" />
+              <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             </button>
             <button
+              type="button"
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-40"
+              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 disabled:opacity-40"
             >
-              <ChevronRight className="w-4 h-4 text-slate-600" />
+              <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             </button>
           </div>
         </div>
@@ -391,17 +495,17 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* VIEW DRAWER */}
       {viewingRow && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end">
-          <div className="w-full max-w-md bg-white border-l border-slate-200 h-full p-6 space-y-6 overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-900">Record Inspector</h3>
-              <button onClick={() => setViewingRow(null)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-6 overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-extrabold text-slate-900 dark:text-white">Record Inspector</h3>
+              <button type="button" onClick={() => setViewingRow(null)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
             <div className="space-y-2 text-xs">
               {Object.entries(viewingRow).map(([k, v]) => (
-                <div key={k} className="p-2.5 rounded bg-slate-50 border border-slate-100 flex justify-between">
+                <div key={k} className="p-2.5 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between">
                   <span className="font-bold text-slate-500 uppercase text-[9px]">{k}</span>
-                  <span className="font-semibold text-slate-900 truncate max-w-xs">{String(v ?? "—")}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">{String(v ?? "—")}</span>
                 </div>
               ))}
             </div>
@@ -409,42 +513,49 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* DELETE MODAL */}
-      {deletingRow && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4 text-center shadow-2xl border border-slate-200">
-            <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
-            <h3 className="font-extrabold text-slate-900">Confirm Deletion</h3>
-            <p className="text-xs text-slate-500">Delete record {String(deletingRow[idField])}?</p>
-            <div className="flex gap-2">
-              <button onClick={() => setDeletingRow(null)} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold text-xs text-slate-700">Cancel</button>
-              <button
-                onClick={() => {
-                  setData(data.filter((r) => String(r[idField]) !== String(deletingRow[idField])));
-                  if (onRowDelete) onRowDelete(deletingRow);
-                  setDeletingRow(null);
-                }}
-                className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs"
-              >
-                Delete
-              </button>
+      {/* TRASH BIN DRAWER */}
+      {isTrashOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-4 overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <RotateCcw className="w-4 h-4 text-amber-500" />
+                Soft-Deleted Trash Bin
+              </h3>
+              <button type="button" onClick={() => setIsTrashOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
+            </div>
+            <div className="space-y-2">
+              {deletedTrash.map((row) => (
+                <div key={String(row[idField])} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white block">{row.name || row.title || String(row[idField])}</span>
+                    <span className="text-[10px] text-slate-400">ID: {String(row[idField])}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRestoreRow(row)}
+                    className="px-3 py-1 bg-emerald-500 text-white rounded-lg font-bold text-xs flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Restore
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* IMPORT DRAWER */}
-      {isImportOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex justify-end">
-          <div className="w-full max-w-md bg-white h-full p-6 space-y-4 border-l border-slate-200 shadow-2xl">
-            <div className="flex justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-slate-900">Import CSV Records</h3>
-              <button onClick={() => setIsImportOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="border-2 border-dashed border-slate-200 p-8 text-center rounded-2xl bg-slate-50">
-              <Upload className="w-8 h-8 text-brand-600 mx-auto mb-2" />
-              <span className="font-bold text-xs text-slate-900 block">Drag & Drop CSV File</span>
-              <span className="text-[10px] text-slate-400">Or click to browse from device</span>
+      {/* DELETE CONFIRM MODAL */}
+      {deletingRow && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 text-center border border-slate-200 dark:border-slate-800 shadow-2xl">
+            <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
+            <h3 className="font-extrabold text-slate-900 dark:text-white">Confirm Soft Delete</h3>
+            <p className="text-xs text-slate-500">Soft delete {String(deletingRow[idField])}? Item will move to Trash Bin for recovery.</p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setDeletingRow(null)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+              <button type="button" onClick={() => handleSoftDeleteRow(deletingRow)} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Soft Delete</button>
             </div>
           </div>
         </div>
@@ -452,15 +563,37 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* BULK DELETE MODAL */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4 text-center border border-slate-200 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 text-center border border-slate-200 dark:border-slate-800 shadow-2xl">
             <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
-            <h3 className="font-extrabold text-slate-900">Delete Selected Records</h3>
-            <p className="text-xs text-slate-500">Delete {selectedIds.size} records?</p>
+            <h3 className="font-extrabold text-slate-900 dark:text-white">Delete Selected Records</h3>
+            <p className="text-xs text-slate-500">Soft delete {selectedIds.size} selected records?</p>
             <div className="flex gap-2">
-              <button onClick={() => setIsBulkDeleteModalOpen(false)} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold text-xs text-slate-700">Cancel</button>
-              <button onClick={handleBulkDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Delete Selected</button>
+              <button type="button" onClick={() => setIsBulkDeleteModalOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+              <button type="button" onClick={handleBulkSoftDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Soft Delete Selected</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK STATUS MODAL */}
+      {isBulkStatusModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl text-left">
+            <h3 className="font-extrabold text-slate-900 dark:text-white">Update Status for {selectedIds.size} Records</h3>
+            <div className="space-y-2">
+              {["Active", "Pending", "Completed", "Cancelled"].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => handleBulkStatusChange(st)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-brand-500 hover:text-white transition-all text-left"
+                >
+                  Set Status to {st}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => setIsBulkStatusModalOpen(false)} className="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-600">Cancel</button>
           </div>
         </div>
       )}

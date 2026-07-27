@@ -42,6 +42,12 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/analytics",
+      "regex": "^/analytics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/analytics(?:/)?$"
+    },
+    {
       "page": "/api-docs",
       "regex": "^/api\\-docs(?:/)?$",
       "routeKeys": {},
@@ -60,10 +66,28 @@
       "namedRegex": "^/bookings(?:/)?$"
     },
     {
+      "page": "/categories",
+      "regex": "^/categories(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/categories(?:/)?$"
+    },
+    {
       "page": "/cms",
       "regex": "^/cms(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/cms(?:/)?$"
+    },
+    {
+      "page": "/commission",
+      "regex": "^/commission(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/commission(?:/)?$"
+    },
+    {
+      "page": "/coupons",
+      "regex": "^/coupons(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/coupons(?:/)?$"
     },
     {
       "page": "/customers",
@@ -76,6 +100,12 @@
       "regex": "^/inspections(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/inspections(?:/)?$"
+    },
+    {
+      "page": "/locations",
+      "regex": "^/locations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/locations(?:/)?$"
     },
     {
       "page": "/login",
@@ -96,10 +126,40 @@
       "namedRegex": "^/notifications(?:/)?$"
     },
     {
+      "page": "/payments",
+      "regex": "^/payments(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/payments(?:/)?$"
+    },
+    {
+      "page": "/pricing",
+      "regex": "^/pricing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/pricing(?:/)?$"
+    },
+    {
+      "page": "/profile",
+      "regex": "^/profile(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/profile(?:/)?$"
+    },
+    {
       "page": "/rbac",
       "regex": "^/rbac(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/rbac(?:/)?$"
+    },
+    {
+      "page": "/reports",
+      "regex": "^/reports(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/reports(?:/)?$"
+    },
+    {
+      "page": "/reviews",
+      "regex": "^/reviews(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/reviews(?:/)?$"
     },
     {
       "page": "/settings",
@@ -118,6 +178,12 @@
       "regex": "^/technicians(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/technicians(?:/)?$"
+    },
+    {
+      "page": "/users",
+      "regex": "^/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/users(?:/)?$"
     }
   ],
   "dataRoutes": [],
