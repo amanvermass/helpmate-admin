@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialBookings, Booking, BookingStatus, Technician } from "@/lib/mockData";
 import {
@@ -19,24 +20,25 @@ import {
   Eye,
   Edit2,
   UserPlus,
+  Filter,
+  Plus,
 } from "lucide-react";
 import { BookingWizardModal } from "@/components/bookings/BookingWizardModal";
 import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
 import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
 import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal";
-import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
 import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 
 export default function BookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
 
-  // Modals & Drawers
+  // Modals
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [assignBooking, setAssignBooking] = useState<Booking | null>(null);
   const [inspectionBooking, setInspectionBooking] = useState<Booking | null>(null);
   const [otpBooking, setOtpBooking] = useState<Booking | null>(null);
-  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   const filteredBookings = bookings.filter((b) => {
@@ -101,7 +103,15 @@ export default function BookingsPage() {
     {
       key: "id",
       header: "Booking ID",
-      accessor: (row) => <span className="font-mono font-bold text-brand-600 dark:text-brand-400">{row.id}</span>,
+      accessor: (row) => (
+        <button
+          type="button"
+          onClick={() => router.push(`/bookings/${row.id}`)}
+          className="font-mono font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
+        >
+          {row.id}
+        </button>
+      ),
       sortable: true,
     },
     {
@@ -147,7 +157,7 @@ export default function BookingsPage() {
           <button
             type="button"
             onClick={() => setAssignBooking(row)}
-            className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 cursor-pointer"
+            className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 cursor-pointer hover:bg-amber-100"
           >
             Assign Partner
           </button>
@@ -177,7 +187,8 @@ export default function BookingsPage() {
     { key: "date", header: "Schedule Slot", sortable: true },
   ];
 
-  const statusTabs: BookingStatus[] = [
+  const statusOptions: BookingStatus[] = [
+    "Draft",
     "Pending",
     "Waiting For Assignment",
     "Assigned",
@@ -190,11 +201,12 @@ export default function BookingsPage() {
     "Completed",
     "Cancelled",
     "Refunded",
+    "Rejected",
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header & New Booking Button */}
+      {/* Header with SINGLE Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
@@ -206,13 +218,14 @@ export default function BookingsPage() {
           </div>
         </div>
 
+        {/* ONLY ONE Add Button */}
         <button
           type="button"
           onClick={() => setIsWizardOpen(true)}
           className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lux flex items-center justify-center gap-2"
         >
-          <CalendarCheck className="w-4 h-4" />
-          <span>Launch 9-Step Booking Wizard</span>
+          <Plus className="w-4 h-4" />
+          <span>Create Booking</span>
         </button>
       </div>
 
@@ -236,50 +249,46 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* Status Lifecycle Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
-        <button
-          type="button"
-          onClick={() => setActiveStatusFilter("All")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-            activeStatusFilter === "All"
-              ? "bg-brand-500 text-white shadow-lux"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-          }`}
+      {/* Status Filter Bar - ONLY IN DROPDOWN */}
+      <div className="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            <Filter className="w-4 h-4" />
+          </div>
+          <label htmlFor="statusFilterSelect" className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Filter Booking Status:
+          </label>
+        </div>
+
+        <select
+          id="statusFilterSelect"
+          value={activeStatusFilter}
+          onChange={(e) => setActiveStatusFilter(e.target.value)}
+          className="px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white shadow-xs focus:ring-2 focus:ring-brand-500 outline-none cursor-pointer min-w-[220px]"
         >
-          All ({bookings.length})
-        </button>
-        {statusTabs.map((st) => {
-          const count = bookings.filter((b) => b.status.toLowerCase() === st.toLowerCase()).length;
-          return (
-            <button
-              key={st}
-              type="button"
-              onClick={() => setActiveStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                activeStatusFilter === st
-                  ? "bg-brand-500 text-white shadow-lux"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
-              }`}
-            >
-              {st} ({count})
-            </button>
-          );
-        })}
+          <option value="All">All Statuses ({bookings.length})</option>
+          {statusOptions.map((st) => {
+            const count = bookings.filter((b) => b.status.toLowerCase() === st.toLowerCase()).length;
+            return (
+              <option key={st} value={st}>
+                {st} ({count})
+              </option>
+            );
+          })}
+        </select>
       </div>
 
-      {/* Main DataTable */}
+      {/* Main DataTable - No duplicate add button, opens details in new page */}
       <DataTable
         title="Multi-Service Booking Directory"
         description="Comprehensive dispatch grid with real-time lifecycle actions"
         columns={columns}
         data={filteredBookings}
-        addButtonLabel="New Booking Wizard"
-        onAddClick={() => setIsWizardOpen(true)}
+        onRowView={(row) => router.push(`/bookings/${row.id}`)}
         onRowEdit={(row) => setEditingBooking(row)}
       />
 
-      {/* MODALS & DRAWERS */}
+      {/* MODALS */}
       <BookingWizardModal
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
@@ -307,12 +316,6 @@ export default function BookingsPage() {
         onJobCompleted={handleJobCompleted}
       />
 
-      <BookingDetailsDrawer
-        booking={viewingBooking}
-        isOpen={!!viewingBooking}
-        onClose={() => setViewingBooking(null)}
-      />
-
       <EditBookingModal
         booking={editingBooking}
         isOpen={!!editingBooking}
@@ -322,3 +325,4 @@ export default function BookingsPage() {
     </div>
   );
 }
+

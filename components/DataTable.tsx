@@ -25,6 +25,7 @@ import {
   Clock,
   UserCheck,
 } from "lucide-react";
+import { Portal } from "@/components/Portal";
 
 export interface Column<T> {
   key: string;
@@ -41,6 +42,7 @@ export interface DataTableProps<T extends Record<string, any>> {
   searchPlaceholder?: string;
   onAddClick?: () => void;
   addButtonLabel?: string;
+  onRowView?: (row: T) => void;
   onRowEdit?: (row: T) => void;
   onRowDelete?: (row: T) => void;
   statusField?: string;
@@ -55,6 +57,7 @@ export function DataTable<T extends Record<string, any>>({
   searchPlaceholder = "Search records...",
   onAddClick,
   addButtonLabel = "Add New Record",
+  onRowView,
   onRowEdit,
   onRowDelete,
   statusField = "status",
@@ -427,7 +430,7 @@ export function DataTable<T extends Record<string, any>>({
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => setViewingRow(row)}
+                            onClick={() => (onRowView ? onRowView(row) : setViewingRow(row))}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
                             title="View Details"
                           >
@@ -495,9 +498,10 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* VIEW DRAWER */}
       {viewingRow && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-6 overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-6 overflow-y-auto">
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-extrabold text-slate-900 dark:text-white">Record Inspector</h3>
               <button type="button" onClick={() => setViewingRow(null)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
@@ -511,11 +515,13 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* TRASH BIN DRAWER */}
       {isTrashOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end">
           <div className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-4 overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -544,58 +550,65 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* DELETE CONFIRM MODAL */}
       {deletingRow && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 text-center border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
-            <h3 className="font-extrabold text-slate-900 dark:text-white">Confirm Soft Delete</h3>
-            <p className="text-xs text-slate-500">Soft delete {String(deletingRow[idField])}? Item will move to Trash Bin for recovery.</p>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setDeletingRow(null)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-              <button type="button" onClick={() => handleSoftDeleteRow(deletingRow)} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Soft Delete</button>
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 text-center ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
+              <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
+              <h3 className="font-extrabold text-slate-900 dark:text-white">Confirm Soft Delete</h3>
+              <p className="text-xs text-slate-500">Soft delete {String(deletingRow[idField])}? Item will move to Trash Bin for recovery.</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setDeletingRow(null)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button type="button" onClick={() => handleSoftDeleteRow(deletingRow)} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Soft Delete</button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* BULK DELETE MODAL */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 text-center border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
-            <h3 className="font-extrabold text-slate-900 dark:text-white">Delete Selected Records</h3>
-            <p className="text-xs text-slate-500">Soft delete {selectedIds.size} selected records?</p>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setIsBulkDeleteModalOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-              <button type="button" onClick={handleBulkSoftDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Soft Delete Selected</button>
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 text-center ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
+              <AlertTriangle className="w-10 h-10 text-red-600 mx-auto" />
+              <h3 className="font-extrabold text-slate-900 dark:text-white">Delete Selected Records</h3>
+              <p className="text-xs text-slate-500">Soft delete {selectedIds.size} selected records?</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setIsBulkDeleteModalOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button type="button" onClick={handleBulkSoftDelete} className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold text-xs">Soft Delete Selected</button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* BULK STATUS MODAL */}
       {isBulkStatusModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl text-left">
-            <h3 className="font-extrabold text-slate-900 dark:text-white">Update Status for {selectedIds.size} Records</h3>
-            <div className="space-y-2">
-              {["Active", "Pending", "Completed", "Cancelled"].map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => handleBulkStatusChange(st)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-brand-500 hover:text-white transition-all text-left"
-                >
-                  Set Status to {st}
-                </button>
-              ))}
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-sm w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl text-left outline-none">
+              <h3 className="font-extrabold text-slate-900 dark:text-white">Update Status for {selectedIds.size} Records</h3>
+              <div className="space-y-2">
+                {["Active", "Pending", "Completed", "Cancelled"].map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => handleBulkStatusChange(st)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-brand-500 hover:text-white transition-all text-left"
+                  >
+                    Set Status to {st}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => setIsBulkStatusModalOpen(false)} className="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-600">Cancel</button>
             </div>
-            <button type="button" onClick={() => setIsBulkStatusModalOpen(false)} className="w-full py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-600">Cancel</button>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

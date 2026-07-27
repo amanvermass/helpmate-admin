@@ -27,6 +27,7 @@ import {
   varanasiLocalities,
   Booking,
 } from "@/lib/mockData";
+import { Portal } from "@/components/Portal";
 
 export default function ExecutiveDashboard() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
@@ -457,8 +458,9 @@ export default function ExecutiveDashboard() {
 
       {/* Assign Technician Modal */}
       {selectedBookingForDispatch && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200">
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+          <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-2xl max-w-md w-full p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Assign Varanasi Fleet Specialist</h3>
@@ -529,14 +531,16 @@ export default function ExecutiveDashboard() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* New Booking Modal */}
       {isDispatchModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
           <form
             onSubmit={handleCreateBooking}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none"
           >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
               <div>
@@ -640,6 +644,7 @@ export default function ExecutiveDashboard() {
             </div>
           </form>
         </div>
+        </Portal>
       )}
     </div>
   );

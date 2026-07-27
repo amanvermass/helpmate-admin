@@ -12,6 +12,7 @@ import {
   X,
   Plus,
 } from "lucide-react";
+import { Portal } from "@/components/Portal";
 
 export default function TechniciansPage() {
   const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
@@ -236,55 +237,58 @@ export default function TechniciansPage() {
 
       {/* WEEKLY PAYOUT PROOF UPLOADER DRAWER */}
       {proofTech && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
-          <form
-            onSubmit={handleUploadProof}
-            className="w-full max-w-md bg-white border-l border-slate-200 h-full p-6 space-y-6 overflow-y-auto shadow-2xl"
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">
-                  Upload Weekly Payout Proof
-                </h3>
-                <p className="text-xs text-slate-500 font-mono">Partner: {proofTech.name}</p>
-              </div>
-              <button type="button" onClick={() => setProofTech(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 text-xs space-y-1 border border-emerald-200">
-              <div>Pending Payout: <strong>₹{proofTech.pendingPayout.toLocaleString()}</strong></div>
-              <div>Net Payable (75% of Gross Revenue after 25% HelpMate Commission)</div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">
-                Bank UTR / Transaction Reference Receipt URL
-              </label>
-              <input
-                type="text"
-                value={proofUrl}
-                onChange={(e) => setProofUrl(e.target.value)}
-                placeholder="https://.../utr_receipt_881.jpg"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2"
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
+            <form
+              onSubmit={handleUploadProof}
+              className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-6 overflow-y-auto shadow-2xl"
             >
-              <Upload className="w-4 h-4" />
-              <span>Confirm Weekly Settlement & Save Proof</span>
-            </button>
-          </form>
-        </div>
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                    Upload Weekly Payout Proof
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">Partner: {proofTech.name}</p>
+                </div>
+                <button type="button" onClick={() => setProofTech(null)} className="text-slate-400 hover:text-slate-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 text-xs space-y-1 border border-emerald-200 dark:border-emerald-800">
+                <div>Pending Payout: <strong>₹{proofTech.pendingPayout.toLocaleString()}</strong></div>
+                <div>Net Payable (75% of Gross Revenue after 25% HelpMate Commission)</div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Bank UTR / Transaction Reference Receipt URL
+                </label>
+                <input
+                  type="text"
+                  value={proofUrl}
+                  onChange={(e) => setProofUrl(e.target.value)}
+                  placeholder="https://.../utr_receipt_881.jpg"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Confirm Weekly Settlement & Save Proof</span>
+              </button>
+            </form>
+          </div>
+        </Portal>
       )}
 
       {/* MANUAL PARTNER ONBOARDING DRAWER */}
       {isAddPartnerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end animate-in fade-in duration-200">
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
           <div className="w-full max-w-md bg-white border-l border-slate-200 h-full p-6 space-y-6 overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 pb-4">
               <div>
@@ -333,6 +337,7 @@ export default function TechniciansPage() {
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

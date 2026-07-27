@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialCityPricing, CityPricingItem } from "@/lib/mockData";
-import { Tag, Plus, CheckCircle2, DollarSign } from "lucide-react";
+import { Tag, Plus, CheckCircle2, DollarSign, TrendingUp } from "lucide-react";
+import { Portal } from "@/components/Portal";
 
 export default function PricingPage() {
   const [cityPricings, setCityPricings] = useState<CityPricingItem[]>(initialCityPricing);
@@ -106,38 +107,40 @@ export default function PricingPage() {
 
       {/* Add Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <form onSubmit={handleAddPricing} className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-md w-full space-y-4 border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add City Pricing Rule</h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City Name</label>
-                <input
-                  type="text"
-                  value={cityName}
-                  onChange={(e) => setCityName(e.target.value)}
-                  placeholder="e.g. Varanasi Metro"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  required
-                />
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <form onSubmit={handleAddPricing} className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add City Pricing Rule</h3>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City Name</label>
+                  <input
+                    type="text"
+                    value={cityName}
+                    onChange={(e) => setCityName(e.target.value)}
+                    placeholder="e.g. Varanasi Metro"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Base Multiplier</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    value={baseFareMultiplier}
+                    onChange={(e) => setBaseFareMultiplier(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Base Multiplier</label>
-                <input
-                  type="number"
-                  step="0.05"
-                  value={baseFareMultiplier}
-                  onChange={(e) => setBaseFareMultiplier(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs">Cancel</button>
+                <button type="submit" className="flex-1 py-2 bg-brand-500 text-white rounded-xl font-bold text-xs">Save Pricing Rule</button>
               </div>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs">Cancel</button>
-              <button type="submit" className="flex-1 py-2 bg-brand-500 text-white rounded-xl font-bold text-xs">Save Pricing Rule</button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        </Portal>
       )}
     </div>
   );

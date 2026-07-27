@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, Search, Star, MapPin, CheckCircle2, ShieldCheck, UserCheck, Wrench } from "lucide-react";
 import { Booking, initialTechnicians, Technician } from "@/lib/mockData";
+import { Portal } from "@/components/Portal";
 
 interface AssignPartnerModalProps {
   booking: Booking | null;
@@ -40,8 +41,9 @@ export function AssignPartnerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
+    <Portal>
+      <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+      <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
           <div>
@@ -86,11 +88,10 @@ export function AssignPartnerModal({
               <div
                 key={t.id}
                 onClick={() => setSelectedTechId(t.id)}
-                className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
-                  isSelected
-                    ? "bg-brand-50 border-brand-500 dark:bg-brand-950 dark:border-brand-500 shadow-xs"
-                    : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-brand-300"
-                }`}
+                className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${isSelected
+                  ? "bg-brand-50 border-brand-500 dark:bg-brand-950 dark:border-brand-500 shadow-xs"
+                  : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-brand-300"
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center font-bold text-slate-800 dark:text-white text-xs shrink-0">
@@ -137,5 +138,6 @@ export function AssignPartnerModal({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

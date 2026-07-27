@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, CheckCircle2, ShieldCheck, FileText, Download } from "lucide-react";
 import { Booking } from "@/lib/mockData";
+import { Portal } from "@/components/Portal";
 
 interface OtpVerificationModalProps {
   booking: Booking | null;
@@ -35,8 +36,9 @@ export function OtpVerificationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
+    <Portal>
+      <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+      <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
           <div>
@@ -97,5 +99,6 @@ export function OtpVerificationModal({
         </form>
       </div>
     </div>
+    </Portal>
   );
 }

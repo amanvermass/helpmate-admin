@@ -20,6 +20,7 @@ import {
   History,
 } from "lucide-react";
 import { Booking } from "@/lib/mockData";
+import { Portal } from "@/components/Portal";
 
 interface BookingDetailsDrawerProps {
   booking: Booking | null;
@@ -37,7 +38,8 @@ export function BookingDetailsDrawer({
   if (!isOpen || !booking) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex justify-end outline-none">
+    <Portal>
+      <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
       <div className="w-full max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-right duration-200">
         {/* Drawer Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
@@ -45,13 +47,12 @@ export function BookingDetailsDrawer({
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-black text-brand-600 dark:text-brand-400">{booking.id}</span>
               <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                  booking.status === "Completed"
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${booking.status === "Completed"
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
                     : booking.status === "In Progress"
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                }`}
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                  }`}
               >
                 {booking.status}
               </span>
@@ -70,11 +71,10 @@ export function BookingDetailsDrawer({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-xl font-bold capitalize transition-all ${
-                activeTab === tab
+              className={`px-3 py-1.5 rounded-xl font-bold capitalize transition-all ${activeTab === tab
                   ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
                   : "text-slate-500 hover:text-slate-900"
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -191,5 +191,6 @@ export function BookingDetailsDrawer({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
