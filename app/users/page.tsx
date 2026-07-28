@@ -326,13 +326,14 @@ export default function UsersPage() {
           </Portal>
         )}
 
-        {/* EDIT USER & GRANULAR VIEW/EDIT/DELETE PERMISSIONS MODAL */}
+        {/* EDIT USER & GRANULAR VIEW/EDIT/DELETE PERMISSIONS DRAWER */}
         {editUser && (
           <Portal>
-            <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+              <div className="absolute inset-0" onClick={() => setEditUser(null)} />
               <form
                 onSubmit={handleUpdateUser}
-                className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 outline-none max-h-[90vh] overflow-y-auto"
+                className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-2xl w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none overflow-y-auto"
               >
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <div>
@@ -526,13 +527,14 @@ export default function UsersPage() {
           </Portal>
         )}
 
-        {/* ADD NEW STAFF USER MODAL */}
+        {/* ADD NEW STAFF USER DRAWER */}
         {isAddOpen && (
           <Portal>
-            <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+              <div className="absolute inset-0" onClick={() => setIsAddOpen(false)} />
               <form
                 onSubmit={handleAddUser}
-                className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-2xl w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none max-h-[90vh] overflow-y-auto"
+                className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-2xl w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none overflow-y-auto"
               >
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add New Staff User</h3>

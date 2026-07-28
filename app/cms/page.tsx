@@ -4,7 +4,7 @@ import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
-import { Wrench, Plus, CheckCircle2, MapPin, Tag } from "lucide-react";
+import { Wrench, Plus, CheckCircle2, MapPin, Tag, X } from "lucide-react";
 
 export default function CmsPage() {
   const [services, setServices] = useState<ServiceItem[]>(initialServices);
@@ -342,13 +342,14 @@ export default function CmsPage() {
         />
       )}
 
-      {/* ADD SERVICE POPUP MODAL */}
+      {/* ADD SERVICE DRAWER */}
       {isAddServiceOpen && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+            <div className="absolute inset-0" onClick={() => setIsAddServiceOpen(false)} />
             <form
               onSubmit={handleCreateService}
-              className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none max-h-[90vh] overflow-y-auto"
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-2xl w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <div>
@@ -514,47 +515,60 @@ export default function CmsPage() {
         </Portal>
       )}
 
-      {/* ADD ADDON POPUP MODAL */}
+      {/* ADD ADDON DRAWER */}
       {isAddAddonOpen && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-            <form onSubmit={handleCreateAddon} className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Spare Part / Add-on</h3>
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Add-on Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={addonTitle}
-                    onChange={(e) => setAddonTitle(e.target.value)}
-                    placeholder="e.g. Anti-Bacterial Spray Coating"
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+            <div className="absolute inset-0" onClick={() => setIsAddAddonOpen(false)} />
+            <form
+              onSubmit={handleCreateAddon}
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Spare Part / Add-on</h3>
+                  <button type="button" onClick={() => setIsAddAddonOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+
+                <div className="space-y-3 text-xs">
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit Price (₹)</label>
-                    <input
-                      type="number"
-                      value={addonPrice}
-                      onChange={(e) => setAddonPrice(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Add-on Title *</label>
                     <input
                       type="text"
-                      value={addonUnit}
-                      onChange={(e) => setAddonUnit(e.target.value)}
-                      placeholder="Can / Meter"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      required
+                      value={addonTitle}
+                      onChange={(e) => setAddonTitle(e.target.value)}
+                      placeholder="e.g. Anti-Bacterial Spray Coating"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit Price (₹)</label>
+                      <input
+                        type="number"
+                        value={addonPrice}
+                        onChange={(e) => setAddonPrice(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit</label>
+                      <input
+                        type="text"
+                        value={addonUnit}
+                        onChange={(e) => setAddonUnit(e.target.value)}
+                        placeholder="Can / Meter"
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 pt-2">
+
+              <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button type="button" onClick={() => setIsAddAddonOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
                 <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Save Add-on</button>
               </div>
@@ -563,38 +577,52 @@ export default function CmsPage() {
         </Portal>
       )}
 
-      {/* ADD PINCODE POPUP MODAL */}
+      {/* ADD PINCODE DRAWER */}
       {isAddPincodeOpen && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-            <form onSubmit={handleCreatePincode} className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Varanasi Serviceable Pincode</h3>
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Varanasi Locality / Zone Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={pincodeLocality}
-                    onChange={(e) => setPincodeLocality(e.target.value)}
-                    placeholder="e.g. Sarnath / Shivpur"
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+            <div className="absolute inset-0" onClick={() => setIsAddPincodeOpen(false)} />
+            <form
+              onSubmit={handleCreatePincode}
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Varanasi Serviceable Pincode</h3>
+                  <button type="button" onClick={() => setIsAddPincodeOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode</label>
-                  <input
-                    type="text"
-                    value={pincodeCode}
-                    onChange={(e) => setPincodeCode(e.target.value)}
-                    placeholder="221007"
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold"
-                  />
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Varanasi Locality / Zone Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={pincodeLocality}
+                      onChange={(e) => setPincodeLocality(e.target.value)}
+                      placeholder="e.g. Mahmoorganj"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">6-Digit Pincode *</label>
+                    <input
+                      type="text"
+                      required
+                      value={pincodeCode}
+                      onChange={(e) => setPincodeCode(e.target.value)}
+                      placeholder="221010"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2 pt-2">
+
+              <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button type="button" onClick={() => setIsAddPincodeOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Activate Pincode</button>
+                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Save Pincode</button>
               </div>
             </form>
           </div>

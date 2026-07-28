@@ -268,6 +268,23 @@ export interface Customer {
   totalBookings: number;
   lastBookingDate: string;
   joinedDate: string;
+
+  // Customer Identity & Aadhaar Verification
+  aadhaarNumber?: string;
+  aadhaarDocUrl?: string;
+
+  // Guarantor / Reference Person (Taking Customer Guarantee)
+  guarantorName?: string;
+  guarantorPhone?: string;
+  guarantorAddress?: string;
+  guarantorAadhaarNumber?: string;
+  guarantorAadhaarDocUrl?: string;
+
+  // Police Verification & Security Records
+  policeStatus?: "Pending Verification" | "Verified Clean" | "Submitted to Local Thana" | "Exempted";
+  policeTokenNumber?: string;
+  policeStationName?: string;
+  policeCertificateUrl?: string;
 }
 
 export interface AuditLog {
@@ -722,6 +739,17 @@ export const initialCustomers: Customer[] = [
     totalBookings: 18,
     lastBookingDate: "Today",
     joinedDate: "12 Jan 2024",
+    aadhaarNumber: "7821-4920-1102",
+    aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    guarantorName: "Sunita Agrawal (Guarantor / Spouse)",
+    guarantorPhone: "+91 98390 88210",
+    guarantorAddress: "D-58/16C Shashtri Nagar Colony, Sigra, Varanasi",
+    guarantorAadhaarNumber: "7821-4920-5592",
+    guarantorAadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    policeStatus: "Verified Clean",
+    policeStationName: "Sigra Police Station",
+    policeTokenNumber: "PCC-VAR-2026-8819",
+    policeCertificateUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
   },
   {
     id: "cust-2",
@@ -735,6 +763,17 @@ export const initialCustomers: Customer[] = [
     totalBookings: 14,
     lastBookingDate: "Today",
     joinedDate: "05 Mar 2024",
+    aadhaarNumber: "4920-1102-8821",
+    aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    guarantorName: "Prof. S. N. Mukherjee (Guarantor / Father)",
+    guarantorPhone: "+91 94152 44321",
+    guarantorAddress: "Plot 12, Assi Ghat Road, Lanka, Varanasi",
+    guarantorAadhaarNumber: "4920-1102-3329",
+    guarantorAadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    policeStatus: "Submitted to Local Thana",
+    policeStationName: "Lanka Thana",
+    policeTokenNumber: "PCC-VAR-2026-9042",
+    policeCertificateUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
   },
 ];
 

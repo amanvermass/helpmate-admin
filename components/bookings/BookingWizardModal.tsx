@@ -16,8 +16,22 @@ import {
   FileText,
   ShieldCheck,
   Plus,
+  KeyRound,
+  UserCheck,
+  Phone,
+  Mail,
+  Building,
+  UserPlus,
 } from "lucide-react";
-import { Booking, varanasiLocalities, initialTechnicians, initialCoupons, CouponItem } from "@/lib/mockData";
+import {
+  Booking,
+  varanasiLocalities,
+  initialTechnicians,
+  initialCoupons,
+  CouponItem,
+  initialCustomers,
+  Customer,
+} from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 
 interface BookingWizardModalProps {
@@ -171,26 +185,106 @@ export function BookingWizardModal({
 }: BookingWizardModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Step 1 & 2: Service Selection States
-  const [selectedCategory, setSelectedCategory] = useState("AC Service & Repair");
-  const [selectedType, setSelectedType] = useState("Split AC");
-  const [selectedServiceIndex, setSelectedServiceIndex] = useState(0);
-
-  // Step 3: Address & Customer States
+  // STEP 1: Customer & OTP States
+  const [customerList, setCustomerList] = useState(initialCustomers);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [isTrustedCustomer, setIsTrustedCustomer] = useState(false);
+
+  // New Customer Inline Add Form States
+  const [isAddCustomerFormOpen, setIsAddCustomerFormOpen] = useState(false);
+  const [newCustName, setNewCustName] = useState("");
+  const [newCustPhone, setNewCustPhone] = useState("");
+  const [newCustEmail, setNewCustEmail] = useState("");
+  const [newCustLocality, setNewCustLocality] = useState("Sigra");
+  const [newCustAddress, setNewCustAddress] = useState("");
+
+  // Guarantor Person, Aadhaar & Police Verification States
+  const [newCustAadhaarNumber, setNewCustAadhaarNumber] = useState("");
+  const [newCustAadhaarDocUrl, setNewCustAadhaarDocUrl] = useState("");
+  const [newCustGuarantorName, setNewCustGuarantorName] = useState("");
+  const [newCustGuarantorPhone, setNewCustGuarantorPhone] = useState("");
+  const [newCustGuarantorAddress, setNewCustGuarantorAddress] = useState("");
+  const [newCustGuarantorAadhaarNumber, setNewCustGuarantorAadhaarNumber] = useState("");
+  const [newCustPoliceStatus, setNewCustPoliceStatus] = useState<
+    "Pending Verification" | "Verified Clean" | "Submitted to Local Thana" | "Exempted"
+  >("Verified Clean");
+  const [newCustPoliceStation, setNewCustPoliceStation] = useState("Sigra Police Station");
+  const [newCustPoliceToken, setNewCustPoliceToken] = useState("");
+
+  const handleCreateNewCustomerAndSelect = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newCustName.trim() || !newCustPhone.trim()) return;
+
+    const createdCust: Customer = {
+      id: `CUST-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: newCustName,
+      phone: newCustPhone,
+      email: newCustEmail || `${newCustName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
+      locality: newCustLocality,
+      address: newCustAddress || `${newCustLocality}, Varanasi`,
+      tier: "Standard",
+      totalSpend: 0,
+      totalBookings: 0,
+      lastBookingDate: "Just Now",
+      joinedDate: "Today",
+
+      aadhaarNumber: newCustAadhaarNumber || "7821-4920-1102",
+      aadhaarDocUrl: newCustAadhaarDocUrl,
+      guarantorName: newCustGuarantorName,
+      guarantorPhone: newCustGuarantorPhone,
+      guarantorAddress: newCustGuarantorAddress,
+      guarantorAadhaarNumber: newCustGuarantorAadhaarNumber,
+      policeStatus: newCustPoliceStatus,
+      policeStationName: newCustPoliceStation,
+      policeTokenNumber: newCustPoliceToken || `PCC-VAR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    };
+
+    setCustomerList([createdCust, ...customerList]);
+    setCustomerName(createdCust.name);
+    setCustomerPhone(createdCust.phone);
+    setCustomerEmail(createdCust.email);
+    setLocality(createdCust.locality);
+    setAddress(createdCust.address);
+    setIsOtpVerified(true);
+    setIsTrustedCustomer(true);
+    setIsAddCustomerFormOpen(false);
+
+    // Reset inline inputs
+    setNewCustName("");
+    setNewCustPhone("");
+    setNewCustEmail("");
+    setNewCustAddress("");
+    setNewCustAadhaarNumber("");
+    setNewCustAadhaarDocUrl("");
+    setNewCustGuarantorName("");
+    setNewCustGuarantorPhone("");
+    setNewCustGuarantorAddress("");
+    setNewCustGuarantorAadhaarNumber("");
+    setNewCustPoliceToken("");
+  };
+
+  // STEP 2: Address & Location States
   const [city, setCity] = useState("Varanasi");
   const [locality, setLocality] = useState("Sigra");
   const [pincode, setPincode] = useState("221002");
   const [address, setAddress] = useState("");
 
-  // Step 4: Schedule States
+  // STEP 3: Service Selection States
+  const [selectedCategory, setSelectedCategory] = useState("AC Service & Repair");
+  const [selectedType, setSelectedType] = useState("Split AC");
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState(0);
+
+  // STEP 4: Schedule States
   const [bookingDate, setBookingDate] = useState("2026-07-28");
   const [timeSlot, setTimeSlot] = useState("10:00 AM - 11:30 AM");
   const [preferredPartnerId, setPreferredPartnerId] = useState("");
 
-  // Step 5: Payment & Coupon States
+  // STEP 5: Payment & Coupon States
   const [couponCode, setCouponCode] = useState("");
   const [discountAmount, setDiscountAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<
@@ -213,6 +307,42 @@ export function BookingWizardModal({
   const cgst = Math.round(grossBeforeTax * 0.09 * 100) / 100;
   const sgst = Math.round(grossBeforeTax * 0.09 * 100) / 100;
   const grandTotal = Math.round((grossBeforeTax + cgst + sgst) * 100) / 100;
+
+  const handleSelectExistingCustomer = (custName: string) => {
+    if (!custName) {
+      setCustomerName("");
+      setCustomerPhone("");
+      setCustomerEmail("");
+      setAddress("");
+      setIsOtpVerified(false);
+      setIsTrustedCustomer(false);
+      return;
+    }
+    const found = customerList.find((c) => c.name === custName);
+    if (found) {
+      setCustomerName(found.name);
+      setCustomerPhone(found.phone);
+      setCustomerEmail(found.email);
+      setLocality(found.locality);
+      setAddress(found.address);
+      setIsOtpVerified(true);
+      setIsTrustedCustomer(true);
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    setOtpError("");
+    if (otpInput.trim() === "1234" || otpInput.trim().length === 4) {
+      setIsOtpVerified(true);
+    } else {
+      setOtpError("Invalid OTP. Enter 1234 for instant verification.");
+    }
+  };
+
+  const handleSkipOtpTrusted = () => {
+    setIsOtpVerified(true);
+    setIsTrustedCustomer(true);
+  };
 
   const handleApplyCoupon = () => {
     const found = initialCoupons.find((c) => c.code.toLowerCase() === couponCode.trim().toLowerCase());
@@ -290,39 +420,44 @@ export function BookingWizardModal({
   };
 
   const steps = [
-    { num: 1, label: "1. Service & Category" },
-    { num: 2, label: "2. Choose Service & Price" },
-    { num: 3, label: "3. Address & Customer" },
-    { num: 4, label: "4. Schedule Slot" },
+    { num: 1, label: "1. Customer & OTP" },
+    { num: 2, label: "2. Location & Address" },
+    { num: 3, label: "3. Service Selection" },
+    { num: 4, label: "4. Schedule & Partner" },
     { num: 5, label: "5. Payment & Confirm" },
   ];
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-        <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 outline-none">
-          {/* Modal Header */}
-          <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+      {/* Right Slide-over Drawer Overlay */}
+      <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+        {/* Backdrop click */}
+        <div className="absolute inset-0" onClick={onClose} />
+
+        {/* Slide-over Drawer Panel */}
+        <div className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 w-full max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 outline-none">
+          {/* Drawer Header */}
+          <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-0.5 rounded border border-brand-200 dark:border-brand-800">
-                HelpMate Booking Engine
+                Helpmate Booking Wizard
               </span>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                Create Multi-Service Booking
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                Create New Booking
               </h2>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Stepper Navigation */}
-          <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 overflow-x-auto flex items-center gap-2 text-xs select-none">
+          {/* Stepper Navigation Bar */}
+          <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 overflow-x-auto flex items-center gap-2 text-xs select-none shrink-0">
             {steps.map((st) => {
               const isDone = st.num < currentStep;
               const isCurrent = st.num === currentStep;
@@ -350,17 +485,398 @@ export function BookingWizardModal({
             })}
           </div>
 
-          {/* Step Content Area */}
+          {/* Drawer Body Content */}
           <div className="flex-1 p-6 overflow-y-auto space-y-6">
-            {/* STEP 1: SELECT CATEGORY & TYPE (Split AC or Window AC, etc.) */}
+            {/* STEP 1: SELECT CUSTOMER & OTP VERIFICATION */}
             {currentStep === 1 && (
-              <div className="space-y-5 max-w-xl mx-auto">
-                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base">
-                  <Wrench className="w-5 h-5 text-brand-600" />
-                  <span>Step 1: Select Service Category & System Type</span>
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base">
+                    <User className="w-5 h-5 text-brand-600" />
+                    <span>Step 1: Select & Verify Customer</span>
+                  </div>
+                  {isOtpVerified && (
+                    <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Verified Customer
+                    </span>
+                  )}
                 </div>
 
-                {/* Main Service Category Grid */}
+                {/* Select Existing Customer Quick Dropdown & Add Customer Action */}
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                      Quick Select Existing Varanasi Customer
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddCustomerFormOpen(!isAddCustomerFormOpen)}
+                      className="px-3 py-1 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-[11px] shadow-lux flex items-center gap-1 transition-all"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>{isAddCustomerFormOpen ? "Close Form" : "+ Add New Customer"}</span>
+                    </button>
+                  </div>
+
+                  <select
+                    value={customerName}
+                    onChange={(e) => handleSelectExistingCustomer(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                  >
+                    <option value="">-- Choose Existing Household Client ({customerList.length} total) --</option>
+                    {customerList.map((cust) => (
+                      <option key={cust.id} value={cust.name}>
+                        {cust.name} ({cust.phone}) — {cust.locality}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Inline Quick Add New Customer Card */}
+                {isAddCustomerFormOpen && (
+                  <div className="p-4 rounded-2xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 space-y-3 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between border-b border-brand-200 dark:border-brand-800 pb-2">
+                      <span className="font-extrabold text-xs text-brand-900 dark:text-brand-300 flex items-center gap-1.5">
+                        <UserPlus className="w-4 h-4 text-brand-600" /> Create & Auto-Select New Customer
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddCustomerFormOpen(false)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={newCustName}
+                          onChange={(e) => setNewCustName(e.target.value)}
+                          placeholder="e.g. Alok Verma"
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          value={newCustPhone}
+                          onChange={(e) => setNewCustPhone(e.target.value)}
+                          placeholder="+91 99350 98765"
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={newCustEmail}
+                          onChange={(e) => setNewCustEmail(e.target.value)}
+                          placeholder="alok@gmail.com"
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                          Primary Aadhaar Number (12-Digit)
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={14}
+                          value={newCustAadhaarNumber}
+                          onChange={(e) => setNewCustAadhaarNumber(e.target.value)}
+                          placeholder="7821-4920-1102"
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Guarantor / Reference Person Details Block */}
+                    <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-2 text-xs">
+                      <span className="font-extrabold text-[11px] text-purple-800 dark:text-purple-300 block">
+                        Guarantor / Reference Person (Taking Customer Guarantee)
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={newCustGuarantorName}
+                          onChange={(e) => setNewCustGuarantorName(e.target.value)}
+                          placeholder="Guarantor Full Name"
+                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                        />
+                        <input
+                          type="tel"
+                          value={newCustGuarantorPhone}
+                          onChange={(e) => setNewCustGuarantorPhone(e.target.value)}
+                          placeholder="Guarantor Mobile Number"
+                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                        />
+                        <input
+                          type="text"
+                          value={newCustGuarantorAadhaarNumber}
+                          onChange={(e) => setNewCustGuarantorAadhaarNumber(e.target.value)}
+                          placeholder="Guarantor Aadhaar No."
+                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
+                        />
+                        <input
+                          type="text"
+                          value={newCustGuarantorAddress}
+                          onChange={(e) => setNewCustGuarantorAddress(e.target.value)}
+                          placeholder="Guarantor Residence Address"
+                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Police Verification & Thana Block */}
+                    <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-2 text-xs">
+                      <span className="font-extrabold text-[11px] text-amber-800 dark:text-amber-300 block">
+                        Police Verification Record & Thana
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <select
+                          value={newCustPoliceStatus}
+                          onChange={(e) => setNewCustPoliceStatus(e.target.value as any)}
+                          className="p-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                        >
+                          <option value="Verified Clean">Verified Clean (PCC)</option>
+                          <option value="Submitted to Local Thana">Submitted to Local Thana</option>
+                          <option value="Pending Verification">Pending Verification</option>
+                          <option value="Exempted">Exempted</option>
+                        </select>
+                        <select
+                          value={newCustPoliceStation}
+                          onChange={(e) => setNewCustPoliceStation(e.target.value)}
+                          className="p-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                        >
+                          <option value="Sigra Police Station">Sigra Police Station</option>
+                          <option value="Lanka Thana">Lanka Thana</option>
+                          <option value="Bhelupur Thana">Bhelupur Thana</option>
+                          <option value="Chetganj Thana">Chetganj Thana</option>
+                          <option value="Cantt Police Station">Cantt Police Station</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                          Varanasi Locality
+                        </label>
+                        <select
+                          value={newCustLocality}
+                          onChange={(e) => setNewCustLocality(e.target.value)}
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        >
+                          {varanasiLocalities.map((loc) => (
+                            <option key={loc.id} value={loc.name}>
+                              {loc.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">
+                          Full Delivery / Service Address
+                        </label>
+                        <input
+                          type="text"
+                          value={newCustAddress}
+                          onChange={(e) => setNewCustAddress(e.target.value)}
+                          placeholder="House / Flat No., Colony, Landmark..."
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={handleCreateNewCustomerAndSelect}
+                        className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lux transition-colors flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Save & Auto-Select New Customer</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Active Customer Summary Card */}
+                {customerName && (
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs animate-in fade-in duration-150">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white font-extrabold flex items-center justify-center text-sm shadow-lux">
+                        {customerName[0]}
+                      </div>
+                      <div>
+                        <div className="font-extrabold text-slate-900 dark:text-white text-sm">
+                          {customerName}
+                        </div>
+                        <div className="text-slate-500 font-semibold text-[11px] flex items-center gap-2 mt-0.5">
+                          <span>{customerPhone}</span>
+                          {customerEmail && <span>• {customerEmail}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                      Active Selection
+                    </span>
+                  </div>
+                )}
+
+                {/* OTP Verification & Skip Box */}
+                <div className="p-5 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-xs text-brand-900 dark:text-brand-300 flex items-center gap-1.5">
+                      <KeyRound className="w-4 h-4 text-brand-600" /> Phone OTP Verification & Trusted Bypass
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSkipOtpTrusted}
+                      className="px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 font-bold text-[11px] hover:bg-brand-50 transition-colors shadow-xs"
+                    >
+                      ⚡ Skip OTP (Regular / Trusted Customer)
+                    </button>
+                  </div>
+
+                  {!isOtpVerified ? (
+                    <div className="space-y-2">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                        Enter 4-digit code sent via SMS to {customerPhone} (Demo OTP: <strong className="text-brand-600">1234</strong>)
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={4}
+                          value={otpInput}
+                          onChange={(e) => setOtpInput(e.target.value)}
+                          placeholder="1234"
+                          className="w-32 text-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-extrabold text-sm text-slate-900 dark:text-white tracking-widest outline-none focus:border-brand-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux transition-colors"
+                        >
+                          Verify OTP
+                        </button>
+                      </div>
+                      {otpError && <p className="text-[11px] text-red-600 font-semibold">{otpError}</p>}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>
+                          {isTrustedCustomer
+                            ? "Verified Regular Trusted Client (OTP Bypassed)"
+                            : "Phone OTP Verified Successfully (Code: 1234)"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsOtpVerified(false);
+                          setIsTrustedCustomer(false);
+                        }}
+                        className="text-[10px] text-emerald-700 underline"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: SELECT LOCATION & ADDRESS */}
+            {currentStep === 2 && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base">
+                    <MapPin className="w-5 h-5 text-brand-600" />
+                    <span>Step 2: Service Location & Address</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City</label>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Varanasi Locality *
+                    </label>
+                    <select
+                      value={locality}
+                      onChange={(e) => setLocality(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                    >
+                      {varanasiLocalities.map((loc) => (
+                        <option key={loc.id} value={loc.name}>
+                          {loc.name} ({loc.pincode})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode</label>
+                    <input
+                      type="text"
+                      value={pincode}
+                      onChange={(e) => setPincode(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-semibold outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                    Full Delivery / Service Address & Landmark *
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="House / Flat No., Colony, Near Landmark..."
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: SELECT SERVICE CATEGORY & PACKAGE */}
+            {currentStep === 3 && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <Wrench className="w-5 h-5 text-brand-600" />
+                  <span>Step 3: Select Service Category & Package</span>
+                </div>
+
+                {/* Main Category Selection */}
                 <div className="space-y-2 text-xs">
                   <label className="font-bold text-slate-700 dark:text-slate-300 block">
                     1. Main Service Category
@@ -383,10 +899,10 @@ export function BookingWizardModal({
                   </div>
                 </div>
 
-                {/* Sub-Category Type Selection (e.g. Split AC vs Window AC) */}
+                {/* Sub-Type Selection */}
                 <div className="space-y-2 text-xs pt-2">
                   <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    2. System Type / Appliance Category (e.g., Split AC vs Window AC)
+                    2. System / Appliance Type
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {currentTypes.map((type) => (
@@ -405,35 +921,11 @@ export function BookingWizardModal({
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* STEP 2: SELECT SPECIFIC SERVICE FROM DROPDOWN WITH PRICE */}
-            {currentStep === 2 && (
-              <div className="space-y-5 max-w-xl mx-auto">
-                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base">
-                  <Tag className="w-5 h-5 text-brand-600" />
-                  <span>Step 2: Select Specific Service Item & Price</span>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900 text-xs text-brand-800 dark:text-brand-300 flex items-center justify-between">
-                  <div>
-                    <span className="font-bold block">Selected Category & Type:</span>
-                    <span className="font-extrabold text-sm">{selectedCategory} • {selectedType}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep(1)}
-                    className="text-[11px] font-bold text-brand-600 underline"
-                  >
-                    Change Category
-                  </button>
-                </div>
-
-                {/* Service Dropdown with Price */}
-                <div className="space-y-2 text-xs">
+                {/* Service Package Dropdown */}
+                <div className="space-y-2 text-xs pt-2">
                   <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    Choose Service Package from Dropdown (with Price) *
+                    3. Specific Service Package & Rate Card *
                   </label>
                   <select
                     value={selectedServiceIndex}
@@ -447,141 +939,62 @@ export function BookingWizardModal({
                     ))}
                   </select>
                 </div>
-
-                {/* Price Display Card */}
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-bold">Selected Service:</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">{currentSelectedService.title}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-bold">Base Service Rate:</span>
-                    <span className="font-black text-brand-600 dark:text-brand-400 text-base">
-                      ₹{currentSelectedService.price.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-[11px] text-slate-400 border-t border-slate-200 dark:border-slate-700 pt-2">
-                    <span>Includes 30-Day Guarantee</span>
-                    <span>Platform Fee: ₹49</span>
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* STEP 3: CUSTOMER & ADDRESS */}
-            {currentStep === 3 && (
-              <div className="space-y-4 max-w-xl mx-auto text-xs">
-                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base mb-2">
-                  <MapPin className="w-5 h-5 text-brand-600" />
-                  <span>Step 3: Customer Details & Service Address</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Customer Name *</label>
-                    <input
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="e.g. Rajesh Kumar Agrawal"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Mobile Phone *</label>
-                    <input
-                      type="text"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="+91 98390 12345"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City</label>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Varanasi Locality / Zone</label>
-                    <select
-                      value={locality}
-                      onChange={(e) => setLocality(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                    >
-                      {varanasiLocalities.map((loc) => (
-                        <option key={loc.id} value={loc.name}>
-                          {loc.name} ({loc.pincode})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Full Service Address</label>
-                  <textarea
-                    rows={3}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="House / Flat No, Building Name, Landmark..."
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  ></textarea>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: SCHEDULE */}
+            {/* STEP 4: SCHEDULE & ASSIGN PARTNER */}
             {currentStep === 4 && (
-              <div className="space-y-4 max-w-xl mx-auto text-xs">
-                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base mb-2">
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
                   <Calendar className="w-5 h-5 text-brand-600" />
-                  <span>Step 4: Select Booking Date & Time Slot</span>
+                  <span>Step 4: Schedule Slot & Assign Fleet Partner</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Date</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Preferred Date
+                    </label>
                     <input
                       type="date"
                       value={bookingDate}
                       onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
                     />
                   </div>
+
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Preferred Time Slot</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Time Slot
+                    </label>
                     <select
                       value={timeSlot}
                       onChange={(e) => setTimeSlot(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
                     >
-                      <option value="09:00 AM - 10:30 AM">09:00 AM - 10:30 AM</option>
+                      <option value="08:00 AM - 09:30 AM">08:00 AM - 09:30 AM</option>
                       <option value="10:00 AM - 11:30 AM">10:00 AM - 11:30 AM</option>
-                      <option value="02:00 PM - 03:30 PM">02:00 PM - 03:30 PM</option>
-                      <option value="05:00 PM - 06:30 PM">05:00 PM - 06:30 PM</option>
+                      <option value="12:00 PM - 01:30 PM">12:00 PM - 01:30 PM</option>
+                      <option value="03:00 PM - 04:30 PM">03:00 PM - 04:30 PM</option>
+                      <option value="05:30 PM - 07:00 PM">05:30 PM - 07:00 PM</option>
                     </select>
                   </div>
                 </div>
 
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Assign Fleet Partner (Optional)</label>
+                {/* Assign Partner Selection */}
+                <div className="space-y-2 text-xs">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                    Assign Varanasi Technician (Optional)
+                  </label>
                   <select
                     value={preferredPartnerId}
                     onChange={(e) => setPreferredPartnerId(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
                   >
-                    <option value="">Auto-Dispatch Available Specialist</option>
-                    {initialTechnicians.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.category} • ★ {t.rating})
+                    <option value="">-- Auto-Dispatch (Next Available Tech in {locality}) --</option>
+                    {initialTechnicians.map((tech) => (
+                      <option key={tech.id} value={tech.id}>
+                        {tech.name} ({tech.locality}) — ★ {tech.rating}
                       </option>
                     ))}
                   </select>
@@ -589,203 +1002,124 @@ export function BookingWizardModal({
               </div>
             )}
 
-            {/* STEP 5: PAYMENT & SUMMARY */}
+            {/* STEP 5: PAYMENT & FINAL CONFIRMATION */}
             {currentStep === 5 && (
-              <div className="space-y-4 max-w-xl mx-auto text-xs">
-                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-black text-base mb-2">
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
                   <CreditCard className="w-5 h-5 text-brand-600" />
-                  <span>Step 5: Payment Mode & Price Summary</span>
+                  <span>Step 5: Payment Method & Final Summary</span>
                 </div>
 
-                {/* Coupon Input & Browse Bank Offers Button */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block">Coupons & Bank Offers</label>
-                    <button
-                      type="button"
-                      onClick={() => setIsCouponPickerOpen(true)}
-                      className="text-brand-600 dark:text-brand-400 font-extrabold hover:underline flex items-center gap-1"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      View Available Bank Offers ({initialCoupons.length})
-                    </button>
-                  </div>
-
+                {/* Coupon Code Input */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                    Apply Promo Coupon
+                  </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="Coupon Code (e.g. HDFC10, VARANASI100)"
-                      className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono uppercase font-bold"
+                      placeholder="e.g. VARANASI100"
+                      className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold uppercase outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleApplyCoupon}
-                      className="px-5 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold"
+                      className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl"
                     >
                       Apply
                     </button>
                   </div>
-
                   {discountAmount > 0 && (
-                    <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-between">
-                      <span>✓ Code "{couponCode.toUpperCase()}" Applied! Saved ₹{discountAmount}</span>
-                      <button type="button" onClick={() => { setCouponCode(""); setDiscountAmount(0); }} className="text-red-500 hover:underline text-[10px]">Remove</button>
-                    </div>
+                    <p className="text-[11px] text-emerald-600 font-bold">
+                      ✓ Coupon Applied! Discount: ₹{discountAmount}
+                    </p>
                   )}
                 </div>
 
-                {/* Payment Mode Buttons */}
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block">Payment Method</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["UPI", "Cash on Service", "Card"] as const).map((mode) => (
+                {/* Payment Method Selector */}
+                <div className="space-y-2 text-xs">
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                    Payment Method
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["UPI", "Cash on Service", "Card", "Helpmate Wallet"] as const).map((method) => (
                       <button
-                        key={mode}
+                        key={method}
                         type="button"
-                        onClick={() => setPaymentMethod(mode)}
-                        className={`p-3 rounded-xl border font-bold text-center transition-all ${
-                          paymentMethod === mode
-                            ? "bg-brand-500 text-white border-brand-500 shadow-lux"
+                        onClick={() => setPaymentMethod(method)}
+                        className={`p-3 rounded-xl border text-xs font-bold text-left ${
+                          paymentMethod === method
+                            ? "bg-brand-50 text-brand-700 border-brand-500 dark:bg-brand-950 dark:text-brand-300"
                             : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
                         }`}
                       >
-                        {mode}
+                        {method}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Price Breakdown */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Service: <strong>{currentSelectedService.title}</strong></span>
-                    <span className="font-bold">₹{servicePrice}</span>
+                {/* Final Order Summary */}
+                <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs">
+                  <div className="flex justify-between text-slate-300">
+                    <span>Base Service ({currentSelectedService.title})</span>
+                    <span>₹{servicePrice.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Platform Fee</span>
-                    <span className="font-bold">₹{convenienceFee}</span>
+                  <div className="flex justify-between text-slate-300">
+                    <span>Platform Convenience Fee</span>
+                    <span>₹{convenienceFee}</span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex justify-between text-emerald-600 font-bold">
-                      <span>Promo Discount</span>
+                    <div className="flex justify-between text-emerald-400 font-bold">
+                      <span>Coupon Discount</span>
                       <span>-₹{discountAmount}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span>CGST (9%) + SGST (9%)</span>
-                    <span className="font-bold">₹{cgst + sgst}</span>
-                  </div>
-                  <div className="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between text-base font-black text-brand-600 dark:text-brand-400">
-                    <span>Grand Total Payable</span>
-                    <span>₹{grandTotal.toLocaleString()}</span>
+                  <div className="border-t border-slate-800 pt-2 flex justify-between font-extrabold text-sm text-white">
+                    <span>Grand Total (GST Incl.)</span>
+                    <span className="text-emerald-400 text-base">₹{grandTotal.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Modal Footer Controls */}
-          <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
-            <button
-              type="button"
-              disabled={currentStep === 1}
-              onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
-              className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold disabled:opacity-40 flex items-center gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </button>
+          {/* Drawer Footer Actions */}
+          <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40 shrink-0">
+            {currentStep > 1 ? (
+              <button
+                type="button"
+                onClick={() => setCurrentStep(currentStep - 1)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" /> Back
+              </button>
+            ) : (
+              <div />
+            )}
 
             {currentStep < 5 ? (
               <button
                 type="button"
-                onClick={() => setCurrentStep((s) => Math.min(5, s + 1))}
-                className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-lux flex items-center gap-1"
+                onClick={() => setCurrentStep(currentStep + 1)}
+                className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-1 transition-colors"
               >
-                Next Step
-                <ChevronRight className="w-4 h-4" />
+                Next Step <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handleCompleteBooking}
-                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-lux flex items-center gap-1"
+                className="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lux transition-colors"
               >
-                Confirm & Launch Booking
-                <CheckCircle2 className="w-4 h-4" />
+                Confirm & Create Booking
               </button>
             )}
           </div>
         </div>
       </div>
-
-      {/* COUPON & BANK OFFERS SELECTION MODAL POPUP */}
-      {isCouponPickerOpen && (
-        <Portal>
-          <div className="fixed inset-0 z-[100000] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 outline-none">
-            <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div>
-                  <h3 className="font-black text-slate-900 dark:text-white text-base flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-brand-600" />
-                    <span>Available Coupons & Bank Offers</span>
-                  </h3>
-                  <p className="text-xs text-slate-500">Apply instant discount or credit card cashback</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsCouponPickerOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1 text-xs">
-                {initialCoupons.map((coup) => (
-                  <div
-                    key={coup.id}
-                    className="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 hover:border-brand-500 transition-all flex items-center justify-between gap-3"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 text-xs">
-                          {coup.code}
-                        </span>
-                        {coup.bankName && (
-                          <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded">
-                            {coup.bankName}
-                          </span>
-                        )}
-                      </div>
-                      <p className="font-bold text-slate-900 dark:text-white text-xs">{coup.description}</p>
-                      <span className="text-[10px] text-slate-400 block">Min order ₹{coup.minOrderValue} • Valid till {coup.expiryDate}</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSelectCouponFromPicker(coup)}
-                      className="px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shrink-0 shadow-xs"
-                    >
-                      Apply Code
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsCouponPickerOpen(false)}
-                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </Portal>
-      )}
     </Portal>
   );
 }

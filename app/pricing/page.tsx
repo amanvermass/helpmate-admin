@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialCityPricing, CityPricingItem } from "@/lib/mockData";
-import { Tag, Plus, CheckCircle2, DollarSign, TrendingUp } from "lucide-react";
+import { Tag, Plus, CheckCircle2, DollarSign, TrendingUp, X } from "lucide-react";
 import { Portal } from "@/components/Portal";
 
 export default function PricingPage() {
@@ -105,38 +105,51 @@ export default function PricingPage() {
         onAddClick={() => setIsAddOpen(true)}
       />
 
-      {/* Add Modal */}
+      {/* Add Pricing Rule Slide-Over Drawer */}
       {isAddOpen && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-            <form onSubmit={handleAddPricing} className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add City Pricing Rule</h3>
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City Name</label>
-                  <input
-                    type="text"
-                    value={cityName}
-                    onChange={(e) => setCityName(e.target.value)}
-                    placeholder="e.g. Varanasi Metro"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                    required
-                  />
+          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
+            <div className="absolute inset-0" onClick={() => setIsAddOpen(false)} />
+            <form
+              onSubmit={handleAddPricing}
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add City Pricing Rule</h3>
+                  <button type="button" onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Base Multiplier</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    value={baseFareMultiplier}
-                    onChange={(e) => setBaseFareMultiplier(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City Name *</label>
+                    <input
+                      type="text"
+                      value={cityName}
+                      onChange={(e) => setCityName(e.target.value)}
+                      placeholder="e.g. Varanasi Metro"
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Base Multiplier</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      value={baseFareMultiplier}
+                      onChange={(e) => setBaseFareMultiplier(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-brand-500 text-white rounded-xl font-bold text-xs">Save Pricing Rule</button>
+
+              <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button type="submit" className="flex-1 py-2.5 bg-brand-500 text-white rounded-xl font-bold text-xs shadow-lux">Save Pricing Rule</button>
               </div>
             </form>
           </div>
