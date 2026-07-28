@@ -140,7 +140,7 @@ export interface UserManagementItem {
   id: string;
   name: string;
   email: string;
-  role: "Super Admin" | "Varanasi Dispatcher" | "Fleet Inspector" | "Support Agent" | "Billing & Finance Manager";
+  role: "Super Admin" | "Varanasi Dispatcher" | "Fleet Inspector" | "Support Agent" | "Billing & Finance Manager" | "Service Partner" | string;
   status: "Active" | "Suspended";
   lastLogin: string;
   phone?: string;

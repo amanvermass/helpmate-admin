@@ -8,7 +8,8 @@ export type RoleType =
   | "Varanasi Dispatcher"
   | "Fleet Inspector"
   | "Billing & Finance Manager"
-  | "Support Agent";
+  | "Support Agent"
+  | "Service Partner";
 
 const rolePermissionsMap: Record<RoleType, UserPermissions> = {
   "Super Admin": {
@@ -86,6 +87,22 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     canDispatchJobs: true,
     canEditServices: false,
     canProcessRefunds: true,
+    canManageFleet: false,
+    canExportReports: false,
+    canManageRbac: false,
+    canViewAuditLogs: false,
+  },
+  "Service Partner": {
+    bookings: { view: true, edit: true, delete: false },
+    services: { view: true, edit: false, delete: false },
+    customers: { view: false, edit: false, delete: false },
+    fleet: { view: false, edit: false, delete: false },
+    finance: { view: true, edit: false, delete: false },
+    reports: { view: false, edit: false, delete: false },
+    rbac: { view: false, edit: false, delete: false },
+    canDispatchJobs: false,
+    canEditServices: false,
+    canProcessRefunds: false,
     canManageFleet: false,
     canExportReports: false,
     canManageRbac: false,

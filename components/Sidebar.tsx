@@ -24,6 +24,7 @@ import {
   Search,
   ChevronDown,
   TrendingUp,
+  CheckCircle2,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
 
@@ -56,7 +57,63 @@ export function Sidebar() {
     )
   );
 
-  const navSections: NavSection[] = [
+  const isPartner = role === "Service Partner";
+
+  const partnerNavSections: NavSection[] = [
+    {
+      sectionTitle: "Partner Portal",
+      items: [
+        {
+          title: "My Dashboard",
+          icon: LayoutDashboard,
+          href: "/partner",
+        },
+      ],
+    },
+    {
+      sectionTitle: "My Jobs & Orders",
+      items: [
+        {
+          title: "New Booked Jobs",
+          icon: CalendarCheck,
+          href: "/partner/bookings",
+          badge: "2 New",
+        },
+      ],
+    },
+    {
+      sectionTitle: "My Catalog & Rates",
+      items: [
+        {
+          title: "Assigned Services",
+          icon: Wrench,
+          href: "/partner/services",
+        },
+      ],
+    },
+    {
+      sectionTitle: "Earnings & Wallet",
+      items: [
+        {
+          title: "Payouts & Commission",
+          icon: DollarSign,
+          href: "/partner/payouts",
+        },
+      ],
+    },
+    {
+      sectionTitle: "My Account",
+      items: [
+        {
+          title: "Partner Profile & KYC",
+          icon: ShieldCheck,
+          href: "/partner/profile",
+        },
+      ],
+    },
+  ];
+
+  const adminNavSections: NavSection[] = [
     {
       sectionTitle: "Overview",
       items: [
@@ -175,25 +232,35 @@ export function Sidebar() {
     },
   ];
 
+  const currentNavSections = isPartner ? partnerNavSections : adminNavSections;
+
   return (
     <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen sticky top-0 shrink-0 select-none z-30 shadow-xs transition-colors duration-200">
-      {/* Fixed Non-Scrolling Header Logo Container - Exact h-16 (64px) matching Header.tsx bottom border */}
+      {/* Fixed Non-Scrolling Header Logo Container */}
       <div className="h-16 px-4 flex items-center border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-10">
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link href={isPartner ? "/partner" : "/"} className="flex items-center gap-2.5 group">
           <img
             src="https://helpmate-theta.vercel.app/logo.png"
             alt="HelpMate Logo"
-            className="h-8 w-auto object-contain group-hover:scale-105 transition-transform"
+            className="h-7 w-auto object-contain group-hover:scale-105 transition-transform"
           />
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">HelpMate</span>
-                <span className="text-[9px] font-bold bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 px-1 py-0.2 rounded border border-brand-200 dark:border-brand-800">
-                  ADMIN
-                </span>
-              </div>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">Varanasi HQ</span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">HelpMate</span>
+              <span
+                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                  isPartner
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                    : "bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border-brand-200 dark:border-brand-800"
+                }`}
+              >
+                {isPartner ? "PARTNER" : "ADMIN"}
+              </span>
             </div>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+              {isPartner ? "Varanasi Fleet" : "Varanasi HQ"}
+            </span>
+          </div>
         </Link>
       </div>
 
@@ -213,7 +280,7 @@ export function Sidebar() {
 
       {/* Scrollable Navigation Menu ONLY */}
       <nav className="p-3 space-y-4 flex-1 overflow-y-auto">
-        {navSections.map((section, secIdx) => {
+        {currentNavSections.map((section, secIdx) => {
           const filteredItems = section.items.filter((item) => {
             if (!sidebarSearch.trim()) return true;
             if (item.title.toLowerCase().includes(sidebarSearch.toLowerCase())) return true;
@@ -292,7 +359,10 @@ export function Sidebar() {
                   );
                 }
 
-                const isActive = pathname === item.href || (item.href !== "/" && item.href && pathname.startsWith(item.href));
+                const isActive =
+                  item.href === "/" || item.href === "/partner"
+                    ? pathname === item.href
+                    : pathname.startsWith(item.href || "");
 
                 return (
                   <Link
@@ -332,7 +402,9 @@ export function Sidebar() {
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
             <div className="flex flex-col text-left">
-              <span className="text-[11px] font-bold text-slate-900 dark:text-white leading-tight">Role</span>
+              <span className="text-[11px] font-bold text-slate-900 dark:text-white leading-tight">
+                {isPartner ? "Partner Account" : "Role"}
+              </span>
               <span className="text-[9px] text-brand-600 dark:text-brand-400 font-extrabold">{role}</span>
             </div>
           </div>

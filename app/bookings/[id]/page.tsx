@@ -104,7 +104,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const finalTotal = currentBooking.totalAmount || taxableAmount + cgst + sgst;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="w-full space-y-6 pb-12">
       {/* Top Navigation Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div className="flex items-center gap-3">
@@ -338,8 +338,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div>
                 <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">{currentBooking.customerName}</h4>
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-200">
-                  Crown Elite Member
+                <span className="text-[10px] font-bold text-slate-500 block">
+                  Varanasi Household Client
                 </span>
               </div>
             </div>

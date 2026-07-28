@@ -8,16 +8,22 @@ export function Breadcrumbs() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  // Only render breadcrumbs on detail pages (e.g. /bookings/[id])
-  if (segments.length <= 1) return null;
+  if (segments.length === 0) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 select-none">
+        <Home className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+        <span className="font-bold text-slate-900 dark:text-white">Dashboard Overview</span>
+      </div>
+    );
+  }
 
   return (
-    <nav className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4 select-none">
+    <nav className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 select-none">
       <Link
         href="/"
-        className="flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors font-medium"
+        className="flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors font-semibold"
       >
-        <Home className="w-3.5 h-3.5" />
+        <Home className="w-3.5 h-3.5 text-slate-400 hover:text-brand-600" />
         <span>Dashboard</span>
       </Link>
 
@@ -30,7 +36,7 @@ export function Breadcrumbs() {
 
         return (
           <div key={href} className="flex items-center gap-1.5">
-            <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+            <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 shrink-0" />
             {isLast ? (
               <span className="font-bold text-slate-900 dark:text-white capitalize">
                 {formattedName}
@@ -38,7 +44,7 @@ export function Breadcrumbs() {
             ) : (
               <Link
                 href={href}
-                className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors capitalize font-medium"
+                className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors capitalize font-semibold"
               >
                 {formattedName}
               </Link>

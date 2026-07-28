@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,8 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] w-full mx-auto">
-          <Breadcrumbs />
+        <main className="flex-1 p-6 md:p-8 overflow-y-auto w-full">
           {children}
         </main>
       </div>
