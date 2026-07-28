@@ -78,9 +78,12 @@ export interface CityPricingItem {
 export interface CouponItem {
   id: string;
   code: string;
-  discountType: "Percentage" | "Fixed";
+  discountType: "Fixed" | "Percentage" | "Bank Offer" | "First Booking";
   discountValue: number;
   minOrderValue: number;
+  maxDiscountCap?: number;
+  bankName?: string;
+  description?: string;
   usageCount: number;
   expiryDate: string;
   status: "Active" | "Expired" | "Disabled";
@@ -107,13 +110,42 @@ export interface TransactionItem {
   date: string;
 }
 
+export interface ModulePermission {
+  view: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+
+export interface UserPermissions {
+  // Granular View/Edit/Delete Matrix
+  bookings: ModulePermission;
+  services: ModulePermission;
+  customers: ModulePermission;
+  fleet: ModulePermission;
+  finance: ModulePermission;
+  reports: ModulePermission;
+  rbac: ModulePermission;
+
+  // Feature flags
+  canDispatchJobs: boolean;
+  canEditServices: boolean;
+  canProcessRefunds: boolean;
+  canManageFleet: boolean;
+  canExportReports: boolean;
+  canManageRbac: boolean;
+  canViewAuditLogs: boolean;
+}
+
 export interface UserManagementItem {
   id: string;
   name: string;
   email: string;
-  role: "Super Admin" | "Varanasi Dispatcher" | "Fleet Inspector" | "Support Agent";
+  role: "Super Admin" | "Varanasi Dispatcher" | "Fleet Inspector" | "Support Agent" | "Billing & Finance Manager";
   status: "Active" | "Suspended";
   lastLogin: string;
+  phone?: string;
+  locality?: string;
+  permissions: UserPermissions;
 }
 
 export interface Technician {
@@ -294,8 +326,65 @@ export const initialCityPricing: CityPricingItem[] = [
 ];
 
 export const initialCoupons: CouponItem[] = [
-  { id: "coup-1", code: "KASHI100", discountType: "Fixed", discountValue: 100, minOrderValue: 499, usageCount: 1420, expiryDate: "31 Dec 2026", status: "Active" },
-  { id: "coup-2", code: "ELITE20", discountType: "Percentage", discountValue: 20, minOrderValue: 1499, usageCount: 890, expiryDate: "30 Nov 2026", status: "Active" },
+  {
+    id: "coup-1",
+    code: "VARANASI100",
+    discountType: "Fixed",
+    discountValue: 100,
+    minOrderValue: 499,
+    description: "Flat ₹100 Instant Cash Discount on AC & Home Care Services in Varanasi",
+    usageCount: 1420,
+    expiryDate: "31 Dec 2026",
+    status: "Active",
+  },
+  {
+    id: "coup-2",
+    code: "HDFC10",
+    discountType: "Bank Offer",
+    discountValue: 10,
+    maxDiscountCap: 300,
+    minOrderValue: 999,
+    bankName: "HDFC Bank",
+    description: "10% Instant Discount up to ₹300 on HDFC Credit & Debit Cards",
+    usageCount: 890,
+    expiryDate: "31 Dec 2026",
+    status: "Active",
+  },
+  {
+    id: "coup-3",
+    code: "ICICICASH",
+    discountType: "Bank Offer",
+    discountValue: 200,
+    minOrderValue: 1499,
+    bankName: "ICICI Bank",
+    description: "Flat ₹200 Cashback on ICICI Credit Cards & NetBanking",
+    usageCount: 640,
+    expiryDate: "30 Nov 2026",
+    status: "Active",
+  },
+  {
+    id: "coup-4",
+    code: "WELCOME150",
+    discountType: "First Booking",
+    discountValue: 150,
+    minOrderValue: 499,
+    description: "Flat ₹150 Off for First Time HelpMate Booking Customers",
+    usageCount: 2150,
+    expiryDate: "31 Dec 2026",
+    status: "Active",
+  },
+  {
+    id: "coup-5",
+    code: "AXIS250",
+    discountType: "Bank Offer",
+    discountValue: 250,
+    minOrderValue: 1999,
+    bankName: "Axis Bank",
+    description: "Flat ₹250 Discount on Axis Bank Credit Cards",
+    usageCount: 430,
+    expiryDate: "31 Dec 2026",
+    status: "Active",
+  },
 ];
 
 export const initialReviews: ReviewItem[] = [
@@ -309,8 +398,110 @@ export const initialTransactions: TransactionItem[] = [
 ];
 
 export const initialUsers: UserManagementItem[] = [
-  { id: "usr-1", name: "Aman Verma", email: "admin@helpmate.net.in", role: "Super Admin", status: "Active", lastLogin: "Just now" },
-  { id: "usr-2", name: "Siddharth Malhotra", email: "dispatch.sigra@helpmate.net.in", role: "Varanasi Dispatcher", status: "Active", lastLogin: "10 mins ago" },
+  {
+    id: "usr-1",
+    name: "Aman Verma",
+    email: "admin@helpmate.net.in",
+    role: "Super Admin",
+    status: "Active",
+    lastLogin: "Just now",
+    phone: "+91 98390 11111",
+    locality: "Varanasi HQ",
+    permissions: {
+      bookings: { view: true, edit: true, delete: true },
+      services: { view: true, edit: true, delete: true },
+      customers: { view: true, edit: true, delete: true },
+      fleet: { view: true, edit: true, delete: true },
+      finance: { view: true, edit: true, delete: true },
+      reports: { view: true, edit: true, delete: true },
+      rbac: { view: true, edit: true, delete: true },
+      canDispatchJobs: true,
+      canEditServices: true,
+      canProcessRefunds: true,
+      canManageFleet: true,
+      canExportReports: true,
+      canManageRbac: true,
+      canViewAuditLogs: true,
+    },
+  },
+  {
+    id: "usr-2",
+    name: "Siddharth Malhotra",
+    email: "dispatch.sigra@helpmate.net.in",
+    role: "Varanasi Dispatcher",
+    status: "Active",
+    lastLogin: "10 mins ago",
+    phone: "+91 98390 22222",
+    locality: "Sigra Zone",
+    permissions: {
+      bookings: { view: true, edit: true, delete: false },
+      services: { view: true, edit: false, delete: false },
+      customers: { view: true, edit: true, delete: false },
+      fleet: { view: true, edit: true, delete: false },
+      finance: { view: false, edit: false, delete: false },
+      reports: { view: false, edit: false, delete: false },
+      rbac: { view: false, edit: false, delete: false },
+      canDispatchJobs: true,
+      canEditServices: false,
+      canProcessRefunds: false,
+      canManageFleet: true,
+      canExportReports: false,
+      canManageRbac: false,
+      canViewAuditLogs: true,
+    },
+  },
+  {
+    id: "usr-3",
+    name: "Priya Sharma",
+    email: "priya.support@helpmate.net.in",
+    role: "Support Agent",
+    status: "Active",
+    lastLogin: "1 hour ago",
+    phone: "+91 98390 33333",
+    locality: "Lanka Zone",
+    permissions: {
+      bookings: { view: true, edit: true, delete: false },
+      services: { view: true, edit: false, delete: false },
+      customers: { view: true, edit: true, delete: false },
+      fleet: { view: true, edit: false, delete: false },
+      finance: { view: true, edit: false, delete: false },
+      reports: { view: false, edit: false, delete: false },
+      rbac: { view: false, edit: false, delete: false },
+      canDispatchJobs: true,
+      canEditServices: false,
+      canProcessRefunds: true,
+      canManageFleet: false,
+      canExportReports: false,
+      canManageRbac: false,
+      canViewAuditLogs: false,
+    },
+  },
+  {
+    id: "usr-4",
+    name: "Rajesh Agrawal",
+    email: "finance@helpmate.net.in",
+    role: "Billing & Finance Manager",
+    status: "Active",
+    lastLogin: "Yesterday",
+    phone: "+91 98390 44444",
+    locality: "Cantt Zone",
+    permissions: {
+      bookings: { view: true, edit: false, delete: false },
+      services: { view: true, edit: true, delete: false },
+      customers: { view: true, edit: false, delete: false },
+      fleet: { view: false, edit: false, delete: false },
+      finance: { view: true, edit: true, delete: true },
+      reports: { view: true, edit: true, delete: false },
+      rbac: { view: false, edit: false, delete: false },
+      canDispatchJobs: false,
+      canEditServices: true,
+      canProcessRefunds: true,
+      canManageFleet: false,
+      canExportReports: true,
+      canManageRbac: false,
+      canViewAuditLogs: true,
+    },
+  },
 ];
 
 export const initialTechnicians: Technician[] = [

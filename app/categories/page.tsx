@@ -34,6 +34,22 @@ export default function CategoriesPage() {
         </span>
       ),
     },
+    {
+      key: "actions",
+      header: "Actions",
+      accessor: (row) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => alert(`Editing ${row.name}`)}
+            title="Edit Category"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all"
+          >
+            <Sliders className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
   ];
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -58,39 +74,10 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
-            <Sliders className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Category & Catalog Management</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Configure master categories, subcategories, add-on items, and combo packages</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          {(["categories", "subcategories", "addons", "packages"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                activeTab === tab
-                  ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main DataTable */}
+      {/* Main DataTable matching User Management layout */}
       <DataTable
-        title="Category Directory"
-        description="Master service categories offered across Varanasi"
+        title="Category & Catalog Directory"
+        description="Master service categories, subcategories & live packages offered across Varanasi"
         columns={catColumns}
         data={categories}
         addButtonLabel="Add Master Category"

@@ -42,8 +42,9 @@ export default function ExecutiveDashboard() {
     customerPhone: "",
     locality: "Sigra",
     address: "",
-    serviceTitle: "Power Jet AC Servicing",
-    price: 699,
+    serviceTitle: "Split AC Foam Jet Servicing",
+    category: "AC Service & Repair",
+    price: 599,
   });
 
   const filteredBookings = selectedLocality === "All"
@@ -85,8 +86,9 @@ export default function ExecutiveDashboard() {
       customerPhone: "",
       locality: "Sigra",
       address: "",
-      serviceTitle: "Power Jet AC Servicing",
-      price: 699,
+      serviceTitle: "Split AC Foam Jet Servicing",
+      category: "AC Service & Repair",
+      price: 599,
     });
   };
 
@@ -599,18 +601,32 @@ export default function ExecutiveDashboard() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Service Category</label>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Service Package (with Price)</label>
                 <select
-                  value={newBooking.serviceTitle}
-                  onChange={(e) => setNewBooking({ ...newBooking, serviceTitle: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:border-brand-500 focus:outline-none"
+                  value={`${newBooking.serviceTitle} (₹${newBooking.price})`}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.includes("Split AC Foam Jet")) {
+                      setNewBooking({ ...newBooking, serviceTitle: "Split AC Foam Jet Servicing", category: "AC Service & Repair", price: 599 });
+                    } else if (val.includes("Split AC Gas Leak")) {
+                      setNewBooking({ ...newBooking, serviceTitle: "Split AC Gas Leak Repair & Refill", category: "AC Service & Repair", price: 1499 });
+                    } else if (val.includes("Window AC Deep Jet")) {
+                      setNewBooking({ ...newBooking, serviceTitle: "Window AC Deep Jet Servicing", category: "AC Service & Repair", price: 499 });
+                    } else if (val.includes("Full House Deep Cleaning")) {
+                      setNewBooking({ ...newBooking, serviceTitle: "Full House Deep Cleaning (2BHK)", category: "Home Cleaning", price: 2999 });
+                    } else if (val.includes("Car Foam Wash")) {
+                      setNewBooking({ ...newBooking, serviceTitle: "Car Foam Wash & Interior Vacuuming", category: "Car & Bike Wash", price: 499 });
+                    } else {
+                      setNewBooking({ ...newBooking, serviceTitle: "Power Jet AC Servicing", category: "AC Service & Repair", price: 699 });
+                    }
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white focus:border-brand-500 focus:outline-none cursor-pointer"
                 >
-                  <option value="Power Jet AC Servicing">Power Jet AC Servicing (₹699)</option>
-                  <option value="AC Gas Leakage Repair & Refilling">AC Gas Refilling (₹2,499)</option>
-                  <option value="Elite Full Home Deep Cleaning">Elite Home Cleaning (₹4,999)</option>
-                  <option value="Ayurvedic Home Spa & Wellness">Ayurvedic Spa (₹1,999)</option>
-                  <option value="Smart Home & MCB Box Repair">Electrician MCB (₹499)</option>
-                  <option value="Hydro Jet Drainage Unclogging">Hydro Plumbing (₹799)</option>
+                  <option value="Split AC Foam Jet Servicing (₹599)">Split AC Foam Jet Servicing — ₹599</option>
+                  <option value="Split AC Gas Leak Repair & Refill (₹1499)">Split AC Gas Leak Repair & Refill — ₹1,499</option>
+                  <option value="Window AC Deep Jet Servicing (₹499)">Window AC Deep Jet Servicing — ₹499</option>
+                  <option value="Full House Deep Cleaning (₹2999)">Full House Deep Cleaning (2BHK) — ₹2,999</option>
+                  <option value="Car Foam Wash & Interior Vacuuming (₹499)">Car Foam Wash & Interior Vacuuming — ₹499</option>
                 </select>
               </div>
             </div>

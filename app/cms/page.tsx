@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
+import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
 import { Wrench, Plus, CheckCircle2, MapPin, Tag } from "lucide-react";
 
@@ -63,6 +64,22 @@ export default function CmsPage() {
         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 w-fit">
           <CheckCircle2 className="w-3 h-3" /> {row.status}
         </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      accessor: (row) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => alert(`Viewing details for ${row.title}`)}
+            title="View Service Details"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all"
+          >
+            <Wrench className="w-4 h-4" />
+          </button>
+        </div>
       ),
     },
   ];
@@ -142,6 +159,96 @@ export default function CmsPage() {
     },
   ];
 
+  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [isAddAddonOpen, setIsAddAddonOpen] = useState(false);
+  const [isAddPincodeOpen, setIsAddPincodeOpen] = useState(false);
+
+  // Add Service Form State
+  const [serviceTitle, setServiceTitle] = useState("");
+  const [serviceCategory, setServiceCategory] = useState("AC Service & Repair");
+  const [serviceSubtitle, setServiceSubtitle] = useState("");
+  const [price, setPrice] = useState("699");
+  const [originalPrice, setOriginalPrice] = useState("999");
+  const [duration, setDuration] = useState("45 mins");
+  const [isInspectionBased, setIsInspectionBased] = useState(false);
+  const [isPopular, setIsPopular] = useState(false);
+  const [selectedSystemTypes, setSelectedSystemTypes] = useState<string[]>(["Split AC", "Window AC"]);
+
+  // Add Addon Form State
+  const [addonTitle, setAddonTitle] = useState("");
+  const [addonPrice, setAddonPrice] = useState("199");
+  const [addonUnit, setAddonUnit] = useState("Can");
+  const [addonCategory, setAddonCategory] = useState("AC Service");
+
+  // Add Pincode Form State
+  const [pincodeLocality, setPincodeLocality] = useState("");
+  const [pincodeCode, setPincodeCode] = useState("221005");
+
+  const handleCreateService = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceTitle) return;
+
+    const newSvc: ServiceItem = {
+      id: `srv-${Date.now()}`,
+      category: serviceCategory as any,
+      title: serviceTitle,
+      subtitle: serviceSubtitle || "High quality expert service with 30-day HelpMate guarantee",
+      price: parseFloat(price) || 699,
+      originalPrice: parseFloat(originalPrice) || 999,
+      duration,
+      rating: 5.0,
+      reviewsCount: 1,
+      isInspectionBased,
+      isPopular,
+      systemType: selectedSystemTypes,
+      status: "Active",
+      createdBy: "Admin Dispatcher",
+      createdDate: "Just Now",
+    };
+
+    setServices([newSvc, ...services]);
+    setServiceTitle("");
+    setServiceSubtitle("");
+    setIsAddServiceOpen(false);
+  };
+
+  const handleCreateAddon = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addonTitle) return;
+
+    const newAddon: ServiceAddon = {
+      id: `adn-${Date.now()}`,
+      title: addonTitle,
+      price: parseFloat(addonPrice) || 199,
+      unit: addonUnit,
+      category: addonCategory,
+      status: "Active",
+    };
+
+    setAddons([newAddon, ...addons]);
+    setAddonTitle("");
+    setIsAddAddonOpen(false);
+  };
+
+  const handleCreatePincode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pincodeLocality) return;
+
+    const newLoc: VaranasiLocality = {
+      id: `loc-${Date.now()}`,
+      name: pincodeLocality,
+      pincode: pincodeCode,
+      activeBookings: 0,
+      activeTechs: 5,
+      status: "Normal",
+      isServiceable: true,
+    };
+
+    setLocalities([newLoc, ...localities]);
+    setPincodeLocality("");
+    setIsAddPincodeOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -169,13 +276,13 @@ export default function CmsPage() {
 
       {/* Tab Controls */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200 w-fit text-xs font-bold">
+        <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold">
           <button
             onClick={() => setActiveTab("services")}
             className={`px-4 py-2 rounded-xl transition-all ${
               activeTab === "services"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Services & Inspection Pricing CMS
@@ -184,8 +291,8 @@ export default function CmsPage() {
             onClick={() => setActiveTab("addons")}
             className={`px-4 py-2 rounded-xl transition-all ${
               activeTab === "addons"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Add-on Parts Management
@@ -194,8 +301,8 @@ export default function CmsPage() {
             onClick={() => setActiveTab("pincodes")}
             className={`px-4 py-2 rounded-xl transition-all ${
               activeTab === "pincodes"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-900"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Varanasi Pincode Serviceability
@@ -211,7 +318,7 @@ export default function CmsPage() {
           data={services}
           searchPlaceholder="Search service title or category..."
           addButtonLabel="Add New Service"
-          onAddClick={() => alert("Add Service dialog triggered")}
+          onAddClick={() => setIsAddServiceOpen(true)}
         />
       ) : activeTab === "addons" ? (
         <DataTable
@@ -221,7 +328,7 @@ export default function CmsPage() {
           data={addons}
           searchPlaceholder="Search add-on title..."
           addButtonLabel="Add New Add-on"
-          onAddClick={() => alert("Add Addon dialog triggered")}
+          onAddClick={() => setIsAddAddonOpen(true)}
         />
       ) : (
         <DataTable
@@ -231,8 +338,267 @@ export default function CmsPage() {
           data={localities}
           searchPlaceholder="Search locality or pincode..."
           addButtonLabel="Add Serviceable Pincode"
-          onAddClick={() => alert("Add Pincode dialog triggered")}
+          onAddClick={() => setIsAddPincodeOpen(true)}
         />
+      )}
+
+      {/* ADD SERVICE POPUP MODAL */}
+      {isAddServiceOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <form
+              onSubmit={handleCreateService}
+              className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                    <Wrench className="w-5 h-5 text-brand-600" />
+                    <span>Create New Service Package</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">Add service details, category, pricing, duration, and warranty</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddServiceOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                {/* Service Title */}
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Package Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={serviceTitle}
+                    onChange={(e) => setServiceTitle(e.target.value)}
+                    placeholder="e.g. Split AC Power Foam Jet Servicing"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                  />
+                </div>
+
+                {/* Category & System Type */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Category</label>
+                    <select
+                      value={serviceCategory}
+                      onChange={(e) => setServiceCategory(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                    >
+                      <option value="AC Service & Repair">AC Service & Repair</option>
+                      <option value="Car & Bike Wash">Car & Bike Wash</option>
+                      <option value="Home Cleaning">Home Cleaning</option>
+                      <option value="Appliance Repair">Appliance Repair</option>
+                      <option value="Pest Control">Pest Control</option>
+                      <option value="Electrician">Electrician</option>
+                      <option value="Plumbing">Plumbing</option>
+                      <option value="Home Salon">Home Salon</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Est. Duration</label>
+                    <select
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                    >
+                      <option value="30 mins">30 mins</option>
+                      <option value="45 mins">45 mins</option>
+                      <option value="60 mins">60 mins</option>
+                      <option value="90 mins">90 mins</option>
+                      <option value="2 - 3 hrs">2 - 3 hrs</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Subtitle / Description */}
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Description / Highlights</label>
+                  <textarea
+                    rows={2}
+                    value={serviceSubtitle}
+                    onChange={(e) => setServiceSubtitle(e.target.value)}
+                    placeholder="High-pressure jet pump cleaning for indoor & outdoor units with anti-bacterial coating..."
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                  ></textarea>
+                </div>
+
+                {/* Pricing Mode Toggle */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <span className="font-bold text-slate-900 dark:text-white block">Pricing Architecture</span>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                      <input
+                        type="radio"
+                        name="pricingMode"
+                        checked={!isInspectionBased}
+                        onChange={() => setIsInspectionBased(false)}
+                      />
+                      <span>Fixed Standard Rate</span>
+                    </label>
+                    <label className="flex items-center gap-2 font-semibold cursor-pointer">
+                      <input
+                        type="radio"
+                        name="pricingMode"
+                        checked={isInspectionBased}
+                        onChange={() => setIsInspectionBased(true)}
+                      />
+                      <span>Diagnostic Inspection Quote</span>
+                    </label>
+                  </div>
+
+                  {!isInspectionBased && (
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Selling Price (₹)</label>
+                        <input
+                          type="number"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-brand-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">MRP Original (₹)</label>
+                        <input
+                          type="number"
+                          value={originalPrice}
+                          onChange={(e) => setOriginalPrice(e.target.value)}
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-slate-400 line-through"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Popular Badge Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                  <span className="font-bold text-slate-700 dark:text-slate-300">Mark as Trending / Most Popular Service</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isPopular}
+                      onChange={(e) => setIsPopular(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-brand-500"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddServiceOpen(false)}
+                  className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center justify-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Publish Service to App
+                </button>
+              </div>
+            </form>
+          </div>
+        </Portal>
+      )}
+
+      {/* ADD ADDON POPUP MODAL */}
+      {isAddAddonOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <form onSubmit={handleCreateAddon} className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Spare Part / Add-on</h3>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Add-on Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addonTitle}
+                    onChange={(e) => setAddonTitle(e.target.value)}
+                    placeholder="e.g. Anti-Bacterial Spray Coating"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit Price (₹)</label>
+                    <input
+                      type="number"
+                      value={addonPrice}
+                      onChange={(e) => setAddonPrice(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit</label>
+                    <input
+                      type="text"
+                      value={addonUnit}
+                      onChange={(e) => setAddonUnit(e.target.value)}
+                      placeholder="Can / Meter"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setIsAddAddonOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Save Add-on</button>
+              </div>
+            </form>
+          </div>
+        </Portal>
+      )}
+
+      {/* ADD PINCODE POPUP MODAL */}
+      {isAddPincodeOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <form onSubmit={handleCreatePincode} className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Varanasi Serviceable Pincode</h3>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Varanasi Locality / Zone Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={pincodeLocality}
+                    onChange={(e) => setPincodeLocality(e.target.value)}
+                    placeholder="e.g. Sarnath / Shivpur"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    value={pincodeCode}
+                    onChange={(e) => setPincodeCode(e.target.value)}
+                    placeholder="221007"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setIsAddPincodeOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Activate Pincode</button>
+              </div>
+            </form>
+          </div>
+        </Portal>
       )}
     </div>
   );

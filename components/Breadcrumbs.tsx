@@ -8,7 +8,8 @@ export function Breadcrumbs() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  if (segments.length === 0) return null;
+  // Only render breadcrumbs on detail pages (e.g. /bookings/[id])
+  if (segments.length <= 1) return null;
 
   return (
     <nav className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4 select-none">

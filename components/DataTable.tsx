@@ -35,7 +35,7 @@ export interface Column<T> {
 }
 
 export interface DataTableProps<T extends Record<string, any>> {
-  title: string;
+  title?: string;
   description?: string;
   columns: Column<T>[];
   data: T[];
@@ -47,6 +47,7 @@ export interface DataTableProps<T extends Record<string, any>> {
   onRowDelete?: (row: T) => void;
   statusField?: string;
   idField?: string;
+  hideActionsColumn?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -62,7 +63,13 @@ export function DataTable<T extends Record<string, any>>({
   onRowDelete,
   statusField = "status",
   idField = "id",
+  hideActionsColumn = false,
 }: DataTableProps<T>) {
+  const hasDefaultActionsColumn =
+    !hideActionsColumn &&
+    !columns.some(
+      (col) => col.header.toLowerCase() === "actions" || col.key.toLowerCase() === "actions"
+    );
   const [data, setData] = useState<T[]>(initialData);
   const [deletedTrash, setDeletedTrash] = useState<T[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,7 +166,7 @@ export function DataTable<T extends Record<string, any>>({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${title.toLowerCase().replace(/\s+/g, "_")}_export.csv`);
+    link.setAttribute("download", `${(title || "export").toLowerCase().replace(/\s+/g, "_")}_export.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -205,11 +212,7 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const handleDuplicateRow = (row: T) => {
-    const cloned = {
-      ...row,
-      [idField]: `${String(row[idField])}-copy-${Math.floor(Math.random() * 1000)}`,
-      title: row.title ? `${row.title} (Copy)` : row.name ? `${row.name} (Copy)` : undefined,
-    };
+    const cloned = { ...row, [idField]: `${String(row[idField])}-copy-${Date.now()}` };
     setData([cloned, ...data]);
   };
 
@@ -217,61 +220,67 @@ export function DataTable<T extends Record<string, any>>({
     paginatedData.length > 0 &&
     paginatedData.every((row) => selectedIds.has(String(row[idField])));
 
+  const hasTopBar = !!(title || onAddClick);
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {title}
-          </h2>
-          {description && (
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
-          )}
-        </div>
+      {hasTopBar && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            {title && (
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {title}
+              </h2>
+            )}
+            {description && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={handleExportCSV}
-            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Export CSV</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Printer className="w-3.5 h-3.5 text-slate-500" />
-            <span>Print</span>
-          </button>
-
-          {deletedTrash.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={() => setIsTrashOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              onClick={handleExportCSV}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Trash Bin ({deletedTrash.length})</span>
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Export CSV</span>
             </button>
-          )}
 
-          {onAddClick && (
             <button
               type="button"
-              onClick={onAddClick}
-              className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-2 cursor-pointer"
+              onClick={handlePrint}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <Plus className="w-4 h-4" />
-              <span>{addButtonLabel}</span>
+              <Printer className="w-3.5 h-3.5 text-slate-500" />
+              <span>Print</span>
             </button>
-          )}
+
+            {deletedTrash.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsTrashOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Trash Bin ({deletedTrash.length})</span>
+              </button>
+            )}
+
+            {onAddClick && (
+              <button
+                type="button"
+                onClick={onAddClick}
+                className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{addButtonLabel}</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -361,31 +370,37 @@ export function DataTable<T extends Record<string, any>>({
                     className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer"
                   />
                 </th>
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => col.sortable !== false && handleSort(col.key)}
-                    className="py-3.5 px-4 cursor-pointer select-none"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span>{col.header}</span>
-                      {col.sortable !== false && <ArrowUpDown className="w-3 h-3 text-slate-400" />}
-                    </div>
-                  </th>
-                ))}
+                {columns.map((col) => {
+                  const isActionsCol =
+                    col.header.toLowerCase().includes("action") ||
+                    col.key.toLowerCase().includes("action");
+
+                  return (
+                    <th
+                      key={col.key}
+                      onClick={() => col.sortable !== false && handleSort(col.key)}
+                      className={`py-3.5 px-4 cursor-pointer select-none ${isActionsCol ? "text-right" : ""}`}
+                    >
+                      <div className={`flex items-center gap-1.5 ${isActionsCol ? "justify-end" : ""}`}>
+                        <span>{col.header}</span>
+                        {col.sortable !== false && <ArrowUpDown className="w-3 h-3 text-slate-400" />}
+                      </div>
+                    </th>
+                  );
+                })}
                 {showMetadata && (
                   <>
                     <th className="py-3.5 px-4">Created By / Date</th>
                     <th className="py-3.5 px-4">Updated By / Date</th>
                   </>
                 )}
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                {hasDefaultActionsColumn && <th className="py-3.5 px-4 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + (showMetadata ? 4 : 2)} className="py-12 text-center text-slate-400">
+                  <td colSpan={columns.length + 1 + (showMetadata ? 2 : 0) + (hasDefaultActionsColumn ? 1 : 0)} className="py-12 text-center text-slate-400">
                     <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                     <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No matching records found</p>
                     <p className="text-xs text-slate-400 mt-1">Try resetting filters or adding new data.</p>
@@ -407,11 +422,17 @@ export function DataTable<T extends Record<string, any>>({
                         />
                       </td>
 
-                      {columns.map((col) => (
-                        <td key={col.key} className="py-4 px-4">
-                          {col.accessor ? col.accessor(row) : row[col.key]}
-                        </td>
-                      ))}
+                      {columns.map((col) => {
+                        const isActionsCol =
+                          col.header.toLowerCase().includes("action") ||
+                          col.key.toLowerCase().includes("action");
+
+                        return (
+                          <td key={col.key} className={`py-4 px-4 ${isActionsCol ? "text-right" : ""}`}>
+                            {col.accessor ? col.accessor(row) : row[col.key]}
+                          </td>
+                        );
+                      })}
 
                       {showMetadata && (
                         <>
@@ -426,44 +447,46 @@ export function DataTable<T extends Record<string, any>>({
                         </>
                       )}
 
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => (onRowView ? onRowView(row) : setViewingRow(row))}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {onRowEdit && (
+                      {hasDefaultActionsColumn && (
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
-                              onClick={() => onRowEdit(row)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 cursor-pointer"
-                              title="Edit Record"
+                              onClick={() => (onRowView ? onRowView(row) : setViewingRow(row))}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                              title="View Details"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicateRow(row)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 cursor-pointer"
-                            title="Duplicate Record"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeletingRow(row)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 cursor-pointer"
-                            title="Delete Record"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+                            {onRowEdit && (
+                              <button
+                                type="button"
+                                onClick={() => onRowEdit(row)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 cursor-pointer"
+                                title="Edit Record"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicateRow(row)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 cursor-pointer"
+                              title="Duplicate Record"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingRow(row)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 cursor-pointer"
+                              title="Delete Record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })

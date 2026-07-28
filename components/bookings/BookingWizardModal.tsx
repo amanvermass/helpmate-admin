@@ -17,7 +17,7 @@ import {
   ShieldCheck,
   Plus,
 } from "lucide-react";
-import { Booking, varanasiLocalities, initialTechnicians } from "@/lib/mockData";
+import { Booking, varanasiLocalities, initialTechnicians, initialCoupons, CouponItem } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 
 interface BookingWizardModalProps {
@@ -197,6 +197,7 @@ export function BookingWizardModal({
     "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet" | "Online" | "Partial Payment"
   >("UPI");
   const [customerNotes, setCustomerNotes] = useState("");
+  const [isCouponPickerOpen, setIsCouponPickerOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -214,11 +215,26 @@ export function BookingWizardModal({
   const grandTotal = Math.round((grossBeforeTax + cgst + sgst) * 100) / 100;
 
   const handleApplyCoupon = () => {
-    if (couponCode.toUpperCase() === "VARANASI100" || couponCode.toUpperCase() === "HELPMATE100") {
+    const found = initialCoupons.find((c) => c.code.toLowerCase() === couponCode.trim().toLowerCase());
+    if (found) {
+      handleSelectCouponFromPicker(found);
+    } else if (couponCode.toUpperCase() === "VARANASI100" || couponCode.toUpperCase() === "HELPMATE100") {
       setDiscountAmount(100);
     } else if (couponCode.trim()) {
       setDiscountAmount(50);
     }
+  };
+
+  const handleSelectCouponFromPicker = (coup: CouponItem) => {
+    setCouponCode(coup.code);
+    if (coup.discountType === "Percentage") {
+      const calc = Math.round(servicePrice * (coup.discountValue / 100));
+      const capped = coup.maxDiscountCap ? Math.min(calc, coup.maxDiscountCap) : calc;
+      setDiscountAmount(capped);
+    } else {
+      setDiscountAmount(coup.discountValue);
+    }
+    setIsCouponPickerOpen(false);
   };
 
   const handleCategoryChange = (cat: string) => {
@@ -581,22 +597,43 @@ export function BookingWizardModal({
                   <span>Step 5: Payment Mode & Price Summary</span>
                 </div>
 
-                {/* Coupon Input */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Coupon Code (e.g. VARANASI100)"
-                    className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyCoupon}
-                    className="px-4 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold"
-                  >
-                    Apply
-                  </button>
+                {/* Coupon Input & Browse Bank Offers Button */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block">Coupons & Bank Offers</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCouponPickerOpen(true)}
+                      className="text-brand-600 dark:text-brand-400 font-extrabold hover:underline flex items-center gap-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      View Available Bank Offers ({initialCoupons.length})
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="Coupon Code (e.g. HDFC10, VARANASI100)"
+                      className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono uppercase font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      className="px-5 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold"
+                    >
+                      Apply
+                    </button>
+                  </div>
+
+                  {discountAmount > 0 && (
+                    <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-between">
+                      <span>✓ Code "{couponCode.toUpperCase()}" Applied! Saved ₹{discountAmount}</span>
+                      <button type="button" onClick={() => { setCouponCode(""); setDiscountAmount(0); }} className="text-red-500 hover:underline text-[10px]">Remove</button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Payment Mode Buttons */}
@@ -683,6 +720,72 @@ export function BookingWizardModal({
           </div>
         </div>
       </div>
+
+      {/* COUPON & BANK OFFERS SELECTION MODAL POPUP */}
+      {isCouponPickerOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[100000] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 outline-none">
+            <div className="bg-white dark:bg-slate-900 ring-1 ring-slate-900/10 dark:ring-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 outline-none">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div>
+                  <h3 className="font-black text-slate-900 dark:text-white text-base flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-brand-600" />
+                    <span>Available Coupons & Bank Offers</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">Apply instant discount or credit card cashback</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCouponPickerOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1 text-xs">
+                {initialCoupons.map((coup) => (
+                  <div
+                    key={coup.id}
+                    className="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 hover:border-brand-500 transition-all flex items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 text-xs">
+                          {coup.code}
+                        </span>
+                        {coup.bankName && (
+                          <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded">
+                            {coup.bankName}
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-bold text-slate-900 dark:text-white text-xs">{coup.description}</p>
+                      <span className="text-[10px] text-slate-400 block">Min order ₹{coup.minOrderValue} • Valid till {coup.expiryDate}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectCouponFromPicker(coup)}
+                      className="px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shrink-0 shadow-xs"
+                    >
+                      Apply Code
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsCouponPickerOpen(false)}
+                className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Portal>
+      )}
     </Portal>
   );
 }

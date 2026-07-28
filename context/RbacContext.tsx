@@ -1,121 +1,163 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { UserPermissions, initialUsers, UserManagementItem } from "@/lib/mockData";
 
 export type RoleType =
   | "Super Admin"
-  | "Admin"
-  | "Operations Manager"
-  | "Finance"
-  | "Support"
-  | "City Manager";
+  | "Varanasi Dispatcher"
+  | "Fleet Inspector"
+  | "Billing & Finance Manager"
+  | "Support Agent";
 
-export interface PermissionMatrix {
-  viewAll: boolean;
-  canAdd: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canBulkAction: boolean;
-  canExport: boolean;
-  canRefund: boolean;
-  canManageUsers: boolean;
-}
-
-const rolePermissions: Record<RoleType, PermissionMatrix> = {
+const rolePermissionsMap: Record<RoleType, UserPermissions> = {
   "Super Admin": {
-    viewAll: true,
-    canAdd: true,
-    canEdit: true,
-    canDelete: true,
-    canBulkAction: true,
-    canExport: true,
-    canRefund: true,
-    canManageUsers: true,
+    bookings: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    customers: { view: true, edit: true, delete: true },
+    fleet: { view: true, edit: true, delete: true },
+    finance: { view: true, edit: true, delete: true },
+    reports: { view: true, edit: true, delete: true },
+    rbac: { view: true, edit: true, delete: true },
+    canDispatchJobs: true,
+    canEditServices: true,
+    canProcessRefunds: true,
+    canManageFleet: true,
+    canExportReports: true,
+    canManageRbac: true,
+    canViewAuditLogs: true,
   },
-  Admin: {
-    viewAll: true,
-    canAdd: true,
-    canEdit: true,
-    canDelete: true,
-    canBulkAction: true,
-    canExport: true,
-    canRefund: true,
-    canManageUsers: false,
+  "Varanasi Dispatcher": {
+    bookings: { view: true, edit: true, delete: false },
+    services: { view: true, edit: false, delete: false },
+    customers: { view: true, edit: true, delete: false },
+    fleet: { view: true, edit: true, delete: false },
+    finance: { view: false, edit: false, delete: false },
+    reports: { view: false, edit: false, delete: false },
+    rbac: { view: false, edit: false, delete: false },
+    canDispatchJobs: true,
+    canEditServices: false,
+    canProcessRefunds: false,
+    canManageFleet: true,
+    canExportReports: false,
+    canManageRbac: false,
+    canViewAuditLogs: true,
   },
-  "Operations Manager": {
-    viewAll: true,
-    canAdd: true,
-    canEdit: true,
-    canDelete: false,
-    canBulkAction: true,
-    canExport: true,
-    canRefund: false,
-    canManageUsers: false,
+  "Fleet Inspector": {
+    bookings: { view: true, edit: true, delete: false },
+    services: { view: true, edit: false, delete: false },
+    customers: { view: true, edit: false, delete: false },
+    fleet: { view: true, edit: true, delete: false },
+    finance: { view: false, edit: false, delete: false },
+    reports: { view: false, edit: false, delete: false },
+    rbac: { view: false, edit: false, delete: false },
+    canDispatchJobs: true,
+    canEditServices: false,
+    canProcessRefunds: false,
+    canManageFleet: true,
+    canExportReports: false,
+    canManageRbac: false,
+    canViewAuditLogs: false,
   },
-  Finance: {
-    viewAll: true,
-    canAdd: false,
-    canEdit: true,
-    canDelete: false,
-    canBulkAction: false,
-    canExport: true,
-    canRefund: true,
-    canManageUsers: false,
+  "Billing & Finance Manager": {
+    bookings: { view: true, edit: false, delete: false },
+    services: { view: true, edit: true, delete: false },
+    customers: { view: true, edit: false, delete: false },
+    fleet: { view: false, edit: false, delete: false },
+    finance: { view: true, edit: true, delete: true },
+    reports: { view: true, edit: true, delete: false },
+    rbac: { view: false, edit: false, delete: false },
+    canDispatchJobs: false,
+    canEditServices: true,
+    canProcessRefunds: true,
+    canManageFleet: false,
+    canExportReports: true,
+    canManageRbac: false,
+    canViewAuditLogs: true,
   },
-  Support: {
-    viewAll: true,
-    canAdd: false,
-    canEdit: true,
-    canDelete: false,
-    canBulkAction: false,
-    canExport: false,
-    canRefund: false,
-    canManageUsers: false,
-  },
-  "City Manager": {
-    viewAll: true,
-    canAdd: true,
-    canEdit: true,
-    canDelete: false,
-    canBulkAction: false,
-    canExport: true,
-    canRefund: false,
-    canManageUsers: false,
+  "Support Agent": {
+    bookings: { view: true, edit: true, delete: false },
+    services: { view: true, edit: false, delete: false },
+    customers: { view: true, edit: true, delete: false },
+    fleet: { view: true, edit: false, delete: false },
+    finance: { view: true, edit: false, delete: false },
+    reports: { view: false, edit: false, delete: false },
+    rbac: { view: false, edit: false, delete: false },
+    canDispatchJobs: true,
+    canEditServices: false,
+    canProcessRefunds: true,
+    canManageFleet: false,
+    canExportReports: false,
+    canManageRbac: false,
+    canViewAuditLogs: false,
   },
 };
 
 interface RbacContextType {
+  currentUser: UserManagementItem;
+  setCurrentUser: (user: UserManagementItem) => void;
   role: RoleType;
   setRole: (role: RoleType) => void;
-  permissions: PermissionMatrix;
-  hasPermission: (action: keyof PermissionMatrix) => boolean;
+  userPermissions: UserPermissions;
+  hasPermission: (permKey: keyof UserPermissions) => boolean;
+  updateUserPermissions: (permissions: UserPermissions) => void;
 }
 
 const RbacContext = createContext<RbacContextType | undefined>(undefined);
 
 export function RbacProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<RoleType>("Super Admin");
+  const [currentUser, setCurrentUser] = useState<UserManagementItem>(initialUsers[0]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("helpmate_user_role");
-    if (saved && saved in rolePermissions) {
-      setRoleState(saved as RoleType);
+    const savedUserId = localStorage.getItem("helpmate_active_user_id");
+    if (savedUserId) {
+      const found = initialUsers.find((u) => u.id === savedUserId);
+      if (found) setCurrentUser(found);
     }
   }, []);
 
-  const setRole = (newRole: RoleType) => {
-    setRoleState(newRole);
-    localStorage.setItem("helpmate_user_role", newRole);
+  const handleSetCurrentUser = (user: UserManagementItem) => {
+    setCurrentUser(user);
+    localStorage.setItem("helpmate_active_user_id", user.id);
   };
 
-  const permissions = rolePermissions[role];
+  const handleSetRole = (newRole: RoleType) => {
+    const defaultPerms = rolePermissionsMap[newRole] || rolePermissionsMap["Super Admin"];
+    const updatedUser: UserManagementItem = {
+      ...currentUser,
+      role: newRole,
+      permissions: defaultPerms,
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem("helpmate_active_user_id", updatedUser.id);
+  };
 
-  const hasPermission = (action: keyof PermissionMatrix) => {
-    return permissions[action] ?? false;
+  const handleUpdatePermissions = (newPerms: UserPermissions) => {
+    const updatedUser: UserManagementItem = {
+      ...currentUser,
+      permissions: newPerms,
+    };
+    setCurrentUser(updatedUser);
+  };
+
+  const userPermissions: UserPermissions = currentUser.permissions || rolePermissionsMap[currentUser.role as RoleType] || rolePermissionsMap["Super Admin"];
+
+  const hasPermission = (permKey: keyof UserPermissions) => {
+    return !!userPermissions[permKey];
   };
 
   return (
-    <RbacContext.Provider value={{ role, setRole, permissions, hasPermission }}>
+    <RbacContext.Provider
+      value={{
+        currentUser,
+        setCurrentUser: handleSetCurrentUser,
+        role: currentUser.role as RoleType,
+        setRole: handleSetRole,
+        userPermissions,
+        hasPermission,
+        updateUserPermissions: handleUpdatePermissions,
+      }}
+    >
       {children}
     </RbacContext.Provider>
   );

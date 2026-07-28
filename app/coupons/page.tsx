@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialCoupons, CouponItem } from "@/lib/mockData";
-import { Tag, Plus, CheckCircle2, Percent } from "lucide-react";
+import { Tag, Plus, CheckCircle2, Percent, CreditCard, Building2, Gift, Sparkles } from "lucide-react";
 import { Portal } from "@/components/Portal";
 
 export default function CouponsPage() {
@@ -11,33 +11,72 @@ export default function CouponsPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const [code, setCode] = useState("");
-  const [discountValue, setDiscountValue] = useState("100");
+  const [discountType, setDiscountType] = useState<"Fixed" | "Percentage" | "Bank Offer" | "First Booking">("Fixed");
+  const [discountValue, setDiscountValue] = useState("150");
+  const [minOrderValue, setMinOrderValue] = useState("499");
+  const [maxDiscountCap, setMaxDiscountCap] = useState("300");
+  const [bankName, setBankName] = useState("HDFC Bank");
+  const [description, setDescription] = useState("");
 
   const columns: Column<CouponItem>[] = [
     {
       key: "code",
       header: "Coupon Code",
-      accessor: (row) => <span className="font-extrabold text-brand-600 dark:text-brand-400 font-mono text-xs">{row.code}</span>,
+      accessor: (row) => (
+        <div className="flex flex-col">
+          <span className="font-extrabold text-brand-600 dark:text-brand-400 font-mono text-xs flex items-center gap-1">
+            <Tag className="w-3 h-3" />
+            {row.code}
+          </span>
+          {row.bankName && <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">● {row.bankName}</span>}
+        </div>
+      ),
       sortable: true,
     },
-    { key: "discountType", header: "Type", sortable: true },
+    {
+      key: "discountType",
+      header: "Offer Type",
+      accessor: (row) => (
+        <span
+          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+            row.discountType === "Bank Offer"
+              ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200"
+              : row.discountType === "First Booking"
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
+              : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200"
+          }`}
+        >
+          {row.discountType}
+        </span>
+      ),
+      sortable: true,
+    },
     {
       key: "discountValue",
       header: "Discount Value",
       accessor: (row) => (
-        <span className="font-bold text-slate-900 dark:text-white">
+        <span className="font-black text-slate-900 dark:text-white">
           {row.discountType === "Percentage" ? `${row.discountValue}% OFF` : `₹${row.discountValue} OFF`}
         </span>
       ),
       sortable: true,
     },
     {
+      key: "description",
+      header: "Offer Details",
+      accessor: (row) => (
+        <span className="text-xs text-slate-500 truncate max-w-[200px] block">
+          {row.description || `Min Order ₹${row.minOrderValue}`}
+        </span>
+      ),
+    },
+    {
       key: "minOrderValue",
       header: "Min Order",
-      accessor: (row) => <span>₹{row.minOrderValue}</span>,
+      accessor: (row) => <span className="font-semibold">₹{row.minOrderValue}</span>,
       sortable: true,
     },
-    { key: "usageCount", header: "Total Redemptions", sortable: true },
+    { key: "usageCount", header: "Redemptions", sortable: true },
     { key: "expiryDate", header: "Expiry Date", sortable: true },
     {
       key: "status",
@@ -54,6 +93,22 @@ export default function CouponsPage() {
         </span>
       ),
     },
+    {
+      key: "actions",
+      header: "Actions",
+      accessor: (row) => (
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => alert(`Editing offer code ${row.code}`)}
+            title="Edit Offer Code"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all"
+          >
+            <Tag className="w-4 h-4" />
+          </button>
+        </div>
+      ),
+    },
   ];
 
   const handleAddCoupon = (e: React.FormEvent) => {
@@ -63,41 +118,32 @@ export default function CouponsPage() {
     const newItem: CouponItem = {
       id: `cpn-${Date.now()}`,
       code: code.toUpperCase(),
-      discountType: "Fixed",
+      discountType,
       discountValue: parseFloat(discountValue) || 100,
-      minOrderValue: 499,
+      minOrderValue: parseFloat(minOrderValue) || 499,
+      maxDiscountCap: discountType === "Percentage" || discountType === "Bank Offer" ? parseFloat(maxDiscountCap) : undefined,
+      bankName: discountType === "Bank Offer" ? bankName : undefined,
+      description: description || `${discountType} coupon code ${code.toUpperCase()}`,
       usageCount: 0,
-      expiryDate: "2026-12-31",
+      expiryDate: "31 Dec 2026",
       status: "Active",
     };
 
     setCoupons([newItem, ...coupons]);
     setCode("");
+    setDescription("");
     setIsAddOpen(false);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
-            <Tag className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Discount & Promotional Coupons</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Manage promo codes, usage caps, and Varanasi seasonal offers</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main DataTable */}
+      {/* Main DataTable matching User Management layout */}
       <DataTable
-        title="Coupon Campaign Directory"
-        description="Active customer discount codes and redemption limits"
+        title="Discount & Bank Offers Engine"
+        description="Active customer discount codes, cash discounts, credit card bank offers, and promo campaigns"
         columns={columns}
         data={coupons}
-        addButtonLabel="Create New Coupon Code"
+        addButtonLabel="Create New Offer Code"
         onAddClick={() => setIsAddOpen(true)}
       />
 
@@ -105,33 +151,97 @@ export default function CouponsPage() {
       {isAddOpen && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-            <form onSubmit={handleAddCoupon} className="bg-white dark:bg-slate-900 p-6 rounded-2xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Create Promo Coupon</h3>
+            <form onSubmit={handleAddCoupon} className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-lg w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-brand-600" />
+                  <span>Create Discount or Bank Offer</span>
+                </h3>
+                <button type="button" onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              </div>
+
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Coupon Code</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Coupon Code *</label>
                   <input
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="e.g. VARANASI150"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase"
+                    placeholder="e.g. HDFC150 / FLAT100"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold uppercase"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Discount Amount (₹)</label>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Offer Category Type</label>
+                  <select
+                    value={discountType}
+                    onChange={(e) => setDiscountType(e.target.value as any)}
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                  >
+                    <option value="Fixed">Flat Cash Discount (Fixed ₹ Off)</option>
+                    <option value="Bank Offer">Credit Card / Bank Offer (HDFC, ICICI, Axis)</option>
+                    <option value="Percentage">Percentage Discount (% Off)</option>
+                    <option value="First Booking">First Booking Special (New Customer)</option>
+                  </select>
+                </div>
+
+                {discountType === "Bank Offer" && (
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Partner Bank Name</label>
+                    <select
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                    >
+                      <option value="HDFC Bank">HDFC Bank Credit & Debit Cards</option>
+                      <option value="ICICI Bank">ICICI Bank Cards & NetBanking</option>
+                      <option value="Axis Bank">Axis Bank Credit Cards</option>
+                      <option value="SBI Card">SBI Credit Cards</option>
+                      <option value="Kotak Mahindra">Kotak Mahindra Bank</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Discount Value ({discountType === "Percentage" ? "%" : "₹"})
+                    </label>
+                    <input
+                      type="number"
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Min Order Value (₹)</label>
+                    <input
+                      type="number"
+                      value={minOrderValue}
+                      onChange={(e) => setMinOrderValue(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Offer Description</label>
                   <input
-                    type="number"
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="e.g. 10% Instant Discount on HDFC Credit Cards"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
+
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-brand-500 text-white rounded-xl font-bold text-xs">Publish Coupon</button>
+                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Publish Offer</button>
               </div>
             </form>
           </div>
@@ -140,3 +250,4 @@ export default function CouponsPage() {
     </div>
   );
 }
+
