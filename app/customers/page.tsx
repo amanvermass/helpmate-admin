@@ -243,7 +243,6 @@ export default function CustomersPage() {
             className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors flex items-center gap-1 text-[11px] font-bold px-2"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>View Details</span>
           </button>
           <button
             type="button"
