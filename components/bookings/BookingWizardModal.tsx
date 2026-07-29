@@ -22,6 +22,7 @@ import {
   Mail,
   Building,
   UserPlus,
+  Lock,
 } from "lucide-react";
 import {
   Booking,
@@ -194,6 +195,7 @@ export function BookingWizardModal({
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
   const [isTrustedCustomer, setIsTrustedCustomer] = useState(false);
+  const [isNewCustomerAdded, setIsNewCustomerAdded] = useState(false);
 
   // New Customer Inline Add Form States
   const [isAddCustomerFormOpen, setIsAddCustomerFormOpen] = useState(false);
@@ -250,8 +252,9 @@ export function BookingWizardModal({
     setCustomerEmail(createdCust.email);
     setLocality(createdCust.locality);
     setAddress(createdCust.address);
-    setIsOtpVerified(true);
-    setIsTrustedCustomer(true);
+    setIsOtpVerified(false);
+    setIsTrustedCustomer(false);
+    setIsNewCustomerAdded(true);
     setIsAddCustomerFormOpen(false);
 
     // Reset inline inputs
@@ -316,6 +319,7 @@ export function BookingWizardModal({
       setAddress("");
       setIsOtpVerified(false);
       setIsTrustedCustomer(false);
+      setIsNewCustomerAdded(false);
       return;
     }
     const found = customerList.find((c) => c.name === custName);
@@ -325,8 +329,9 @@ export function BookingWizardModal({
       setCustomerEmail(found.email);
       setLocality(found.locality);
       setAddress(found.address);
-      setIsOtpVerified(true);
-      setIsTrustedCustomer(true);
+      setIsOtpVerified(false);
+      setIsTrustedCustomer(false);
+      setIsNewCustomerAdded(false);
     }
   };
 
@@ -715,91 +720,99 @@ export function BookingWizardModal({
                   </div>
                 )}
 
-                {/* Selected Active Customer Summary Card */}
+                {/* Selected Active Customer Summary Card & OTP Verification Box (ONLY SHOWN AFTER CUSTOMER IS SELECTED OR ADDED) */}
                 {customerName && (
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs animate-in fade-in duration-150">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white font-extrabold flex items-center justify-center text-sm shadow-lux">
-                        {customerName[0]}
-                      </div>
-                      <div>
-                        <div className="font-extrabold text-slate-900 dark:text-white text-sm">
-                          {customerName}
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white font-extrabold flex items-center justify-center text-sm shadow-lux">
+                          {customerName[0]}
                         </div>
-                        <div className="text-slate-500 font-semibold text-[11px] flex items-center gap-2 mt-0.5">
-                          <span>{customerPhone}</span>
-                          {customerEmail && <span>• {customerEmail}</span>}
+                        <div>
+                          <div className="font-extrabold text-slate-900 dark:text-white text-sm">
+                            {customerName}
+                          </div>
+                          <div className="text-slate-500 font-semibold text-[11px] flex items-center gap-2 mt-0.5">
+                            <span>{customerPhone}</span>
+                            {customerEmail && <span>• {customerEmail}</span>}
+                          </div>
                         </div>
                       </div>
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                        Active Selection
+                      </span>
                     </div>
-                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                      Active Selection
-                    </span>
+
+                    {/* OTP Verification & Skip Box */}
+                    <div className="p-5 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-xs text-brand-900 dark:text-brand-300 flex items-center gap-1.5">
+                          <KeyRound className="w-4 h-4 text-brand-600" /> Phone OTP Verification & Security
+                        </span>
+                        {!isNewCustomerAdded ? (
+                          <button
+                            type="button"
+                            onClick={handleSkipOtpTrusted}
+                            className="px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 font-bold text-[11px] hover:bg-brand-50 transition-colors shadow-xs"
+                          >
+                            ⚡ Skip OTP (Regular / Trusted Customer)
+                          </button>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold text-[11px] flex items-center gap-1">
+                            <Lock className="w-3.5 h-3.5 text-amber-600" /> Mandatory OTP for New Customer
+                          </span>
+                        )}
+                      </div>
+
+                      {!isOtpVerified ? (
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                            Enter 4-digit code sent via SMS to {customerPhone} (Demo OTP: <strong className="text-brand-600">1234</strong>)
+                          </p>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              maxLength={4}
+                              value={otpInput}
+                              onChange={(e) => setOtpInput(e.target.value)}
+                              placeholder="1234"
+                              className="w-32 text-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-extrabold text-sm text-slate-900 dark:text-white tracking-widest outline-none focus:border-brand-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifyOtp}
+                              className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux transition-colors"
+                            >
+                              Verify OTP
+                            </button>
+                          </div>
+                          {otpError && <p className="text-[11px] text-red-600 font-semibold">{otpError}</p>}
+                        </div>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>
+                              {isTrustedCustomer
+                                ? "Verified Regular Trusted Client (OTP Bypassed)"
+                                : "Phone OTP Verified Successfully (Code: 1234)"}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsOtpVerified(false);
+                              setIsTrustedCustomer(false);
+                            }}
+                            className="text-[10px] text-emerald-700 underline"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-
-                {/* OTP Verification & Skip Box */}
-                <div className="p-5 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-xs text-brand-900 dark:text-brand-300 flex items-center gap-1.5">
-                      <KeyRound className="w-4 h-4 text-brand-600" /> Phone OTP Verification & Trusted Bypass
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleSkipOtpTrusted}
-                      className="px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 font-bold text-[11px] hover:bg-brand-50 transition-colors shadow-xs"
-                    >
-                      ⚡ Skip OTP (Regular / Trusted Customer)
-                    </button>
-                  </div>
-
-                  {!isOtpVerified ? (
-                    <div className="space-y-2">
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                        Enter 4-digit code sent via SMS to {customerPhone} (Demo OTP: <strong className="text-brand-600">1234</strong>)
-                      </p>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          maxLength={4}
-                          value={otpInput}
-                          onChange={(e) => setOtpInput(e.target.value)}
-                          placeholder="1234"
-                          className="w-32 text-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-extrabold text-sm text-slate-900 dark:text-white tracking-widest outline-none focus:border-brand-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleVerifyOtp}
-                          className="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux transition-colors"
-                        >
-                          Verify OTP
-                        </button>
-                      </div>
-                      {otpError && <p className="text-[11px] text-red-600 font-semibold">{otpError}</p>}
-                    </div>
-                  ) : (
-                    <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>
-                          {isTrustedCustomer
-                            ? "Verified Regular Trusted Client (OTP Bypassed)"
-                            : "Phone OTP Verified Successfully (Code: 1234)"}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsOtpVerified(false);
-                          setIsTrustedCustomer(false);
-                        }}
-                        className="text-[10px] text-emerald-700 underline"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 

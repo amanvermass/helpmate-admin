@@ -36,6 +36,15 @@ export interface ServiceItem {
   createdDate?: string;
 }
 
+export interface CategorySubService {
+  id: string;
+  title: string;
+  type: "Installation" | "Repair" | "Uninstallation" | "Servicing" | "Maintenance";
+  price: number;
+  duration?: string;
+  status: "Active" | "Inactive";
+}
+
 export interface CategoryItem {
   id: string;
   name: string;
@@ -44,6 +53,7 @@ export interface CategoryItem {
   subcategoriesCount: number;
   servicesCount: number;
   status: "Active" | "Inactive";
+  subServices?: CategorySubService[];
 }
 
 export interface SubCategoryItem {
@@ -317,11 +327,78 @@ export const initialAddons: ServiceAddon[] = [
 ];
 
 export const initialCategories: CategoryItem[] = [
-  { id: "cat-1", name: "AC Servicing & Repair", slug: "ac", icon: "Wrench", subcategoriesCount: 4, servicesCount: 12, status: "Active" },
-  { id: "cat-2", name: "Elite Deep Cleaning", slug: "cleaning", icon: "Sparkles", subcategoriesCount: 5, servicesCount: 18, status: "Active" },
-  { id: "cat-3", name: "Smart Home Electrician", slug: "electrician", icon: "Zap", subcategoriesCount: 3, servicesCount: 10, status: "Active" },
-  { id: "cat-4", name: "Hydro Jet Plumbing", slug: "plumbing", icon: "Droplets", subcategoriesCount: 3, servicesCount: 8, status: "Active" },
-  { id: "cat-5", name: "Home Salon & Spa", slug: "beauty", icon: "Scissors", subcategoriesCount: 6, servicesCount: 22, status: "Active" },
+  {
+    id: "cat-1",
+    name: "AC Servicing & Repair",
+    slug: "ac",
+    icon: "Wrench",
+    subcategoriesCount: 4,
+    servicesCount: 12,
+    status: "Active",
+    subServices: [
+      { id: "sub-srv-101", title: "Split AC Complete Installation", type: "Installation", price: 1499, duration: "90 mins", status: "Active" },
+      { id: "sub-srv-102", title: "Window AC Installation", type: "Installation", price: 999, duration: "60 mins", status: "Active" },
+      { id: "sub-srv-103", title: "Power Jet Deep Foam Servicing", type: "Servicing", price: 699, duration: "45 mins", status: "Active" },
+      { id: "sub-srv-104", title: "Gas Leakage Testing & R32/R410 Charging", type: "Repair", price: 2499, duration: "60 mins", status: "Active" },
+      { id: "sub-srv-105", title: "Split AC Safe Uninstallation", type: "Uninstallation", price: 699, duration: "45 mins", status: "Active" },
+      { id: "sub-srv-106", title: "Window AC Uninstallation", type: "Uninstallation", price: 499, duration: "30 mins", status: "Active" },
+      { id: "sub-srv-107", title: "Anti-Bacterial Hydro Coil Cleaning", type: "Maintenance", price: 399, duration: "30 mins", status: "Active" },
+    ],
+  },
+  {
+    id: "cat-2",
+    name: "Elite Deep Cleaning",
+    slug: "cleaning",
+    icon: "Sparkles",
+    subcategoriesCount: 5,
+    servicesCount: 18,
+    status: "Active",
+    subServices: [
+      { id: "sub-srv-201", title: "Full Home Deep Cleaning (3BHK)", type: "Servicing", price: 4999, duration: "4-5 hrs", status: "Active" },
+      { id: "sub-srv-202", title: "Bathroom Hydro Cleaning & Descaling", type: "Servicing", price: 699, duration: "60 mins", status: "Active" },
+      { id: "sub-srv-203", title: "Modular Kitchen Chimney Degreasing", type: "Maintenance", price: 899, duration: "90 mins", status: "Active" },
+    ],
+  },
+  {
+    id: "cat-3",
+    name: "Smart Home Electrician",
+    slug: "electrician",
+    icon: "Zap",
+    subcategoriesCount: 3,
+    servicesCount: 10,
+    status: "Active",
+    subServices: [
+      { id: "sub-srv-301", title: "Smart MCB Box & Circuit Fitting", type: "Installation", price: 799, duration: "45 mins", status: "Active" },
+      { id: "sub-srv-302", title: "Short Circuit & Wire Fault Repair", type: "Repair", price: 499, duration: "30 mins", status: "Active" },
+      { id: "sub-srv-303", title: "Ceiling Fan & Chandelier Fitting", type: "Installation", price: 299, duration: "30 mins", status: "Active" },
+    ],
+  },
+  {
+    id: "cat-4",
+    name: "Hydro Jet Plumbing",
+    slug: "plumbing",
+    icon: "Droplets",
+    subcategoriesCount: 3,
+    servicesCount: 8,
+    status: "Active",
+    subServices: [
+      { id: "sub-srv-401", title: "High-Pressure Drain Unclogging", type: "Repair", price: 599, duration: "45 mins", status: "Active" },
+      { id: "sub-srv-402", title: "Luxury Tap & Mixer Fitting", type: "Installation", price: 349, duration: "30 mins", status: "Active" },
+    ],
+  },
+  {
+    id: "cat-5",
+    name: "Home Salon & Spa",
+    slug: "beauty",
+    icon: "Scissors",
+    subcategoriesCount: 6,
+    servicesCount: 22,
+    status: "Active",
+    subServices: [
+      { id: "sub-srv-501", title: "Ayurvedic Kashi Spa Body Massage", type: "Servicing", price: 1999, duration: "60 mins", status: "Active" },
+      { id: "sub-srv-502", title: "Organic Gold Glow Facial", type: "Maintenance", price: 1499, duration: "60 mins", status: "Active" },
+    ],
+  },
 ];
 
 export const initialSubCategories: SubCategoryItem[] = [
