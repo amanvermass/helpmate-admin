@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { CustomSelect } from "@/components/CustomSelect";
 import {
   Search,
   Download,
@@ -296,24 +297,23 @@ export function DataTable<T extends Record<string, any>>({
           <div className="flex items-center gap-3 flex-wrap">
             {extraFilters}
 
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
-              <Filter className="w-3.5 h-3.5 text-brand-600" />
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Status:</span>
-              <select
+            <div className="w-36">
+              <CustomSelect
+                size="sm"
                 value={selectedStatusFilter}
-                onChange={(e) => {
-                  setSelectedStatusFilter(e.target.value);
+                onChange={(val) => {
+                  setSelectedStatusFilter(val);
                   setCurrentPage(1);
                 }}
-                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none cursor-pointer"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Approved">Approved</option>
-                <option value="Pending">Pending</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
+                options={[
+                  { value: "All", label: "All Statuses" },
+                  { value: "Active", label: "Active" },
+                  { value: "Approved", label: "Approved" },
+                  { value: "Pending", label: "Pending" },
+                  { value: "Completed", label: "Completed" },
+                  { value: "Cancelled", label: "Cancelled" },
+                ]}
+              />
             </div>
 
             <button

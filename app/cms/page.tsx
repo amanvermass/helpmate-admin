@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
-import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit } from "lucide-react";
+import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown } from "lucide-react";
 
 interface ServiceOfferingRow {
   id: string;
@@ -14,6 +14,8 @@ interface ServiceOfferingRow {
   duration: string;
   description?: string;
 }
+
+import { CustomSelect } from "@/components/CustomSelect";
 
 export default function CmsPage() {
   const [categorySubcategoriesMap, setCategorySubcategoriesMap] = useState<Record<string, string[]>>({
@@ -594,8 +596,8 @@ export default function CmsPage() {
             type="button"
             onClick={() => setActiveTab("services")}
             className={`px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${activeTab === "services"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
           >
             Services & Pricing CMS
@@ -604,8 +606,8 @@ export default function CmsPage() {
             type="button"
             onClick={() => setActiveTab("addons")}
             className={`px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${activeTab === "addons"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
           >
             Add-on Parts
@@ -614,8 +616,8 @@ export default function CmsPage() {
             type="button"
             onClick={() => setActiveTab("pincodes")}
             className={`px-3 sm:px-4 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${activeTab === "pincodes"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
           >
             Pincode Serviceability
@@ -635,8 +637,8 @@ export default function CmsPage() {
               type="button"
               onClick={() => setSelectedCategoryFilter(cat)}
               className={`px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 cursor-pointer ${selectedCategoryFilter === cat
-                  ? "bg-brand-500 text-white shadow-lux"
-                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                ? "bg-brand-500 text-white shadow-lux"
+                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
                 }`}
             >
               {cat}
@@ -704,8 +706,8 @@ export default function CmsPage() {
                       <div
                         key={addon.id}
                         className={`p-3 rounded-2xl border flex items-center justify-between transition-all ${isLinked
-                            ? "bg-purple-50/60 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800"
-                            : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700"
+                          ? "bg-purple-50/60 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800"
+                          : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700"
                           }`}
                       >
                         <div>
@@ -720,8 +722,8 @@ export default function CmsPage() {
                           type="button"
                           onClick={() => handleToggleLinkAddonToService(selectedService.id, addon)}
                           className={`px-3 py-1.5 rounded-xl font-extrabold text-[11px] transition-all flex items-center gap-1 ${isLinked
-                              ? "bg-purple-600 text-white shadow-lux"
-                              : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300"
+                            ? "bg-purple-600 text-white shadow-lux"
+                            : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300"
                             }`}
                         >
                           {isLinked ? (
@@ -777,76 +779,44 @@ export default function CmsPage() {
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Category Dropdown & Add Category Option */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="font-extrabold text-slate-900 dark:text-white block text-xs">
-                          Select Category *
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNewCatNameInput("");
-                            setNewCatSubcategories([]);
-                            setNewCatSubInput("");
-                            setIsAddCategoryModalOpen(true);
-                          }}
-                          className="text-brand-600 dark:text-brand-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>+ Add Category</span>
-                        </button>
-                      </div>
-
-                      <select
-                        value={serviceCategory}
-                        onChange={(e) => {
-                          const cat = e.target.value;
-                          setServiceCategory(cat);
-                          const subs = categorySubcategoriesMap[cat] || [];
-                          setSelectedSubcategory(subs[0] || "");
-                        }}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 text-xs"
-                      >
-                        {Object.keys(categorySubcategoriesMap).map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Select Category *"
+                      value={serviceCategory}
+                      onChange={(cat) => {
+                        setServiceCategory(cat);
+                        const subs = categorySubcategoriesMap[cat] || [];
+                        setSelectedSubcategory(subs[0] || "");
+                      }}
+                      options={Object.keys(categorySubcategoriesMap).map((cat) => ({
+                        value: cat,
+                        label: cat,
+                      }))}
+                      onAddAction={() => {
+                        setNewCatNameInput("");
+                        setNewCatSubcategories([]);
+                        setNewCatSubInput("");
+                        setIsAddCategoryModalOpen(true);
+                      }}
+                      addActionLabel="Add Category"
+                    />
 
                     {/* Subcategory Dropdown & Add Subcategory Option */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="font-extrabold text-purple-900 dark:text-purple-300 block text-xs">
-                          Select Subcategory *
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTargetCategoryForSubcategory(serviceCategory);
-                            setSubCatInputForModal("");
-                            setIsAddSubcategoryOpen(true);
-                          }}
-                          className="text-purple-600 dark:text-purple-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>+ Add Subcategory</span>
-                        </button>
-                      </div>
-
-                      <select
-                        value={selectedSubcategory}
-                        onChange={(e) => setSelectedSubcategory(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-300 font-bold outline-none focus:border-purple-500 text-xs"
-                      >
-                        {(categorySubcategoriesMap[serviceCategory] || []).length > 0 ? (
-                          (categorySubcategoriesMap[serviceCategory] || []).map((sub) => (
-                            <option key={sub} value={sub}>{sub}</option>
-                          ))
-                        ) : (
-                          <option value="">No Subcategory</option>
-                        )}
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Select Subcategory *"
+                      value={selectedSubcategory}
+                      onChange={(sub) => setSelectedSubcategory(sub)}
+                      options={(categorySubcategoriesMap[serviceCategory] || []).map((sub) => ({
+                        value: sub,
+                        label: sub,
+                      }))}
+                      placeholder="No Subcategory"
+                      onAddAction={() => {
+                        setTargetCategoryForSubcategory(serviceCategory);
+                        setSubCatInputForModal("");
+                        setIsAddSubcategoryOpen(true);
+                      }}
+                      addActionLabel="Add Subcategory"
+                    />
                   </div>
                 </div>
 
@@ -891,21 +861,17 @@ export default function CmsPage() {
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {/* FIRST FIELD: Service Action */}
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                                Service Action *
-                              </label>
-                              <select
-                                value={off.type}
-                                onChange={(e) => handleUpdateOfferingRow(idx, "type", e.target.value)}
-                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 text-xs"
-                              >
-                                <option value="Repair">Repair Service</option>
-                                <option value="Service">Service & Maintenance</option>
-                                <option value="Installation">Installation Service</option>
-                                <option value="Uninstallation">Uninstallation Service</option>
-                              </select>
-                            </div>
+                            <CustomSelect
+                              label="Service Action *"
+                              value={off.type}
+                              onChange={(val) => handleUpdateOfferingRow(idx, "type", val)}
+                              options={[
+                                { value: "Repair", label: "Repair Service" },
+                                { value: "Service", label: "Service & Maintenance" },
+                                { value: "Installation", label: "Installation Service" },
+                                { value: "Uninstallation", label: "Uninstallation Service" },
+                              ]}
+                            />
 
                             {/* SECOND FIELD: Package Name */}
                             <div>
@@ -917,7 +883,7 @@ export default function CmsPage() {
                                 value={off.title}
                                 onChange={(e) => handleUpdateOfferingRow(idx, "title", e.target.value)}
                                 placeholder="e.g. Master Power Jet Foam Cleaning Package"
-                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+                                className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
                                 required
                               />
                             </div>
@@ -934,28 +900,24 @@ export default function CmsPage() {
                                 value={off.price}
                                 onChange={(e) => handleUpdateOfferingRow(idx, "price", Number(e.target.value))}
                                 placeholder="699"
-                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 text-xs"
+                                className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 text-xs"
                                 required
                               />
                             </div>
 
                             {/* FOURTH FIELD: Duration */}
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                                Duration *
-                              </label>
-                              <select
-                                value={off.duration}
-                                onChange={(e) => handleUpdateOfferingRow(idx, "duration", e.target.value)}
-                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
-                              >
-                                <option value="30 mins">30 mins</option>
-                                <option value="45 mins">45 mins</option>
-                                <option value="60 mins">60 mins</option>
-                                <option value="90 mins">90 mins</option>
-                                <option value="2 - 3 hrs">2 - 3 hrs</option>
-                              </select>
-                            </div>
+                            <CustomSelect
+                              label="Duration *"
+                              value={off.duration}
+                              onChange={(val) => handleUpdateOfferingRow(idx, "duration", val)}
+                              options={[
+                                { value: "30 mins", label: "30 mins" },
+                                { value: "45 mins", label: "45 mins" },
+                                { value: "60 mins", label: "60 mins" },
+                                { value: "90 mins", label: "90 mins" },
+                                { value: "2 - 3 hrs", label: "2 - 3 hrs" },
+                              ]}
+                            />
                           </div>
 
                           {/* FIFTH FIELD: Description */}
@@ -1040,8 +1002,8 @@ export default function CmsPage() {
                         <label
                           key={addon.id}
                           className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${isSelected
-                              ? "bg-white dark:bg-slate-800 border-purple-500 shadow-xs"
-                              : "bg-white/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-70"
+                            ? "bg-white dark:bg-slate-800 border-purple-500 shadow-xs"
+                            : "bg-white/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-70"
                             }`}
                         >
                           <div className="flex items-center gap-2">

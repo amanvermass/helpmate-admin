@@ -7,6 +7,7 @@ import {
   initialCategories,
   CategoryItem,
 } from "@/lib/mockData";
+import { CustomSelect } from "@/components/CustomSelect";
 import {
   Sliders,
   Plus,
@@ -329,19 +330,15 @@ export default function CategoriesPage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Status *
-                      </label>
-                      <select
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value as any)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
-                      >
-                        <option value="Active">Active (Live in Varanasi)</option>
-                        <option value="Inactive">Inactive (Disabled)</option>
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Status *"
+                      value={status}
+                      onChange={(val) => setStatus(val as any)}
+                      options={[
+                        { value: "Active", label: "Active (Live in Varanasi)" },
+                        { value: "Inactive", label: "Inactive (Disabled)" },
+                      ]}
+                    />
                   </div>
                 </div>
 

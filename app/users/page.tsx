@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CustomSelect } from "@/components/CustomSelect";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialUsers, UserManagementItem, UserPermissions, ModulePermission } from "@/lib/mockData";
 import {
@@ -316,31 +317,27 @@ export default function UsersPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Assigned Role</label>
-                      <select
-                        value={editUser.role}
-                        onChange={(e) => setEditUser({ ...editUser, role: e.target.value as any })}
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                      >
-                        <option value="Super Admin">Super Admin</option>
-                        <option value="Varanasi Dispatcher">Varanasi Dispatcher</option>
-                        <option value="Fleet Inspector">Fleet Inspector</option>
-                        <option value="Support Agent">Support Agent</option>
-                        <option value="Billing & Finance Manager">Billing & Finance Manager</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Account Status</label>
-                      <select
-                        value={editUser.status}
-                        onChange={(e) => setEditUser({ ...editUser, status: e.target.value as any })}
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Suspended">Suspended</option>
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Assigned Role"
+                      value={editUser.role}
+                      onChange={(val) => setEditUser({ ...editUser, role: val as any })}
+                      options={[
+                        { value: "Super Admin", label: "Super Admin" },
+                        { value: "Varanasi Dispatcher", label: "Varanasi Dispatcher" },
+                        { value: "Fleet Inspector", label: "Fleet Inspector" },
+                        { value: "Support Agent", label: "Support Agent" },
+                        { value: "Billing & Finance Manager", label: "Billing & Finance Manager" },
+                      ]}
+                    />
+                    <CustomSelect
+                      label="Account Status"
+                      value={editUser.status}
+                      onChange={(val) => setEditUser({ ...editUser, status: val as any })}
+                      options={[
+                        { value: "Active", label: "Active" },
+                        { value: "Suspended", label: "Suspended" },
+                      ]}
+                    />
                   </div>
 
                   {/* Module Permissions — Enhanced Toggle Pills */}
