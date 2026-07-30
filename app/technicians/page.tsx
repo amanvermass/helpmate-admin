@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialTechnicians, Technician } from "@/lib/mockData";
 import {
@@ -52,6 +53,7 @@ export default function TechniciansPage() {
   const [partnerPoliceStation, setPartnerPoliceStation] = useState("Sigra Police Station");
   const [partnerPoliceToken, setPartnerPoliceToken] = useState("");
   const [viewTech, setViewTech] = useState<Technician | null>(null);
+  const [detailTab, setDetailTab] = useState<"overview" | "kyc" | "jobs" | "earnings">("overview");
   const [editTech, setEditTech] = useState<Technician | null>(null);
   const [deleteTech, setDeleteTech] = useState<Technician | null>(null);
 
@@ -86,10 +88,10 @@ export default function TechniciansPage() {
             alt={row.name}
             className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs"
           />
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-900">{row.name}</span>
+          <Link href={`/technicians/${row.id}`} className="flex flex-col hover:underline">
+            <span className="font-extrabold text-slate-900 dark:text-white text-xs">{row.name}</span>
             <span className="text-[10px] text-slate-400">{row.role}</span>
-          </div>
+          </Link>
         </div>
       ),
     },
@@ -158,13 +160,13 @@ export default function TechniciansPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex items-center justify-end gap-1.5">
-          <button
-            onClick={() => setViewTech(row)}
-            title="View Partner Profile"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 hover:text-brand-600 transition-all"
+          <Link
+            href={`/technicians/${row.id}`}
+            title="View Full Partner Profile Page"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all flex items-center justify-center"
           >
             <Eye className="w-3.5 h-3.5" />
-          </button>
+          </Link>
           <button
             onClick={() => setEditTech(row)}
             title="Edit Partner Details"
@@ -252,36 +254,269 @@ export default function TechniciansPage() {
   const totalPendingSettlements = techs.reduce((sum, t) => sum + (t.pendingPayout || 0), 0);
   const avgFleetRating = (techs.reduce((sum, t) => sum + (t.rating || 4.9), 0) / (totalFleet || 1)).toFixed(2);
 
+  if (viewTech) {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-200">
+        {/* Top Back Navigation Bar */}
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+          <button
+            onClick={() => setViewTech(null)}
+            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs"
+          >
+            ← Back to Fleet Directory
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setEditTech(viewTech);
+                setViewTech(null);
+              }}
+              className="px-4 py-2 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 border border-brand-200 dark:border-brand-800 text-xs font-bold flex items-center gap-1.5"
+            >
+              <Edit className="w-3.5 h-3.5" /> Edit Profile
+            </button>
+          </div>
+        </div>
+
+        {/* Executive Partner Header Profile Banner */}
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <img
+              src={viewTech.avatar}
+              alt={viewTech.name}
+              className="w-16 h-16 rounded-2xl object-cover border-2 border-brand-500 shadow-md"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                  {viewTech.name}
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-bold border border-emerald-300 dark:border-emerald-800">
+                  {viewTech.status}
+                </span>
+              </div>
+              <p className="text-xs text-brand-600 dark:text-brand-400 font-bold mt-0.5">
+                {viewTech.role} • {viewTech.category}
+              </p>
+              <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-1">
+                <MapPin className="w-3.5 h-3.5 text-slate-400" /> {viewTech.locality} ({viewTech.pincode}) • Joined {viewTech.joiningDate || "2025"}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-3 gap-4 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 pt-4 md:pt-0 md:pl-6 text-center">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Rating</span>
+              <span className="text-lg font-black text-amber-500 flex items-center justify-center gap-1">
+                <Star className="w-4 h-4 fill-amber-500 inline" /> {viewTech.rating}
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Jobs</span>
+              <span className="text-lg font-black text-slate-900 dark:text-white">
+                {viewTech.totalJobs}
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Gross Revenue</span>
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                ₹{viewTech.totalEarnings.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 text-xs font-bold">
+          <button
+            onClick={() => setDetailTab("overview")}
+            className={`px-4 py-2 rounded-xl transition-all ${
+              detailTab === "overview"
+                ? "bg-brand-500 text-white shadow-lux"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+            }`}
+          >
+            Overview & Biometric KYC
+          </button>
+          <button
+            onClick={() => setDetailTab("kyc")}
+            className={`px-4 py-2 rounded-xl transition-all ${
+              detailTab === "kyc"
+                ? "bg-brand-500 text-white shadow-lux"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+            }`}
+          >
+            KYC & Document Attachments
+          </button>
+          <button
+            onClick={() => setDetailTab("jobs")}
+            className={`px-4 py-2 rounded-xl transition-all ${
+              detailTab === "jobs"
+                ? "bg-brand-500 text-white shadow-lux"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+            }`}
+          >
+            Completed Jobs History
+          </button>
+          <button
+            onClick={() => setDetailTab("earnings")}
+            className={`px-4 py-2 rounded-xl transition-all ${
+              detailTab === "earnings"
+                ? "bg-brand-500 text-white shadow-lux"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+            }`}
+          >
+            Earnings & Weekly Settlement
+          </button>
+        </div>
+
+        {/* TAB 1: OVERVIEW & BIOMETRIC KYC */}
+        {detailTab === "overview" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 text-slate-900 dark:text-white font-extrabold text-sm">
+                <User className="w-4 h-4 text-brand-600" />
+                <span>1. Partner Personal Information</span>
+              </div>
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-400 font-bold">Full Name</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white">{viewTech.name}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-400 font-bold">Mobile Phone</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{viewTech.phone}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-400 font-bold">Varanasi Locality</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{viewTech.locality} ({viewTech.pincode})</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-400 font-bold">Partner Aadhaar Number</span>
+                  <span className="font-mono font-extrabold text-brand-600">7821-4920-1102</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 text-amber-900 dark:text-amber-300 font-extrabold text-sm">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <span>2. Police Clearance & Security Verification</span>
+              </div>
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-400 font-bold">Police PCC Status</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 font-extrabold">
+                    {viewTech.policeVerified ? "Verified Clean (PCC Issued)" : "Pending Verification"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
+                  <span className="text-slate-400 font-bold">Local Police Station</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Sigra Police Station</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-slate-400 font-bold">Bonded Insurance</span>
+                  <span className="font-bold text-emerald-600">₹5,00,000 Safety Cover</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: KYC & DOCUMENT ATTACHMENTS */}
+        {detailTab === "kyc" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                  Partner Biometric Aadhaar Document
+                </span>
+                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                  Verified
+                </span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-5 h-5 text-brand-600" />
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">Partner_Aadhaar_Front_Back.pdf</span>
+                </div>
+                <button type="button" className="text-brand-600 font-bold text-[11px] underline">View Document</button>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                  Guarantor Person Aadhaar Card Document
+                </span>
+                <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">
+                  Guarantor Verified
+                </span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-5 h-5 text-purple-600" />
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">Guarantor_Aadhaar_Record.pdf</span>
+                </div>
+                <button type="button" className="text-purple-600 font-bold text-[11px] underline">View Document</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: COMPLETED JOBS */}
+        {detailTab === "jobs" && (
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
+            <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
+              Jobs Completed by {viewTech.name} ({viewTech.totalJobs} Jobs)
+            </h3>
+            <p className="text-xs text-slate-500">Live job dispatches and completion records in Varanasi</p>
+          </div>
+        )}
+
+        {/* TAB 4: EARNINGS & SETTLEMENT */}
+        {detailTab === "earnings" && (
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+            <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
+              Partner Weekly Settlement & Commission Ledger
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border">
+                <span className="text-slate-400 font-bold block">Gross Revenue</span>
+                <span className="text-lg font-black text-slate-900 dark:text-white">₹{viewTech.totalEarnings.toLocaleString()}</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border">
+                <span className="text-slate-400 font-bold block">HelpMate Comm. (25%)</span>
+                <span className="text-lg font-black text-emerald-600">₹{viewTech.commissionPaid.toLocaleString()}</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border">
+                <span className="text-slate-400 font-bold block">Pending Weekly Payout</span>
+                <span className="text-lg font-black text-amber-600">₹{viewTech.pendingPayout.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Top Header Tabs */}
+      {/* Top Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold">
-          <button
-            onClick={() => setActiveTab("fleet")}
-            className={`px-4 py-2 rounded-xl transition-all ${
-              activeTab === "fleet"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            Varanasi Technician Fleet & KYC
-          </button>
-          <button
-            onClick={() => setActiveTab("commission")}
-            className={`px-4 py-2 rounded-xl transition-all ${
-              activeTab === "commission"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            25% Commission & Weekly Settlement Ledger
-          </button>
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Partner Fleet Directory & Payouts
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Manage onboarded technicians, biometric KYC verification, and weekly commission settlements.
+          </p>
         </div>
 
         <button
           onClick={() => setIsAddPartnerOpen(true)}
-          className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-2"
+          className="px-4 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux flex items-center gap-2 transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Manual Onboard Partner</span>
@@ -375,6 +610,30 @@ export default function TechniciansPage() {
             75% technician earnings awaiting payout
           </p>
         </div>
+      </div>
+
+      {/* Navigation Tabs (Positioned right at bottom of Quick Cards) */}
+      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+        <button
+          onClick={() => setActiveTab("fleet")}
+          className={`px-4 py-2.5 rounded-xl transition-all ${
+            activeTab === "fleet"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          Varanasi Technician Fleet & KYC
+        </button>
+        <button
+          onClick={() => setActiveTab("commission")}
+          className={`px-4 py-2.5 rounded-xl transition-all ${
+            activeTab === "commission"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          25% Commission & Weekly Settlement Ledger
+        </button>
       </div>
 
       {activeTab === "fleet" ? (
@@ -789,49 +1048,6 @@ export default function TechniciansPage() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        </Portal>
-      )}
-
-      {/* View Tech Profile Modal */}
-      {viewTech && (
-        <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-3">
-                  <img src={viewTech.avatar} alt={viewTech.name} className="w-12 h-12 rounded-2xl object-cover border" />
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">{viewTech.name}</h3>
-                    <p className="text-xs text-brand-600 font-semibold">{viewTech.role} • {viewTech.category}</p>
-                  </div>
-                </div>
-                <button type="button" onClick={() => setViewTech(null)} className="text-slate-400 hover:text-slate-600">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Locality & Phone</span>
-                  <div className="font-bold text-slate-900 dark:text-white">{viewTech.phone}</div>
-                  <div className="text-slate-500">{viewTech.locality} ({viewTech.pincode})</div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">KYC Status</span>
-                    <div className="font-extrabold text-emerald-600 text-xs mt-0.5">Aadhaar Verified</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Rating & Jobs</span>
-                    <div className="font-extrabold text-slate-900 dark:text-white text-xs mt-0.5">★ {viewTech.rating} ({viewTech.totalJobs} jobs)</div>
-                  </div>
-                </div>
-              </div>
-
-              <button type="button" onClick={() => setViewTech(null)} className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs">Close</button>
             </div>
           </div>
         </Portal>

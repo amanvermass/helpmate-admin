@@ -49,19 +49,14 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Page Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+      {/* Top Header Banner */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-800 to-slate-950 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-2.5 py-0.5 rounded border border-brand-200 dark:border-brand-800 flex items-center gap-1">
-              <Settings className="w-3 h-3 text-brand-600" /> System Configuration
-            </span>
-            <span className="text-xs text-slate-500">Varanasi Dispatch HQ</span>
+          <div className="flex items-center gap-2 text-slate-300 text-xs font-bold uppercase tracking-wider mb-1">
+            <Settings className="w-4 h-4" /> System Control Center
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            System & Application Settings
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-2xl font-extrabold tracking-tight">System & Application Settings</h1>
+          <p className="text-xs text-slate-300 mt-1 max-w-xl">
             Manage platform parameters, WhatsApp notification gateways, backup schedules, and security controls.
           </p>
         </div>
@@ -76,300 +71,210 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* Settings Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab("general")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
-            activeTab === "general"
-              ? "bg-brand-500 text-white shadow-lux"
-              : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-          }`}
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>General Platform</span>
-        </button>
+      {/* 4 Quick Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Dispatch Radius</span>
+            <div className="p-2.5 rounded-2xl bg-brand-50 text-brand-600 border border-brand-200">
+              <Globe className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">15 km Radius</span>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("notifications")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
-            activeTab === "notifications"
-              ? "bg-brand-500 text-white shadow-lux"
-              : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-          }`}
-        >
-          <Bell className="w-3.5 h-3.5" />
-          <span>WhatsApp & Alerts</span>
-        </button>
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">WhatsApp Gateway</span>
+            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-emerald-600">Active OTP API</span>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("data")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
-            activeTab === "data"
-              ? "bg-brand-500 text-white shadow-lux"
-              : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-          }`}
-        >
-          <Database className="w-3.5 h-3.5" />
-          <span>Data & Exports</span>
-        </button>
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Automated Backup</span>
+            <div className="p-2.5 rounded-2xl bg-purple-50 text-purple-600 border border-purple-200">
+              <Database className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-purple-600">Daily Nightly</span>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("security")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
-            activeTab === "security"
-              ? "bg-brand-500 text-white shadow-lux"
-              : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-          }`}
-        >
-          <Lock className="w-3.5 h-3.5" />
-          <span>Security & Backup</span>
-        </button>
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Encryption Standard</span>
+            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">AES-256 Valid</span>
+        </div>
       </div>
 
-      {/* TAB 1: GENERAL PLATFORM SETTINGS */}
-      {activeTab === "general" && (
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-6">
-          <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <Building className="w-5 h-5 text-brand-600" />
-              <span>General Platform Parameters</span>
-            </h3>
-            <p className="text-xs text-slate-500">
-              Configure default brand details, service dispatch radius, commission defaults, and regional currency.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-            <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Platform Brand Name</label>
-              <input
-                type="text"
-                value={appName}
-                onChange={(e) => setAppName(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Default Dispatch Radius</label>
-              <input
-                type="text"
-                value={dispatchRadius}
-                onChange={(e) => setDispatchRadius(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Standard Partner Commission Share</label>
-              <input
-                type="text"
-                value={commissionRate}
-                onChange={(e) => setCommissionRate(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Base Operating Currency</label>
-              <input
-                type="text"
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                disabled
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: WHATSAPP & NOTIFICATIONS */}
-      {activeTab === "notifications" && (
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-6">
-          <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-emerald-600" />
-              <span>WhatsApp & SMS Gateway Triggers</span>
-            </h3>
-            <p className="text-xs text-slate-500">
-              Configure real-time automated messaging sent to Varanasi customers and service partner technicians.
-            </p>
-          </div>
-
-          <div className="space-y-4 text-xs">
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="font-bold text-slate-900 dark:text-white block">Instant WhatsApp Booking Confirmation</span>
-                <span className="text-slate-500">Sends job ID, assigned technician photo, and scheduled slot directly on WhatsApp.</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setWhatsappConfirmations(!whatsappConfirmations)}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  whatsappConfirmations ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                    whatsappConfirmations ? "left-6.5" : "left-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="font-bold text-slate-900 dark:text-white block">Job Completion OTP Verification SMS</span>
-                <span className="text-slate-500">Sends 4-digit verification code to customer phone when technician arrives.</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOtpNotifications(!otpNotifications)}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  otpNotifications ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                    otpNotifications ? "left-6.5" : "left-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="font-bold text-slate-900 dark:text-white block">Technician Dispatch Push Alerts</span>
-                <span className="text-slate-500">Notifies lead partner on WhatsApp when a new job is assigned in their locality.</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAssignmentAlerts(!assignmentAlerts)}
-                className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                  assignmentAlerts ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                    assignmentAlerts ? "left-6.5" : "left-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: DATA & EXPORTS */}
-      {activeTab === "data" && (
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-6">
-          <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <Database className="w-5 h-5 text-brand-600" />
-              <span>Bulk Reporting & CSV Exports</span>
-            </h3>
-            <p className="text-xs text-slate-500">
-              Download system-wide CSV ledgers for accounting, GST filings, and operational audits.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      {/* Navigation Tabs (Positioned at bottom of Quick Cards) */}
+      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+        {[
+          { id: "general", label: "General & Operational Settings", icon: Sliders },
+          { id: "notifications", label: "Notification Gateways", icon: Bell },
+          { id: "data", label: "Data Backups & Export", icon: Database },
+          { id: "security", label: "Security & Encryption", icon: ShieldCheck },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
             <button
-              type="button"
-              onClick={() => handleExportSystemData("Bookings Ledger")}
-              className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-left space-y-2 transition-all group cursor-pointer"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 ${
+                activeTab === tab.id
+                  ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
             >
-              <div className="flex items-center justify-between">
-                <FileSpreadsheet className="w-5 h-5 text-brand-600" />
-                <Download className="w-4 h-4 text-slate-400 group-hover:text-brand-600" />
-              </div>
-              <div>
-                <span className="font-bold text-xs text-slate-900 dark:text-white block">Export Bookings Log</span>
-                <span className="text-[10px] text-slate-500">Full dispatch history with GST splits</span>
-              </div>
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
             </button>
+          );
+        })}
+      </div>
 
-            <button
-              type="button"
-              onClick={() => handleExportSystemData("25% Commission Ledger")}
-              className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-left space-y-2 transition-all group cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
-                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                <Download className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
-              </div>
-              <div>
-                <span className="font-bold text-xs text-slate-900 dark:text-white block">Commission & Settlements</span>
-                <span className="text-[10px] text-slate-500">25% HelpMate revenue breakdown</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleExportSystemData("Technician KYC Directory")}
-              className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-left space-y-2 transition-all group cursor-pointer"
-            >
-              <div className="flex items-center justify-between">
-                <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-                <Download className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
-              </div>
-              <div>
-                <span className="font-bold text-xs text-slate-900 dark:text-white block">Partner KYC Records</span>
-                <span className="text-[10px] text-slate-500">Aadhaar & Police clearance stats</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: SECURITY & BACKUP */}
-      {activeTab === "security" && (
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-6">
-          <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <Server className="w-5 h-5 text-purple-600" />
-              <span>Database Backups & Security Protection</span>
+      {/* TAB CONTENT CARDS */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        {activeTab === "general" && (
+          <div className="space-y-6 max-w-3xl">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
+              General System Settings
             </h3>
-            <p className="text-xs text-slate-500">
-              Automated database snapshot backups, input sanitization rules, and active uptime monitoring.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Activity className="w-5 h-5 text-emerald-600" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Application Name</label>
+                <input
+                  type="text"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Dispatch Radius Limit</label>
+                <input
+                  type="text"
+                  value={dispatchRadius}
+                  onChange={(e) => setDispatchRadius(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Fixed Commission Fee</label>
+                <input
+                  type="text"
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Operational Currency</label>
+                <input
+                  type="text"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "notifications" && (
+          <div className="space-y-6 max-w-3xl">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
+              Notification & Communication Channels
+            </h3>
+
+            <div className="space-y-4 text-xs">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                 <div>
-                  <span className="font-bold text-xs text-emerald-900 dark:text-emerald-300 block">Database Auto-Backup</span>
-                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400">Snapshot schedule active (03:00 AM IST)</span>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm">WhatsApp Booking Confirmations</div>
+                  <div className="text-slate-500">Send instant automated WhatsApp messages with booking details to customers</div>
                 </div>
+                <input
+                  type="checkbox"
+                  checked={whatsappConfirmations}
+                  onChange={(e) => setWhatsappConfirmations(e.target.checked)}
+                  className="w-5 h-5 accent-brand-500 cursor-pointer"
+                />
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                Operational
-              </span>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                 <div>
-                  <span className="font-bold text-xs text-blue-900 dark:text-blue-300 block">Strict Input Regex Validation</span>
-                  <span className="text-[10px] text-blue-700 dark:text-blue-400">Phone, OTP & GSTIN rules active</span>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm">Customer OTP Phone Verification</div>
+                  <div className="text-slate-500">Require 4-digit SMS OTP code when adding new household customers</div>
                 </div>
+                <input
+                  type="checkbox"
+                  checked={otpNotifications}
+                  onChange={(e) => setOtpNotifications(e.target.checked)}
+                  className="w-5 h-5 accent-brand-500 cursor-pointer"
+                />
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                Secured
-              </span>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {activeTab === "data" && (
+          <div className="space-y-6 max-w-3xl">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
+              Database Backups & Export
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => handleExportSystemData("Bookings")}
+                className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left hover:border-brand-500 transition-all group"
+              >
+                <FileSpreadsheet className="w-6 h-6 text-brand-600 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-bold text-slate-900 dark:text-white text-xs">Export Bookings Log (CSV)</div>
+                <div className="text-[11px] text-slate-500">Download complete Varanasi dispatch history</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleExportSystemData("Technician Fleet")}
+                className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left hover:border-brand-500 transition-all group"
+              >
+                <Database className="w-6 h-6 text-purple-600 mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-bold text-slate-900 dark:text-white text-xs">Export Fleet Directory (CSV)</div>
+                <div className="text-[11px] text-slate-500">Download technician KYC and Aadhaar records</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "security" && (
+          <div className="space-y-6 max-w-3xl">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
+              Security Controls & Audit Policy
+            </h3>
+
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs space-y-1">
+              <div className="font-extrabold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" /> Granular RBAC Permission System Active
+              </div>
+              <div className="text-emerald-700 dark:text-emerald-400">
+                All admin panel actions are logged to immutable audit trails under Varanasi HQ control.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

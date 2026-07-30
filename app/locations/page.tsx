@@ -3,20 +3,20 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { varanasiLocalities, VaranasiLocality } from "@/lib/mockData";
-import { MapPin, Plus, CheckCircle2, AlertCircle, Building2, X } from "lucide-react";
+import { Building2, Plus, CheckCircle2, MapPin, Users, Activity, X } from "lucide-react";
 import { Portal } from "@/components/Portal";
 
 export default function LocationsPage() {
   const [localities, setLocalities] = useState<VaranasiLocality[]>(varanasiLocalities);
-  const [activeTab, setActiveTab] = useState<"cities" | "areas" | "zones" | "pincodes">("pincodes");
+  const [activeTab, setActiveTab] = useState<"pincodes" | "areas" | "zones" | "cities">("pincodes");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [pincode, setPincode] = useState("");
 
   const columns: Column<VaranasiLocality>[] = [
+    { key: "name", header: "Locality / Zone Name", sortable: true },
     { key: "pincode", header: "Pincode", sortable: true },
-    { key: "name", header: "Locality / Area", sortable: true },
     {
       key: "status",
       header: "Demand Status",
@@ -25,17 +25,19 @@ export default function LocationsPage() {
           className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
             row.status === "High Demand"
               ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
-              : row.status === "Peak"
-              ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
           }`}
         >
           {row.status}
         </span>
       ),
     },
-    { key: "activeBookings", header: "Active Jobs", sortable: true },
-    { key: "activeTechs", header: "Assigned Techs", sortable: true },
+    {
+      key: "activeTechs",
+      header: "Assigned Technicians",
+      accessor: (row) => <span className="font-bold text-slate-900 dark:text-white">{row.activeTechs} Active</span>,
+      sortable: true,
+    },
     {
       key: "isServiceable",
       header: "Serviceability",
@@ -76,33 +78,89 @@ export default function LocationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
-            <Building2 className="w-5 h-5" />
+      {/* Top Header Banner */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">
+            <Building2 className="w-4 h-4" /> Coverage & Pincode Matrix
           </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Location & Coverage Management</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Single-city Varanasi pincode matrix & zone coverage</p>
-          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Location & Coverage Management</h1>
+          <p className="text-xs text-blue-100 mt-1 max-w-xl">
+            Single-city Varanasi pincode matrix & zone coverage.
+          </p>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          {(["pincodes", "areas", "zones", "cities"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                activeTab === tab
-                  ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <button
+          onClick={() => setIsAddOpen(true)}
+          className="px-4 py-2.5 rounded-2xl bg-white text-blue-900 font-extrabold text-xs shadow-md hover:bg-blue-50 transition-all flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4 text-blue-600" />
+          <span>Add New Pincode Zone</span>
+        </button>
+      </div>
+
+      {/* 4 Executive Quick Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Serviceable Zones</span>
+            <div className="p-2.5 rounded-2xl bg-brand-50 text-brand-600 border border-brand-200">
+              <MapPin className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">{localities.length} Pincodes</span>
         </div>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">High Demand Hubs</span>
+            <div className="p-2.5 rounded-2xl bg-purple-50 text-purple-600 border border-purple-200">
+              <Activity className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-purple-600">
+            {localities.filter((l) => l.status === "High Demand").length} Active Hubs
+          </span>
+        </div>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Deployed Techs</span>
+            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-emerald-600">
+            {localities.reduce((sum, l) => sum + (l.activeTechs || 0), 0)} Engineers
+          </span>
+        </div>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">City Jurisdiction</span>
+            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+              <Building2 className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">Varanasi Metro</span>
+        </div>
+      </div>
+
+      {/* Navigation Tabs (Positioned at bottom of Quick Cards) */}
+      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+        {(["pincodes", "areas", "zones", "cities"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 rounded-xl capitalize transition-all ${
+              activeTab === tab
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
       {/* Main DataTable */}
@@ -126,41 +184,51 @@ export default function LocationsPage() {
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Varanasi Pincode Zone</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add New Pincode Zone</h3>
                   <button type="button" onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Locality Name *</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Lanka / Assi Ghat"
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode *</label>
-                    <input
-                      type="text"
-                      value={pincode}
-                      onChange={(e) => setPincode(e.target.value)}
-                      placeholder="e.g. 221005"
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">Locality / Zone Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Lanka Bhabha Road"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">Pincode *</label>
+                  <input
+                    type="text"
+                    required
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value)}
+                    placeholder="221005"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-xs outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-                <button type="submit" className="flex-1 py-2.5 bg-brand-500 text-white rounded-xl font-bold text-xs shadow-lux">Save Pincode Zone</button>
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux"
+                >
+                  Save Locality
+                </button>
               </div>
             </form>
           </div>

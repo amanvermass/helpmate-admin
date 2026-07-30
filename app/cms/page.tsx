@@ -4,7 +4,15 @@ import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
-import { Wrench, Plus, CheckCircle2, MapPin, Tag, X } from "lucide-react";
+import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2 } from "lucide-react";
+
+interface ServiceOfferingRow {
+  id: string;
+  title: string;
+  type: string;
+  price: number;
+  duration: string;
+}
 
 export default function CmsPage() {
   const [services, setServices] = useState<ServiceItem[]>(initialServices);
@@ -12,13 +20,28 @@ export default function CmsPage() {
   const [localities, setLocalities] = useState<VaranasiLocality[]>(varanasiLocalities);
   const [activeTab, setActiveTab] = useState<"services" | "addons" | "pincodes">("services");
 
+  // Category Filter Flow State
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All Categories");
+
+  const categoriesList = [
+    "All Categories",
+    "AC Service & Repair",
+    "Appliance Repair",
+    "Electrical",
+    "Plumbing",
+    "Home Cleaning",
+    "Car & Bike Wash",
+    "Pest Control",
+    "Home Salon",
+  ];
+
   const serviceColumns: Column<ServiceItem>[] = [
     {
       key: "title",
       header: "Service Package Title",
       accessor: (row) => (
         <div className="flex flex-col">
-          <span className="font-extrabold text-slate-900">{row.title}</span>
+          <span className="font-extrabold text-slate-900 dark:text-white">{row.title}</span>
           <span className="text-[10px] text-slate-400 max-w-xs truncate">{row.subtitle}</span>
         </div>
       ),
@@ -27,7 +50,7 @@ export default function CmsPage() {
       key: "category",
       header: "Category",
       accessor: (row) => (
-        <span className="font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded text-[10px] border border-brand-200">
+        <span className="font-bold text-brand-600 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded text-[10px] border border-brand-200 dark:border-brand-800">
           {row.category}
         </span>
       ),
@@ -37,7 +60,7 @@ export default function CmsPage() {
       header: "Price (₹)",
       accessor: (row) => (
         <div className="flex items-baseline gap-1.5 font-bold">
-          <span className="text-sm text-slate-900">₹{row.price}</span>
+          <span className="text-sm text-slate-900 dark:text-white">₹{row.price}</span>
           <span className="text-xs text-slate-400 line-through">₹{row.originalPrice}</span>
         </div>
       ),
@@ -49,8 +72,8 @@ export default function CmsPage() {
         <span
           className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
             row.isInspectionBased
-              ? "bg-amber-100 text-amber-800 border border-amber-300"
-              : "bg-blue-50 text-blue-700 border border-blue-200"
+              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800"
+              : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
           }`}
         >
           {row.isInspectionBased ? "Inspection Quote" : "Fixed Pricing"}
@@ -61,7 +84,7 @@ export default function CmsPage() {
       key: "status",
       header: "Status",
       accessor: (row) => (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 w-fit">
+        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 w-fit">
           <CheckCircle2 className="w-3 h-3" /> {row.status}
         </span>
       ),
@@ -88,22 +111,22 @@ export default function CmsPage() {
     {
       key: "title",
       header: "Add-on Title",
-      accessor: (row) => <span className="font-extrabold text-slate-900">{row.title}</span>,
+      accessor: (row) => <span className="font-extrabold text-slate-900 dark:text-white">{row.title}</span>,
     },
     {
       key: "price",
       header: "Unit Price (₹)",
       accessor: (row) => (
-        <span className="font-bold text-slate-900">
+        <span className="font-bold text-slate-900 dark:text-white">
           ₹{row.price} / {row.unit}
         </span>
       ),
     },
     {
       key: "category",
-      header: "Category",
+      header: "Associated Category",
       accessor: (row) => (
-        <span className="font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded text-[10px] border border-brand-200">
+        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-bold text-[10px] text-slate-700 dark:text-slate-300">
           {row.category}
         </span>
       ),
@@ -112,8 +135,8 @@ export default function CmsPage() {
       key: "status",
       header: "Status",
       accessor: (row) => (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 w-fit">
-          <CheckCircle2 className="w-3 h-3" /> {row.status}
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          {row.status}
         </span>
       ),
     },
@@ -122,37 +145,24 @@ export default function CmsPage() {
   const pincodeColumns: Column<VaranasiLocality>[] = [
     {
       key: "name",
-      header: "Varanasi Zone / Locality",
-      accessor: (row) => (
-        <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-brand-600" />
-          <span className="font-bold text-slate-900">{row.name}</span>
-        </div>
-      ),
+      header: "Locality / Zone",
+      accessor: (row) => <span className="font-extrabold text-slate-900 dark:text-white">{row.name}</span>,
     },
     {
       key: "pincode",
       header: "Pincode",
-      accessor: (row) => (
-        <span className="font-mono font-bold text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-          {row.pincode}
-        </span>
-      ),
+      accessor: (row) => <span className="font-mono font-bold text-brand-600">{row.pincode}</span>,
     },
     {
       key: "activeBookings",
       header: "Active Dispatch Load",
-      accessor: (row) => (
-        <span className="font-bold text-slate-800 text-xs">
-          {row.activeBookings} Live Bookings
-        </span>
-      ),
+      accessor: (row) => <span className="font-bold text-slate-700 dark:text-slate-300">{row.activeBookings} Bookings</span>,
     },
     {
       key: "status",
       header: "Serviceability Status",
       accessor: () => (
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 w-fit">
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 w-fit">
           <CheckCircle2 className="w-3 h-3" /> Serviceable
         </span>
       ),
@@ -163,16 +173,22 @@ export default function CmsPage() {
   const [isAddAddonOpen, setIsAddAddonOpen] = useState(false);
   const [isAddPincodeOpen, setIsAddPincodeOpen] = useState(false);
 
-  // Add Service Form State
-  const [serviceTitle, setServiceTitle] = useState("");
+  // Step 1 State: Master Category & Option to Add New Category
   const [serviceCategory, setServiceCategory] = useState("AC Service & Repair");
-  const [serviceSubtitle, setServiceSubtitle] = useState("");
-  const [price, setPrice] = useState("699");
-  const [originalPrice, setOriginalPrice] = useState("999");
-  const [duration, setDuration] = useState("45 mins");
-  const [isInspectionBased, setIsInspectionBased] = useState(false);
-  const [isPopular, setIsPopular] = useState(false);
-  const [selectedSystemTypes, setSelectedSystemTypes] = useState<string[]>(["Split AC", "Window AC"]);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+  // Step 2 State: Multiple Add Sub-Service Offerings with Price & Duration
+  const [serviceOfferings, setServiceOfferings] = useState<ServiceOfferingRow[]>([
+    {
+      id: `offering-${Date.now()}`,
+      title: "",
+      type: "Servicing",
+      price: 699,
+      duration: "45 mins",
+    },
+  ]);
 
   // Add Addon Form State
   const [addonTitle, setAddonTitle] = useState("");
@@ -184,31 +200,73 @@ export default function CmsPage() {
   const [pincodeLocality, setPincodeLocality] = useState("");
   const [pincodeCode, setPincodeCode] = useState("221005");
 
+  const handleAddOfferingRow = () => {
+    setServiceOfferings([
+      ...serviceOfferings,
+      {
+        id: `offering-${Date.now()}`,
+        title: "",
+        type: "Servicing",
+        price: 699,
+        duration: "45 mins",
+      },
+    ]);
+  };
+
+  const handleUpdateOfferingRow = (index: number, field: keyof ServiceOfferingRow, value: any) => {
+    const updated = [...serviceOfferings];
+    updated[index] = { ...updated[index], [field]: value };
+    setServiceOfferings(updated);
+  };
+
+  const handleRemoveOfferingRow = (index: number) => {
+    setServiceOfferings(serviceOfferings.filter((_, i) => i !== index));
+  };
+
   const handleCreateService = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!serviceTitle) return;
 
-    const newSvc: ServiceItem = {
-      id: `srv-${Date.now()}`,
-      category: serviceCategory as any,
-      title: serviceTitle,
-      subtitle: serviceSubtitle || "High quality expert service with 30-day HelpMate guarantee",
-      price: parseFloat(price) || 699,
-      originalPrice: parseFloat(originalPrice) || 999,
-      duration,
+    const finalCategory = isAddingNewCategory && newCategoryName.trim()
+      ? newCategoryName.trim()
+      : serviceCategory;
+
+    const validOfferings = serviceOfferings.filter((off) => off.title.trim().length > 0);
+    if (validOfferings.length === 0) return;
+
+    const newServicesList: ServiceItem[] = validOfferings.map((off, idx) => ({
+      id: `srv-${Date.now()}-${idx}`,
+      category: finalCategory as any,
+      title: off.title,
+      subtitle: `Expert ${off.type} service with 30-day HelpMate guarantee`,
+      price: off.price || 699,
+      originalPrice: Math.round((off.price || 699) * 1.3),
+      duration: off.duration || "45 mins",
       rating: 5.0,
       reviewsCount: 1,
-      isInspectionBased,
-      isPopular,
-      systemType: selectedSystemTypes,
+      isInspectionBased: false,
+      isPopular: idx === 0,
+      systemType: [off.type],
       status: "Active",
       createdBy: "Admin Dispatcher",
       createdDate: "Just Now",
-    };
+    }));
 
-    setServices([newSvc, ...services]);
-    setServiceTitle("");
-    setServiceSubtitle("");
+    if (isAddingNewCategory && newCategoryName.trim()) {
+      setCustomCategories([...customCategories, newCategoryName.trim()]);
+    }
+
+    setServices([...newServicesList, ...services]);
+    setServiceOfferings([
+      {
+        id: `offering-${Date.now()}`,
+        title: "",
+        type: "Servicing",
+        price: 699,
+        duration: "45 mins",
+      },
+    ]);
+    setIsAddingNewCategory(false);
+    setNewCategoryName("");
     setIsAddServiceOpen(false);
   };
 
@@ -248,6 +306,11 @@ export default function CmsPage() {
     setPincodeLocality("");
     setIsAddPincodeOpen(false);
   };
+
+  // Dynamic Filtering by Category
+  const filteredServices = selectedCategoryFilter === "All Categories"
+    ? services
+    : services.filter((s) => s.category === selectedCategoryFilter);
 
   return (
     <div className="space-y-6">
@@ -310,12 +373,34 @@ export default function CmsPage() {
         </div>
       </div>
 
+      {/* CATEGORY FLOW SELECTION CHIPS (For Services Tab) */}
+      {activeTab === "services" && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span className="font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] shrink-0 flex items-center gap-1">
+            <Filter className="w-3 h-3" /> Category Flow:
+          </span>
+          {categoriesList.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategoryFilter(cat)}
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 ${
+                selectedCategoryFilter === cat
+                  ? "bg-brand-500 text-white shadow-lux"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
       {activeTab === "services" ? (
         <DataTable
-          title="Service Catalog & Pricing Mode CMS"
+          title={`Service Catalog & Pricing Mode CMS (${filteredServices.length})`}
           description="Manage fixed pricing and inspection-based service options across HVAC, Electrical & Plumbing."
           columns={serviceColumns}
-          data={services}
+          data={filteredServices}
           searchPlaceholder="Search service title or category..."
           addButtonLabel="Add New Service"
           onAddClick={() => setIsAddServiceOpen(true)}
@@ -349,165 +434,209 @@ export default function CmsPage() {
             <div className="absolute inset-0" onClick={() => setIsAddServiceOpen(false)} />
             <form
               onSubmit={handleCreateService}
-              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-2xl w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none overflow-y-auto"
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-lg w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs"
             >
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
-                    <Wrench className="w-5 h-5 text-brand-600" />
-                    <span>Create New Service Package</span>
-                  </h3>
-                  <p className="text-xs text-slate-500">Add service details, category, pricing, duration, and warranty</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddServiceOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 text-sm font-bold"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-4 text-xs">
-                {/* Service Title */}
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Package Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={serviceTitle}
-                    onChange={(e) => setServiceTitle(e.target.value)}
-                    placeholder="e.g. Split AC Power Foam Jet Servicing"
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                  />
+              <div className="space-y-4 overflow-y-auto pr-1">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add New Service</h3>
+                  <button type="button" onClick={() => setIsAddServiceOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
-                {/* Category & System Type */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Category</label>
-                    <select
-                      value={serviceCategory}
-                      onChange={(e) => setServiceCategory(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
+                {/* Step 1: Master Category Selection & Add Category Option */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-1.5">
+                    <span className="font-extrabold text-slate-900 dark:text-white block text-xs">
+                      1. Select Master Category *
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingNewCategory(!isAddingNewCategory)}
+                      className="text-brand-600 dark:text-brand-400 hover:underline font-bold text-[11px] flex items-center gap-1"
                     >
-                      <option value="AC Service & Repair">AC Service & Repair</option>
-                      <option value="Car & Bike Wash">Car & Bike Wash</option>
-                      <option value="Home Cleaning">Home Cleaning</option>
-                      <option value="Appliance Repair">Appliance Repair</option>
-                      <option value="Pest Control">Pest Control</option>
-                      <option value="Electrician">Electrician</option>
-                      <option value="Plumbing">Plumbing</option>
-                      <option value="Home Salon">Home Salon</option>
-                    </select>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{isAddingNewCategory ? "Select Existing Category" : "Add New Category"}</span>
+                    </button>
                   </div>
 
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Est. Duration</label>
-                    <select
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                    >
-                      <option value="30 mins">30 mins</option>
-                      <option value="45 mins">45 mins</option>
-                      <option value="60 mins">60 mins</option>
-                      <option value="90 mins">90 mins</option>
-                      <option value="2 - 3 hrs">2 - 3 hrs</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Subtitle / Description */}
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Description / Highlights</label>
-                  <textarea
-                    rows={2}
-                    value={serviceSubtitle}
-                    onChange={(e) => setServiceSubtitle(e.target.value)}
-                    placeholder="High-pressure jet pump cleaning for indoor & outdoor units with anti-bacterial coating..."
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  ></textarea>
-                </div>
-
-                {/* Pricing Mode Toggle */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
-                  <span className="font-bold text-slate-900 dark:text-white block">Pricing Architecture</span>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 font-semibold cursor-pointer">
-                      <input
-                        type="radio"
-                        name="pricingMode"
-                        checked={!isInspectionBased}
-                        onChange={() => setIsInspectionBased(false)}
-                      />
-                      <span>Fixed Standard Rate</span>
-                    </label>
-                    <label className="flex items-center gap-2 font-semibold cursor-pointer">
-                      <input
-                        type="radio"
-                        name="pricingMode"
-                        checked={isInspectionBased}
-                        onChange={() => setIsInspectionBased(true)}
-                      />
-                      <span>Diagnostic Inspection Quote</span>
-                    </label>
-                  </div>
-
-                  {!isInspectionBased && (
-                    <div className="grid grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Selling Price (₹)</label>
+                  {!isAddingNewCategory ? (
+                    <div>
+                      <select
+                        value={serviceCategory}
+                        onChange={(e) => setServiceCategory(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
+                      >
+                        {[...categoriesList.filter((c) => c !== "All Categories"), ...customCategories].map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">New Category Title *</label>
+                      <div className="flex gap-2">
                         <input
-                          type="number"
-                          value={price}
-                          onChange={(e) => setPrice(e.target.value)}
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-extrabold text-brand-600"
+                          type="text"
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="e.g. Solar Panel Cleaning & Repair"
+                          className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
                         />
-                      </div>
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">MRP Original (₹)</label>
-                        <input
-                          type="number"
-                          value={originalPrice}
-                          onChange={(e) => setOriginalPrice(e.target.value)}
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-slate-400 line-through"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (newCategoryName.trim()) {
+                              setCustomCategories([...customCategories, newCategoryName.trim()]);
+                              setServiceCategory(newCategoryName.trim());
+                              setIsAddingNewCategory(false);
+                            }
+                          }}
+                          className="px-3 py-2.5 bg-brand-500 text-white rounded-xl font-bold text-xs shadow-lux"
+                        >
+                          Save
+                        </button>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Popular Badge Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                  <span className="font-bold text-slate-700 dark:text-slate-300">Mark as Trending / Most Popular Service</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isPopular}
-                      onChange={(e) => setIsPopular(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-slate-600 peer-checked:bg-brand-500"></div>
-                  </label>
+                {/* Step 2: Dynamic Multiple Add Sub-Service Offerings */}
+                <div className="p-4 rounded-2xl bg-brand-50/50 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-800 space-y-3">
+                  <div className="flex items-center justify-between border-b border-brand-200 dark:border-brand-800 pb-1.5">
+                    <span className="font-extrabold text-brand-900 dark:text-brand-300 block text-xs">
+                      2. Sub-Services Offerings ({serviceOfferings.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAddOfferingRow}
+                      className="px-2.5 py-1 bg-brand-500 text-white rounded-lg text-[11px] font-bold shadow-lux flex items-center gap-1 hover:bg-brand-600 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Offering</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {serviceOfferings.length > 0 ? (
+                      serviceOfferings.map((off, idx) => (
+                        <div
+                          key={off.id || idx}
+                          className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 relative shadow-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-extrabold text-[10px] text-slate-500">
+                              Offering #{idx + 1}
+                            </span>
+                            {serviceOfferings.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveOfferingRow(idx)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+                                title="Remove Offering"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                                Sub-Service Offering Title *
+                              </label>
+                              <input
+                                type="text"
+                                value={off.title}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "title", e.target.value)}
+                                placeholder="e.g. Split AC Installation / Servicing"
+                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                                Offering Type *
+                              </label>
+                              <select
+                                value={off.type}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "type", e.target.value)}
+                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
+                              >
+                                <option value="Installation">Installation Service</option>
+                                <option value="Servicing">Servicing / Maintenance</option>
+                                <option value="Repair">Repairing Service</option>
+                                <option value="Uninstallation">Uninstallation Service</option>
+                                <option value="Maintenance">Maintenance & Add-on</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                                Price (₹) *
+                              </label>
+                              <input
+                                type="number"
+                                value={off.price}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "price", Number(e.target.value))}
+                                placeholder="699"
+                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                                Duration *
+                              </label>
+                              <select
+                                value={off.duration}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "duration", e.target.value)}
+                                className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                              >
+                                <option value="30 mins">30 mins</option>
+                                <option value="45 mins">45 mins</option>
+                                <option value="60 mins">60 mins</option>
+                                <option value="90 mins">90 mins</option>
+                                <option value="2 - 3 hrs">2 - 3 hrs</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-2">
+                        <p className="text-xs text-slate-500 font-medium">No service offerings added yet.</p>
+                        <button
+                          type="button"
+                          onClick={handleAddOfferingRow}
+                          className="px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-xs font-bold border border-brand-200 inline-flex items-center gap-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add First Offering Item
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Modal Buttons */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddServiceOpen(false)}
-                  className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs"
+                  className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Publish Service to App
+                  <span>Save Service Package</span>
                 </button>
               </div>
             </form>
@@ -522,55 +651,54 @@ export default function CmsPage() {
             <div className="absolute inset-0" onClick={() => setIsAddAddonOpen(false)} />
             <form
               onSubmit={handleCreateAddon}
-              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none"
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs"
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Spare Part / Add-on</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Spare Part Add-on</h3>
                   <button type="button" onClick={() => setIsAddAddonOpen(false)} className="text-slate-400 hover:text-slate-600">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Add-on Title *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addonTitle}
-                      onChange={(e) => setAddonTitle(e.target.value)}
-                      placeholder="e.g. Anti-Bacterial Spray Coating"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit Price (₹)</label>
-                      <input
-                        type="number"
-                        value={addonPrice}
-                        onChange={(e) => setAddonPrice(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit</label>
-                      <input
-                        type="text"
-                        value={addonUnit}
-                        onChange={(e) => setAddonUnit(e.target.value)}
-                        placeholder="Can / Meter"
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Add-on Item Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addonTitle}
+                    onChange={(e) => setAddonTitle(e.target.value)}
+                    placeholder="e.g. Copper Piping (per ft)"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Unit Price (₹) *</label>
+                  <input
+                    type="number"
+                    required
+                    value={addonPrice}
+                    onChange={(e) => setAddonPrice(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button type="button" onClick={() => setIsAddAddonOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Save Add-on</button>
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddAddonOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux"
+                >
+                  Save Add-on Item
+                </button>
               </div>
             </form>
           </div>
@@ -584,45 +712,55 @@ export default function CmsPage() {
             <div className="absolute inset-0" onClick={() => setIsAddPincodeOpen(false)} />
             <form
               onSubmit={handleCreatePincode}
-              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none"
+              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs"
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Varanasi Serviceable Pincode</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Serviceable Pincode Zone</h3>
                   <button type="button" onClick={() => setIsAddPincodeOpen(false)} className="text-slate-400 hover:text-slate-600">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Varanasi Locality / Zone Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={pincodeLocality}
-                      onChange={(e) => setPincodeLocality(e.target.value)}
-                      placeholder="e.g. Mahmoorganj"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">6-Digit Pincode *</label>
-                    <input
-                      type="text"
-                      required
-                      value={pincodeCode}
-                      onChange={(e) => setPincodeCode(e.target.value)}
-                      placeholder="221010"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold"
-                    />
-                  </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Locality Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={pincodeLocality}
+                    onChange={(e) => setPincodeLocality(e.target.value)}
+                    placeholder="e.g. Lanka Bhabha Road"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode *</label>
+                  <input
+                    type="text"
+                    required
+                    value={pincodeCode}
+                    onChange={(e) => setPincodeCode(e.target.value)}
+                    placeholder="221005"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button type="button" onClick={() => setIsAddPincodeOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Save Pincode</button>
+              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddPincodeOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux"
+                >
+                  Save Service Zone
+                </button>
               </div>
             </form>
           </div>

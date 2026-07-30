@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialReviews, ReviewItem } from "@/lib/mockData";
-import { Star, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Star, MessageSquare, CheckCircle2, ShieldCheck, Award } from "lucide-react";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>(initialReviews);
   const [activeTab, setActiveTab] = useState<"customer" | "partner">("customer");
+
+  const avgRating = (reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / (reviews.length || 1)).toFixed(1);
+  const approvedCount = reviews.filter((r) => r.status === "Approved").length;
 
   const columns: Column<ReviewItem>[] = [
     { key: "reviewerName", header: "Reviewer", sortable: true },
@@ -47,39 +50,85 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
-            <Star className="w-5 h-5 text-amber-500" />
+      {/* Top Header Banner */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-amber-100 text-xs font-bold uppercase tracking-wider mb-1">
+            <Star className="w-4 h-4 fill-white" /> Quality Assurance & Ratings
           </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Review & Rating Moderation</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Moderate customer service ratings and technician performance reviews</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Review & Rating Moderation</h1>
+          <p className="text-xs text-amber-100 mt-1 max-w-xl">
+            Moderate customer service ratings and technician performance reviews.
+          </p>
+        </div>
+      </div>
+
+      {/* 4 Quick Executive Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Average Fleet Rating</span>
+            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+              <Star className="w-5 h-5 fill-amber-500" />
+            </div>
           </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">★ {avgRating} / 5.0</span>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-          {(["customer", "partner"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                activeTab === tab
-                  ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900"
-              }`}
-            >
-              {tab} Reviews
-            </button>
-          ))}
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Approved Ratings</span>
+            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-emerald-600">{approvedCount} / {reviews.length}</span>
         </div>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Customer Feedbacks</span>
+            <div className="p-2.5 rounded-2xl bg-brand-50 text-brand-600 border border-brand-200">
+              <MessageSquare className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">
+            {reviews.filter((r) => r.reviewerType === "Customer").length} Feedback Logs
+          </span>
+        </div>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Service Guarantee</span>
+            <div className="p-2.5 rounded-2xl bg-purple-50 text-purple-600 border border-purple-200">
+              <Award className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-purple-600">30-Day Covered</span>
+        </div>
+      </div>
+
+      {/* Navigation Tabs (Positioned at bottom of Quick Cards) */}
+      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+        {(["customer", "partner"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 rounded-xl capitalize transition-all ${
+              activeTab === tab
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            {tab} Reviews & Feedback
+          </button>
+        ))}
       </div>
 
       {/* Main DataTable */}
       <DataTable
-        title="Ratings & Feedback Directory"
-        description="Public service feedback and moderation panel"
+        title="Customer & Partner Ratings Feed"
+        description="Verified service reviews and rating scores"
         columns={columns}
         data={reviews}
       />

@@ -34,6 +34,7 @@ import {
   Customer,
 } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
+import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
 
 interface BookingWizardModalProps {
   isOpen: boolean;
@@ -507,137 +508,25 @@ export function BookingWizardModal({
                   )}
                 </div>
 
-                {/* Select Existing Customer Quick Dropdown & Add Customer Action */}
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                      Quick Select Existing Varanasi Customer
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setIsAddCustomerFormOpen(!isAddCustomerFormOpen)}
-                      className="px-3 py-1 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-[11px] shadow-lux flex items-center gap-1 transition-all"
-                    >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>{isAddCustomerFormOpen ? "Close Form" : "+ Add New Customer"}</span>
-                    </button>
-                  </div>
-
-                  <select
-                    value={customerName}
-                    onChange={(e) => handleSelectExistingCustomer(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                  >
-                    <option value="">-- Choose Existing Household Client ({customerList.length} total) --</option>
-                    {customerList.map((cust) => (
-                      <option key={cust.id} value={cust.name}>
-                        {cust.name} ({cust.phone}) — {cust.locality}
-                      </option>
-                    ))}
-                  </select>
+                {/* Select Existing Customer Search Picker Component */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                  <CustomerSearchPicker
+                    customers={customerList}
+                    selectedCustomer={customerList.find((c) => c.name === customerName) || null}
+                    onSelectCustomer={(c, isNew) => {
+                      if (isNew) {
+                        setCustomerList([c, ...customerList]);
+                        setIsNewCustomerAdded(true);
+                      }
+                      setCustomerName(c.name);
+                      setCustomerPhone(c.phone);
+                      setCustomerEmail(c.email || "");
+                      setLocality(c.locality);
+                      setAddress(c.address || `${c.locality}, Varanasi`);
+                    }}
+                    label="Quick Select Existing Varanasi Customer (Search Name or Phone)"
+                  />
                 </div>
-
-                {/* Inline Quick Add New Customer Card */}
-                {isAddCustomerFormOpen && (
-                  <div className="p-4 rounded-2xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 space-y-3 animate-in fade-in duration-200">
-                    <div className="flex items-center justify-between border-b border-brand-200 dark:border-brand-800 pb-2">
-                      <span className="font-extrabold text-xs text-brand-900 dark:text-brand-300 flex items-center gap-1.5">
-                        <UserPlus className="w-4 h-4 text-brand-600" /> Create & Auto-Select New Customer
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setIsAddCustomerFormOpen(false)}
-                        className="text-slate-400 hover:text-slate-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Full Name *
-                        </label>
-                        <input
-                          type="text"
-                          value={newCustName}
-                          onChange={(e) => setNewCustName(e.target.value)}
-                          placeholder="e.g. Alok Verma"
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Phone Number *
-                        </label>
-                        <input
-                          type="tel"
-                          value={newCustPhone}
-                          onChange={(e) => setNewCustPhone(e.target.value)}
-                          placeholder="+91 99350 98765"
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Email Address *
-                        </label>
-                        <input
-                          type="email"
-                          value={newCustEmail}
-                          onChange={(e) => setNewCustEmail(e.target.value)}
-                          placeholder="alok@gmail.com"
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Varanasi Locality
-                        </label>
-                        <select
-                          value={newCustLocality}
-                          onChange={(e) => setNewCustLocality(e.target.value)}
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                        >
-                          {varanasiLocalities.map((loc) => (
-                            <option key={loc.id} value={loc.name}>
-                              {loc.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">
-                          Full Delivery / Service Address
-                        </label>
-                        <input
-                          type="text"
-                          value={newCustAddress}
-                          onChange={(e) => setNewCustAddress(e.target.value)}
-                          placeholder="House / Flat No., Colony, Landmark..."
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                      <button
-                        type="button"
-                        onClick={handleCreateNewCustomerAndSelect}
-                        className="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lux transition-colors flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Save & Auto-Select New Customer</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Selected Active Customer Summary Card & OTP Verification Box (ONLY SHOWN AFTER CUSTOMER IS SELECTED OR ADDED) */}
                 {customerName && (

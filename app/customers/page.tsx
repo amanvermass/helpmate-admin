@@ -40,7 +40,7 @@ import { Portal } from "@/components/Portal";
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "kyc" | "bookings" | "billing">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "bookings" | "billing">("overview");
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<Customer | null>(null);
 
@@ -54,14 +54,7 @@ export default function CustomersPage() {
   const [newAadhaarNumber, setNewAadhaarNumber] = useState("");
   const [newAadhaarDocUrl, setNewAadhaarDocUrl] = useState("");
 
-  // 2. Guarantor / Reference Person States
-  const [newGuarantorName, setNewGuarantorName] = useState("");
-  const [newGuarantorPhone, setNewGuarantorPhone] = useState("");
-  const [newGuarantorAddress, setNewGuarantorAddress] = useState("");
-  const [newGuarantorAadhaarNumber, setNewGuarantorAadhaarNumber] = useState("");
-  const [newGuarantorAadhaarDocUrl, setNewGuarantorAadhaarDocUrl] = useState("");
-
-  // 3. Police Verification States
+  // 2. Police Verification States
   const [newPoliceStatus, setNewPoliceStatus] = useState<
     "Pending Verification" | "Verified Clean" | "Submitted to Local Thana" | "Exempted"
   >("Verified Clean");
@@ -69,7 +62,7 @@ export default function CustomersPage() {
   const [newPoliceTokenNumber, setNewPoliceTokenNumber] = useState("");
   const [newPoliceCertificateUrl, setNewPoliceCertificateUrl] = useState("");
 
-  // 4. Location States
+  // 3. Location States
   const [newLocality, setNewLocality] = useState("Sigra");
   const [newAddress, setNewAddress] = useState("");
 
@@ -93,12 +86,6 @@ export default function CustomersPage() {
       aadhaarNumber: newAadhaarNumber || "7821-XXXX-9900",
       aadhaarDocUrl: newAadhaarDocUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
 
-      guarantorName: newGuarantorName,
-      guarantorPhone: newGuarantorPhone,
-      guarantorAddress: newGuarantorAddress,
-      guarantorAadhaarNumber: newGuarantorAadhaarNumber,
-      guarantorAadhaarDocUrl: newGuarantorAadhaarDocUrl,
-
       policeStatus: newPoliceStatus,
       policeStationName: newPoliceStationName,
       policeTokenNumber: newPoliceTokenNumber || `PCC-VAR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -116,11 +103,6 @@ export default function CustomersPage() {
     setNewEmail("");
     setNewAadhaarNumber("");
     setNewAadhaarDocUrl("");
-    setNewGuarantorName("");
-    setNewGuarantorPhone("");
-    setNewGuarantorAddress("");
-    setNewGuarantorAadhaarNumber("");
-    setNewGuarantorAadhaarDocUrl("");
     setNewPoliceStatus("Verified Clean");
     setNewPoliceStationName("Sigra Police Station");
     setNewPoliceTokenNumber("");
@@ -166,49 +148,6 @@ export default function CustomersPage() {
       sortable: true,
     },
     {
-      key: "guarantorName",
-      header: "Guarantor / Reference",
-      accessor: (row) => (
-        <div className="flex flex-col text-[11px] max-w-xs">
-          {row.guarantorName ? (
-            <>
-              <span className="font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1">
-                <ShieldAlert className="w-3 h-3 text-purple-600" /> {row.guarantorName}
-              </span>
-              <span className="text-[10px] text-slate-500">{row.guarantorPhone}</span>
-            </>
-          ) : (
-            <span className="text-slate-400 italic">Self-Verified Customer</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "policeStatus",
-      header: "Police Verification",
-      accessor: (row) => (
-        <div className="flex flex-col gap-1 text-[10px]">
-          <span
-            className={`px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 w-fit ${
-              row.policeStatus === "Verified Clean"
-                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                : row.policeStatus === "Submitted to Local Thana"
-                ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            }`}
-          >
-            <ShieldCheck className="w-3 h-3" />
-            <span>{row.policeStatus || "Verified Clean"}</span>
-          </span>
-          {row.aadhaarNumber && (
-            <span className="font-mono text-[10px] text-slate-500 flex items-center gap-1">
-              <CreditCard className="w-3 h-3 text-brand-500" /> Aadhaar: {row.aadhaarNumber}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
       key: "locality",
       header: "Locality Address",
       accessor: (row) => (
@@ -239,7 +178,7 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={() => setSelectedCustomer(row)}
-            title="Open In-Page Full Customer Details"
+            title="Open Customer Details"
             className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors flex items-center gap-1 text-[11px] font-bold px-2"
           >
             <Eye className="w-3.5 h-3.5" />
@@ -327,8 +266,8 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* 4 Metric Stats Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 3 Metric Stats Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-sm">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Lifetime Spend</span>
             <div className="text-2xl font-black text-slate-900 dark:text-white">
@@ -340,30 +279,20 @@ export default function CustomersPage() {
           </div>
 
           <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-sm">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Service Bookings</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
             <div className="text-2xl font-black text-brand-600 dark:text-brand-400">
-              {selectedCustomer.totalBookings || customerBookings.length} Jobs
+              {customerBookings.length} {customerBookings.length === 1 ? "Booking" : "Bookings"}
             </div>
             <span className="text-[11px] text-slate-500 font-semibold">Last active: {selectedCustomer.lastBookingDate}</span>
           </div>
 
           <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-sm">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Aadhaar Identity</span>
-            <div className="text-sm font-mono font-bold text-slate-900 dark:text-white truncate">
-              {selectedCustomer.aadhaarNumber || "7821-4920-1102"}
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Service Location Zone</span>
+            <div className="text-lg font-black text-brand-600 dark:text-brand-400 truncate">
+              {selectedCustomer.locality || "Sigra"}
             </div>
-            <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Aadhaar Verified
-            </span>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-sm">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Police Thana Status</span>
-            <div className="text-sm font-bold text-amber-800 dark:text-amber-300 truncate">
-              {selectedCustomer.policeStatus || "Verified Clean"}
-            </div>
-            <span className="text-[11px] text-slate-500 font-semibold">
-              {selectedCustomer.policeStationName || "Sigra Police Station"}
+            <span className="text-[11px] text-slate-500 font-semibold truncate block">
+              Varanasi Operations Hub
             </span>
           </div>
         </div>
@@ -379,19 +308,7 @@ export default function CustomersPage() {
             }`}
           >
             <UserCheck className="w-4 h-4" />
-            <span>Overview & Verification Details</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("kyc")}
-            className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "kyc"
-                ? "bg-brand-500 text-white shadow-lux"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>KYC & Document Attachments</span>
+            <span>Overview & Personal Details</span>
           </button>
 
           <button
@@ -403,7 +320,7 @@ export default function CustomersPage() {
             }`}
           >
             <Briefcase className="w-4 h-4" />
-            <span>Booking & Job History ({customerBookings.length})</span>
+            <span>Bookings ({customerBookings.length})</span>
           </button>
 
           <button
@@ -419,7 +336,7 @@ export default function CustomersPage() {
           </button>
         </div>
 
-        {/* TAB 1: OVERVIEW & VERIFICATION DETAILS */}
+        {/* TAB 1: OVERVIEW & PERSONAL DETAILS */}
         {activeTab === "overview" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Card 1: Customer Info */}
@@ -446,12 +363,6 @@ export default function CustomersPage() {
                     <Mail className="w-3 h-3 text-slate-400" /> {selectedCustomer.email}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                  <span className="text-slate-400 font-bold">Customer Aadhaar Number</span>
-                  <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400">
-                    {selectedCustomer.aadhaarNumber || "7821-4920-1102"}
-                  </span>
-                </div>
                 <div className="flex justify-between py-1">
                   <span className="text-slate-400 font-bold">Account Status</span>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 font-bold text-[11px]">
@@ -461,77 +372,11 @@ export default function CustomersPage() {
               </div>
             </div>
 
-            {/* Card 2: Guarantor / Reference Person */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 text-purple-900 dark:text-purple-300 font-extrabold text-sm">
-                <ShieldAlert className="w-4 h-4 text-purple-600" />
-                <span>2. Guarantor / Reference Person (Taking Customer Guarantee)</span>
-              </div>
-
-              {selectedCustomer.guarantorName ? (
-                <div className="space-y-3 text-xs">
-                  <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                    <span className="text-slate-400 font-bold">Guarantor Name</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">{selectedCustomer.guarantorName}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                    <span className="text-slate-400 font-bold">Guarantor Mobile No.</span>
-                    <span className="font-bold text-purple-700 dark:text-purple-300">{selectedCustomer.guarantorPhone}</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                    <span className="text-slate-400 font-bold">Guarantor Aadhaar No.</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">
-                      {selectedCustomer.guarantorAadhaarNumber || "7821-4920-5592"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-slate-400 font-bold">Guarantor Address</span>
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 max-w-xs text-right truncate">
-                      {selectedCustomer.guarantorAddress || selectedCustomer.address}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs italic text-center">
-                  No separate guarantor registered. Verified through direct customer Aadhaar identity.
-                </div>
-              )}
-            </div>
-
-            {/* Card 3: Police Clearance & Thana Records */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 text-amber-900 dark:text-amber-300 font-extrabold text-sm">
-                <ShieldCheck className="w-4 h-4 text-amber-600" />
-                <span>3. Police Verification & Thana Clearance</span>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                  <span className="text-slate-400 font-bold">Verification Status</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 font-extrabold">
-                    {selectedCustomer.policeStatus || "Verified Clean"}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800/60">
-                  <span className="text-slate-400 font-bold">Local Police Station (Thana)</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    {selectedCustomer.policeStationName || "Sigra Police Station"}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-slate-400 font-bold">PCC Reference Token</span>
-                  <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
-                    {selectedCustomer.policeTokenNumber || "PCC-VAR-2026-8819"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 4: Service Delivery Address */}
+            {/* Card 2: Service Delivery Address */}
             <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
               <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 text-slate-900 dark:text-white font-extrabold text-sm">
                 <MapPin className="w-4 h-4 text-brand-600" />
-                <span>4. Service Location & Address</span>
+                <span>2. Service Location & Address</span>
               </div>
 
               <div className="space-y-3 text-xs">
@@ -550,101 +395,7 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {/* TAB 2: KYC & DOCUMENT ATTACHMENTS */}
-        {activeTab === "kyc" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Document Card 1: Customer Aadhaar */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <span className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-brand-600" /> Customer Aadhaar Card
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">
-                  Verified
-                </span>
-              </div>
-              <div className="h-44 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 relative group">
-                <img
-                  src={selectedCustomer.aadhaarDocUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80"}
-                  alt="Customer Aadhaar"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="font-mono text-slate-500">{selectedCustomer.aadhaarNumber || "7821-4920-1102"}</span>
-                <button
-                  type="button"
-                  onClick={() => alert("Downloading Customer Aadhaar Certificate...")}
-                  className="text-brand-600 font-bold flex items-center gap-1 hover:underline"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download
-                </button>
-              </div>
-            </div>
-
-            {/* Document Card 2: Guarantor Aadhaar */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <span className="font-extrabold text-sm text-purple-900 dark:text-purple-300 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-purple-600" /> Guarantor Aadhaar Card
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full">
-                  Guarantor
-                </span>
-              </div>
-              <div className="h-44 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 relative group">
-                <img
-                  src={selectedCustomer.guarantorAadhaarDocUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80"}
-                  alt="Guarantor Aadhaar"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="font-mono text-slate-500">
-                  {selectedCustomer.guarantorAadhaarNumber || "7821-4920-5592"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => alert("Downloading Guarantor Document...")}
-                  className="text-purple-600 font-bold flex items-center gap-1 hover:underline"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download
-                </button>
-              </div>
-            </div>
-
-            {/* Document Card 3: Police Clearance PCC */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <span className="font-extrabold text-sm text-amber-900 dark:text-amber-300 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-amber-600" /> Police Clearance (PCC)
-                </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">
-                  PCC Clean
-                </span>
-              </div>
-              <div className="h-44 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 relative group">
-                <img
-                  src={selectedCustomer.policeCertificateUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80"}
-                  alt="Police Verification PCC"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="font-mono text-slate-500">{selectedCustomer.policeTokenNumber || "PCC-VAR-2026-8819"}</span>
-                <button
-                  type="button"
-                  onClick={() => alert("Downloading Police Clearance Certificate...")}
-                  className="text-amber-600 font-bold flex items-center gap-1 hover:underline"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: BOOKING & SERVICE HISTORY */}
+        {/* TAB 2: BOOKINGS */}
         {activeTab === "bookings" && (
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
             <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
@@ -723,7 +474,7 @@ export default function CustomersPage() {
       {/* Main DataTable matching User Management layout */}
       <DataTable
         title="Customer CRM & Household Directory"
-        description="Track Varanasi client profiles, Aadhaar identity, Guarantor reference records & Police Thana clearance"
+        description="Track Varanasi client profiles, contact information, service location & spend history"
         columns={columns}
         data={customers}
         addButtonLabel="Add New Customer"
@@ -750,7 +501,7 @@ export default function CustomersPage() {
                       Add New Customer Profile
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Customer Aadhaar, Guarantor / Reference Person details & Police Thana record
+                      Customer contact information & service delivery address
                     </p>
                   </div>
                 </div>
@@ -873,7 +624,7 @@ export default function CustomersPage() {
                   className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-extrabold text-xs shadow-lux transition-colors flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Save Full Customer Record</span>
+                  <span>Save Customer Record</span>
                 </button>
               </div>
             </form>
@@ -915,65 +666,26 @@ export default function CustomersPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Phone Number</label>
-                    <input
-                      type="text"
-                      value={editCustomer.phone}
-                      onChange={(e) => setEditCustomer({ ...editCustomer, phone: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Customer Aadhaar No.</label>
-                    <input
-                      type="text"
-                      value={editCustomer.aadhaarNumber || ""}
-                      onChange={(e) => setEditCustomer({ ...editCustomer, aadhaarNumber: e.target.value })}
-                      placeholder="7821-4920-1102"
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Guarantor Name</label>
-                    <input
-                      type="text"
-                      value={editCustomer.guarantorName || ""}
-                      onChange={(e) => setEditCustomer({ ...editCustomer, guarantorName: e.target.value })}
-                      placeholder="Person Taking Guarantee"
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Guarantor Aadhaar No.</label>
-                    <input
-                      type="text"
-                      value={editCustomer.guarantorAadhaarNumber || ""}
-                      onChange={(e) => setEditCustomer({ ...editCustomer, guarantorAadhaarNumber: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-semibold"
-                    />
-                  </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    value={editCustomer.phone}
+                    onChange={(e) => setEditCustomer({ ...editCustomer, phone: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                    required
+                  />
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Police Verification Status</label>
-                  <select
-                    value={editCustomer.policeStatus || "Verified Clean"}
-                    onChange={(e) => setEditCustomer({ ...editCustomer, policeStatus: e.target.value as any })}
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={editCustomer.email}
+                    onChange={(e) => setEditCustomer({ ...editCustomer, email: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                  >
-                    <option value="Verified Clean">Verified Clean (PCC Issued)</option>
-                    <option value="Submitted to Local Thana">Submitted to Local Thana</option>
-                    <option value="Pending Verification">Pending Verification</option>
-                    <option value="Exempted">Exempted</option>
-                  </select>
+                    required
+                  />
                 </div>
               </div>
 

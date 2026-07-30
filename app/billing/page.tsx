@@ -1,34 +1,128 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
-import { initialBookings, Booking } from "@/lib/mockData";
-import { FileText, Download, Printer, CheckCircle2, RotateCcw } from "lucide-react";
+import { initialBookings, initialCustomers, Booking, Customer } from "@/lib/mockData";
+import {
+  FileText,
+  Printer,
+  CheckCircle2,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  X,
+  Wallet,
+  CreditCard,
+  TrendingUp,
+  Receipt,
+  ShieldCheck,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
+import { Portal } from "@/components/Portal";
+import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
 
 export default function BillingPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
 
+  // Drawer & Modal States
+  const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
+  const [editInvoice, setEditInvoice] = useState<Booking | null>(null);
+  const [deleteInvoice, setDeleteInvoice] = useState<Booking | null>(null);
+
+  // Invoice Form States (For New & Edit)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [invCustomerName, setInvCustomerName] = useState("");
+  const [invCustomerPhone, setInvCustomerPhone] = useState("");
+  const [invCustomerEmail, setInvCustomerEmail] = useState("");
+  const [invAddress, setInvAddress] = useState("");
+  const [invType, setInvType] = useState<"B2C" | "B2B">("B2C");
+  const [invGstin, setInvGstin] = useState("");
+  const [invServiceName, setInvServiceName] = useState("AC Master Servicing");
+  const [invCategory, setInvCategory] = useState("AC Servicing & Repair");
+  const [invBasePrice, setInvBasePrice] = useState("1499");
+  const [invConvenienceFee, setInvConvenienceFee] = useState("49");
+
+  // Handler for selecting customer via CustomerSearchPicker
+  const handleSelectCustomerForInvoice = (c: Customer, isNew?: boolean) => {
+    if (isNew) {
+      setCustomers([c, ...customers]);
+    }
+    setSelectedCustomer(c);
+    setInvCustomerName(c.name);
+    setInvCustomerPhone(c.phone);
+    setInvCustomerEmail(c.email || "");
+    setInvAddress(c.address || `${c.locality}, Varanasi`);
+  };
+
+  // Open Edit Invoice Drawer
+  const handleOpenEdit = (b: Booking) => {
+    setEditInvoice(b);
+    setInvCustomerName(b.customerName);
+    setInvCustomerPhone(b.customerPhone);
+    setInvCustomerEmail(b.customerEmail || "");
+    setInvAddress(b.address || "Sigra Colony, Varanasi");
+    setInvType(b.invoiceType);
+    setInvGstin(b.customerGstin || "");
+    setInvServiceName(b.serviceName || b.serviceTitle);
+    setInvCategory(b.category);
+    setInvBasePrice(b.basePrice.toString());
+    setInvConvenienceFee(b.convenienceFee.toString());
+  };
+
+  // Delete Invoice Handler
+  const handleConfirmDelete = () => {
+    if (!deleteInvoice) return;
+    setBookings(bookings.filter((b) => b.id !== deleteInvoice.id));
+    setDeleteInvoice(null);
+  };
+
+  const formatInvoiceNumber = (id: string) => {
+    if (!id) return "INV-2026-001";
+    const cleanId = id.replace(/^(INV-)?(bk-)?/gi, "");
+    if (cleanId.length > 5 && !isNaN(Number(cleanId))) {
+      return `INV-${cleanId.slice(-5)}`;
+    }
+    return `INV-${cleanId.toUpperCase()}`;
+  };
+
+  // Columns Matching Standardized Page Design Across Helpmate Admin
   const columns: Column<Booking>[] = [
     {
       key: "id",
       header: "Invoice Ref & Type",
       accessor: (row) => (
         <div className="flex flex-col">
-          <span className="font-mono font-extrabold text-brand-600 text-xs">INV-{row.id}</span>
-          <span className="text-[9px] font-bold text-emerald-600 uppercase">
+          <Link
+            href={`/billing/${row.id}`}
+            className="font-mono font-extrabold text-brand-600 text-xs hover:underline flex items-center gap-1"
+          >
+            <Receipt className="w-3.5 h-3.5" /> {formatInvoiceNumber(row.id)}
+          </Link>
+          <span className="text-[9px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
             {row.invoiceType} Tax Invoice
           </span>
         </div>
       ),
+      sortable: true,
     },
     {
       key: "customerName",
-      header: "Billed Customer / GSTIN",
+      header: "Billed Customer & Contact",
       accessor: (row) => (
-        <div className="flex flex-col">
-          <span className="font-bold text-slate-900">{row.customerName}</span>
+        <div className="flex flex-col text-[11px]">
+          <span className="font-bold text-slate-900 dark:text-white">{row.customerName}</span>
+          <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
+            <Phone className="w-2.5 h-2.5 text-brand-600" /> {row.customerPhone}
+          </span>
           {row.customerGstin ? (
-            <span className="font-mono text-[9px] text-brand-600 font-bold">
+            <span className="font-mono text-[9px] text-brand-600 font-bold mt-0.5">
               GSTIN: {row.customerGstin}
             </span>
           ) : (
@@ -36,23 +130,56 @@ export default function BillingPage() {
           )}
         </div>
       ),
+      sortable: true,
+    },
+    {
+      key: "serviceTitle",
+      header: "Service & Locality",
+      accessor: (row) => (
+        <div className="flex flex-col max-w-xs text-[11px]">
+          <span className="font-bold text-slate-900 dark:text-white truncate">
+            {row.serviceName || row.serviceTitle}
+          </span>
+          <span className="text-[10px] text-brand-600 font-semibold flex items-center gap-1">
+            <MapPin className="w-2.5 h-2.5 text-brand-600 shrink-0" /> {row.locality}, Varanasi
+          </span>
+        </div>
+      ),
     },
     {
       key: "basePrice",
-      header: "Base Service Price",
-      accessor: (row) => <span className="font-bold text-slate-800">₹{row.basePrice}</span>,
-    },
-    {
-      key: "convenienceFee",
-      header: "Convenience Fee",
-      accessor: (row) => <span className="font-bold text-slate-600">₹{row.convenienceFee}</span>,
+      header: "Base + Fee",
+      accessor: (row) => (
+        <div className="flex flex-col text-xs font-semibold">
+          <span className="text-slate-900 dark:text-white font-bold">₹{row.basePrice}</span>
+          <span className="text-[10px] text-slate-500">+ ₹{row.convenienceFee} Fee</span>
+        </div>
+      ),
     },
     {
       key: "cgst",
       header: "CGST (9%) + SGST (9%)",
       accessor: (row) => (
-        <span className="font-mono text-xs text-slate-700 font-bold">
+        <span className="font-mono text-xs text-slate-700 dark:text-slate-300 font-bold">
           ₹{row.cgst} + ₹{row.sgst}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Payment Status",
+      accessor: (row) => (
+        <span
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit ${
+            row.status === "Cancelled" || row.status === "Refunded"
+              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+              : row.status === "Pending"
+              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+          }`}
+        >
+          <CheckCircle2 className="w-3 h-3" />
+          <span>{row.status === "Pending" ? "Pending Collection" : "Paid Clean"}</span>
         </span>
       ),
     },
@@ -60,47 +187,175 @@ export default function BillingPage() {
       key: "totalAmount",
       header: "Gross Total (₹)",
       accessor: (row) => (
-        <span className="font-extrabold text-slate-900">₹{row.totalAmount}</span>
+        <span className="font-black text-slate-900 dark:text-white text-sm">₹{row.totalAmount}</span>
       ),
+      sortable: true,
     },
     {
       key: "actions",
-      header: "Tax Invoice Actions",
+      header: "Actions",
       accessor: (row) => (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            href={`/billing/${row.id}`}
+            title="View Full Tax Invoice Page"
+            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors flex items-center justify-center"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => handleOpenEdit(row)}
+            title="Edit GST Invoice Details"
+            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors"
+          >
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDeleteInvoice(row)}
+            title="Delete Invoice"
+            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-red-50 text-slate-700 dark:text-slate-300 hover:text-red-600 transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+
           <button
             type="button"
             onClick={() => window.print()}
-            className="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+            title="Print Tax Invoice"
+            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition-colors"
           >
-            Print GST
+            <Printer className="w-3.5 h-3.5" />
           </button>
         </div>
       ),
     },
   ];
 
+  // Quick Executive Metric Calculations
+  const totalBilledRevenue = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+  const totalCgst = bookings.reduce((sum, b) => sum + (b.cgst || 0), 0);
+  const totalSgst = bookings.reduce((sum, b) => sum + (b.sgst || 0), 0);
+  const totalGstCollected = totalCgst + totalSgst;
+
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
+      {/* Top Header Banner with Generate Invoice Action */}
       <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <FileText className="w-4 h-4" /> Requirement #7
+            <FileText className="w-4 h-4" /> GST Tax Engine & Invoicing
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Billing & GST Tax Engine</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">Billing, GST Invoices & Tax Ledger</h1>
           <p className="text-xs text-blue-100 mt-1 max-w-xl">
-            GST-inclusive pricing engine, automated B2C & B2B Tax Invoices, CGST (9%) + SGST (9%) split calculator, and refund ledger.
+            Automated B2C & B2B Tax Invoices, CGST (9%) + SGST (9%) split calculator, and digital receipt ledger.
           </p>
         </div>
-        <div className="flex gap-3">
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[110px]">
-            <span className="text-xs text-blue-200 block font-semibold">GST Rate</span>
-            <span className="text-lg font-black text-white">18% Standard</span>
-          </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              setSelectedCustomer(null);
+              setInvCustomerName("");
+              setInvCustomerPhone("");
+              setInvCustomerEmail("");
+              setIsAddInvoiceOpen(true);
+            }}
+            className="px-4 py-2.5 rounded-2xl bg-white text-blue-900 font-extrabold text-xs shadow-md hover:bg-blue-50 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4 text-blue-600" />
+            <span>Generate New GST Invoice</span>
+          </button>
         </div>
       </div>
 
+      {/* 4 Executive Quick Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Total Gross Billed Revenue */}
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Total Billed Revenue
+            </span>
+            <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800 shadow-sm">
+              <Wallet className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900 dark:text-white">
+              ₹{(totalBilledRevenue + 482900).toLocaleString()}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
+            <TrendingUp className="w-3 h-3 text-emerald-600 inline" /> Gross revenue processed in Varanasi
+          </p>
+        </div>
+
+        {/* Card 2: Paid Invoices Status */}
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Paid Invoices Ratio
+            </span>
+            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-sm">
+              <Receipt className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900 dark:text-white">
+              184 / 210 Paid
+            </span>
+          </div>
+          <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 inline" /> 94.2% Settlement Rate
+          </p>
+        </div>
+
+        {/* Card 3: Total 18% GST Collected */}
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Total 18% GST Collected
+            </span>
+            <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 border border-purple-200 dark:border-purple-800 shadow-sm">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900 dark:text-white">
+              ₹{(totalGstCollected + 73660).toLocaleString()}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-semibold">
+            CGST 9% (₹36.8k) + SGST 9% (₹36.8k)
+          </p>
+        </div>
+
+        {/* Card 4: Pending / Overdue Collections */}
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Pending Collections
+            </span>
+            <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-sm">
+              <CreditCard className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
+              ₹32,450
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-semibold">
+            12 B2B invoices pending 7-day payment
+          </p>
+        </div>
+      </div>
+
+      {/* Main Billing Table */}
       <DataTable
         title="B2C & B2B GST Tax Invoicing Ledger"
         description="Automated tax breakdown with CGST, SGST, IGST calculation and printable invoices."
@@ -108,6 +363,491 @@ export default function BillingPage() {
         data={bookings}
         searchPlaceholder="Search invoice ref, customer, or GSTIN..."
       />
+
+      {/* 1. SLIDE-OVER GENERATE NEW GST INVOICE DRAWER */}
+      {isAddInvoiceOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
+            <div className="w-full max-w-2xl bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none">
+              {/* Header */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 border border-brand-200 dark:border-brand-800 shadow-sm">
+                    <Receipt className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                      Generate New GST Tax Invoice
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Search customer by Name / Phone, or Add New Customer on the fly
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddInvoiceOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Form Body */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!invCustomerName.trim()) return;
+
+                  const base = parseFloat(invBasePrice) || 0;
+                  const fee = parseFloat(invConvenienceFee) || 0;
+                  const cgstVal = Math.round(base * 0.09);
+                  const sgstVal = Math.round(base * 0.09);
+                  const grandTotal = base + fee + cgstVal + sgstVal;
+
+                  const newBooking: Booking = {
+                    id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+                    customerName: invCustomerName,
+                    customerPhone: invCustomerPhone || "+91 99350 12345",
+                    serviceTitle: invServiceName,
+                    serviceName: invServiceName,
+                    city: "Varanasi",
+                    pincode: "221002",
+                    category: invCategory,
+                    locality: "Sigra",
+                    date: "Today",
+                    timeSlot: "11:00 AM",
+                    scheduledDate: "Today",
+                    scheduledTime: "11:00 AM",
+                    status: "Confirmed",
+                    basePrice: base,
+                    convenienceFee: fee,
+                    cgst: cgstVal,
+                    sgst: sgstVal,
+                    totalAmount: grandTotal,
+                    commissionAmount: Math.round(base * 0.25),
+                    partnerEarnings: Math.round(base * 0.75),
+                    paymentMethod: "UPI",
+                    invoiceType: invType,
+                    customerGstin: invType === "B2B" ? invGstin || "09AAACH8819Q1ZM" : undefined,
+                    address: invAddress || "Sigra Colony, Varanasi",
+                  };
+
+                  setBookings([newBooking, ...bookings]);
+                  setIsAddInvoiceOpen(false);
+                }}
+                className="flex-1 p-6 overflow-y-auto space-y-6"
+              >
+                {/* SECTION 1: SEARCHABLE CUSTOMER PICKER */}
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                  <CustomerSearchPicker
+                    customers={customers}
+                    selectedCustomer={selectedCustomer}
+                    onSelectCustomer={handleSelectCustomerForInvoice}
+                    label="1. Billed Customer Selection (Search Name or Mobile Phone Number)"
+                  />
+                </div>
+
+                {/* SECTION 2: INVOICE TYPE & B2B CORPORATE GSTIN */}
+                <div className="p-5 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-3">
+                  <div className="flex items-center justify-between border-b border-blue-200 dark:border-blue-800 pb-2">
+                    <span className="font-extrabold text-blue-900 dark:text-blue-300 text-xs uppercase tracking-wider">
+                      2. Invoice Category & Corporate GST Tax Rules
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setInvType("B2C")}
+                      className={`py-2 rounded-lg font-extrabold transition-all ${
+                        invType === "B2C"
+                          ? "bg-brand-500 text-white shadow-xs"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      B2C Retail Invoice
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvType("B2B")}
+                      className={`py-2 rounded-lg font-extrabold transition-all ${
+                        invType === "B2B"
+                          ? "bg-brand-500 text-white shadow-xs"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      B2B Corporate Invoice
+                    </button>
+                  </div>
+
+                  {invType === "B2B" && (
+                    <div className="space-y-1 text-xs">
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                        Customer Corporate GSTIN Number *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={invGstin}
+                        onChange={(e) => setInvGstin(e.target.value)}
+                        placeholder="09AAACH8819Q1ZM"
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold uppercase text-brand-600 outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* SECTION 3: SERVICE CATALOG & PRICING ENGINE */}
+                <div className="p-5 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-purple-200 dark:border-purple-800 pb-2">
+                    <span className="font-extrabold text-purple-900 dark:text-purple-300 text-xs uppercase tracking-wider">
+                      3. Service Rate Card & Price Calculation
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Service Name *
+                      </label>
+                      <select
+                        value={invServiceName}
+                        onChange={(e) => setInvServiceName(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
+                      >
+                        <option value="AC Master Servicing">AC Master Servicing</option>
+                        <option value="AC Jet Pump Deep Clean">AC Jet Pump Deep Clean</option>
+                        <option value="Deep House Sanitation & Cleaning">Deep House Sanitation & Cleaning</option>
+                        <option value="Full Home Electrical Safety Audit">Full Home Electrical Safety Audit</option>
+                        <option value="Plumbing Drain Unclogging">Plumbing Drain Unclogging</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Varanasi Category Zone
+                      </label>
+                      <input
+                        type="text"
+                        value={invCategory}
+                        onChange={(e) => setInvCategory(e.target.value)}
+                        placeholder="AC Servicing & Repair"
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Base Service Price (₹) *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        value={invBasePrice}
+                        onChange={(e) => setInvBasePrice(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Convenience Fee (₹)
+                      </label>
+                      <input
+                        type="number"
+                        value={invConvenienceFee}
+                        onChange={(e) => setInvConvenienceFee(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 4: LIVE GST TAX LEDGER CARD */}
+                <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-2 font-semibold text-xs">
+                  <div className="flex justify-between text-slate-500">
+                    <span>Base Service Price</span>
+                    <span className="font-mono font-bold">₹{parseFloat(invBasePrice) || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-500">
+                    <span>Platform Convenience Fee</span>
+                    <span className="font-mono font-bold">₹{parseFloat(invConvenienceFee) || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-500">
+                    <span>CGST (9% Split)</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                      ₹{Math.round((parseFloat(invBasePrice) || 0) * 0.09)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-500">
+                    <span>SGST (9% Split)</span>
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                      ₹{Math.round((parseFloat(invBasePrice) || 0) * 0.09)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-900 dark:text-white font-black pt-2 border-t border-amber-200 dark:border-amber-800 text-sm">
+                    <span>Gross Invoice Grand Total</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                      ₹
+                      {(parseFloat(invBasePrice) || 0) +
+                        (parseFloat(invConvenienceFee) || 0) +
+                        Math.round((parseFloat(invBasePrice) || 0) * 0.18)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="pt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddInvoiceOpen(false)}
+                    className="flex-1 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-extrabold text-xs shadow-lux flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Generate GST Invoice</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* 2. SLIDE-OVER EDIT INVOICE DRAWER */}
+      {editInvoice && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
+            <div className="w-full max-w-xl bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none">
+              {/* Header */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-sm">
+                    <Edit className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                      Edit Tax Invoice INV-{editInvoice.id}
+                    </h3>
+                    <p className="text-xs text-slate-500">Update GST rate, Customer info, or Base price</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditInvoice(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Scrollable Form Body */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+
+                  const base = parseFloat(invBasePrice) || 0;
+                  const fee = parseFloat(invConvenienceFee) || 0;
+                  const cgstVal = Math.round(base * 0.09);
+                  const sgstVal = Math.round(base * 0.09);
+                  const grandTotal = base + fee + cgstVal + sgstVal;
+
+                  setBookings(
+                    bookings.map((b) =>
+                      b.id === editInvoice.id
+                        ? {
+                            ...b,
+                            customerName: invCustomerName,
+                            customerPhone: invCustomerPhone,
+                            customerEmail: invCustomerEmail,
+                            serviceTitle: invServiceName,
+                            serviceName: invServiceName,
+                            basePrice: base,
+                            convenienceFee: fee,
+                            cgst: cgstVal,
+                            sgst: sgstVal,
+                            totalAmount: grandTotal,
+                            invoiceType: invType,
+                            customerGstin: invType === "B2B" ? invGstin || "09AAACH8819Q1ZM" : undefined,
+                          }
+                        : b
+                    )
+                  );
+                  setEditInvoice(null);
+                }}
+                className="flex-1 p-6 overflow-y-auto space-y-4 text-xs"
+              >
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Billed Customer Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={invCustomerName}
+                    onChange={(e) => setInvCustomerName(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Customer Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={invCustomerPhone}
+                      onChange={(e) => setInvCustomerPhone(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Invoice Type
+                    </label>
+                    <select
+                      value={invType}
+                      onChange={(e) => setInvType(e.target.value as "B2C" | "B2B")}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
+                    >
+                      <option value="B2C">B2C Retail Invoice</option>
+                      <option value="B2B">B2B Corporate Invoice</option>
+                    </select>
+                  </div>
+                </div>
+
+                {invType === "B2B" && (
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      GSTIN Number
+                    </label>
+                    <input
+                      type="text"
+                      value={invGstin}
+                      onChange={(e) => setInvGstin(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold text-brand-600 outline-none uppercase"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Service Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={invServiceName}
+                    onChange={(e) => setInvServiceName(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Base Price (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={invBasePrice}
+                      onChange={(e) => setInvBasePrice(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Convenience Fee (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={invConvenienceFee}
+                      onChange={(e) => setInvConvenienceFee(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="pt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditInvoice(null)}
+                    className="flex-1 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-extrabold text-xs shadow-lux flex items-center justify-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* 3. DELETE INVOICE POPUP MODAL */}
+      {deleteInvoice && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-3 text-red-600">
+                <div className="p-3 rounded-2xl bg-red-100 dark:bg-red-950">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                    Delete Invoice Ref INV-{deleteInvoice.id}?
+                  </h3>
+                  <p className="text-xs text-slate-500">This action cannot be undone.</p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs space-y-1">
+                <div className="font-bold text-slate-900 dark:text-white">
+                  Customer: {deleteInvoice.customerName}
+                </div>
+                <div className="text-slate-500 font-mono">
+                  Total Billed Amount: ₹{deleteInvoice.totalAmount} ({deleteInvoice.invoiceType} Tax Invoice)
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteInvoice(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-lux"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </div>
   );
 }
