@@ -8,18 +8,22 @@ import { Header } from "@/components/Header";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const session = localStorage.getItem("helpmate_admin_session");
       if (session === "true") {
         setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(true); // Default active for seamless enterprise navigation preview
       }
     }
   }, [pathname, router]);
+
+  // Close mobile sidebar automatically on route change
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [pathname]);
 
   // Standalone Login Page
   if (pathname === "/login") {
@@ -28,10 +32,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-      <Sidebar />
+      <Sidebar
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <Header />
-        <main className="flex-1 p-6 md:p-8 overflow-y-auto w-full">
+        <Header onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto w-full">
           {children}
         </main>
       </div>

@@ -443,12 +443,12 @@ export function BookingWizardModal({
         {/* Slide-over Drawer Panel */}
         <div className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 w-full max-w-4xl h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 outline-none">
           {/* Drawer Header */}
-          <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
+          <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-0.5 rounded border border-brand-200 dark:border-brand-800">
+              <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-0.5 rounded border border-brand-200 dark:border-brand-800">
                 Helpmate Booking Wizard
               </span>
-              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1">
                 Create New Booking
               </h2>
             </div>
@@ -463,17 +463,17 @@ export function BookingWizardModal({
           </div>
 
           {/* Stepper Navigation Bar */}
-          <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 overflow-x-auto flex items-center gap-2 text-xs select-none shrink-0">
+          <div className="px-4 sm:px-6 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 overflow-x-auto flex items-center gap-1.5 sm:gap-2 text-xs select-none shrink-0 no-scrollbar">
             {steps.map((st) => {
               const isDone = st.num < currentStep;
               const isCurrent = st.num === currentStep;
 
               return (
-                <div key={st.num} className="flex items-center gap-2 shrink-0">
+                <div key={st.num} className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setCurrentStep(st.num)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+                    className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all text-xs whitespace-nowrap ${
                       isCurrent
                         ? "bg-brand-500 text-white shadow-lux"
                         : isDone
@@ -492,7 +492,7 @@ export function BookingWizardModal({
           </div>
 
           {/* Drawer Body Content */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-6">
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
             {/* STEP 1: SELECT CUSTOMER & OTP VERIFICATION */}
             {currentStep === 1 && (
               <div className="space-y-5">
@@ -528,29 +528,9 @@ export function BookingWizardModal({
                   />
                 </div>
 
-                {/* Selected Active Customer Summary Card & OTP Verification Box (ONLY SHOWN AFTER CUSTOMER IS SELECTED OR ADDED) */}
+                {/* OTP Verification Box (ONLY SHOWN AFTER CUSTOMER IS SELECTED OR ADDED) */}
                 {customerName && (
                   <div className="space-y-4 animate-in fade-in duration-200">
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-brand-500 text-white font-extrabold flex items-center justify-center text-sm shadow-lux">
-                          {customerName[0]}
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-slate-900 dark:text-white text-sm">
-                            {customerName}
-                          </div>
-                          <div className="text-slate-500 font-semibold text-[11px] flex items-center gap-2 mt-0.5">
-                            <span>{customerPhone}</span>
-                            {customerEmail && <span>• {customerEmail}</span>}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                        Active Selection
-                      </span>
-                    </div>
-
                     {/* OTP Verification & Skip Box */}
                     <div className="p-5 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800 space-y-3">
                       <div className="flex items-center justify-between">
@@ -908,12 +888,12 @@ export function BookingWizardModal({
           </div>
 
           {/* Drawer Footer Actions */}
-          <div className="p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40 shrink-0">
+          <div className="p-4 sm:p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/40 shrink-0 gap-3">
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={() => setCurrentStep(currentStep - 1)}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+                className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" /> Back
               </button>
@@ -925,7 +905,7 @@ export function BookingWizardModal({
               <button
                 type="button"
                 onClick={() => setCurrentStep(currentStep + 1)}
-                className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-1 transition-colors"
+                className="px-5 sm:px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-lux flex items-center gap-1 transition-colors cursor-pointer"
               >
                 Next Step <ChevronRight className="w-4 h-4" />
               </button>
@@ -933,7 +913,7 @@ export function BookingWizardModal({
               <button
                 type="button"
                 onClick={handleCompleteBooking}
-                className="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lux transition-colors"
+                className="px-6 sm:px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lux transition-colors cursor-pointer"
               >
                 Confirm & Create Booking
               </button>

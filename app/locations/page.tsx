@@ -79,24 +79,27 @@ export default function LocationsPage() {
   return (
     <div className="space-y-6">
       {/* Top Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <Building2 className="w-4 h-4" /> Coverage & Pincode Matrix
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
+            <MapPin className="w-4 h-4" /> Single-City Serviceability Engine
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Location & Coverage Management</h1>
-          <p className="text-xs text-blue-100 mt-1 max-w-xl">
-            Single-city Varanasi pincode matrix & zone coverage.
+          <h1 className="text-2xl font-extrabold tracking-tight">Varanasi Location & Pincode Coverage</h1>
+          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+            Manage active serviceable pincodes, demand surges, and technician allocation.
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="px-4 py-2.5 rounded-2xl bg-white text-blue-900 font-extrabold text-xs shadow-md hover:bg-blue-50 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4 text-blue-600" />
-          <span>Add New Pincode Zone</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-brand-600" />
+            <span>Add New Pincode Zone</span>
+          </button>
+        </div>
       </div>
 
       {/* 4 Executive Quick Metric Cards */}
@@ -146,31 +149,12 @@ export default function LocationsPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs (Positioned at bottom of Quick Cards) */}
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
-        {(["pincodes", "areas", "zones", "cities"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 rounded-xl capitalize transition-all ${
-              activeTab === tab
-                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      
 
-      {/* Main DataTable */}
+      {/* Main DataTable without duplicate headers */}
       <DataTable
-        title="Varanasi Pincode & Locality Grid"
-        description="Manage active serviceable pincodes, demand surges, and technician allocation"
         columns={columns}
         data={localities}
-        addButtonLabel="Add New Pincode Zone"
-        onAddClick={() => setIsAddOpen(true)}
       />
 
       {/* Add Pincode Zone Slide-Over Drawer */}

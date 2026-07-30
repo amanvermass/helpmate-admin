@@ -86,8 +86,6 @@ export default function PartnerServicesPage() {
   return (
     <div className="space-y-6">
       <DataTable
-        title="My Authorized Services & Fixed Rate Cards"
-        description="Services you are certified to perform in Varanasi with guaranteed 75% payout cut"
         columns={columns}
         data={partnerServices}
       />

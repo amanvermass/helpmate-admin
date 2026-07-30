@@ -25,8 +25,10 @@ import {
   ChevronDown,
   TrendingUp,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
+import { Portal } from "@/components/Portal";
 
 interface SubItem {
   label: string;
@@ -47,7 +49,12 @@ interface NavSection {
   items: NavItem[];
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
   const pathname = usePathname();
   const { role } = useRbac();
   const [sidebarSearch, setSidebarSearch] = useState("");
@@ -234,11 +241,15 @@ export function Sidebar() {
 
   const currentNavSections = isPartner ? partnerNavSections : adminNavSections;
 
-  return (
-    <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen sticky top-0 shrink-0 select-none z-30 shadow-xs transition-colors duration-200">
-      {/* Fixed Non-Scrolling Header Logo Container */}
-      <div className="h-16 px-4 flex items-center border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-10">
-        <Link href={isPartner ? "/partner" : "/"} className="flex items-center gap-2.5 group">
+  const renderSidebarContent = () => (
+    <div className="flex flex-col h-full select-none">
+      {/* Fixed Header Logo */}
+      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-10">
+        <Link
+          href={isPartner ? "/partner" : "/"}
+          onClick={onCloseMobile}
+          className="flex items-center gap-2.5 group"
+        >
           <img
             src="https://helpmate-theta.vercel.app/logo.png"
             alt="HelpMate Logo"
@@ -262,9 +273,19 @@ export function Sidebar() {
             </span>
           </div>
         </Link>
+
+        {onCloseMobile && (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="lg:hidden p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
-      {/* Sidebar Quick Filter (Fixed) */}
+      {/* Search Bar */}
       <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900">
         <div className="relative">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -273,12 +294,12 @@ export function Sidebar() {
             value={sidebarSearch}
             onChange={(e) => setSidebarSearch(e.target.value)}
             placeholder="Search menu..."
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500"
           />
         </div>
       </div>
 
-      {/* Scrollable Navigation Menu ONLY */}
+      {/* Scrollable Navigation Menu */}
       <nav className="p-3 space-y-4 flex-1 overflow-y-auto">
         {currentNavSections.map((section, secIdx) => {
           const filteredItems = section.items.filter((item) => {
@@ -299,11 +320,8 @@ export function Sidebar() {
               {filteredItems.map((item) => {
                 const Icon = item.icon;
 
-                // Render Dropdown item for Settings & Analytics
                 if (item.subItems) {
-                  const isSubActive = item.subItems.some(
-                    (sub) => pathname === sub.href
-                  );
+                  const isSubActive = item.subItems.some((sub) => pathname === sub.href);
 
                   return (
                     <div key={item.title} className="space-y-1">
@@ -331,7 +349,6 @@ export function Sidebar() {
                         />
                       </button>
 
-                      {/* Expandable Submenu Items */}
                       {(isSettingsOpen || sidebarSearch.trim().length > 0) && (
                         <div className="pl-6 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 ml-3">
                           {item.subItems.map((sub) => {
@@ -342,6 +359,7 @@ export function Sidebar() {
                               <Link
                                 key={sub.href}
                                 href={sub.href}
+                                onClick={onCloseMobile}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                   isActive
                                     ? "bg-brand-500 text-white font-bold shadow-lux"
@@ -368,6 +386,7 @@ export function Sidebar() {
                   <Link
                     key={item.href || item.title}
                     href={item.href || "#"}
+                    onClick={onCloseMobile}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group ${
                       isActive
                         ? "bg-brand-500 text-white shadow-lux"
@@ -396,7 +415,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Fixed Footer Role Badge */}
+      {/* Role Footer */}
       <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900">
         <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
@@ -408,9 +427,30 @@ export function Sidebar() {
               <span className="text-[9px] text-brand-600 dark:text-brand-400 font-extrabold">{role}</span>
             </div>
           </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar (hidden on screens < 1024px) */}
+      <aside className="hidden lg:flex w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col h-screen sticky top-0 shrink-0 select-none z-30 shadow-xs transition-colors duration-200">
+        {renderSidebarContent()}
+      </aside>
+
+      {/* Mobile Drawer (visible when isMobileOpen is true) */}
+      {isMobileOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] lg:hidden bg-slate-950/70 backdrop-blur-xs flex justify-start outline-none animate-in fade-in duration-200">
+            <div className="absolute inset-0" onClick={onCloseMobile} />
+            <div className="relative z-10 w-72 bg-white dark:bg-slate-900 h-full shadow-2xl border-r border-slate-200 dark:border-slate-800 animate-in slide-in-from-left duration-300 outline-none">
+              {renderSidebarContent()}
+            </div>
+          </div>
+        </Portal>
+      )}
+    </>
   );
 }

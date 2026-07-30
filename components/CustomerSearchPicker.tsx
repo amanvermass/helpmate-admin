@@ -235,11 +235,10 @@ export function CustomerSearchPicker({
                       setIsOpen(false);
                       setSearchTerm("");
                     }}
-                    className={`w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors ${
-                      selectedCustomer?.id === c.id
+                    className={`w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors ${selectedCustomer?.id === c.id
                         ? "bg-brand-50/50 dark:bg-brand-950/30 font-bold"
                         : ""
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">

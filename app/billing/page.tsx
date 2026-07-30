@@ -355,10 +355,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Main Billing Table */}
+      {/* Main Billing Table without duplicate headers */}
       <DataTable
-        title="B2C & B2B GST Tax Invoicing Ledger"
-        description="Automated tax breakdown with CGST, SGST, IGST calculation and printable invoices."
         columns={columns}
         data={bookings}
         searchPlaceholder="Search invoice ref, customer, or GSTIN..."

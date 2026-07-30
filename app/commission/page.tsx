@@ -25,13 +25,13 @@ export default function CommissionPage() {
     {
       key: "commissionPaid",
       header: "Helpmate 25% Fee",
-      accessor: (row) => <span className="font-bold text-emerald-600">₹{row.commissionPaid.toLocaleString("en-IN")}</span>,
+      accessor: (row) => <span className="font-bold text-brand-600 dark:text-brand-400">₹{row.commissionPaid.toLocaleString("en-IN")}</span>,
       sortable: true,
     },
     {
       key: "pendingPayout",
       header: "Net Pending Payout",
-      accessor: (row) => <span className="font-bold text-purple-600">₹{row.pendingPayout.toLocaleString("en-IN")}</span>,
+      accessor: (row) => <span className="font-bold text-purple-600 dark:text-purple-400">₹{row.pendingPayout.toLocaleString("en-IN")}</span>,
       sortable: true,
     },
     { key: "lastPayoutDate", header: "Last Settlement", sortable: true },
@@ -39,14 +39,14 @@ export default function CommissionPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Header Banner matching Billing layout */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-emerald-200 text-xs font-bold uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
             <DollarSign className="w-4 h-4" /> Commission & Revenue Engine
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight">Fixed 25% Commission & Settlement Ledger</h1>
-          <p className="text-xs text-emerald-100 mt-1 max-w-xl">
+          <p className="text-xs text-brand-100 mt-1 max-w-xl">
             Weekly bank transfer reconciliation, 75% technician earnings disbursement, and UTR payout receipt storage.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function CommissionPage() {
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase">Gross Partner Revenue</span>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-xs">
               <Wallet className="w-5 h-5" />
             </div>
           </div>
@@ -67,27 +67,27 @@ export default function CommissionPage() {
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase">Helpmate 25% Fee</span>
-            <div className="p-2.5 rounded-2xl bg-brand-50 text-brand-600 border border-brand-200">
+            <div className="p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 border border-brand-200 dark:border-brand-800 shadow-xs">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-2xl font-black text-brand-600">₹{totalCommission.toLocaleString("en-IN")}</span>
+          <span className="text-2xl font-black text-brand-600 dark:text-brand-400">₹{totalCommission.toLocaleString("en-IN")}</span>
         </div>
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase">Pending Weekly Payouts</span>
-            <div className="p-2.5 rounded-2xl bg-purple-50 text-purple-600 border border-purple-200">
+            <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 border border-purple-200 dark:border-purple-800 shadow-xs">
               <CreditCard className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-2xl font-black text-purple-600">₹{totalPending.toLocaleString("en-IN")}</span>
+          <span className="text-2xl font-black text-purple-600 dark:text-purple-400">₹{totalPending.toLocaleString("en-IN")}</span>
         </div>
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400 uppercase">Settlement Rate</span>
-            <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
+            <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-xs">
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
@@ -112,10 +112,8 @@ export default function CommissionPage() {
         ))}
       </div>
 
-      {/* Main DataTable */}
+      {/* Main DataTable without duplicate headers */}
       <DataTable
-        title="Partner Earnings & Commission Summary"
-        description="Fixed 25% platform deduction and net weekly technician disbursements"
         columns={columns}
         data={techs}
       />

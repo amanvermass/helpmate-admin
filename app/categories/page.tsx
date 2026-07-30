@@ -14,10 +14,24 @@ import {
   X,
   Wrench,
   Edit,
+  Layers,
 } from "lucide-react";
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
+  const [categories, setCategories] = useState<CategoryItem[]>(() => {
+    return initialCategories.map((c, idx) => ({
+      ...c,
+      subcategories: c.subcategories || (
+        idx === 0
+          ? ["Split AC", "Window AC", "Cassette AC / Commercial", "Inverter AC"]
+          : idx === 1
+          ? ["Full House Deep Clean", "Kitchen Degreasing", "Bathroom Scrub"]
+          : idx === 2
+          ? ["MCB & Switchboard", "Wiring & Fuse", "Fan & Chandelier"]
+          : ["Tap & Mixer", "Toilet & Tank", "Drain Unclogging"]
+      ),
+    }));
+  });
 
   // Add / Edit Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -29,12 +43,31 @@ export default function CategoriesPage() {
   const [icon, setIcon] = useState("Wrench");
   const [status, setStatus] = useState<"Active" | "Inactive">("Active");
 
+  // Subcategories Multi-Add Form State
+  const [subcategoriesList, setSubcategoriesList] = useState<string[]>([]);
+  const [subCategoryInput, setSubCategoryInput] = useState("");
+
+  const handleAddSubcategoryTag = () => {
+    if (!subCategoryInput.trim()) return;
+    const tag = subCategoryInput.trim();
+    if (!subcategoriesList.includes(tag)) {
+      setSubcategoriesList([...subcategoriesList, tag]);
+    }
+    setSubCategoryInput("");
+  };
+
+  const handleRemoveSubcategoryTag = (tag: string) => {
+    setSubcategoriesList(subcategoriesList.filter((t) => t !== tag));
+  };
+
   const openAddDrawer = () => {
     setEditingCategory(null);
     setCatName("");
     setSlug("");
     setIcon("Wrench");
     setStatus("Active");
+    setSubcategoriesList([]);
+    setSubCategoryInput("");
     setIsDrawerOpen(true);
   };
 
@@ -44,6 +77,8 @@ export default function CategoriesPage() {
     setSlug(cat.slug);
     setIcon(cat.icon || "Wrench");
     setStatus(cat.status);
+    setSubcategoriesList(cat.subcategories || []);
+    setSubCategoryInput("");
     setIsDrawerOpen(true);
   };
 
@@ -60,6 +95,8 @@ export default function CategoriesPage() {
               slug: slug || catName.toLowerCase().replace(/\s+/g, "-"),
               icon,
               status,
+              subcategories: subcategoriesList,
+              subcategoriesCount: subcategoriesList.length,
             }
           : c
       );
@@ -70,7 +107,8 @@ export default function CategoriesPage() {
         name: catName,
         slug: slug || catName.toLowerCase().replace(/\s+/g, "-"),
         icon,
-        subcategoriesCount: 1,
+        subcategories: subcategoriesList,
+        subcategoriesCount: subcategoriesList.length,
         servicesCount: 0,
         status,
       };
@@ -96,6 +134,26 @@ export default function CategoriesPage() {
         </div>
       ),
       sortable: true,
+    },
+    {
+      key: "subcategories",
+      header: "Subcategories",
+      accessor: (row) => {
+        const subs = row.subcategories || ["Split AC", "Window AC", "Commercial AC"];
+        return (
+          <div className="flex flex-wrap gap-1 items-center max-w-xs">
+            {subs.map((s) => (
+              <span
+                key={s}
+                className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 font-extrabold text-[10px] border border-purple-200 dark:border-purple-800 flex items-center gap-1"
+              >
+                <Layers className="w-2.5 h-2.5" />
+                {s}
+              </span>
+            ))}
+          </div>
+        );
+      },
     },
     {
       key: "servicesCount",
@@ -201,13 +259,9 @@ export default function CategoriesPage() {
 
       {/* Master Categories Directory Table */}
       <DataTable
-        title="Master Category Directory"
-        description="Configure master categories for single-city service operations in Varanasi"
         columns={catColumns}
         data={categories}
         searchPlaceholder="Search category title or slug..."
-        addButtonLabel="Add Master Category"
-        onAddClick={openAddDrawer}
       />
 
       {/* SLIDE-OVER ADD/EDIT CATEGORY DRAWER */}
@@ -287,6 +341,79 @@ export default function CategoriesPage() {
                         <option value="Active">Active (Live in Varanasi)</option>
                         <option value="Inactive">Inactive (Disabled)</option>
                       </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subcategories Multi-Add Section */}
+                <div className="p-5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 space-y-4">
+                  <div className="flex items-center justify-between border-b border-purple-200 dark:border-purple-800 pb-2">
+                    <span className="font-extrabold text-purple-900 dark:text-purple-300 text-sm flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-purple-600" />
+                      Category Subcategories
+                    </span>
+                    <span className="text-[10px] font-bold text-purple-600 bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded-full">
+                      Multi-Add Options
+                    </span>
+                  </div>
+
+                  {/* 1. Multi-Add Input Field ABOVE */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-extrabold text-purple-900 dark:text-purple-300 block">
+                      + Add Subcategory (e.g. Split AC, Window AC, Commercial AC)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={subCategoryInput}
+                        onChange={(e) => setSubCategoryInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddSubcategoryTag();
+                          }
+                        }}
+                        placeholder="Type subcategory (e.g. Split AC)..."
+                        className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddSubcategoryTag}
+                        className="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-lux flex items-center gap-1 cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Tag
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 2. Display Subcategory Tag Pills BELOW */}
+                  <div className="pt-3 border-t border-purple-200/60 dark:border-purple-900/50 space-y-2">
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                      Added Subcategories ({subcategoriesList.length}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 min-h-[36px]">
+                      {subcategoriesList.length > 0 ? (
+                        subcategoriesList.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 font-extrabold text-xs flex items-center gap-1.5 shadow-xs"
+                          >
+                            <Layers className="w-3 h-3 text-purple-500" />
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSubcategoryTag(tag)}
+                              className="text-slate-400 hover:text-red-500 transition-colors ml-0.5"
+                              title="Remove subcategory tag"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">No subcategories added yet. Type above to add options.</span>
+                      )}
                     </div>
                   </div>
                 </div>

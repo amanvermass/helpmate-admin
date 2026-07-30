@@ -125,10 +125,8 @@ export default function ReviewsPage() {
         ))}
       </div>
 
-      {/* Main DataTable */}
+      {/* Main DataTable without duplicate headers */}
       <DataTable
-        title="Customer & Partner Ratings Feed"
-        description="Verified service reviews and rating scores"
         columns={columns}
         data={reviews}
       />

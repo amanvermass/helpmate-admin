@@ -503,24 +503,27 @@ export default function TechniciansPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Header Banner matching Billing layout */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Partner Fleet Directory & Payouts
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
+            <Users className="w-4 h-4" /> Partner Fleet Engine
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Partner Fleet Directory & Payouts</h1>
+          <p className="text-xs text-brand-100 mt-1 max-w-xl">
             Manage onboarded technicians, biometric KYC verification, and weekly commission settlements.
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAddPartnerOpen(true)}
-          className="px-4 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux flex items-center gap-2 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Manual Onboard Partner</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsAddPartnerOpen(true)}
+            className="px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-brand-600" />
+            <span>Manual Onboard Partner</span>
+          </button>
+        </div>
       </div>
 
       {/* 4 Partner Fleet Executive Quick Cards */}
@@ -638,16 +641,12 @@ export default function TechniciansPage() {
 
       {activeTab === "fleet" ? (
         <DataTable
-          title="Technician Fleet & Biometric KYC Directory"
-          description="Aadhaar verified and Varanasi Police cleared service partner directory."
           columns={fleetColumns}
           data={techs}
           searchPlaceholder="Search partner name, locality, or phone..."
         />
       ) : (
         <DataTable
-          title="25% Fixed Platform Commission & Payout Reconciliation"
-          description="Weekly settlement breakdown (75% partner earnings, 25% HelpMate commission)."
           columns={commissionColumns}
           data={techs}
           searchPlaceholder="Search partner name..."

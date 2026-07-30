@@ -25,6 +25,14 @@ import {
   Mail,
   Award,
   Sparkles,
+  Check,
+  IndianRupee,
+  CreditCard,
+  Building2,
+  FileCheck,
+  Star,
+  ChevronRight,
+  ShieldAlert,
 } from "lucide-react";
 import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
 import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
@@ -97,50 +105,64 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   // Financial Calculations
   const base = currentBooking.basePrice || 699;
-  const convenienceFee = 49;
+  const convenienceFee = currentBooking.convenienceFee || 49;
   const taxableAmount = base + convenienceFee;
-  const cgst = Math.round(taxableAmount * 0.09);
-  const sgst = Math.round(taxableAmount * 0.09);
+  const cgst = currentBooking.cgst || Math.round(taxableAmount * 0.09);
+  const sgst = currentBooking.sgst || Math.round(taxableAmount * 0.09);
   const finalTotal = currentBooking.totalAmount || taxableAmount + cgst + sgst;
 
   return (
-    <div className="w-full space-y-6 pb-12">
-      {/* Top Navigation Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/bookings"
-            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800">
-                {currentBooking.id}
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyId}
-                className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-white flex items-center gap-1"
-              >
-                <Copy className="w-3 h-3" />
-                {copied ? "Copied!" : "Copy"}
-              </button>
-            </div>
-            <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+    <div className="w-full space-y-6 pb-12 animate-in fade-in duration-300">
+
+      {/* ─── CLEAN DETAIL TOP BAR (Enterprise Style) ─── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/bookings"
+              className="text-xs font-bold text-slate-500 hover:text-brand-600 dark:text-slate-400 flex items-center gap-1 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Bookings Directory
+            </Link>
+            <span className="text-slate-300 dark:text-slate-700 font-bold">•</span>
+            <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800">
+              {currentBooking.id}
+            </span>
+            <button
+              type="button"
+              onClick={handleCopyId}
+              className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-white flex items-center gap-1"
+            >
+              <Copy className="w-3 h-3" />
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {currentBooking.serviceTitle}
             </h1>
+            <span
+              className={`px-3 py-0.5 rounded-full text-xs font-extrabold ${
+                currentBooking.status === "Completed"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                  : currentBooking.status === "In Progress" || currentBooking.status === "Assigned"
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              }`}
+            >
+              ● {currentBooking.status}
+            </span>
           </div>
         </div>
 
-        {/* Action Toolbar Buttons */}
+        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
           {!currentBooking.technicianName && (
             <button
               type="button"
               onClick={() => setIsAssignOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Assign Fleet Partner</span>
@@ -151,7 +173,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <button
               type="button"
               onClick={() => setIsInspectionOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Wrench className="w-4 h-4" />
               <span>Diagnostic Quote</span>
@@ -162,7 +184,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <button
               type="button"
               onClick={() => setIsOtpOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <KeyRound className="w-4 h-4" />
               <span>Verify Job OTP</span>
@@ -172,7 +194,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <button
             type="button"
             onClick={() => setIsEditOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Edit2 className="w-4 h-4" />
             <span>Edit Booking</span>
@@ -180,48 +202,42 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Main Grid: 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* General Overview Card */}
+      {/* ─── CLEAN 2-COLUMN RECORD DETAIL LAYOUT ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Column (8 Cols) */}
+        <div className="lg:col-span-8 space-y-6">
+
+          {/* Order Specifications Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Booking Information & Status
+                Booking Information & Specifications
               </span>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-extrabold ${
-                  currentBooking.status === "Completed"
-                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                    : currentBooking.status === "In Progress" || currentBooking.status === "Assigned"
-                    ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                    : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                }`}
-              >
-                ● {currentBooking.status}
+              <span className="text-xs font-extrabold text-brand-600 dark:text-brand-400">
+                {currentBooking.category}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Service Category</span>
-                <div className="font-extrabold text-slate-900 dark:text-white text-sm">{currentBooking.category}</div>
-                <div className="text-slate-500">{currentBooking.packageTitle || "Standard Care Package"}</div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Service Package</span>
+                <div className="font-extrabold text-slate-900 dark:text-white text-sm">{currentBooking.serviceTitle}</div>
+                <div className="text-slate-500 font-semibold">{currentBooking.packageTitle || "Standard Service Package"}</div>
               </div>
 
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Schedule Slot</span>
                 <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-brand-500" />
                   {currentBooking.date} • {currentBooking.timeSlot}
                 </div>
-                <div className="text-slate-500 font-semibold">{currentBooking.city || "Varanasi"}</div>
+                <div className="text-slate-500 font-semibold">{currentBooking.locality}, {currentBooking.city || "Varanasi"}</div>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2 text-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Service Address</span>
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Destination Service Address</span>
               <div className="font-bold text-slate-900 dark:text-white flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
                 <span>{currentBooking.address}</span>
@@ -238,9 +254,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
           {/* Assigned Fleet Specialist Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Assigned Varanasi Fleet Specialist
-            </span>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                Assigned Fleet Partner
+              </span>
+              {currentBooking.technicianName && (
+                <button
+                  type="button"
+                  onClick={() => setIsAssignOpen(true)}
+                  className="text-xs font-bold text-brand-600 hover:underline cursor-pointer"
+                >
+                  Change Partner
+                </button>
+              )}
+            </div>
 
             {currentBooking.technicianName ? (
               <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
@@ -259,7 +286,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
                 <div className="text-right">
                   <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">★ 4.9 Rating</span>
-                  <span className="block text-[10px] text-slate-400">Background Checked</span>
+                  <span className="block text-[10px] text-slate-400 font-semibold">140+ Jobs Done</span>
                 </div>
               </div>
             ) : (
@@ -274,7 +301,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <button
                   type="button"
                   onClick={() => setIsAssignOpen(true)}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-xs"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
                 >
                   Assign Partner Now
                 </button>
@@ -282,18 +309,18 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
-          {/* Job Audit Trail & Timeline */}
+          {/* Job Lifecycle Timeline Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
               Job Audit & Lifecycle Timeline
             </span>
 
-            <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+            <div className="space-y-4 relative pl-5 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
               <div className="flex items-start gap-3 relative z-10">
                 <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-xs">✓</div>
                 <div>
-                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Booking Created</h5>
-                  <p className="text-[11px] text-slate-400">Registered by customer on HelpMate Varanasi Web App</p>
+                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Booking Registered</h5>
+                  <p className="text-[11px] text-slate-400">Created via HelpMate Varanasi Engine</p>
                 </div>
               </div>
 
@@ -314,7 +341,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   {currentBooking.isOtpVerified ? "✓" : "3"}
                 </div>
                 <div>
-                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Job Completion & OTP Verification</h5>
+                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Job Closure & OTP Verification</h5>
                   <p className="text-[11px] text-slate-400">
                     {currentBooking.isOtpVerified ? `OTP ${currentBooking.otpCode || "4920"} verified successfully` : `Job Closure OTP: ${currentBooking.otpCode || "4920"}`}
                   </p>
@@ -324,8 +351,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {/* Right Column (1 Col): Customer CRM & Payment Breakdown */}
-        <div className="space-y-6">
+        {/* Right Column (4 Cols): Customer CRM & Payment Breakdown */}
+        <div className="lg:col-span-4 space-y-6">
+
           {/* Customer CRM Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
@@ -333,7 +361,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </span>
 
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="w-12 h-12 rounded-2xl bg-brand-500 text-white font-black flex items-center justify-center text-base shadow-lux">
+              <div className="w-11 h-11 rounded-2xl bg-brand-500 text-white font-black flex items-center justify-center text-base shadow-xs">
                 {currentBooking.customerName[0]}
               </div>
               <div>
@@ -346,12 +374,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                <span className="flex items-center gap-1.5 text-slate-400"><Phone className="w-3.5 h-3.5" /> Phone</span>
+                <span className="flex items-center gap-1.5 text-slate-400 font-semibold"><Phone className="w-3.5 h-3.5" /> Phone</span>
                 <span className="font-bold text-slate-900 dark:text-white">{currentBooking.customerPhone}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                <span className="flex items-center gap-1.5 text-slate-400"><Mail className="w-3.5 h-3.5" /> Email</span>
-                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[150px]">
+                <span className="flex items-center gap-1.5 text-slate-400 font-semibold"><Mail className="w-3.5 h-3.5" /> Email</span>
+                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]">
                   {currentBooking.customerEmail || "customer@helpmate.com"}
                 </span>
               </div>
@@ -364,7 +392,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Payment & GST Invoice
               </span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                 {currentBooking.paymentMethod || "UPI Online"}
               </span>
             </div>
@@ -399,12 +427,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <button
               type="button"
               onClick={() => window.print()}
-              className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs"
+              className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>Print Tax Invoice</span>
             </button>
           </div>
+
         </div>
       </div>
 

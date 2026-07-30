@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -21,13 +21,18 @@ import {
   Wrench,
   DollarSign,
   CalendarCheck,
+  Menu,
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { varanasiLocalities } from "@/lib/mockData";
 import { useTheme } from "@/context/ThemeContext";
 import { useRbac, RoleType } from "@/context/RbacContext";
 
-export function Header() {
+interface HeaderProps {
+  onOpenMobileSidebar?: () => void;
+}
+
+export function Header({ onOpenMobileSidebar }: HeaderProps) {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { role, setRole } = useRbac();
@@ -37,6 +42,25 @@ export function Header() {
   const [isRoleOpen, setIsRoleOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Close all open dropdowns when user clicks outside the header
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
+        setIsRoleOpen(false);
+        setIsZoneOpen(false);
+        setIsNotificationsOpen(false);
+        setIsProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const isPartner = role === "Service Partner";
 
@@ -68,25 +92,40 @@ export function Header() {
   ];
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200 shadow-xs">
-      {/* Header Breadcrumbs Navigation */}
-      <div className="flex items-center gap-4">
-        <Breadcrumbs />
+    <header ref={headerRef} className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200 shadow-xs">
+      {/* Mobile Hamburger & Header Breadcrumbs Navigation */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={onOpenMobileSidebar}
+          aria-label="Open Mobile Menu"
+          className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="min-w-0 overflow-hidden">
+          <Breadcrumbs />
+        </div>
       </div>
 
       {/* Right Action Icons & Controls */}
-      <div className="flex items-center gap-3">
-        {/* Role Selector Badge - HIDDEN for Partner Mode as requested */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Role Selector Badge - HIDDEN on Mobile (< md breakpoint) */}
         {!isPartner ? (
-          <div className="relative">
+          <div className="hidden md:block relative">
             <button
               type="button"
-              onClick={() => setIsRoleOpen(!isRoleOpen)}
+              onClick={() => {
+                setIsRoleOpen(!isRoleOpen);
+                setIsZoneOpen(false);
+                setIsNotificationsOpen(false);
+                setIsProfileOpen(false);
+              }}
               className="px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold flex items-center gap-1.5 hover:bg-purple-100 transition-colors cursor-pointer"
             >
-              <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+              <UserCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
               <span>Role: {role}</span>
-              <ChevronDown className="w-3 h-3" />
+              <ChevronDown className="w-3 h-3 shrink-0" />
             </button>
 
             {isRoleOpen && (
@@ -116,32 +155,27 @@ export function Header() {
             )}
           </div>
         ) : (
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Service Partner Portal</span>
+            <span>Partner Portal</span>
           </div>
         )}
 
-        {/* Dark Mode Toggle */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-500 transition-colors cursor-pointer"
-          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-        >
-          {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-        </button>
-
-        {/* Varanasi Zone Filter */}
-        <div className="relative">
+        {/* Varanasi Zone Filter - HIDDEN on Mobile (< md breakpoint) */}
+        <div className="hidden md:block relative">
           <button
             type="button"
-            onClick={() => setIsZoneOpen(!isZoneOpen)}
+            onClick={() => {
+              setIsZoneOpen(!isZoneOpen);
+              setIsRoleOpen(false);
+              setIsNotificationsOpen(false);
+              setIsProfileOpen(false);
+            }}
             className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
-            <MapPin className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+            <MapPin className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
             <span>{selectedZone}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
           </button>
 
           {isZoneOpen && (
@@ -173,44 +207,106 @@ export function Header() {
           )}
         </div>
 
+        {/* Dark Mode Toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-500 transition-colors cursor-pointer shrink-0"
+          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+        >
+          {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+        </button>
+
         {/* Notifications Drawer Toggle */}
         <div className="relative">
           <button
             type="button"
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 relative cursor-pointer"
+            onClick={() => {
+              setIsNotificationsOpen(!isNotificationsOpen);
+              setIsRoleOpen(false);
+              setIsZoneOpen(false);
+              setIsProfileOpen(false);
+            }}
+            className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 relative cursor-pointer shrink-0"
           >
             <Bell className="w-4 h-4" />
-            <span className="w-2 h-2 rounded-full bg-brand-500 absolute top-2 right-2 ring-2 ring-white dark:ring-slate-900"></span>
+            <span className="w-2 h-2 rounded-full bg-brand-500 absolute top-1.5 right-1.5 ring-2 ring-white dark:ring-slate-900" />
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-4 z-50">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Live System Alerts</h4>
-                <button type="button" onClick={() => setIsNotificationsOpen(false)}><X className="w-4 h-4 text-slate-400" /></button>
+            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-4 z-50 animate-in zoom-in-95 duration-150 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-black text-slate-900 dark:text-white">Live Operations Alerts</h4>
+                  <span className="px-2 py-0.5 rounded-full bg-brand-500 text-white font-extrabold text-[10px]">
+                    3 New
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotificationsOpen(false)}
+                    className="text-[10px] font-bold text-slate-400 hover:text-brand-600 underline"
+                  >
+                    Mark read
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsNotificationsOpen(false)}
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                 {notifications.map((n) => (
-                  <div key={n.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-left space-y-0.5">
-                    <span className="text-[11px] font-bold text-slate-900 dark:text-white block">{n.title}</span>
-                    <p className="text-[10px] text-slate-500 leading-tight">{n.desc}</p>
+                  <div
+                    key={n.id}
+                    className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-left space-y-1 hover:border-brand-300 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-brand-600 bg-brand-50 dark:bg-brand-950 px-2 py-0.2 rounded border border-brand-200 dark:border-brand-800">
+                        {n.title.includes("Priority") ? "HIGH PRIORITY" : n.title.includes("Payout") ? "PAYOUT CREDITED" : "NEW ORDER"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">{n.time}</span>
+                    </div>
+                    <span className="text-xs font-extrabold text-slate-900 dark:text-white block leading-tight">
+                      {n.title}
+                    </span>
+                    <p className="text-[11px] text-slate-500 leading-snug">{n.desc}</p>
                   </div>
                 ))}
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <Link
+                  href="/notifications"
+                  onClick={() => setIsNotificationsOpen(false)}
+                  className="w-full py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-extrabold text-xs text-center block transition-colors"
+                >
+                  View All System Alerts & Broadcast Logs →
+                </Link>
               </div>
             </div>
           )}
         </div>
 
-        {/* Interactive User Profile Dropdown */}
-        <div className="relative pl-2 border-l border-slate-200 dark:border-slate-800">
+        {/* User Profile Dropdown */}
+        <div className="relative pl-1 sm:pl-2 border-l border-slate-200 dark:border-slate-800">
           <button
             type="button"
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            onClick={() => {
+              setIsProfileOpen(!isProfileOpen);
+              setIsRoleOpen(false);
+              setIsZoneOpen(false);
+              setIsNotificationsOpen(false);
+            }}
+            className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <div
-              className={`w-8 h-8 rounded-xl ${
+              className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl ${
                 isPartner
                   ? "bg-gradient-to-tr from-emerald-600 to-teal-600"
                   : "bg-gradient-to-tr from-brand-600 to-purple-600"
@@ -228,10 +324,10 @@ export function Header() {
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in zoom-in-95 duration-150">
+            <div className="absolute right-0 mt-2 w-60 sm:w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in zoom-in-95 duration-150">
               <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl ${
+                  className={`w-9 h-9 rounded-xl ${
                     isPartner ? "bg-emerald-600" : "bg-brand-500"
                   } text-white font-black text-sm flex items-center justify-center shrink-0 shadow-lux`}
                 >
@@ -347,7 +443,7 @@ export function Header() {
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition-colors font-bold text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 text-red-500" />
-                  <span>Logout Account</span>
+                  <span>Log Out Session</span>
                 </button>
               </div>
             </div>

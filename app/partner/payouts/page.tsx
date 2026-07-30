@@ -113,8 +113,6 @@ export default function PartnerPayoutsPage() {
       </div>
 
       <DataTable
-        title="Weekly Earnings & Settlement Log"
-        description="Transparent 75/25 revenue split breakdown and bank deposit receipts"
         columns={columns}
         data={payouts}
       />

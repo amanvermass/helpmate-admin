@@ -19,7 +19,8 @@ export interface ServiceAddon {
 
 export interface ServiceItem {
   id: string;
-  category: "ac" | "cleaning" | "electrician" | "plumbing" | "beauty";
+  category: string;
+  subcategory?: string;
   title: string;
   subtitle: string;
   price: number;
@@ -51,6 +52,7 @@ export interface CategoryItem {
   slug: string;
   icon: string;
   subcategoriesCount: number;
+  subcategories?: string[];
   servicesCount: number;
   status: "Active" | "Inactive";
   subServices?: CategorySubService[];
@@ -76,12 +78,28 @@ export interface PackageItem {
   status: "Active" | "Inactive";
 }
 
+export interface RateCardItem {
+  id: string;
+  serviceTitle: string;
+  category: string;
+  basePrice: number;
+  memberPrice: number;
+  convenienceFee: number;
+  gstPercentage: number;
+  commissionPercentage: number;
+  surgeMultiplier: number;
+  status: "Active" | "Inactive";
+}
+
 export interface CityPricingItem {
   id: string;
   cityName: string;
+  locality?: string;
   state: string;
   baseFareMultiplier: number;
+  peakHourSurge: number;
   nightSurgeMultiplier: number;
+  weatherSurge: number;
   status: "Active" | "Inactive";
 }
 
@@ -115,28 +133,39 @@ export interface TransactionItem {
   bookingId: string;
   customerName: string;
   amount: number;
-  paymentMethod: "UPI" | "Card" | "Wallet" | "Cash";
+  paymentMethod: string;
   status: "Success" | "Refunded" | "Failed";
   date: string;
 }
 
 export interface ModulePermission {
   view: boolean;
+  create: boolean;
   edit: boolean;
   delete: boolean;
 }
 
 export interface UserPermissions {
-  // Granular View/Edit/Delete Matrix
+  // Granular View/Edit/Delete Matrix — All Admin Modules
   bookings: ModulePermission;
-  services: ModulePermission;
+  inspections: ModulePermission;
   customers: ModulePermission;
-  fleet: ModulePermission;
-  finance: ModulePermission;
+  technicians: ModulePermission;
+  categories: ModulePermission;
+  cms: ModulePermission;
+  pricing: ModulePermission;
+  locations: ModulePermission;
+  payments: ModulePermission;
+  billing: ModulePermission;
+  commission: ModulePermission;
+  coupons: ModulePermission;
+  reviews: ModulePermission;
+  media: ModulePermission;
+  analytics: ModulePermission;
   reports: ModulePermission;
   rbac: ModulePermission;
 
-  // Feature flags
+  // Feature flags (auto-derived)
   canDispatchJobs: boolean;
   canEditServices: boolean;
   canProcessRefunds: boolean;
@@ -418,8 +447,26 @@ export const initialPackages: PackageItem[] = [
   { id: "pkg-3", title: "Ayurvedic Home Spa & Glow Facial Bundle", category: "Beauty", includedServices: ["Kashi Oil Body Massage", "Gold Glow Facial", "Herbal Hair Spa"], packagePrice: 2999, individualPrice: 4299, discountPercentage: 30, status: "Active" },
 ];
 
+export const initialRateCards: RateCardItem[] = [
+  { id: "rc-1", serviceTitle: "Split AC Foam Jet Servicing", category: "AC Servicing", basePrice: 599, memberPrice: 499, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-2", serviceTitle: "Split AC Gas Leak Repair & Refill", category: "AC Servicing", basePrice: 1499, memberPrice: 1299, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-3", serviceTitle: "Window AC Deep Jet Servicing", category: "AC Servicing", basePrice: 499, memberPrice: 399, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-4", serviceTitle: "Full House Deep Cleaning (2BHK)", category: "Deep Cleaning", basePrice: 2999, memberPrice: 2499, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.1, status: "Active" },
+  { id: "rc-5", serviceTitle: "Kitchen Oil & Degreasing Wash", category: "Deep Cleaning", basePrice: 1199, memberPrice: 999, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-6", serviceTitle: "Smart MCB & Fuse Box Installation", category: "Electrician", basePrice: 349, memberPrice: 299, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-7", serviceTitle: "Hydro Jet Drain Cleaning & Unclog", category: "Plumbing", basePrice: 699, memberPrice: 599, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-8", serviceTitle: "Gold Radiance Glow Facial & Massage", category: "Home Salon", basePrice: 1299, memberPrice: 1099, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+  { id: "rc-9", serviceTitle: "Full Car Foam Wash & Interior Polish", category: "Car Wash", basePrice: 499, memberPrice: 399, convenienceFee: 49, gstPercentage: 18, commissionPercentage: 25, surgeMultiplier: 1.0, status: "Active" },
+];
+
 export const initialCityPricing: CityPricingItem[] = [
-  { id: "cp-1", cityName: "Varanasi", state: "Uttar Pradesh", baseFareMultiplier: 1.0, nightSurgeMultiplier: 1.2, status: "Active" },
+  { id: "cp-1", cityName: "Varanasi Metro", locality: "Sigra Commercial Zone", state: "Uttar Pradesh", baseFareMultiplier: 1.0, peakHourSurge: 1.25, nightSurgeMultiplier: 1.20, weatherSurge: 1.30, status: "Active" },
+  { id: "cp-2", cityName: "Varanasi Metro", locality: "Lanka & Assi Ghat Hub", state: "Uttar Pradesh", baseFareMultiplier: 1.0, peakHourSurge: 1.20, nightSurgeMultiplier: 1.15, weatherSurge: 1.25, status: "Active" },
+  { id: "cp-3", cityName: "Varanasi Metro", locality: "Godowlia Heritage Zone", state: "Uttar Pradesh", baseFareMultiplier: 1.1, peakHourSurge: 1.30, nightSurgeMultiplier: 1.25, weatherSurge: 1.35, status: "Active" },
+  { id: "cp-4", cityName: "Varanasi Metro", locality: "Bhelupur Residential", state: "Uttar Pradesh", baseFareMultiplier: 1.0, peakHourSurge: 1.15, nightSurgeMultiplier: 1.15, weatherSurge: 1.20, status: "Active" },
+  { id: "cp-5", cityName: "Varanasi Metro", locality: "Cantt Railway Station Zone", state: "Uttar Pradesh", baseFareMultiplier: 1.05, peakHourSurge: 1.25, nightSurgeMultiplier: 1.20, weatherSurge: 1.30, status: "Active" },
+  { id: "cp-6", cityName: "Prayagraj Hub", locality: "Civil Lines Central", state: "Uttar Pradesh", baseFareMultiplier: 1.0, peakHourSurge: 1.15, nightSurgeMultiplier: 1.20, weatherSurge: 1.25, status: "Active" },
+  { id: "cp-7", cityName: "Lucknow Metro", locality: "Hazratganj & Gomti Nagar", state: "Uttar Pradesh", baseFareMultiplier: 1.15, peakHourSurge: 1.35, nightSurgeMultiplier: 1.30, weatherSurge: 1.40, status: "Active" },
 ];
 
 export const initialCoupons: CouponItem[] = [
@@ -490,8 +537,14 @@ export const initialReviews: ReviewItem[] = [
 ];
 
 export const initialTransactions: TransactionItem[] = [
-  { id: "txn-901", bookingId: "HM-VAR-8821", customerName: "Rajesh Kumar Agrawal", amount: 873, paymentMethod: "UPI", status: "Success", date: "Today, 05:30 PM" },
-  { id: "txn-902", bookingId: "HM-VAR-8820", customerName: "Dr. Ananya Mukherjee", amount: 2407, paymentMethod: "Wallet", status: "Success", date: "Today, 04:45 PM" },
+  { id: "txn-901", bookingId: "HM-VAR-8821", customerName: "Rajesh Kumar Agrawal", amount: 1499, paymentMethod: "UPI (Google Pay)", status: "Success", date: "Today, 05:30 PM" },
+  { id: "txn-902", bookingId: "HM-VAR-8822", customerName: "Sanjay Mishra", amount: 850, paymentMethod: "Cash on Service", status: "Success", date: "Today, 03:15 PM" },
+  { id: "txn-903", bookingId: "HM-VAR-8823", customerName: "Priya Sharma", amount: 1249, paymentMethod: "UPI (PhonePe)", status: "Success", date: "Yesterday, 11:45 AM" },
+  { id: "txn-904", bookingId: "HM-VAR-8820", customerName: "Dr. Ananya Mukherjee", amount: 2417, paymentMethod: "Helpmate Wallet", status: "Success", date: "Today, 04:45 PM" },
+  { id: "txn-905", bookingId: "HM-VAR-8819", customerName: "Vikram Singh", amount: 647, paymentMethod: "Credit Card (HDFC)", status: "Success", date: "Today, 02:10 PM" },
+  { id: "txn-906", bookingId: "HM-VAR-8818", customerName: "Sunil Verma", amount: 499, paymentMethod: "UPI (Paytm)", status: "Refunded", date: "28 Jul 2026, 06:15 PM" },
+  { id: "txn-907", bookingId: "HM-VAR-8817", customerName: "Kavita Gupta", amount: 1899, paymentMethod: "NetBanking (ICICI)", status: "Success", date: "28 Jul 2026, 01:20 PM" },
+  { id: "txn-908", bookingId: "HM-VAR-8816", customerName: "Manish Srivastava", amount: 799, paymentMethod: "UPI (BHIM)", status: "Failed", date: "27 Jul 2026, 09:10 AM" },
 ];
 
 export const initialUsers: UserManagementItem[] = [
@@ -505,13 +558,23 @@ export const initialUsers: UserManagementItem[] = [
     phone: "+91 98390 11111",
     locality: "Varanasi HQ",
     permissions: {
-      bookings: { view: true, edit: true, delete: true },
-      services: { view: true, edit: true, delete: true },
-      customers: { view: true, edit: true, delete: true },
-      fleet: { view: true, edit: true, delete: true },
-      finance: { view: true, edit: true, delete: true },
-      reports: { view: true, edit: true, delete: true },
-      rbac: { view: true, edit: true, delete: true },
+      bookings: { view: true, create: true, edit: true, delete: true },
+      inspections: { view: true, create: true, edit: true, delete: true },
+      customers: { view: true, create: true, edit: true, delete: true },
+      technicians: { view: true, create: true, edit: true, delete: true },
+      categories: { view: true, create: true, edit: true, delete: true },
+      cms: { view: true, create: true, edit: true, delete: true },
+      pricing: { view: true, create: true, edit: true, delete: true },
+      locations: { view: true, create: true, edit: true, delete: true },
+      payments: { view: true, create: true, edit: true, delete: true },
+      billing: { view: true, create: true, edit: true, delete: true },
+      commission: { view: true, create: true, edit: true, delete: true },
+      coupons: { view: true, create: true, edit: true, delete: true },
+      reviews: { view: true, create: true, edit: true, delete: true },
+      media: { view: true, create: true, edit: true, delete: true },
+      analytics: { view: true, create: true, edit: true, delete: true },
+      reports: { view: true, create: true, edit: true, delete: true },
+      rbac: { view: true, create: true, edit: true, delete: true },
       canDispatchJobs: true,
       canEditServices: true,
       canProcessRefunds: true,
@@ -531,13 +594,23 @@ export const initialUsers: UserManagementItem[] = [
     phone: "+91 98390 22222",
     locality: "Sigra Zone",
     permissions: {
-      bookings: { view: true, edit: true, delete: false },
-      services: { view: true, edit: false, delete: false },
-      customers: { view: true, edit: true, delete: false },
-      fleet: { view: true, edit: true, delete: false },
-      finance: { view: false, edit: false, delete: false },
-      reports: { view: false, edit: false, delete: false },
-      rbac: { view: false, edit: false, delete: false },
+      bookings: { view: true, create: true, edit: true, delete: false },
+      inspections: { view: true, create: false, edit: true, delete: false },
+      customers: { view: true, create: false, edit: true, delete: false },
+      technicians: { view: true, create: false, edit: true, delete: false },
+      categories: { view: true, create: false, edit: false, delete: false },
+      cms: { view: false, create: false, edit: false, delete: false },
+      pricing: { view: false, create: false, edit: false, delete: false },
+      locations: { view: true, create: false, edit: false, delete: false },
+      payments: { view: false, create: false, edit: false, delete: false },
+      billing: { view: false, create: false, edit: false, delete: false },
+      commission: { view: false, create: false, edit: false, delete: false },
+      coupons: { view: false, create: false, edit: false, delete: false },
+      reviews: { view: true, create: false, edit: false, delete: false },
+      media: { view: false, create: false, edit: false, delete: false },
+      analytics: { view: false, create: false, edit: false, delete: false },
+      reports: { view: false, create: false, edit: false, delete: false },
+      rbac: { view: false, create: false, edit: false, delete: false },
       canDispatchJobs: true,
       canEditServices: false,
       canProcessRefunds: false,
@@ -557,13 +630,23 @@ export const initialUsers: UserManagementItem[] = [
     phone: "+91 98390 33333",
     locality: "Lanka Zone",
     permissions: {
-      bookings: { view: true, edit: true, delete: false },
-      services: { view: true, edit: false, delete: false },
-      customers: { view: true, edit: true, delete: false },
-      fleet: { view: true, edit: false, delete: false },
-      finance: { view: true, edit: false, delete: false },
-      reports: { view: false, edit: false, delete: false },
-      rbac: { view: false, edit: false, delete: false },
+      bookings: { view: true, create: false, edit: true, delete: false },
+      inspections: { view: true, create: false, edit: false, delete: false },
+      customers: { view: true, create: false, edit: true, delete: false },
+      technicians: { view: true, create: false, edit: false, delete: false },
+      categories: { view: false, create: false, edit: false, delete: false },
+      cms: { view: false, create: false, edit: false, delete: false },
+      pricing: { view: false, create: false, edit: false, delete: false },
+      locations: { view: false, create: false, edit: false, delete: false },
+      payments: { view: true, create: false, edit: false, delete: false },
+      billing: { view: true, create: false, edit: false, delete: false },
+      commission: { view: false, create: false, edit: false, delete: false },
+      coupons: { view: false, create: false, edit: false, delete: false },
+      reviews: { view: true, create: false, edit: false, delete: false },
+      media: { view: false, create: false, edit: false, delete: false },
+      analytics: { view: false, create: false, edit: false, delete: false },
+      reports: { view: false, create: false, edit: false, delete: false },
+      rbac: { view: false, create: false, edit: false, delete: false },
       canDispatchJobs: true,
       canEditServices: false,
       canProcessRefunds: true,
@@ -583,13 +666,23 @@ export const initialUsers: UserManagementItem[] = [
     phone: "+91 98390 44444",
     locality: "Cantt Zone",
     permissions: {
-      bookings: { view: true, edit: false, delete: false },
-      services: { view: true, edit: true, delete: false },
-      customers: { view: true, edit: false, delete: false },
-      fleet: { view: false, edit: false, delete: false },
-      finance: { view: true, edit: true, delete: true },
-      reports: { view: true, edit: true, delete: false },
-      rbac: { view: false, edit: false, delete: false },
+      bookings: { view: true, create: false, edit: false, delete: false },
+      inspections: { view: false, create: false, edit: false, delete: false },
+      customers: { view: true, create: false, edit: false, delete: false },
+      technicians: { view: false, create: false, edit: false, delete: false },
+      categories: { view: true, create: false, edit: false, delete: false },
+      cms: { view: true, create: true, edit: true, delete: false },
+      pricing: { view: true, create: true, edit: true, delete: false },
+      locations: { view: true, create: false, edit: false, delete: false },
+      payments: { view: true, create: false, edit: true, delete: false },
+      billing: { view: true, create: true, edit: true, delete: true },
+      commission: { view: true, create: false, edit: true, delete: false },
+      coupons: { view: true, create: true, edit: true, delete: false },
+      reviews: { view: false, create: false, edit: false, delete: false },
+      media: { view: false, create: false, edit: false, delete: false },
+      analytics: { view: true, create: false, edit: false, delete: false },
+      reports: { view: true, create: false, edit: true, delete: false },
+      rbac: { view: false, create: false, edit: false, delete: false },
       canDispatchJobs: false,
       canEditServices: true,
       canProcessRefunds: true,
@@ -668,95 +761,295 @@ export const initialTechnicians: Technician[] = [
   },
 ];
 
-export const initialBookings: Booking[] = [
-  {
-    id: "HM-VAR-8821",
-    customerName: "Rajesh Kumar Agrawal",
-    customerPhone: "+91 77050 04040",
-    customerGstin: "09AABCH1234H1Z5",
-    city: "Varanasi",
-    locality: "Sigra",
-    pincode: "221002",
-    address: "D-58/16C Shashtri Nagar Colony, Sigra, Varanasi",
-    serviceTitle: "Power Jet AC Servicing",
-    category: "AC",
-    systemType: "Split AC (1.5 Ton)",
-    basePrice: 699,
-    convenienceFee: 49,
-    cgst: 67.32,
-    sgst: 67.32,
-    totalAmount: 883,
-    invoiceType: "B2B",
-    commissionAmount: 174.75, // 25% of 699
-    partnerEarnings: 524.25, // 75% of 699
-    isInspectionBased: true,
-    initialInspectionQuote: 199,
-    updatedInspectionQuote: 699,
-    inspectionApprovedByCustomer: true,
-    otpCode: "8821",
-    isOtpVerified: false,
-    status: "In Progress",
-    technicianName: "Ramesh Yadav",
-    technicianId: "tech-101",
-    date: "Today, 05:30 PM",
-    timeSlot: "05:00 PM - 06:30 PM",
-    paymentMethod: "UPI",
-  },
-  {
-    id: "HM-VAR-8820",
-    customerName: "Dr. Ananya Mukherjee",
-    customerPhone: "+91 94501 22910",
-    city: "Varanasi",
-    locality: "Lanka / Assi Ghat",
-    pincode: "221005",
-    address: "Plot 12, Assi Ghat Road, Near BHU Gate, Lanka, Varanasi",
-    serviceTitle: "Ayurvedic Home Spa & Wellness",
-    category: "Beauty",
-    basePrice: 1999,
-    convenienceFee: 49,
-    cgst: 184.32,
-    sgst: 184.32,
-    totalAmount: 2417,
-    invoiceType: "B2C",
-    commissionAmount: 499.75,
-    partnerEarnings: 1499.25,
-    otpCode: "4920",
-    isOtpVerified: false,
-    status: "Assigned",
-    technicianName: "Sunita Verma",
-    technicianId: "tech-102",
-    date: "Today, 06:00 PM",
-    timeSlot: "06:00 PM - 07:30 PM",
-    paymentMethod: "Helpmate Wallet",
-  },
-  {
-    id: "HM-VAR-8819",
-    customerName: "Vikram Singh",
-    customerPhone: "+91 99180 55432",
-    city: "Varanasi",
-    locality: "Bhelupur",
-    pincode: "221010",
-    address: "B-22/41 Sonarpura, Bhelupur, Varanasi",
-    serviceTitle: "Smart Home & MCB Box Repair",
-    category: "Electrician",
-    basePrice: 499,
-    convenienceFee: 49,
-    cgst: 49.32,
-    sgst: 49.32,
-    totalAmount: 647,
-    invoiceType: "B2C",
-    commissionAmount: 124.75,
-    partnerEarnings: 374.25,
-    otpCode: "1819",
-    isOtpVerified: true,
-    status: "Completed",
-    technicianName: "Amit Pandey",
-    technicianId: "tech-103",
-    date: "Today, 04:45 PM",
-    timeSlot: "04:30 PM - 05:30 PM",
-    paymentMethod: "UPI",
-  },
-];
+const generateMockBookings = (): Booking[] => {
+  const initialFiveBookings: Booking[] = [
+    {
+      id: "HM-VAR-8821",
+      customerName: "Rajesh Kumar Agrawal",
+      customerPhone: "+91 77050 04040",
+      customerGstin: "09AABCH1234H1Z5",
+      city: "Varanasi",
+      locality: "Sigra",
+      pincode: "221002",
+      address: "D-58/16C Shashtri Nagar Colony, Sigra, Varanasi",
+      serviceTitle: "Power Jet AC Servicing & Diagnostic Check",
+      category: "AC",
+      systemType: "Split AC (1.5 Ton)",
+      basePrice: 699,
+      convenienceFee: 49,
+      cgst: 67.32,
+      sgst: 67.32,
+      totalAmount: 883,
+      invoiceType: "B2B",
+      commissionAmount: 174.75,
+      partnerEarnings: 524.25,
+      isInspectionBased: true,
+      initialInspectionQuote: 199,
+      updatedInspectionQuote: 1450,
+      materialCost: 950,
+      labourCost: 500,
+      inspectionRemarks: "Compressor capacitor burnt & copper pipe R32 refrigerant top-up required (300g). PCB circuit tested clean.",
+      inspectionImages: [
+        "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=80"
+      ],
+      inspectionApprovedByCustomer: true,
+      otpCode: "8821",
+      isOtpVerified: false,
+      status: "In Progress",
+      technicianName: "Ramesh Yadav",
+      technicianId: "tech-101",
+      date: "Today, 05:30 PM",
+      timeSlot: "05:00 PM - 06:30 PM",
+      paymentMethod: "UPI",
+    },
+    {
+      id: "HM-VAR-8822",
+      customerName: "Sanjay Mishra",
+      customerPhone: "+91 98390 11928",
+      city: "Varanasi",
+      locality: "Mahmoorganj",
+      pincode: "221010",
+      address: "B-32/12 Tulsipur, Near Galaxy Hospital, Mahmoorganj, Varanasi",
+      serviceTitle: "Main Circuit Breaker & Short Circuit Diagnostic",
+      category: "Electrical",
+      systemType: "3-Phase Distribution Box",
+      basePrice: 299,
+      convenienceFee: 49,
+      cgst: 35.82,
+      sgst: 35.82,
+      totalAmount: 419,
+      invoiceType: "B2C",
+      commissionAmount: 74.75,
+      partnerEarnings: 224.25,
+      isInspectionBased: true,
+      initialInspectionQuote: 149,
+      updatedInspectionQuote: 850,
+      materialCost: 550,
+      labourCost: 300,
+      inspectionRemarks: "Overheated 32A 4-Pole MCB switch melted terminal block. Replaced with Havells 32A C-Curve MCB.",
+      inspectionImages: [
+        "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=500&auto=format&fit=crop&q=80"
+      ],
+      inspectionApprovedByCustomer: false,
+      otpCode: "3310",
+      isOtpVerified: false,
+      status: "Assigned",
+      technicianName: "Amit Pandey",
+      technicianId: "tech-103",
+      date: "Today, 03:15 PM",
+      timeSlot: "03:00 PM - 04:30 PM",
+      paymentMethod: "Cash on Service",
+    },
+    {
+      id: "HM-VAR-8823",
+      customerName: "Priya Sharma",
+      customerPhone: "+91 91402 88301",
+      city: "Varanasi",
+      locality: "Ravindrapuri",
+      pincode: "221005",
+      address: "House 45, Lane 3, Near Anand Park, Ravindrapuri, Varanasi",
+      serviceTitle: "Concealed Wall Leakage & Pipe Diagnosis",
+      category: "Plumbing",
+      systemType: "CPVC Underground Line",
+      basePrice: 399,
+      convenienceFee: 49,
+      cgst: 44.82,
+      sgst: 44.82,
+      totalAmount: 537,
+      invoiceType: "B2C",
+      commissionAmount: 99.75,
+      partnerEarnings: 299.25,
+      isInspectionBased: true,
+      initialInspectionQuote: 199,
+      updatedInspectionQuote: 1200,
+      materialCost: 700,
+      labourCost: 500,
+      inspectionRemarks: "CPVC 1-inch elbow hairline crack detected using pressure gauge. Requires wall chipping & replacement.",
+      inspectionImages: [
+        "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=500&auto=format&fit=crop&q=80"
+      ],
+      inspectionApprovedByCustomer: true,
+      otpCode: "9912",
+      isOtpVerified: true,
+      status: "Completed",
+      technicianName: "Vikas Kumar",
+      technicianId: "tech-104",
+      date: "Yesterday",
+      timeSlot: "11:00 AM - 12:30 PM",
+      paymentMethod: "UPI",
+    },
+    {
+      id: "HM-VAR-8820",
+      customerName: "Dr. Ananya Mukherjee",
+      customerPhone: "+91 94501 22910",
+      city: "Varanasi",
+      locality: "Lanka / Assi Ghat",
+      pincode: "221005",
+      address: "Plot 12, Assi Ghat Road, Near BHU Gate, Lanka, Varanasi",
+      serviceTitle: "Ayurvedic Home Spa & Wellness",
+      category: "Beauty",
+      basePrice: 1999,
+      convenienceFee: 49,
+      cgst: 184.32,
+      sgst: 184.32,
+      totalAmount: 2417,
+      invoiceType: "B2C",
+      commissionAmount: 499.75,
+      partnerEarnings: 1499.25,
+      otpCode: "4920",
+      isOtpVerified: false,
+      status: "Assigned",
+      technicianName: "Sunita Verma",
+      technicianId: "tech-102",
+      date: "Today, 06:00 PM",
+      timeSlot: "06:00 PM - 07:30 PM",
+      paymentMethod: "Helpmate Wallet",
+    },
+    {
+      id: "HM-VAR-8819",
+      customerName: "Vikram Singh",
+      customerPhone: "+91 99180 55432",
+      city: "Varanasi",
+      locality: "Bhelupur",
+      pincode: "221010",
+      address: "B-22/41 Sonarpura, Bhelupur, Varanasi",
+      serviceTitle: "Smart Home & MCB Box Repair",
+      category: "Electrician",
+      basePrice: 499,
+      convenienceFee: 49,
+      cgst: 49.32,
+      sgst: 49.32,
+      totalAmount: 647,
+      invoiceType: "B2C",
+      commissionAmount: 124.75,
+      partnerEarnings: 374.25,
+      otpCode: "1819",
+      isOtpVerified: true,
+      status: "Completed",
+      technicianName: "Amit Pandey",
+      technicianId: "tech-103",
+      date: "Today, 04:45 PM",
+      timeSlot: "04:30 PM - 05:30 PM",
+      paymentMethod: "UPI",
+    },
+  ];
+
+  const localities = ["Sigra", "Lanka / Assi Ghat", "Godowlia", "Bhelupur", "Mahmoorganj", "Shivpur", "Sarnath", "Varanasi Cantt"];
+  const pincodes: Record<string, string> = {
+    "Sigra": "221002",
+    "Lanka / Assi Ghat": "221005",
+    "Godowlia": "221001",
+    "Bhelupur": "221010",
+    "Mahmoorganj": "221010",
+    "Shivpur": "221003",
+    "Sarnath": "221007",
+    "Varanasi Cantt": "221002",
+  };
+
+  const services = [
+    { title: "Power Jet Split AC Servicing", category: "AC", price: 699 },
+    { title: "Window AC Gas Leakage Repair", category: "AC", price: 2499 },
+    { title: "Full 3BHK Villa Deep Cleaning", category: "Cleaning", price: 4999 },
+    { title: "Bathroom Hydro Jet Descaling", category: "Cleaning", price: 699 },
+    { title: "Smart MCB & Circuit Box Fitting", category: "Electrician", price: 799 },
+    { title: "Short Circuit & Wire Fault Repair", category: "Electrician", price: 499 },
+    { title: "High-Pressure Drain Unclogging", category: "Plumbing", price: 599 },
+    { title: "Tap Mixer & Shower Fitting", category: "Plumbing", price: 349 },
+    { title: "Ayurvedic Kashi Spa Body Massage", category: "Beauty", price: 1999 },
+    { title: "Organic Gold Glow Facial", category: "Beauty", price: 1499 },
+    { title: "RO Water Purifier Filter Change", category: "Plumbing", price: 899 },
+    { title: "Washing Machine Motor Overhaul", category: "Electrician", price: 1299 },
+  ];
+
+  const customers = [
+    { name: "Rakesh Verma", phone: "+91 98390 12001" },
+    { name: "Kavita Gupta", phone: "+91 94152 33412" },
+    { name: "Abhishek Singh", phone: "+91 99180 77123" },
+    { name: "Archana Tripathi", phone: "+91 98391 55642" },
+    { name: "Deepak Pandey", phone: "+91 77050 88129" },
+    { name: "Neha Agarwal", phone: "+91 94501 66321" },
+    { name: "Rohit Srivastava", phone: "+91 98392 44109" },
+    { name: "Pooja Yadav", phone: "+91 91402 99823" },
+    { name: "Sunil Kumar Rastogi", phone: "+91 94150 11294" },
+    { name: "Meenakshi Joshi", phone: "+91 98393 77210" },
+    { name: "Alok Chaurasia", phone: "+91 99350 44812" },
+    { name: "Shalini Rai", phone: "+91 77051 22938" },
+  ];
+
+  const technicians = [
+    { name: "Ramesh Yadav", id: "tech-101" },
+    { name: "Amit Pandey", id: "tech-103" },
+    { name: "Vikas Kumar", id: "tech-104" },
+    { name: "Sunita Verma", id: "tech-102" },
+  ];
+
+  const statuses: BookingStatus[] = [
+    "Completed",
+    "In Progress",
+    "Assigned",
+    "Waiting For Assignment",
+    "Pending",
+    "Customer Approval Pending",
+    "Completed",
+    "Cancelled",
+  ];
+
+  const paymentMethods: Array<Booking["paymentMethod"]> = ["UPI", "Cash on Service", "Card", "Helpmate Wallet", "Online"];
+
+  const generated: Booking[] = [];
+  for (let i = 6; i <= 85; i++) {
+    const numStr = String(8820 + i);
+    const id = `HM-VAR-${numStr}`;
+    const cust = customers[i % customers.length];
+    const srv = services[i % services.length];
+    const loc = localities[i % localities.length];
+    const pin = pincodes[loc] || "221002";
+    const status = statuses[i % statuses.length];
+    const tech = technicians[i % technicians.length];
+
+    const basePrice = srv.price;
+    const convenienceFee = 49;
+    const gstTotal = Math.round(basePrice * 0.18 * 100) / 100;
+    const cgst = Math.round((gstTotal / 2) * 100) / 100;
+    const sgst = cgst;
+    const totalAmount = Math.round((basePrice + convenienceFee + gstTotal) * 100) / 100;
+    const commissionAmount = Math.round(basePrice * 0.25 * 100) / 100;
+    const partnerEarnings = Math.round(basePrice * 0.75 * 100) / 100;
+
+    generated.push({
+      id,
+      customerName: cust.name,
+      customerPhone: cust.phone,
+      city: "Varanasi",
+      locality: loc,
+      pincode: pin,
+      address: `Plot ${10 + (i % 50)}, ${loc} Main Road, Varanasi`,
+      serviceTitle: srv.title,
+      category: srv.category,
+      basePrice,
+      convenienceFee,
+      cgst,
+      sgst,
+      totalAmount,
+      invoiceType: i % 4 === 0 ? "B2B" : "B2C",
+      commissionAmount,
+      partnerEarnings,
+      status,
+      technicianName: status !== "Pending" && status !== "Waiting For Assignment" ? tech.name : undefined,
+      technicianId: status !== "Pending" && status !== "Waiting For Assignment" ? tech.id : undefined,
+      date: i % 2 === 0 ? "Today, 02:00 PM" : "Yesterday",
+      timeSlot: "02:00 PM - 03:30 PM",
+      paymentMethod: paymentMethods[i % paymentMethods.length],
+      isOtpVerified: status === "Completed",
+      otpCode: String(1000 + (i * 37) % 8999),
+    });
+  }
+
+  return [...initialFiveBookings, ...generated];
+};
+
+export const initialBookings: Booking[] = generateMockBookings();
 
 export const initialServices: ServiceItem[] = [
   {

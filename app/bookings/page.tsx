@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DataTable, Column } from "@/components/DataTable";
 import { initialBookings, Booking, BookingStatus, Technician } from "@/lib/mockData";
 import {
+  Calendar,
   CalendarCheck,
   CheckCircle2,
   Clock,
@@ -230,6 +231,30 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Top Header Banner matching Billing layout */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
+            <Calendar className="w-4 h-4" /> Single-City Dispatch Engine
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Bookings & Dispatch Operations</h1>
+          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+            Manage Varanasi customer service bookings, technician dispatch assignments, live job status, and service quotes.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsWizardOpen(true)}
+            className="px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-brand-600" />
+            <span>Create Booking</span>
+          </button>
+        </div>
+      </div>
+
       {/* KPI Cards Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
@@ -250,14 +275,10 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* Main DataTable matching User Management layout */}
+      {/* Main DataTable without duplicate headers */}
       <DataTable
-        title="Booking Dispatch & Lifecycle Management"
-        description="Enterprise multi-service booking dispatch grid with real-time status actions"
         columns={columns}
         data={filteredBookings}
-        addButtonLabel="Create Booking"
-        onAddClick={() => setIsWizardOpen(true)}
       />
 
       {/* MODALS */}

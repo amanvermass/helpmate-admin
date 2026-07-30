@@ -471,14 +471,34 @@ export default function CustomersPage() {
   // DEFAULT IN-PAGE DATATABLE CUSTOMER LIST VIEW
   return (
     <div className="space-y-6">
-      {/* Main DataTable matching User Management layout */}
+      {/* Top Header Banner matching Billing layout */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
+            <Users className="w-4 h-4" /> Customer Relationship Engine
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Customer CRM & Household Directory</h1>
+          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+            Track Varanasi client profiles, contact information, service location & spend history.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-brand-600" />
+            <span>Add New Customer</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main DataTable without duplicate headers */}
       <DataTable
-        title="Customer CRM & Household Directory"
-        description="Track Varanasi client profiles, contact information, service location & spend history"
         columns={columns}
         data={customers}
-        addButtonLabel="Add New Customer"
-        onAddClick={() => setIsAddOpen(true)}
       />
 
       {/* ADD CUSTOMER SLIDE-OVER DRAWER */}

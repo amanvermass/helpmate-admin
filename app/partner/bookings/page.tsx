@@ -126,8 +126,6 @@ export default function PartnerBookingsPage() {
   return (
     <div className="space-y-6">
       <DataTable
-        title="My Assigned Service Bookings"
-        description="Real-time list of Varanasi customer jobs assigned to your partner account"
         columns={columns}
         data={bookings}
       />

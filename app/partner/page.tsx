@@ -150,10 +150,8 @@ export default function PartnerDashboardPage() {
         </div>
       </div>
 
-      {/* Main Jobs DataTable */}
+      {/* Main Jobs DataTable without duplicate headers */}
       <DataTable
-        title="My Assigned Bookings & Customer Dispatch"
-        description="Live queue of assigned Varanasi customer orders awaiting service"
         columns={columns}
         data={partnerBookings}
       />

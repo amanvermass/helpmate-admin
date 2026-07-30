@@ -48,6 +48,7 @@ export interface DataTableProps<T extends Record<string, any>> {
   statusField?: string;
   idField?: string;
   hideActionsColumn?: boolean;
+  extraFilters?: React.ReactNode;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -64,6 +65,7 @@ export function DataTable<T extends Record<string, any>>({
   statusField = "status",
   idField = "id",
   hideActionsColumn = false,
+  extraFilters,
 }: DataTableProps<T>) {
   const hasDefaultActionsColumn =
     !hideActionsColumn &&
@@ -241,15 +243,6 @@ export function DataTable<T extends Record<string, any>>({
           <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={handleExportCSV}
-              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export CSV</span>
-            </button>
-
-            <button
-              type="button"
               onClick={handlePrint}
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
@@ -282,82 +275,94 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Filter & Search Bar */}
-      <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            placeholder={searchPlaceholder}
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-all font-medium"
-          />
-        </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-            <Filter className="w-3.5 h-3.5 text-brand-600" />
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Status:</span>
-            <select
-              value={selectedStatusFilter}
+      {/* UNIFIED CONTAINER: MERGED SEARCH BAR, FILTERS, TABLE & PAGINATION */}
+      <div className="glass-panel rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs space-y-0">
+        {/* Search Bar & Action Controls (Merged Top Header) */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-800/40">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
               onChange={(e) => {
-                setSelectedStatusFilter(e.target.value);
+                setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Approved">Approved</option>
-              <option value="Pending">Pending</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
+              placeholder={searchPlaceholder}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-all font-medium shadow-xs"
+            />
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowMetadata(!showMetadata)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              showMetadata
-                ? "bg-brand-50 border-brand-300 text-brand-600 dark:bg-brand-950/60 dark:border-brand-800 dark:text-brand-400"
-                : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span>Audit Metadata</span>
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            {extraFilters}
 
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-brand-600 bg-brand-50 dark:bg-brand-950/80 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
-                {selectedIds.size} Selected
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsBulkStatusModalOpen(true)}
-                className="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold cursor-pointer"
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
+              <Filter className="w-3.5 h-3.5 text-brand-600" />
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Status:</span>
+              <select
+                value={selectedStatusFilter}
+                onChange={(e) => {
+                  setSelectedStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-xs font-bold text-slate-900 dark:text-white focus:outline-none cursor-pointer"
               >
-                Change Status
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsBulkDeleteModalOpen(true)}
-                className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Approved">Approved</option>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Main Table Container */}
-      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="px-3.5 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-brand-600" />
+              <span>Export CSV</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowMetadata(!showMetadata)}
+              className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                showMetadata
+                  ? "bg-brand-50 border-brand-300 text-brand-600 dark:bg-brand-950/60 dark:border-brand-800 dark:text-brand-400"
+                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Audit Metadata</span>
+            </button>
+
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-brand-600 bg-brand-50 dark:bg-brand-950/80 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
+                  {selectedIds.size} Selected
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsBulkStatusModalOpen(true)}
+                  className="px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold cursor-pointer"
+                >
+                  Change Status
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsBulkDeleteModalOpen(true)}
+                  className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Main Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
@@ -496,25 +501,104 @@ export function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* Pagination Bar */}
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <span>Showing page {currentPage} of {totalPages} ({sortedData.length} records)</span>
-          <div className="flex items-center gap-1">
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-600 dark:text-slate-300 select-none">
+          {/* LEFT: Rows Per Page Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 font-bold">Rows per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-extrabold cursor-pointer outline-none focus:border-brand-500 shadow-xs"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          {/* CENTER: Pagination Controls (First, Second ... Current ... Second-to-last, Last) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 md:pb-0 no-scrollbar">
+            {/* Previous Button */}
             <button
               type="button"
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 disabled:opacity-40"
+              className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Previous Page"
             >
-              <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+              <ChevronLeft className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             </button>
+
+            {/* Page Number Pills */}
+            <div className="flex items-center gap-1 shrink-0">
+              {(() => {
+                const getPageNumbers = (current: number, total: number) => {
+                  if (total <= 3) return Array.from({ length: total }, (_, i) => i + 1);
+
+                  const set = new Set<number>();
+                  set.add(1); // First page
+                  set.add(current); // Current page
+                  set.add(total); // Last page
+
+                  const sorted = Array.from(set).sort((a, b) => a - b);
+                  const result: (number | string)[] = [];
+
+                  for (let i = 0; i < sorted.length; i++) {
+                    if (i > 0 && sorted[i] - sorted[i - 1] > 1) {
+                      result.push("...");
+                    }
+                    result.push(sorted[i]);
+                  }
+                  return result;
+                };
+
+                return getPageNumbers(currentPage, totalPages).map((p, idx) => {
+                  if (p === "...") {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="px-1.5 py-1 text-slate-400 font-mono text-xs">
+                        ...
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(p);
+                  const isCurrent = pageNum === currentPage;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`min-w-[32px] h-8 px-2.5 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                        isCurrent
+                          ? "bg-brand-500 text-white shadow-lux"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Next Button */}
             <button
               type="button"
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 disabled:opacity-40"
+              className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Next Page"
             >
-              <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+              <ChevronRight className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             </button>
+          </div>
+
+          {/* RIGHT: Showing Entries Info */}
+          <div className="text-slate-500 dark:text-slate-400 font-mono text-[11px] font-bold">
+            Showing {sortedData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}–{Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} entries
           </div>
         </div>
       </div>
