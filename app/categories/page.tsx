@@ -51,12 +51,7 @@ export default function CategoriesPage() {
   const [status, setStatus] = useState<"Active" | "Inactive">("Active");
 
   // Dynamic Sub-Services List in Form
-  const [formSubServices, setFormSubServices] = useState<CategorySubService[]>([
-    { id: "sub-1", title: "Split AC Complete Installation", type: "Installation", price: 1499, duration: "90 mins", status: "Active" },
-    { id: "sub-2", title: "Power Jet Deep Servicing", type: "Servicing", price: 699, duration: "45 mins", status: "Active" },
-    { id: "sub-3", title: "Gas Leak Repair & Charging", type: "Repair", price: 2499, duration: "60 mins", status: "Active" },
-    { id: "sub-4", title: "Split AC Safe Uninstallation", type: "Uninstallation", price: 699, duration: "45 mins", status: "Active" },
-  ]);
+  const [formSubServices, setFormSubServices] = useState<CategorySubService[]>([]);
 
   const openAddDrawer = () => {
     setEditingCategory(null);
@@ -64,12 +59,7 @@ export default function CategoriesPage() {
     setSlug("");
     setIcon("Wrench");
     setStatus("Active");
-    setFormSubServices([
-      { id: `sub-${Date.now()}-1`, title: "AC Complete Installation", type: "Installation", price: 1499, duration: "90 mins", status: "Active" },
-      { id: `sub-${Date.now()}-2`, title: "Power Jet Servicing", type: "Servicing", price: 699, duration: "45 mins", status: "Active" },
-      { id: `sub-${Date.now()}-3`, title: "Gas Leakage Repair", type: "Repair", price: 2499, duration: "60 mins", status: "Active" },
-      { id: `sub-${Date.now()}-4`, title: "AC Safe Uninstallation", type: "Uninstallation", price: 699, duration: "45 mins", status: "Active" },
-    ]);
+    setFormSubServices([]);
     setIsDrawerOpen(true);
   };
 
@@ -79,15 +69,7 @@ export default function CategoriesPage() {
     setSlug(cat.slug);
     setIcon(cat.icon || "Wrench");
     setStatus(cat.status);
-    setFormSubServices(
-      cat.subServices && cat.subServices.length > 0
-        ? [...cat.subServices]
-        : [
-            { id: `sub-${Date.now()}-1`, title: `${cat.name} Installation`, type: "Installation", price: 999, duration: "60 mins", status: "Active" },
-            { id: `sub-${Date.now()}-2`, title: `${cat.name} Servicing & Repair`, type: "Repair", price: 499, duration: "45 mins", status: "Active" },
-            { id: `sub-${Date.now()}-3`, title: `${cat.name} Uninstallation`, type: "Uninstallation", price: 499, duration: "30 mins", status: "Active" },
-          ]
-    );
+    setFormSubServices(cat.subServices ? [...cat.subServices] : []);
     setIsDrawerOpen(true);
   };
 
