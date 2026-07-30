@@ -580,9 +580,9 @@ export function BookingWizardModal({
                         />
                       </div>
 
-                      <div>
+                      <div className="sm:col-span-2">
                         <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Email Address
+                          Email Address *
                         </label>
                         <input
                           type="email"
@@ -591,87 +591,6 @@ export function BookingWizardModal({
                           placeholder="alok@gmail.com"
                           className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                         />
-                      </div>
-
-                      <div>
-                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                          Primary Aadhaar Number (12-Digit)
-                        </label>
-                        <input
-                          type="text"
-                          maxLength={14}
-                          value={newCustAadhaarNumber}
-                          onChange={(e) => setNewCustAadhaarNumber(e.target.value)}
-                          placeholder="7821-4920-1102"
-                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Guarantor / Reference Person Details Block */}
-                    <div className="p-3 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-2 text-xs">
-                      <span className="font-extrabold text-[11px] text-purple-800 dark:text-purple-300 block">
-                        Guarantor / Reference Person (Taking Customer Guarantee)
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={newCustGuarantorName}
-                          onChange={(e) => setNewCustGuarantorName(e.target.value)}
-                          placeholder="Guarantor Full Name"
-                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                        />
-                        <input
-                          type="tel"
-                          value={newCustGuarantorPhone}
-                          onChange={(e) => setNewCustGuarantorPhone(e.target.value)}
-                          placeholder="Guarantor Mobile Number"
-                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                        />
-                        <input
-                          type="text"
-                          value={newCustGuarantorAadhaarNumber}
-                          onChange={(e) => setNewCustGuarantorAadhaarNumber(e.target.value)}
-                          placeholder="Guarantor Aadhaar No."
-                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                        />
-                        <input
-                          type="text"
-                          value={newCustGuarantorAddress}
-                          onChange={(e) => setNewCustGuarantorAddress(e.target.value)}
-                          placeholder="Guarantor Residence Address"
-                          className="p-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Police Verification & Thana Block */}
-                    <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-2 text-xs">
-                      <span className="font-extrabold text-[11px] text-amber-800 dark:text-amber-300 block">
-                        Police Verification Record & Thana
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <select
-                          value={newCustPoliceStatus}
-                          onChange={(e) => setNewCustPoliceStatus(e.target.value as any)}
-                          className="p-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                        >
-                          <option value="Verified Clean">Verified Clean (PCC)</option>
-                          <option value="Submitted to Local Thana">Submitted to Local Thana</option>
-                          <option value="Pending Verification">Pending Verification</option>
-                          <option value="Exempted">Exempted</option>
-                        </select>
-                        <select
-                          value={newCustPoliceStation}
-                          onChange={(e) => setNewCustPoliceStation(e.target.value)}
-                          className="p-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
-                        >
-                          <option value="Sigra Police Station">Sigra Police Station</option>
-                          <option value="Lanka Thana">Lanka Thana</option>
-                          <option value="Bhelupur Thana">Bhelupur Thana</option>
-                          <option value="Chetganj Thana">Chetganj Thana</option>
-                          <option value="Cantt Police Station">Cantt Police Station</option>
-                        </select>
                       </div>
                     </div>
 

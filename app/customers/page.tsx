@@ -769,7 +769,7 @@ export default function CustomersPage() {
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-4">
                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <UserCheck className="w-4 h-4 text-brand-600" />
-                    <span>1. Customer Details & Identity</span>
+                    <span>1. Customer Personal Information</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -789,7 +789,7 @@ export default function CustomersPage() {
 
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Mobile Number (WhatsApp) *
+                        Mobile Phone Number *
                       </label>
                       <input
                         type="tel"
@@ -801,9 +801,9 @@ export default function CustomersPage() {
                       />
                     </div>
 
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Email Address
+                        Email Address *
                       </label>
                       <input
                         type="email"
@@ -811,207 +811,17 @@ export default function CustomersPage() {
                         onChange={(e) => setNewEmail(e.target.value)}
                         placeholder="rajesh@gmail.com"
                         className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Customer Aadhaar Number (12-Digit)
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={14}
-                        value={newAadhaarNumber}
-                        onChange={(e) => setNewAadhaarNumber(e.target.value)}
-                        placeholder="7821-4920-1102"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Customer Aadhaar Upload Box */}
-                  <div className="space-y-1 text-xs">
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                      Customer Aadhaar Card Document Upload (Front & Back)
-                    </label>
-                    <div className="p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-brand-600" />
-                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                          {newAadhaarDocUrl ? "Customer_Aadhaar_Doc.jpg Uploaded" : "Upload Aadhaar Photo/PDF..."}
-                        </span>
-                      </div>
-                      <input
-                        type="text"
-                        value={newAadhaarDocUrl}
-                        onChange={(e) => setNewAadhaarDocUrl(e.target.value)}
-                        placeholder="Paste Aadhaar Document URL..."
-                        className="w-1/2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono"
+                        required
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* SECTION 2: GUARANTOR / REFERENCE PERSON DETAILS */}
-                <div className="p-5 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-4">
-                  <div className="flex items-center gap-2 text-purple-900 dark:text-purple-300 font-extrabold text-sm border-b border-purple-200 dark:border-purple-800 pb-2">
-                    <ShieldAlert className="w-4 h-4 text-purple-600" />
-                    <span>2. Guarantor / Reference Person (Person Taking Customer Guarantee)</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Guarantor Full Name
-                      </label>
-                      <input
-                        type="text"
-                        value={newGuarantorName}
-                        onChange={(e) => setNewGuarantorName(e.target.value)}
-                        placeholder="e.g. Sunita Agrawal (Guarantor / Spouse / Employer)"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Guarantor Mobile Number
-                      </label>
-                      <input
-                        type="tel"
-                        value={newGuarantorPhone}
-                        onChange={(e) => setNewGuarantorPhone(e.target.value)}
-                        placeholder="+91 98390 88210"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Guarantor Aadhaar Number (12-Digit)
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={14}
-                        value={newGuarantorAadhaarNumber}
-                        onChange={(e) => setNewGuarantorAadhaarNumber(e.target.value)}
-                        placeholder="7821-4920-5592"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-purple-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Guarantor Residence Address
-                      </label>
-                      <input
-                        type="text"
-                        value={newGuarantorAddress}
-                        onChange={(e) => setNewGuarantorAddress(e.target.value)}
-                        placeholder="House / Locality address..."
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Guarantor Aadhaar Upload */}
-                  <div className="space-y-1 text-xs">
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                      Guarantor Person Aadhaar Card Document Upload
-                    </label>
-                    <div className="p-3 rounded-xl border border-dashed border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-purple-600" />
-                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                          {newGuarantorAadhaarDocUrl ? "Guarantor_Aadhaar.jpg Uploaded" : "Upload Guarantor Aadhaar..."}
-                        </span>
-                      </div>
-                      <input
-                        type="text"
-                        value={newGuarantorAadhaarDocUrl}
-                        onChange={(e) => setNewGuarantorAadhaarDocUrl(e.target.value)}
-                        placeholder="Paste Guarantor Aadhaar Image URL..."
-                        className="w-1/2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECTION 3: POLICE VERIFICATION & CLEARANCE */}
-                <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-4">
-                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-extrabold text-sm border-b border-amber-200 dark:border-amber-800 pb-2">
-                    <ShieldCheck className="w-4 h-4 text-amber-600" />
-                    <span>3. Police Verification & Thana Clearance Records</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Police Verification Status
-                      </label>
-                      <select
-                        value={newPoliceStatus}
-                        onChange={(e) => setNewPoliceStatus(e.target.value as any)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
-                      >
-                        <option value="Verified Clean">Verified Clean (PCC Issued)</option>
-                        <option value="Submitted to Local Thana">Submitted to Local Thana</option>
-                        <option value="Pending Verification">Pending Verification</option>
-                        <option value="Exempted">Exempted</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Local Police Station (Thana)
-                      </label>
-                      <select
-                        value={newPoliceStationName}
-                        onChange={(e) => setNewPoliceStationName(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                      >
-                        <option value="Sigra Police Station">Sigra Police Station</option>
-                        <option value="Lanka Thana">Lanka Thana</option>
-                        <option value="Bhelupur Thana">Bhelupur Thana</option>
-                        <option value="Chetganj Thana">Chetganj Thana</option>
-                        <option value="Cantt Police Station">Cantt Police Station</option>
-                        <option value="Chowk Thana">Chowk Thana</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Police Token / PCC Ref No.
-                      </label>
-                      <input
-                        type="text"
-                        value={newPoliceTokenNumber}
-                        onChange={(e) => setNewPoliceTokenNumber(e.target.value)}
-                        placeholder="PCC-VAR-2026-8819"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Police Clearance Certificate Upload
-                      </label>
-                      <input
-                        type="text"
-                        value={newPoliceCertificateUrl}
-                        onChange={(e) => setNewPoliceCertificateUrl(e.target.value)}
-                        placeholder="Paste PCC Document URL..."
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-[11px] outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECTION 4: LOCATION & ADDRESS */}
+                {/* SECTION 2: LOCATION & ADDRESS */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-4">
                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <MapPin className="w-4 h-4 text-brand-600" />
-                    <span>4. Service Location & Delivery Address</span>
+                    <span>2. Service Location & Delivery Address</span>
                   </div>
 
                   <div className="space-y-3 text-xs">
