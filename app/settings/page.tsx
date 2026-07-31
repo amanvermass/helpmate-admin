@@ -18,7 +18,12 @@ import {
   Sliders,
   DollarSign,
   Building,
+  Smartphone,
+  Mail,
+  Zap,
+  Volume2,
 } from "lucide-react";
+import { CustomSelect } from "@/components/CustomSelect";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"general" | "notifications" | "data" | "security">("general");
@@ -29,11 +34,15 @@ export default function SettingsPage() {
   const [commissionRate, setCommissionRate] = useState("25%");
   const [currency, setCurrency] = useState("INR (₹)");
 
-  // Notification Toggles
+  // Notification Settings & Rules Configuration
   const [whatsappConfirmations, setWhatsappConfirmations] = useState(true);
   const [otpNotifications, setOtpNotifications] = useState(true);
   const [assignmentAlerts, setAssignmentAlerts] = useState(true);
   const [settlementSms, setSettlementSms] = useState(true);
+  const [emailReceipts, setEmailReceipts] = useState(true);
+  const [soundAlerts, setSoundAlerts] = useState(true);
+  const [whatsappProvider, setWhatsappProvider] = useState("Meta Cloud API (Official)");
+  const [smsGatewayProvider, setSmsGatewayProvider] = useState("Fast2SMS DLT Approved");
 
   // Security & Backup
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(true);
@@ -67,7 +76,7 @@ export default function SettingsPage() {
           className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lux flex items-center justify-center gap-2 cursor-pointer shrink-0 transition-all"
         >
           <Save className="w-4 h-4" />
-          <span>Save Changes</span>
+          <span>Save System Settings</span>
         </button>
       </div>
 
@@ -90,7 +99,7 @@ export default function SettingsPage() {
               <MessageSquare className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-2xl font-black text-emerald-600">Active OTP API</span>
+          <span className="text-2xl font-black text-emerald-600">Active API</span>
         </div>
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
@@ -114,11 +123,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs (Positioned at bottom of Quick Cards) */}
+      {/* Navigation Tabs */}
       <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
         {[
           { id: "general", label: "General & Operational Settings", icon: Sliders },
-          { id: "notifications", label: "Notification Gateways", icon: Bell },
+          { id: "notifications", label: "Notification Channels & Preferences", icon: Bell },
           { id: "data", label: "Data Backups & Export", icon: Database },
           { id: "security", label: "Security & Encryption", icon: ShieldCheck },
         ].map((tab) => {
@@ -194,34 +203,155 @@ export default function SettingsPage() {
 
         {activeTab === "notifications" && (
           <div className="space-y-6 max-w-3xl">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
-              Notification & Communication Channels
-            </h3>
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  Notification Settings & Channel Preferences
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Configure active gateways, trigger rules, and sound alert preferences for Helpmate dispatches.
+                </p>
+              </div>
+            </div>
 
-            <div className="space-y-4 text-xs">
+            {/* Gateway Providers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <CustomSelect
+                label="WhatsApp Business Gateway Provider"
+                value={whatsappProvider}
+                onChange={(val) => setWhatsappProvider(val)}
+                options={[
+                  { value: "Meta Cloud API (Official)", label: "Meta Cloud API (Official HDFC / Business)" },
+                  { value: "Twilio Business API", label: "Twilio Business API" },
+                  { value: "Gupshup Enterprise API", label: "Gupshup Enterprise API" },
+                ]}
+              />
+
+              <CustomSelect
+                label="SMS OTP Gateway Provider"
+                value={smsGatewayProvider}
+                onChange={(val) => setSmsGatewayProvider(val)}
+                options={[
+                  { value: "Fast2SMS DLT Approved", label: "Fast2SMS DLT Approved Gateway" },
+                  { value: "Msg91 Enterprise DLT", label: "Msg91 Enterprise DLT Gateway" },
+                  { value: "Textlocal India", label: "Textlocal India API" },
+                ]}
+              />
+            </div>
+
+            {/* Event Trigger Preferences */}
+            <div className="space-y-3 text-xs pt-2">
+              <span className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block text-[11px]">
+                Automated Trigger Rules
+              </span>
+
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <div>
-                  <div className="font-bold text-slate-900 dark:text-white text-sm">WhatsApp Booking Confirmations</div>
-                  <div className="text-slate-500">Send instant automated WhatsApp messages with booking details to customers</div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                      WhatsApp Customer Booking Confirmation
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Instantly dispatches booking receipt with live tracking link on WhatsApp.
+                    </div>
+                  </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={whatsappConfirmations}
                   onChange={(e) => setWhatsappConfirmations(e.target.checked)}
-                  className="w-5 h-5 accent-brand-500 cursor-pointer"
+                  className="w-4 h-4 accent-brand-500 cursor-pointer"
                 />
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <div>
-                  <div className="font-bold text-slate-900 dark:text-white text-sm">Customer OTP Phone Verification</div>
-                  <div className="text-slate-500">Require 4-digit SMS OTP code when adding new household customers</div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                      4-Digit Job Closure SMS OTP Verification
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Requires customer OTP confirmation before technician marks job as completed.
+                    </div>
+                  </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={otpNotifications}
                   onChange={(e) => setOtpNotifications(e.target.checked)}
-                  className="w-5 h-5 accent-brand-500 cursor-pointer"
+                  className="w-4 h-4 accent-brand-500 cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                      Technician Fleet Push Notifications
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Pushes new job broadcasts to nearby technicians within 15 km zone.
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={assignmentAlerts}
+                  onChange={(e) => setAssignmentAlerts(e.target.checked)}
+                  className="w-4 h-4 accent-brand-500 cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-100 text-blue-600">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                      Email Invoice & Tax Receipt Dispatch
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Emails official GST invoice copy to customer upon payment completion.
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={emailReceipts}
+                  onChange={(e) => setEmailReceipts(e.target.checked)}
+                  className="w-4 h-4 accent-brand-500 cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-brand-100 text-brand-600">
+                    <Volume2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs">
+                      Admin Desk Audio Alerts & Chimes
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Play audio alert tone when high-priority emergency booking is received.
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={soundAlerts}
+                  onChange={(e) => setSoundAlerts(e.target.checked)}
+                  className="w-4 h-4 accent-brand-500 cursor-pointer"
                 />
               </div>
             </div>

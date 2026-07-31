@@ -45,6 +45,19 @@ export default function CmsPage() {
   const [targetCategoryForSubcategory, setTargetCategoryForSubcategory] = useState<string>("AC Service & Repair");
   const [subCatInputForModal, setSubCatInputForModal] = useState<string>("");
 
+  // Add Service Action Modal State
+  const [serviceActionsList, setServiceActionsList] = useState<string[]>([
+    "Repair",
+    "Service",
+    "Installation",
+    "Uninstallation",
+    "Inspection & Diagnosis",
+    "Gas Refill & Overhaul",
+  ]);
+  const [isAddActionModalOpen, setIsAddActionModalOpen] = useState<boolean>(false);
+  const [newActionInput, setNewActionInput] = useState<string>("");
+  const [targetOfferingIndexForAction, setTargetOfferingIndexForAction] = useState<number | null>(null);
+
   // Enhanced Services state with initial linked addons and subcategories
   const [services, setServices] = useState<ServiceItem[]>(() => {
     return initialServices.map((s, idx) => {
@@ -865,12 +878,16 @@ export default function CmsPage() {
                               label="Service Action *"
                               value={off.type}
                               onChange={(val) => handleUpdateOfferingRow(idx, "type", val)}
-                              options={[
-                                { value: "Repair", label: "Repair Service" },
-                                { value: "Service", label: "Service & Maintenance" },
-                                { value: "Installation", label: "Installation Service" },
-                                { value: "Uninstallation", label: "Uninstallation Service" },
-                              ]}
+                              options={serviceActionsList.map((actionName) => ({
+                                value: actionName,
+                                label: actionName,
+                              }))}
+                              onAddAction={() => {
+                                setTargetOfferingIndexForAction(idx);
+                                setNewActionInput("");
+                                setIsAddActionModalOpen(true);
+                              }}
+                              addActionLabel="Add Action"
                             />
 
                             {/* SECOND FIELD: Package Name */}
@@ -1596,6 +1613,133 @@ export default function CmsPage() {
                   className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux cursor-pointer"
                 >
                   Done & Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </Portal>
+      )}
+
+      {/* 3. ADD SERVICE ACTION POPUP MODAL */}
+      {isAddActionModalOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newActionInput.trim()) {
+                  const cleanAction = newActionInput.trim();
+                  if (!serviceActionsList.includes(cleanAction)) {
+                    setServiceActionsList([...serviceActionsList, cleanAction]);
+                  }
+                  if (targetOfferingIndexForAction !== null) {
+                    handleUpdateOfferingRow(targetOfferingIndexForAction, "type", cleanAction);
+                  }
+                  setNewActionInput("");
+                }
+                setIsAddActionModalOpen(false);
+              }}
+              className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-lg w-full space-y-5 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none max-h-[90vh] overflow-y-auto text-xs animate-in zoom-in-95 duration-150"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center">
+                    <Wrench className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      Add New Service Action
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Define custom service scope / action for packages
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddActionModalOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Input New Action Name */}
+              <div className="space-y-2">
+                <label className="font-extrabold text-slate-700 dark:text-slate-300 block text-xs">
+                  Service Action Name *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newActionInput}
+                    onChange={(e) => setNewActionInput(e.target.value)}
+                    placeholder="e.g. Deep Foam Sanitization, Anti-Rust Coating"
+                    className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-brand-500"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newActionInput.trim()) {
+                        const cleanAction = newActionInput.trim();
+                        if (!serviceActionsList.includes(cleanAction)) {
+                          setServiceActionsList([...serviceActionsList, cleanAction]);
+                        }
+                        if (targetOfferingIndexForAction !== null) {
+                          handleUpdateOfferingRow(targetOfferingIndexForAction, "type", cleanAction);
+                        }
+                        setNewActionInput("");
+                        setIsAddActionModalOpen(false);
+                      }
+                    }}
+                    className="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Action
+                  </button>
+                </div>
+              </div>
+
+              {/* Manage Existing Service Actions */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                  Existing Service Actions ({serviceActionsList.length}):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {serviceActionsList.map((act) => (
+                    <span
+                      key={act}
+                      className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-extrabold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5 shadow-xs"
+                    >
+                      {act}
+                      {serviceActionsList.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setServiceActionsList(serviceActionsList.filter((a) => a !== act))}
+                          className="text-slate-400 hover:text-red-500 transition-colors ml-0.5"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddActionModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-extrabold text-xs shadow-lux cursor-pointer"
+                >
+                  Save & Close
                 </button>
               </div>
             </form>

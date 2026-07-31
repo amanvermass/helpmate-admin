@@ -86,7 +86,7 @@ export default function TechniciansPage() {
           <img
             src={row.avatar}
             alt={row.name}
-            className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs"
+            className="w-8 h-8 shrink-0 rounded-xl object-cover border border-slate-200 shadow-xs"
           />
           <Link href={`/technicians/${row.id}`} className="flex flex-col hover:underline">
             <span className="font-extrabold text-slate-900 dark:text-white text-xs">{row.name}</span>

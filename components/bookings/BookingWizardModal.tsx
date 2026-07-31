@@ -23,6 +23,7 @@ import {
   Building,
   UserPlus,
   Lock,
+  Clock,
 } from "lucide-react";
 import {
   Booking,
@@ -35,6 +36,7 @@ import {
 } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
+import { CustomSelect } from "@/components/CustomSelect";
 
 interface BookingWizardModalProps {
   isOpen: boolean;
@@ -42,142 +44,311 @@ interface BookingWizardModalProps {
   onBookingCreated: (booking: Booking) => void;
 }
 
-// Master Service Catalog with Sub-Categories, Dropdown Options, and Prices
-const serviceCatalogData: Record<
-  string,
-  {
-    types: string[];
-    services: Record<string, { title: string; price: number }[]>;
-  }
-> = {
-  "AC Service & Repair": {
-    types: ["Split AC", "Window AC", "Cassette AC"],
-    services: {
-      "Split AC": [
-        { title: "Split AC Foam Jet Servicing", price: 599 },
-        { title: "Split AC Anti-Rust Chemical Wash", price: 899 },
-        { title: "Split AC Gas Leak Repair & Refill (R32/R410a)", price: 1499 },
-        { title: "Split AC Installation & Wall Mounting", price: 1199 },
-        { title: "Split AC Uninstallation & Removal", price: 599 },
-        { title: "Split AC Inspection & Diagnosis", price: 299 },
-      ],
-      "Window AC": [
-        { title: "Window AC Deep Jet Servicing", price: 499 },
-        { title: "Window AC Anti-Bacterial Wash", price: 699 },
-        { title: "Window AC Gas Charging & Repair", price: 1299 },
-        { title: "Window AC Mounting & Fitting", price: 799 },
-      ],
-      "Cassette AC": [
-        { title: "Cassette AC Commercial Service", price: 999 },
-        { title: "Cassette AC Gas Refilling", price: 1999 },
-      ],
-    },
-  },
-  "Car & Bike Wash": {
-    types: ["Car (Hatchback/Sedan)", "Car (SUV/Luxury)", "Bike Wash"],
-    services: {
-      "Car (Hatchback/Sedan)": [
-        { title: "Car Foam Wash & Interior Vacuuming", price: 499 },
-        { title: "Car Deep Interior Shampooing & Polish", price: 999 },
-        { title: "Full Body Teflon Coating & Wax Polish", price: 1499 },
-      ],
-      "Car (SUV/Luxury)": [
-        { title: "SUV Heavy Duty Foam Wash & Vacuum", price: 699 },
-        { title: "SUV Complete Interior Detailing & Sanitization", price: 1299 },
-      ],
-      "Bike Wash": [
-        { title: "Super Bike High Pressure Foam Wash", price: 199 },
-        { title: "Bike Teflon Coating & Chain Lube", price: 399 },
-      ],
-    },
-  },
-  "Home Cleaning": {
-    types: ["Sofa Cleaning", "Carpet Cleaning", "Deep Home Cleaning", "Bathroom Cleaning", "Kitchen Cleaning"],
-    services: {
-      "Sofa Cleaning": [
-        { title: "5-Seater Fabric Sofa Shampooing & Extraction", price: 899 },
-        { title: "7-Seater Leather Sofa Cleaning & Polish", price: 1299 },
-      ],
-      "Carpet Cleaning": [
-        { title: "Living Room Carpet Deep Vacuum & Wash", price: 599 },
-      ],
-      "Deep Home Cleaning": [
-        { title: "Full House Deep Cleaning (2BHK)", price: 2999 },
-        { title: "Full House Deep Cleaning (3BHK)", price: 3999 },
-      ],
-      "Bathroom Cleaning": [
-        { title: "Standard Bathroom Tile Stain Removal", price: 499 },
-        { title: "Premium 2x Bathroom Deep Sanitization", price: 899 },
-      ],
-      "Kitchen Cleaning": [
-        { title: "Kitchen Degreasing & Chimney Cleaning", price: 999 },
+// Master Multi-Level Service Catalog: Category -> Type -> Action -> Package
+export interface ServicePackageItem {
+  id: string;
+  title: string;
+  price: number;
+  duration?: string;
+  badge?: string;
+  description?: string;
+}
+
+export interface ServiceActionGroup {
+  actionName: string;
+  description?: string;
+  packages: ServicePackageItem[];
+}
+
+export interface ServiceTypeGroup {
+  typeName: string;
+  actions: ServiceActionGroup[];
+}
+
+const serviceCatalogData: Record<string, ServiceTypeGroup[]> = {
+  "AC Service & Repair": [
+    {
+      typeName: "Split AC",
+      actions: [
+        {
+          actionName: "Service & Maintenance",
+          description: "Regular cleaning, jet wash & anti-bacterial wash",
+          packages: [
+            { id: "sp-1", title: "Split AC Foam Jet Servicing", price: 599, duration: "45 mins", badge: "Most Popular", description: "Deep foam jet cleaning of indoor coils & outdoor unit" },
+            { id: "sp-2", title: "Split AC Anti-Rust Chemical Wash", price: 899, duration: "60 mins", description: "Chemical jet wash with anti-rust protective coating" },
+            { id: "sp-3", title: "Split AC 2x Dual Seasonal Maintenance", price: 1099, duration: "60 mins", description: "Pre-summer & post-monsoon servicing combo" },
+          ],
+        },
+        {
+          actionName: "Repair & Gas Refill",
+          description: "Gas leak detection, charging, capacitor & PCB fix",
+          packages: [
+            { id: "sp-4", title: "Split AC Gas Leak Repair & Full Refill (R32/R410a)", price: 1499, duration: "90 mins", badge: "Best Value", description: "Nitrogen testing, leak soldering & complete refrigerant refill" },
+            { id: "sp-5", title: "Split AC Capacitor Replacement", price: 499, duration: "30 mins", description: "Genuine brand capacitor replacement with warranty" },
+            { id: "sp-6", title: "Split AC PCB Circuit Board Repair", price: 1199, duration: "120 mins", description: "Electronic motherboard diagnostic & micro-soldering fix" },
+          ],
+        },
+        {
+          actionName: "Installation & Dismantling",
+          description: "Wall mounting, copper piping and removal",
+          packages: [
+            { id: "sp-7", title: "Split AC Complete Wall Installation & Piping", price: 1199, duration: "90 mins", description: "Standard bracket mounting, vacuuming & copper pipe connection" },
+            { id: "sp-8", title: "Split AC Safe Dismantling & Uninstallation", price: 599, duration: "45 mins", description: "Gas pump-down & safe uninstallation without refrigerant loss" },
+            { id: "sp-9", title: "Split AC Relocation Combo", price: 1699, duration: "180 mins", description: "Complete uninstallation from old home + reinstallation at new site" },
+          ],
+        },
+        {
+          actionName: "Inspection & Diagnosis",
+          description: "Diagnostic checkup for noise, cooling issue or water leakage",
+          packages: [
+            { id: "sp-10", title: "Split AC Comprehensive Inspection & Noise Check", price: 299, duration: "30 mins", description: "Full diagnostic report & estimate before starting work" },
+          ],
+        },
       ],
     },
-  },
-  "Appliance Repair": {
-    types: ["Washing Machine", "Refrigerator", "RO Water Purifier", "Microwave"],
-    services: {
-      "Washing Machine": [
-        { title: "Fully Automatic Washing Machine Service & Drum Wash", price: 499 },
-        { title: "Motor & PCB Repair / Spare Replacement", price: 899 },
-      ],
-      "Refrigerator": [
-        { title: "Double Door Refrigerator Gas Refill", price: 1399 },
-        { title: "Compressor & Thermostat Repair", price: 999 },
-      ],
-      "RO Water Purifier": [
-        { title: "RO Water Purifier Filter & Membrane Replacement", price: 799 },
-        { title: "RO General Servicing & TDS Calibration", price: 299 },
-      ],
-      "Microwave": [
-        { title: "Microwave Magnetron & Heating Repair", price: 599 },
-      ],
-    },
-  },
-  "Pest Control": {
-    types: ["Cockroach Control", "Termite Treatment", "Bedbug Control"],
-    services: {
-      "Cockroach Control": [
-        { title: "2BHK Odorless Herbal Gel Cockroach Control", price: 899 },
-      ],
-      "Termite Treatment": [
-        { title: "Drill-Fill-Seal Wooden Termite Treatment", price: 1999 },
-      ],
-      "Bedbug Control": [
-        { title: "2-Session Intensive Bedbug Chemical Spray", price: 1299 },
+    {
+      typeName: "Window AC",
+      actions: [
+        {
+          actionName: "Service & Maintenance",
+          packages: [
+            { id: "wa-1", title: "Window AC Deep Jet Servicing", price: 499, duration: "45 mins", badge: "Popular" },
+            { id: "wa-2", title: "Window AC Anti-Bacterial Wash", price: 699, duration: "60 mins" },
+          ],
+        },
+        {
+          actionName: "Repair & Gas Refill",
+          packages: [
+            { id: "wa-3", title: "Window AC Gas Leakage Fix & Charging", price: 1299, duration: "90 mins" },
+            { id: "wa-4", title: "Window AC Fan Motor & Blade Repair", price: 599, duration: "45 mins" },
+          ],
+        },
+        {
+          actionName: "Installation & Fitting",
+          packages: [
+            { id: "wa-5", title: "Window AC Wall Fitting & Frame Mounting", price: 799, duration: "60 mins" },
+            { id: "wa-6", title: "Window AC Removal & Frame Dismantling", price: 399, duration: "30 mins" },
+          ],
+        },
       ],
     },
-  },
-  "Electrician": {
-    types: ["Wiring & Switches", "Fan Repair", "MCB & Fuse"],
-    services: {
-      "Wiring & Switches": [
-        { title: "Switchboard & Socket Installation (up to 5 points)", price: 299 },
-        { title: "Complete Room Re-wiring & Tube Light Fitting", price: 699 },
-      ],
-      "Fan Repair": [
-        { title: "Ceiling Fan Winding & Capacitor Replacement", price: 349 },
-      ],
-      "MCB & Fuse": [
-        { title: "Main MCB Tripping & Short Circuit Repair", price: 499 },
-      ],
-    },
-  },
-  "Plumbing": {
-    types: ["Tap & Mixer Repair", "Water Tank Cleaning", "Blockage Removal"],
-    services: {
-      "Tap & Mixer Repair": [
-        { title: "Bathroom Tap & Wash Basin Leak Fix", price: 249 },
-        { title: "Wall Mixer & Shower Head Installation", price: 499 },
-      ],
-      "Water Tank Cleaning": [
-        { title: "1000L Overhead Water Tank Mechanized Scrub & Wash", price: 799 },
-      ],
-      "Blockage Removal": [
-        { title: "Kitchen Sink & Drain Pipe Drainage Unclogging", price: 399 },
+    {
+      typeName: "Cassette / Commercial AC",
+      actions: [
+        {
+          actionName: "Commercial Servicing",
+          packages: [
+            { id: "ca-1", title: "Cassette AC Heavy Duty Jet Service", price: 999, duration: "60 mins" },
+            { id: "ca-2", title: "Tower AC Deep Chemical Wash", price: 1199, duration: "75 mins" },
+          ],
+        },
+        {
+          actionName: "Gas Charging & Overhaul",
+          packages: [
+            { id: "ca-3", title: "Cassette AC Refrigerant Gas Refilling", price: 1999, duration: "120 mins" },
+          ],
+        },
       ],
     },
-  },
+  ],
+
+  "Appliance Repair": [
+    {
+      typeName: "Washing Machine",
+      actions: [
+        {
+          actionName: "General Servicing",
+          packages: [
+            { id: "wm-1", title: "Fully Automatic Washing Machine Drum Wash & De-scale", price: 499, duration: "45 mins" },
+            { id: "wm-2", title: "Semi-Automatic Washing Machine General Servicing", price: 399, duration: "30 mins" },
+          ],
+        },
+        {
+          actionName: "Motor & Electronics Repair",
+          packages: [
+            { id: "wm-3", title: "Washing Machine Motor & Belt Repair", price: 899, duration: "60 mins" },
+            { id: "wm-4", title: "Washing Machine Drain Pump & Sensor Replacement", price: 699, duration: "45 mins" },
+            { id: "wm-5", title: "Washing Machine PCB Board Repair", price: 1299, duration: "90 mins" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "Refrigerator",
+      actions: [
+        {
+          actionName: "Gas Charging & Leak Fix",
+          packages: [
+            { id: "ref-1", title: "Double Door Refrigerator Gas Charging & Leak Repair", price: 1399, duration: "90 mins" },
+            { id: "ref-2", title: "Single Door Refrigerator Gas Refill", price: 1099, duration: "60 mins" },
+          ],
+        },
+        {
+          actionName: "Compressor & Thermostat Repair",
+          packages: [
+            { id: "ref-3", title: "Refrigerator Compressor Relay & Thermostat Fix", price: 799, duration: "45 mins" },
+            { id: "ref-4", title: "Refrigerator Door Rubber Gasket Replacement", price: 499, duration: "30 mins" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "RO Water Purifier",
+      actions: [
+        {
+          actionName: "Filter & Membrane Replacement",
+          packages: [
+            { id: "ro-1", title: "RO Full Filter & Sediment Membrane Kit Replacement", price: 799, duration: "45 mins", badge: "Best Seller" },
+            { id: "ro-2", title: "RO General Servicing & TDS Water Calibration", price: 299, duration: "30 mins" },
+          ],
+        },
+      ],
+    },
+  ],
+
+  "Home Cleaning": [
+    {
+      typeName: "Full House Cleaning",
+      actions: [
+        {
+          actionName: "Deep Scrub & Sanitization",
+          packages: [
+            { id: "hc-1", title: "2BHK Full House Deep Cleaning", price: 2999, duration: "4 Hours", badge: "Popular" },
+            { id: "hc-2", title: "3BHK Full House Deep Cleaning", price: 3999, duration: "5 Hours" },
+            { id: "hc-3", title: "Villa / Independent House Deep Cleaning", price: 5999, duration: "7 Hours" },
+          ],
+        },
+        {
+          actionName: "Express Dusting & Mop",
+          packages: [
+            { id: "hc-4", title: "2BHK Express Floor Scrubbing & Dusting", price: 1499, duration: "2 Hours" },
+            { id: "hc-5", title: "3BHK Express Floor Scrubbing & Dusting", price: 1999, duration: "3 Hours" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "Sofa & Carpet",
+      actions: [
+        {
+          actionName: "Shampooing & Extraction",
+          packages: [
+            { id: "sc-1", title: "5-Seater Fabric Sofa Shampooing & Extraction", price: 899, duration: "60 mins" },
+            { id: "sc-2", title: "7-Seater Leather Sofa Cleaning & Polish", price: 1299, duration: "90 mins" },
+            { id: "sc-3", title: "Living Room Carpet Deep Vacuum & Wash", price: 599, duration: "45 mins" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "Kitchen & Bathroom",
+      actions: [
+        {
+          actionName: "Degreasing & Tile Stain Removal",
+          packages: [
+            { id: "kb-1", title: "Kitchen Degreasing & Chimney Cleaning", price: 999, duration: "90 mins" },
+            { id: "kb-2", title: "Bathroom Tile Stain Removal & Sanitization", price: 499, duration: "45 mins" },
+            { id: "kb-3", title: "2x Bathroom Deep Sanitization Combo", price: 899, duration: "75 mins" },
+          ],
+        },
+      ],
+    },
+  ],
+
+  "Electrician": [
+    {
+      typeName: "Wiring & Switches",
+      actions: [
+        {
+          actionName: "Switch & Socket Fitting",
+          packages: [
+            { id: "el-1", title: "Switchboard & Socket Installation (up to 5 points)", price: 299, duration: "30 mins" },
+            { id: "el-2", title: "Modular Switchboard Upgrade", price: 499, duration: "45 mins" },
+          ],
+        },
+        {
+          actionName: "Main Line & Short Circuit Fix",
+          packages: [
+            { id: "el-3", title: "Main Line MCB Tripping & Short Circuit Repair", price: 499, duration: "45 mins" },
+            { id: "el-4", title: "Complete Room Internal Re-Wiring", price: 999, duration: "120 mins" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "Fan & Ceiling Lights",
+      actions: [
+        {
+          actionName: "Repair & Fitting",
+          packages: [
+            { id: "el-5", title: "Ceiling Fan Winding & Capacitor Replacement", price: 349, duration: "30 mins" },
+            { id: "el-6", title: "Chandelier & Ceiling Light Assembly Fitting", price: 599, duration: "60 mins" },
+          ],
+        },
+      ],
+    },
+  ],
+
+  "Plumbing": [
+    {
+      typeName: "Tap & Mixer",
+      actions: [
+        {
+          actionName: "Repair & Replacement",
+          packages: [
+            { id: "pl-1", title: "Bathroom Tap & Wash Basin Leak Fix", price: 249, duration: "30 mins" },
+            { id: "pl-2", title: "Wall Mixer & Shower Head Fitting", price: 499, duration: "45 mins" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "Drainage & Water Tank",
+      actions: [
+        {
+          actionName: "Unclogging & Cleaning",
+          packages: [
+            { id: "pl-3", title: "Kitchen Sink & Drain Pipe Drainage Unclogging", price: 399, duration: "45 mins" },
+            { id: "pl-4", title: "1000L Overhead Water Tank Mechanized Scrub", price: 799, duration: "60 mins" },
+          ],
+        },
+      ],
+    },
+  ],
+
+  "Car & Bike Wash": [
+    {
+      typeName: "Car Detailing",
+      actions: [
+        {
+          actionName: "Washing & Vacuuming",
+          packages: [
+            { id: "cw-1", title: "Hatchback / Sedan High Pressure Foam Wash & Vacuum", price: 499, duration: "45 mins" },
+            { id: "cw-2", title: "SUV Heavy Duty Foam Wash & Interior Vacuum", price: 699, duration: "60 mins" },
+          ],
+        },
+        {
+          actionName: "Polishing & Coating",
+          packages: [
+            { id: "cw-3", title: "Full Body Teflon Coating & Wax Polish", price: 1499, duration: "90 mins" },
+            { id: "cw-4", title: "Complete Interior Detailing & Sanitization", price: 1299, duration: "90 mins" },
+          ],
+        },
+      ],
+    },
+    {
+      typeName: "Bike Wash",
+      actions: [
+        {
+          actionName: "Foam Wash & Lube",
+          packages: [
+            { id: "bw-1", title: "Super Bike High Pressure Foam Wash", price: 199, duration: "20 mins" },
+            { id: "bw-2", title: "Bike Teflon Coating & Chain Lube", price: 399, duration: "35 mins" },
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 export function BookingWizardModal({
@@ -278,10 +449,11 @@ export function BookingWizardModal({
   const [pincode, setPincode] = useState("221002");
   const [address, setAddress] = useState("");
 
-  // STEP 3: Service Selection States
+  // STEP 3: Service Selection States (Flow: Category -> Type -> Action -> Package)
   const [selectedCategory, setSelectedCategory] = useState("AC Service & Repair");
   const [selectedType, setSelectedType] = useState("Split AC");
-  const [selectedServiceIndex, setSelectedServiceIndex] = useState(0);
+  const [selectedAction, setSelectedAction] = useState("Service & Maintenance");
+  const [selectedPackageId, setSelectedPackageId] = useState("sp-1");
 
   // STEP 4: Schedule States
   const [bookingDate, setBookingDate] = useState("2026-07-28");
@@ -299,13 +471,15 @@ export function BookingWizardModal({
 
   if (!isOpen) return null;
 
-  // Active services for current Category + SubCategory Type
-  const currentCategoryObj = serviceCatalogData[selectedCategory] || serviceCatalogData["AC Service & Repair"];
-  const currentTypes = currentCategoryObj.types;
-  const currentServices = currentCategoryObj.services[selectedType] || currentCategoryObj.services[currentTypes[0]] || [];
-  const currentSelectedService = currentServices[selectedServiceIndex] || currentServices[0] || { title: "Custom Service", price: 599 };
+  // Multi-Level Catalog Calculations: Category -> Type -> Action -> Package
+  const currentTypes = serviceCatalogData[selectedCategory] || serviceCatalogData["AC Service & Repair"];
+  const currentTypeObj = currentTypes.find((t) => t.typeName === selectedType) || currentTypes[0];
+  const currentActions = currentTypeObj ? currentTypeObj.actions : [];
+  const currentActionObj = currentActions.find((a) => a.actionName === selectedAction) || currentActions[0];
+  const currentPackages = currentActionObj ? currentActionObj.packages : [];
+  const currentSelectedPackage = currentPackages.find((p) => p.id === selectedPackageId) || currentPackages[0] || { title: "Standard Package", price: 599 };
 
-  const servicePrice = currentSelectedService.price;
+  const servicePrice = currentSelectedPackage.price;
   const convenienceFee = 49;
   const grossBeforeTax = Math.max(0, servicePrice + convenienceFee - discountAmount);
   const cgst = Math.round(grossBeforeTax * 0.09 * 100) / 100;
@@ -373,17 +547,32 @@ export function BookingWizardModal({
     setIsCouponPickerOpen(false);
   };
 
+  // 4-Stage Selection Handlers
   const handleCategoryChange = (cat: string) => {
     setSelectedCategory(cat);
-    const newTypes = serviceCatalogData[cat]?.types || [];
-    const firstType = newTypes[0] || "";
+    const newTypes = serviceCatalogData[cat] || [];
+    const firstType = newTypes[0]?.typeName || "";
     setSelectedType(firstType);
-    setSelectedServiceIndex(0);
+    const firstAction = newTypes[0]?.actions[0]?.actionName || "";
+    setSelectedAction(firstAction);
+    const firstPkgId = newTypes[0]?.actions[0]?.packages[0]?.id || "";
+    setSelectedPackageId(firstPkgId);
   };
 
-  const handleTypeChange = (type: string) => {
-    setSelectedType(type);
-    setSelectedServiceIndex(0);
+  const handleTypeChange = (typeName: string) => {
+    setSelectedType(typeName);
+    const foundType = currentTypes.find((t) => t.typeName === typeName);
+    const firstAction = foundType?.actions[0]?.actionName || "";
+    setSelectedAction(firstAction);
+    const firstPkgId = foundType?.actions[0]?.packages[0]?.id || "";
+    setSelectedPackageId(firstPkgId);
+  };
+
+  const handleActionChange = (actionName: string) => {
+    setSelectedAction(actionName);
+    const foundAction = currentActions.find((a) => a.actionName === actionName);
+    const firstPkgId = foundAction?.packages[0]?.id || "";
+    setSelectedPackageId(firstPkgId);
   };
 
   const handleCompleteBooking = () => {
@@ -398,9 +587,9 @@ export function BookingWizardModal({
       locality,
       pincode,
       address: address || "D-38/21, Sigra Central, Varanasi",
-      serviceTitle: currentSelectedService.title,
+      serviceTitle: currentSelectedPackage.title,
       category: selectedCategory,
-      subCategory: selectedType,
+      subCategory: `${selectedType} (${selectedAction})`,
       basePrice: servicePrice,
       convenienceFee,
       discountAmount,
@@ -669,28 +858,29 @@ export function BookingWizardModal({
               </div>
             )}
 
-            {/* STEP 3: SELECT SERVICE CATEGORY & PACKAGE */}
+            {/* STEP 3: 4-STAGE SERVICE SELECTION FLOW (CATEGORY -> TYPE -> ACTION -> PACKAGE) */}
             {currentStep === 3 && (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
                   <Wrench className="w-5 h-5 text-brand-600" />
-                  <span>Step 3: Select Service Category & Package</span>
+                  <span>Step 3: Select Service (Category → Type → Action → Package)</span>
                 </div>
 
-                {/* Main Category Selection */}
-                <div className="space-y-2 text-xs">
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    1. Main Service Category
-                  </label>
+                {/* 1. Category Selection */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-brand-600 text-white font-extrabold text-[11px] flex items-center justify-center">1</span>
+                    <label className="font-extrabold text-slate-900 dark:text-white text-xs">Select Service Category</label>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {Object.keys(serviceCatalogData).map((cat) => (
                       <button
                         key={cat}
                         type="button"
                         onClick={() => handleCategoryChange(cat)}
-                        className={`p-3 rounded-2xl border text-left font-extrabold text-xs transition-all ${
+                        className={`p-3 rounded-2xl border text-left font-extrabold text-xs transition-all cursor-pointer ${
                           selectedCategory === cat
-                            ? "bg-brand-500 text-white border-brand-500 shadow-lux"
+                            ? "bg-brand-600 text-white border-brand-600 shadow-md"
                             : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-brand-300"
                         }`}
                       >
@@ -700,45 +890,109 @@ export function BookingWizardModal({
                   </div>
                 </div>
 
-                {/* Sub-Type Selection */}
-                <div className="space-y-2 text-xs pt-2">
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    2. System / Appliance Type
-                  </label>
+                {/* 2. Type Selection */}
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-brand-600 text-white font-extrabold text-[11px] flex items-center justify-center">2</span>
+                    <label className="font-extrabold text-slate-900 dark:text-white text-xs">Select Appliance / System Type</label>
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {currentTypes.map((type) => (
+                    {currentTypes.map((t) => (
                       <button
-                        key={type}
+                        key={t.typeName}
                         type="button"
-                        onClick={() => handleTypeChange(type)}
-                        className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all ${
-                          selectedType === type
-                            ? "bg-brand-50 text-brand-700 border-brand-500 dark:bg-brand-950 dark:text-brand-300"
+                        onClick={() => handleTypeChange(t.typeName)}
+                        className={`px-4 py-2.5 rounded-xl border text-xs font-extrabold transition-all cursor-pointer ${
+                          selectedType === t.typeName
+                            ? "bg-brand-50 text-brand-700 border-brand-500 dark:bg-brand-950 dark:text-brand-300 shadow-xs"
                             : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
                         }`}
                       >
-                        {type}
+                        {t.typeName}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Service Package Dropdown */}
-                <div className="space-y-2 text-xs pt-2">
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    3. Specific Service Package & Rate Card *
-                  </label>
-                  <select
-                    value={selectedServiceIndex}
-                    onChange={(e) => setSelectedServiceIndex(Number(e.target.value))}
-                    className="w-full p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold text-sm shadow-xs outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-                  >
-                    {currentServices.map((svc, idx) => (
-                      <option key={svc.title} value={idx}>
-                        {svc.title} — ₹{svc.price.toLocaleString()}
-                      </option>
-                    ))}
-                  </select>
+                {/* 3. Action Selection */}
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-brand-600 text-white font-extrabold text-[11px] flex items-center justify-center">3</span>
+                    <label className="font-extrabold text-slate-900 dark:text-white text-xs">Select Action / Service Scope</label>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {currentActions.map((act) => {
+                      const isSelected = selectedAction === act.actionName;
+                      return (
+                        <button
+                          key={act.actionName}
+                          type="button"
+                          onClick={() => handleActionChange(act.actionName)}
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-purple-50 dark:bg-purple-950/60 border-purple-500 text-purple-900 dark:text-purple-200 shadow-xs"
+                              : "bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-purple-300"
+                          }`}
+                        >
+                          <div className="font-extrabold text-xs flex items-center justify-between">
+                            <span>{act.actionName}</span>
+                            <span className="text-[10px] font-bold text-slate-400">({act.packages.length} packages)</span>
+                          </div>
+                          {act.description && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">{act.description}</p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Package Selection (Custom Dropdown) */}
+                <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-brand-600 text-white font-extrabold text-[11px] flex items-center justify-center">4</span>
+                    <label className="font-extrabold text-slate-900 dark:text-white text-xs">Select Specific Service Package & Rate Card</label>
+                  </div>
+
+                  <CustomSelect
+                    value={selectedPackageId}
+                    onChange={(val) => setSelectedPackageId(val)}
+                    options={currentPackages.map((pkg) => ({
+                      value: pkg.id,
+                      label: `${pkg.title} — ₹${pkg.price.toLocaleString()}${pkg.duration ? ` (${pkg.duration})` : ""}`,
+                    }))}
+                    placeholder="Choose Service Package..."
+                  />
+
+                  {/* Selected Package Details Card */}
+                  {currentSelectedPackage && (
+                    <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-500 shadow-xs flex items-center justify-between gap-3 mt-2">
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-extrabold text-slate-900 dark:text-white text-xs truncate">{currentSelectedPackage.title}</h4>
+                          {currentSelectedPackage.badge && (
+                            <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.2 rounded-full">
+                              {currentSelectedPackage.badge}
+                            </span>
+                          )}
+                        </div>
+                        {currentSelectedPackage.description && (
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400">{currentSelectedPackage.description}</p>
+                        )}
+                        {currentSelectedPackage.duration && (
+                          <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" /> Estimated Duration: {currentSelectedPackage.duration}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-base font-black text-slate-900 dark:text-white">₹{currentSelectedPackage.price.toLocaleString()}</div>
+                        <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full">
+                          Warranty Included
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -865,7 +1119,7 @@ export function BookingWizardModal({
                 {/* Final Order Summary */}
                 <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs">
                   <div className="flex justify-between text-slate-300">
-                    <span>Base Service ({currentSelectedService.title})</span>
+                    <span>Base Service ({currentSelectedPackage.title})</span>
                     <span>₹{servicePrice.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-slate-300">

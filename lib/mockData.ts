@@ -210,6 +210,40 @@ export interface Technician {
   pendingPayout: number;
   lastPayoutDate: string;
   payoutProofUrl?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  ifscCode?: string;
+  upiId?: string;
+}
+
+export interface SettlementRecord {
+  id: string;
+  technicianId: string;
+  technicianName: string;
+  category: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  ifscCode: string;
+  upiId?: string;
+  grossAmount: number;
+  commissionDeducted: number;
+  netPayoutAmount: number;
+  paymentMethod: "IMPS Bank Transfer" | "NEFT Direct" | "UPI Payout" | "RazorpayX Automated";
+  utrNumber: string;
+  settlementDate: string;
+  period: string;
+  status: "Completed" | "Processing" | "Failed";
+  proofUrl?: string;
+  notes?: string;
+}
+
+export interface CategoryCommissionRule {
+  id: string;
+  categoryName: string;
+  commissionPercentage: number;
+  convenienceFeeSharePercentage: number;
+  minimumCommissionFloor: number;
+  status: "Active" | "Inactive";
 }
 
 export type BookingStatus =
@@ -1176,3 +1210,94 @@ export const analyticsData = {
     { category: "Hydro Jet Plumbing", percentage: 7, count: 91, color: "#EC4899" },
   ],
 };
+
+export const initialCategoryCommissionRules: CategoryCommissionRule[] = [
+  { id: "cc-1", categoryName: "AC Service & Repair", commissionPercentage: 25, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 150, status: "Active" },
+  { id: "cc-2", categoryName: "Elite Deep Cleaning", commissionPercentage: 20, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 300, status: "Active" },
+  { id: "cc-3", categoryName: "Smart Home Electrician", commissionPercentage: 15, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 50, status: "Active" },
+  { id: "cc-4", categoryName: "Hydro Jet Plumbing", commissionPercentage: 18, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 75, status: "Active" },
+  { id: "cc-5", categoryName: "Home Salon & Spa", commissionPercentage: 30, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 200, status: "Active" },
+  { id: "cc-6", categoryName: "Appliance Repair", commissionPercentage: 22, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 100, status: "Active" },
+  { id: "cc-7", categoryName: "Car & Bike Wash", commissionPercentage: 20, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 80, status: "Active" },
+  { id: "cc-8", categoryName: "Pest Control", commissionPercentage: 25, convenienceFeeSharePercentage: 100, minimumCommissionFloor: 250, status: "Active" },
+];
+
+export const initialSettlementRecords: SettlementRecord[] = [
+  {
+    id: "SETTL-VAR-901",
+    technicianId: "tech-101",
+    technicianName: "Ramesh Yadav",
+    category: "AC Repair",
+    bankAccountName: "Ramesh Yadav",
+    bankAccountNumber: "9820-1049-8120",
+    ifscCode: "SBIN0001240",
+    upiId: "ramesh.yadav@okaxis",
+    grossAmount: 56800,
+    commissionDeducted: 14200,
+    netPayoutAmount: 42600,
+    paymentMethod: "IMPS Bank Transfer",
+    utrNumber: "IMPS-VAR-2026-9812401824",
+    settlementDate: "20 Jan 2026",
+    period: "13 Jan - 19 Jan 2026",
+    status: "Completed",
+    proofUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+    notes: "Weekly Monday settlement processed cleanly via HDFC Direct API",
+  },
+  {
+    id: "SETTL-VAR-902",
+    technicianId: "tech-102",
+    technicianName: "Sunita Verma",
+    category: "Beauty & Spa",
+    bankAccountName: "Sunita Verma",
+    bankAccountNumber: "4910-2910-4491",
+    ifscCode: "HDFC0000142",
+    upiId: "sunita.verma@okhdfcbank",
+    grossAmount: 75600,
+    commissionDeducted: 18900,
+    netPayoutAmount: 56700,
+    paymentMethod: "NEFT Direct",
+    utrNumber: "NEFT-VAR-2026-4491029102",
+    settlementDate: "20 Jan 2026",
+    period: "13 Jan - 19 Jan 2026",
+    status: "Completed",
+    proofUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+    notes: "Batch payout verified by Finance Manager",
+  },
+  {
+    id: "SETTL-VAR-903",
+    technicianId: "tech-103",
+    technicianName: "Amit Pandey",
+    category: "Electrician",
+    bankAccountName: "Amit Pandey",
+    bankAccountNumber: "1102-4910-8820",
+    ifscCode: "ICIC0000492",
+    upiId: "amit.pandey@icici",
+    grossAmount: 45600,
+    commissionDeducted: 11400,
+    netPayoutAmount: 34200,
+    paymentMethod: "UPI Payout",
+    utrNumber: "UPI-VAR-2026-8839201948",
+    settlementDate: "18 Jan 2026",
+    period: "10 Jan - 16 Jan 2026",
+    status: "Completed",
+    proofUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "SETTL-VAR-904",
+    technicianId: "tech-104",
+    technicianName: "Manoj Kumar",
+    category: "Plumbing",
+    bankAccountName: "Manoj Kumar",
+    bankAccountNumber: "7710-4920-1120",
+    ifscCode: "PUNB0004810",
+    upiId: "manoj.plumber@paytm",
+    grossAmount: 39200,
+    commissionDeducted: 9800,
+    netPayoutAmount: 29400,
+    paymentMethod: "IMPS Bank Transfer",
+    utrNumber: "IMPS-VAR-2026-7740192830",
+    settlementDate: "15 Jan 2026",
+    period: "07 Jan - 13 Jan 2026",
+    status: "Completed",
+  },
+];
