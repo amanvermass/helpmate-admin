@@ -23,7 +23,10 @@ import {
   UserPlus,
   Filter,
   Plus,
+  X,
+  ArrowRight,
 } from "lucide-react";
+import { Portal } from "@/components/Portal";
 import { BookingWizardModal } from "@/components/bookings/BookingWizardModal";
 import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
 import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
@@ -35,8 +38,9 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
 
-  // Modals
+  // Modals & Toasts
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [createdBookingToast, setCreatedBookingToast] = useState<Booking | null>(null);
   const [assignBooking, setAssignBooking] = useState<Booking | null>(null);
   const [inspectionBooking, setInspectionBooking] = useState<Booking | null>(null);
   const [otpBooking, setOtpBooking] = useState<Booking | null>(null);
@@ -49,6 +53,8 @@ export default function BookingsPage() {
 
   const handleBookingCreated = (newBooking: Booking) => {
     setBookings([newBooking, ...bookings]);
+    setIsWizardOpen(false);
+    setCreatedBookingToast(newBooking);
   };
 
   const handlePartnerAssigned = (bookingId: string, technician: Technician) => {
@@ -94,6 +100,7 @@ export default function BookingsPage() {
           : b
       )
     );
+    router.push(`/billing/${bookingId}`);
   };
 
   const handleBookingUpdated = (updated: Booking) => {
@@ -193,9 +200,17 @@ export default function BookingsPage() {
         <div className="flex items-center justify-end gap-1.5">
           <button
             type="button"
+            onClick={() => router.push(`/billing/${row.id}`)}
+            title="Open Invoice Page"
+            className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-bold transition-all flex items-center gap-1 text-[11px] cursor-pointer border border-emerald-200 dark:border-emerald-800"
+          >
+            <FileText className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
             onClick={() => router.push(`/bookings/${row.id}`)}
             title="View Booking Details"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all cursor-pointer"
           >
             <Eye className="w-4 h-4" />
           </button>
@@ -203,7 +218,7 @@ export default function BookingsPage() {
             type="button"
             onClick={() => setEditingBooking(row)}
             title="Edit Booking"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all cursor-pointer"
           >
             <Edit2 className="w-4 h-4" />
           </button>
@@ -315,6 +330,67 @@ export default function BookingsPage() {
         onClose={() => setEditingBooking(null)}
         onBookingUpdated={handleBookingUpdated}
       />
+
+      {/* RIGHT BOTTOM POPUP: CREATED BOOKING INVOICE TOAST */}
+      {createdBookingToast && (
+        <Portal>
+          <div className="fixed bottom-6 right-6 z-[9999999] max-w-sm w-full bg-slate-900 text-white rounded-3xl p-5 shadow-2xl border border-slate-800 ring-1 ring-slate-700/50 animate-in slide-in-from-bottom-5 duration-300 outline-none">
+            {/* Top Right Close Icon */}
+            <button
+              type="button"
+              onClick={() => setCreatedBookingToast(null)}
+              className="absolute top-3.5 right-3.5 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Close notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              </div>
+
+              <div className="space-y-1.5 pr-6 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    Booking Confirmed
+                  </span>
+                  <span className="font-mono text-[11px] font-extrabold text-slate-300">
+                    {createdBookingToast.id}
+                  </span>
+                </div>
+
+                <h4 className="font-extrabold text-xs text-white truncate">
+                  {createdBookingToast.customerName}
+                </h4>
+
+                <p className="text-[11px] text-slate-400">
+                  {createdBookingToast.serviceTitle} •{" "}
+                  <strong className="text-emerald-400 font-extrabold">
+                    ₹{(createdBookingToast.totalAmount || 0).toLocaleString()}
+                  </strong>
+                </p>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const bId = createdBookingToast.id;
+                      setCreatedBookingToast(null);
+                      router.push(`/billing/${bId}`);
+                    }}
+                    className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs rounded-xl shadow-lux flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>See Invoice</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
     </div>
   );
 }

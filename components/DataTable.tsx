@@ -367,12 +367,12 @@ export function DataTable<T extends Record<string, any>>({
           <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
             <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="py-3.5 px-4 w-10">
+                <th className="py-3.5 px-4 w-10 align-middle">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
                     onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer"
+                    className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer align-middle"
                   />
                 </th>
                 {columns.map((col) => {
@@ -384,7 +384,7 @@ export function DataTable<T extends Record<string, any>>({
                     <th
                       key={col.key}
                       onClick={() => col.sortable !== false && handleSort(col.key)}
-                      className={`py-3.5 px-4 cursor-pointer select-none ${isActionsCol ? "text-right" : ""}`}
+                      className={`py-3.5 px-4 align-middle cursor-pointer select-none ${isActionsCol ? "text-right" : ""}`}
                     >
                       <div className={`flex items-center gap-1.5 ${isActionsCol ? "justify-end" : ""}`}>
                         <span>{col.header}</span>
@@ -395,17 +395,17 @@ export function DataTable<T extends Record<string, any>>({
                 })}
                 {showMetadata && (
                   <>
-                    <th className="py-3.5 px-4">Created By / Date</th>
-                    <th className="py-3.5 px-4">Updated By / Date</th>
+                    <th className="py-3.5 px-4 align-middle">Created By / Date</th>
+                    <th className="py-3.5 px-4 align-middle">Updated By / Date</th>
                   </>
                 )}
-                {hasDefaultActionsColumn && <th className="py-3.5 px-4 text-right">Actions</th>}
+                {hasDefaultActionsColumn && <th className="py-3.5 px-4 text-right align-middle">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + 1 + (showMetadata ? 2 : 0) + (hasDefaultActionsColumn ? 1 : 0)} className="py-12 text-center text-slate-400">
+                  <td colSpan={columns.length + 1 + (showMetadata ? 2 : 0) + (hasDefaultActionsColumn ? 1 : 0)} className="py-12 text-center text-slate-400 align-middle">
                     <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                     <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No matching records found</p>
                     <p className="text-xs text-slate-400 mt-1">Try resetting filters or adding new data.</p>
@@ -418,12 +418,12 @@ export function DataTable<T extends Record<string, any>>({
 
                   return (
                     <tr key={idStr} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="py-4 px-4">
+                      <td className="py-3.5 px-4 align-middle">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleSelectRow(idStr)}
-                          className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer align-middle"
                         />
                       </td>
 
@@ -433,7 +433,7 @@ export function DataTable<T extends Record<string, any>>({
                           col.key.toLowerCase().includes("action");
 
                         return (
-                          <td key={col.key} className={`py-4 px-4 ${isActionsCol ? "text-right" : ""}`}>
+                          <td key={col.key} className={`py-3.5 px-4 align-middle ${isActionsCol ? "text-right" : ""}`}>
                             {col.accessor ? col.accessor(row) : row[col.key]}
                           </td>
                         );

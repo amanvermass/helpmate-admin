@@ -662,13 +662,12 @@ export function BookingWizardModal({
                   <button
                     type="button"
                     onClick={() => setCurrentStep(st.num)}
-                    className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all text-xs whitespace-nowrap ${
-                      isCurrent
+                    className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all text-xs whitespace-nowrap ${isCurrent
                         ? "bg-brand-500 text-white shadow-lux"
                         : isDone
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "bg-slate-200/70 dark:bg-slate-800 text-slate-500"
-                    }`}
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          : "bg-slate-200/70 dark:bg-slate-800 text-slate-500"
+                      }`}
                   >
                     <span>{st.label}</span>
                   </button>
@@ -878,11 +877,10 @@ export function BookingWizardModal({
                         key={cat}
                         type="button"
                         onClick={() => handleCategoryChange(cat)}
-                        className={`p-3 rounded-2xl border text-left font-extrabold text-xs transition-all cursor-pointer ${
-                          selectedCategory === cat
+                        className={`p-3 rounded-2xl border text-left font-extrabold text-xs transition-all cursor-pointer ${selectedCategory === cat
                             ? "bg-brand-600 text-white border-brand-600 shadow-md"
                             : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-brand-300"
-                        }`}
+                          }`}
                       >
                         {cat}
                       </button>
@@ -902,11 +900,10 @@ export function BookingWizardModal({
                         key={t.typeName}
                         type="button"
                         onClick={() => handleTypeChange(t.typeName)}
-                        className={`px-4 py-2.5 rounded-xl border text-xs font-extrabold transition-all cursor-pointer ${
-                          selectedType === t.typeName
+                        className={`px-4 py-2.5 rounded-xl border text-xs font-extrabold transition-all cursor-pointer ${selectedType === t.typeName
                             ? "bg-brand-50 text-brand-700 border-brand-500 dark:bg-brand-950 dark:text-brand-300 shadow-xs"
                             : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                        }`}
+                          }`}
                       >
                         {t.typeName}
                       </button>
@@ -928,11 +925,10 @@ export function BookingWizardModal({
                           key={act.actionName}
                           type="button"
                           onClick={() => handleActionChange(act.actionName)}
-                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                            isSelected
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
                               ? "bg-purple-50 dark:bg-purple-950/60 border-purple-500 text-purple-900 dark:text-purple-200 shadow-xs"
                               : "bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-purple-300"
-                          }`}
+                            }`}
                         >
                           <div className="font-extrabold text-xs flex items-center justify-between">
                             <span>{act.actionName}</span>
@@ -1098,11 +1094,10 @@ export function BookingWizardModal({
                         key={method}
                         type="button"
                         onClick={() => setPaymentMethod(method)}
-                        className={`p-3 rounded-xl border text-xs font-bold text-left ${
-                          paymentMethod === method
+                        className={`p-3 rounded-xl border text-xs font-bold text-left ${paymentMethod === method
                             ? "bg-brand-50 text-brand-700 border-brand-500 dark:bg-brand-950 dark:text-brand-300"
                             : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
-                        }`}
+                          }`}
                       >
                         {method}
                       </button>

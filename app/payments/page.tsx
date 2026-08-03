@@ -43,7 +43,7 @@ export default function PaymentsPage() {
       key: "id",
       header: "Transaction ID",
       accessor: (row) => (
-        <div className="flex flex-col">
+        <div className="flex flex-col items-start gap-0.5 text-left">
           <button
             type="button"
             onClick={() => setSelectedTxn(row)}
@@ -51,7 +51,9 @@ export default function PaymentsPage() {
           >
             {row.id}
           </button>
-          <span className="text-[10px] text-slate-400">{row.date}</span>
+          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 whitespace-nowrap">
+            {row.date}
+          </span>
         </div>
       ),
       sortable: true,
@@ -60,7 +62,7 @@ export default function PaymentsPage() {
       key: "bookingId",
       header: "Booking Reference",
       accessor: (row) => (
-        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+        <span className="inline-flex items-center font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 whitespace-nowrap shadow-2xs">
           {row.bookingId}
         </span>
       ),
@@ -73,7 +75,7 @@ export default function PaymentsPage() {
         <button
           type="button"
           onClick={() => setSelectedTxn(row)}
-          className="font-bold text-slate-900 dark:text-white text-xs hover:text-brand-600 text-left transition-colors"
+          className="font-bold text-slate-900 dark:text-white text-xs hover:text-brand-600 text-left transition-colors whitespace-nowrap"
         >
           {row.customerName}
         </button>
