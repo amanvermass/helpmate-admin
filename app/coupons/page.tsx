@@ -301,29 +301,54 @@ export default function CouponsPage() {
         </div>
       </div>
 
-      {/* Quick Stats Cards */}
+      {/* 4 Executive KPI Quick Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-          <span className="text-xs font-bold text-slate-400 uppercase">Active Campaigns</span>
-          <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-            {coupons.filter((c) => c.status === "Active").length} Vouchers
-          </h3>
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Active Campaigns</span>
+            <div className="p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 border border-brand-200 dark:border-brand-800 shadow-xs">
+              <Tag className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">
+            {coupons.filter((c) => c.status === "Active").length} Live Vouchers
+          </span>
         </div>
-        <div className="p-4.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-          <span className="text-xs font-bold text-purple-600">Bank Partnerships</span>
-          <h3 className="text-2xl font-black text-purple-600">
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Bank Partnerships</span>
+            <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 border border-purple-200 dark:border-purple-800 shadow-xs">
+              <CreditCard className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-purple-600 dark:text-purple-400">
             {coupons.filter((c) => c.discountType === "Bank Offer").length} Active Offers
-          </h3>
+          </span>
         </div>
-        <div className="p-4.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-          <span className="text-xs font-bold text-emerald-600">Total Vouchers Used</span>
-          <h3 className="text-2xl font-black text-emerald-600">
-            {coupons.reduce((sum, c) => sum + (c.usageCount || 0), 0).toLocaleString()} Times
-          </h3>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Total Redemptions</span>
+            <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800 shadow-xs">
+              <Sparkles className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+            {coupons.reduce((sum, c) => sum + (c.usageCount || 0), 0).toLocaleString()} Uses
+          </span>
         </div>
-        <div className="p-4.5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-          <span className="text-xs font-bold text-brand-600">Avg Customer Savings</span>
-          <h3 className="text-2xl font-black text-brand-600">₹165 per Booking</h3>
+
+        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-400 uppercase">Avg Customer Savings</span>
+            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-xs">
+              <Percent className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-blue-600 dark:text-blue-400">
+            ₹165 / Order
+          </span>
         </div>
       </div>
 
