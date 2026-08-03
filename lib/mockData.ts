@@ -805,7 +805,7 @@ const generateMockBookings = (): Booking[] => {
       city: "Varanasi",
       locality: "Sigra",
       pincode: "221002",
-      address: "D-58/16C Shashtri Nagar Colony, Sigra, Varanasi",
+      address: "",
       serviceTitle: "Power Jet AC Servicing & Diagnostic Check",
       category: "AC",
       systemType: "Split AC (1.5 Ton)",

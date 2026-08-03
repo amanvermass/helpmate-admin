@@ -423,8 +423,8 @@ export function BookingWizardModal({
     setCustomerPhone(createdCust.phone);
     setCustomerEmail(createdCust.email);
     setLocality(createdCust.locality);
-    setAddress(createdCust.address);
-    setIsOtpVerified(false);
+    setAddress("");
+    setIsAddCustomerFormOpen(false);
     setIsTrustedCustomer(false);
     setIsNewCustomerAdded(true);
     setIsAddCustomerFormOpen(false);
@@ -503,7 +503,7 @@ export function BookingWizardModal({
       setCustomerPhone(found.phone);
       setCustomerEmail(found.email);
       setLocality(found.locality);
-      setAddress(found.address);
+      setAddress("");
       setIsOtpVerified(false);
       setIsTrustedCustomer(false);
       setIsNewCustomerAdded(false);
@@ -711,7 +711,7 @@ export function BookingWizardModal({
                       setCustomerPhone(c.phone);
                       setCustomerEmail(c.email || "");
                       setLocality(c.locality);
-                      setAddress(c.address || `${c.locality}, Varanasi`);
+                      setAddress("");
                     }}
                     label="Quick Select Existing Varanasi Customer (Search Name or Phone)"
                   />
@@ -814,22 +814,22 @@ export function BookingWizardModal({
                     />
                   </div>
 
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Varanasi Locality *
-                    </label>
-                    <select
-                      value={locality}
-                      onChange={(e) => setLocality(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                    >
-                      {varanasiLocalities.map((loc) => (
-                        <option key={loc.id} value={loc.name}>
-                          {loc.name} ({loc.pincode})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Varanasi Service Locality *"
+                    value={locality}
+                    onChange={(val) => {
+                      setLocality(val);
+                      const selectedLocObj = varanasiLocalities.find((loc) => loc.name === val);
+                      if (selectedLocObj) {
+                        setPincode(selectedLocObj.pincode);
+                      }
+                    }}
+                    options={varanasiLocalities.map((loc) => ({
+                      value: loc.name,
+                      label: `${loc.name} (${loc.pincode}) — ${loc.status}`,
+                    }))}
+                    placeholder="Select Service Locality..."
+                  />
 
                   <div>
                     <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode</label>
@@ -850,7 +850,7 @@ export function BookingWizardModal({
                     rows={3}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="House / Flat No., Colony, Near Landmark..."
+                    placeholder="Enter House / Flat No., Street Name, Colony & Landmark ..."
                     className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                     required
                   />
@@ -1018,41 +1018,35 @@ export function BookingWizardModal({
                     />
                   </div>
 
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Time Slot
-                    </label>
-                    <select
-                      value={timeSlot}
-                      onChange={(e) => setTimeSlot(e.target.value)}
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
-                    >
-                      <option value="08:00 AM - 09:30 AM">08:00 AM - 09:30 AM</option>
-                      <option value="10:00 AM - 11:30 AM">10:00 AM - 11:30 AM</option>
-                      <option value="12:00 PM - 01:30 PM">12:00 PM - 01:30 PM</option>
-                      <option value="03:00 PM - 04:30 PM">03:00 PM - 04:30 PM</option>
-                      <option value="05:30 PM - 07:00 PM">05:30 PM - 07:00 PM</option>
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Preferred Time Slot *"
+                    value={timeSlot}
+                    onChange={(val) => setTimeSlot(val)}
+                    options={[
+                      { value: "08:00 AM - 09:30 AM", label: "08:00 AM - 09:30 AM (Morning)" },
+                      { value: "10:00 AM - 11:30 AM", label: "10:00 AM - 11:30 AM (Morning)" },
+                      { value: "12:00 PM - 01:30 PM", label: "12:00 PM - 01:30 PM (Afternoon)" },
+                      { value: "03:00 PM - 04:30 PM", label: "03:00 PM - 04:30 PM (Evening)" },
+                      { value: "05:30 PM - 07:00 PM", label: "05:30 PM - 07:00 PM (Prime Evening)" },
+                    ]}
+                  />
                 </div>
 
                 {/* Assign Partner Selection */}
                 <div className="space-y-2 text-xs">
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    Assign Varanasi Technician (Optional)
-                  </label>
-                  <select
+                  <CustomSelect
+                    label="Assign Varanasi Technician (Optional)"
                     value={preferredPartnerId}
-                    onChange={(e) => setPreferredPartnerId(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
-                  >
-                    <option value="">-- Auto-Dispatch (Next Available Tech in {locality}) --</option>
-                    {initialTechnicians.map((tech) => (
-                      <option key={tech.id} value={tech.id}>
-                        {tech.name} ({tech.locality}) — ★ {tech.rating}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setPreferredPartnerId(val)}
+                    options={[
+                      { value: "", label: `-- Auto-Dispatch (Next Available Tech in ${locality}) --` },
+                      ...initialTechnicians.map((tech) => ({
+                        value: tech.id,
+                        label: `${tech.name} (${tech.locality}) — ★ ${tech.rating}`,
+                      })),
+                    ]}
+                    placeholder="Choose Technician Partner..."
+                  />
                 </div>
               </div>
             )}
