@@ -330,6 +330,9 @@ export interface Booking {
   timeSlot: string;
   paymentMethod: "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet" | "Online" | "Partial Payment";
   createdAt?: string;
+  callingDate?: string;
+  callingPerson?: string;
+  handledBy?: string;
 }
 
 export interface Customer {

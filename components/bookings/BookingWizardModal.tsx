@@ -41,7 +41,9 @@ import { CustomSelect } from "@/components/CustomSelect";
 interface BookingWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBookingCreated: (booking: Booking) => void;
+  onBookingCreated?: (booking: Booking) => void;
+  bookingToEdit?: Booking | null;
+  onBookingUpdated?: (updated: Booking) => void;
 }
 
 // Master Multi-Level Service Catalog: Category -> Type -> Action -> Package
@@ -355,6 +357,8 @@ export function BookingWizardModal({
   isOpen,
   onClose,
   onBookingCreated,
+  bookingToEdit,
+  onBookingUpdated,
 }: BookingWizardModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -469,6 +473,28 @@ export function BookingWizardModal({
   const [customerNotes, setCustomerNotes] = useState("");
   const [isCouponPickerOpen, setIsCouponPickerOpen] = useState(false);
 
+  // Pre-populate if editing an existing booking
+  React.useEffect(() => {
+    if (bookingToEdit) {
+      setCustomerName(bookingToEdit.customerName || "");
+      setCustomerPhone(bookingToEdit.customerPhone || "");
+      setCustomerEmail(bookingToEdit.customerEmail || "");
+      setCity(bookingToEdit.city || "Varanasi");
+      setLocality(bookingToEdit.locality || "Sigra");
+      setPincode(bookingToEdit.pincode || "221002");
+      setAddress(bookingToEdit.address || "");
+      if (bookingToEdit.category && serviceCatalogData[bookingToEdit.category]) {
+        setSelectedCategory(bookingToEdit.category);
+      }
+      setBookingDate(bookingToEdit.date || "2026-07-28");
+      setTimeSlot(bookingToEdit.timeSlot || "10:00 AM - 11:30 AM");
+      setPreferredPartnerId(bookingToEdit.technicianId || "");
+      setCustomerNotes(bookingToEdit.notes || "");
+      setIsOtpVerified(true);
+      setCurrentStep(1);
+    }
+  }, [bookingToEdit, isOpen]);
+
   if (!isOpen) return null;
 
   // Multi-Level Catalog Calculations: Category -> Type -> Action -> Package
@@ -578,6 +604,42 @@ export function BookingWizardModal({
   const handleCompleteBooking = () => {
     const tech = initialTechnicians.find((t) => t.id === preferredPartnerId);
 
+    if (bookingToEdit) {
+      const updated: Booking = {
+        ...bookingToEdit,
+        customerName: customerName || bookingToEdit.customerName,
+        customerPhone: customerPhone || bookingToEdit.customerPhone,
+        customerEmail: customerEmail || bookingToEdit.customerEmail,
+        city,
+        locality,
+        pincode,
+        address: address || bookingToEdit.address,
+        serviceTitle: currentSelectedPackage.title || bookingToEdit.serviceTitle,
+        category: selectedCategory,
+        subCategory: `${selectedType} (${selectedAction})`,
+        basePrice: servicePrice || bookingToEdit.basePrice,
+        convenienceFee,
+        discountAmount,
+        couponCode,
+        cgst,
+        sgst,
+        totalAmount: grandTotal,
+        notes: customerNotes,
+        status: tech ? (bookingToEdit.status === "Pending" ? "Assigned" : bookingToEdit.status) : bookingToEdit.status,
+        technicianName: tech ? tech.name : (preferredPartnerId === "" ? undefined : bookingToEdit.technicianName),
+        technicianId: tech ? tech.id : (preferredPartnerId === "" ? undefined : bookingToEdit.technicianId),
+        date: bookingDate,
+        timeSlot,
+        paymentMethod,
+      };
+
+      if (onBookingUpdated) {
+        onBookingUpdated(updated);
+      }
+      onClose();
+      return;
+    }
+
     const created: Booking = {
       id: `HM-VAR-${Math.floor(9000 + Math.random() * 999)}`,
       customerName: customerName || "Rajesh Kumar Agrawal",
@@ -610,7 +672,9 @@ export function BookingWizardModal({
       createdAt: "Just Now",
     };
 
-    onBookingCreated(created);
+    if (onBookingCreated) {
+      onBookingCreated(created);
+    }
     onClose();
   };
 
@@ -638,7 +702,7 @@ export function BookingWizardModal({
                 Helpmate Booking Wizard
               </span>
               <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white mt-1">
-                Create New Booking
+                {bookingToEdit ? `Edit Booking ${bookingToEdit.id}` : "Create New Booking"}
               </h2>
             </div>
 

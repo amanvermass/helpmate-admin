@@ -31,12 +31,14 @@ interface BookingDetailsDrawerProps {
   booking: Booking | null;
   isOpen: boolean;
   onClose: () => void;
+  onAssignPartner?: (booking: Booking) => void;
 }
 
 export function BookingDetailsDrawer({
   booking,
   isOpen,
   onClose,
+  onAssignPartner,
 }: BookingDetailsDrawerProps) {
   const [activeTab, setActiveTab] = useState<"general" | "timeline" | "payment" | "invoice">("general");
   const [copied, setCopied] = useState(false);
@@ -85,7 +87,7 @@ export function BookingDetailsDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all"
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -114,7 +116,7 @@ export function BookingDetailsDrawer({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-3.5 py-1.5 rounded-xl font-bold capitalize transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl font-bold capitalize transition-all cursor-pointer ${
                   activeTab === tab
                     ? "bg-brand-500 text-white shadow-xs"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -146,7 +148,18 @@ export function BookingDetailsDrawer({
 
                 {/* Fleet Specialist Info */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Assigned Fleet Specialist</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Assigned Fleet Specialist</span>
+                    {onAssignPartner && (
+                      <button
+                        type="button"
+                        onClick={() => onAssignPartner(booking)}
+                        className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 hover:underline cursor-pointer"
+                      >
+                        {booking.technicianName ? "Change Partner" : "+ Assign Partner"}
+                      </button>
+                    )}
+                  </div>
                   {booking.technicianName ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -165,7 +178,18 @@ export function BookingDetailsDrawer({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-amber-600 font-bold italic block">No Fleet Partner Assigned</span>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-amber-600 font-bold italic block">No Fleet Partner Assigned</span>
+                      {onAssignPartner && (
+                        <button
+                          type="button"
+                          onClick={() => onAssignPartner(booking)}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[10px] transition-all cursor-pointer"
+                        >
+                          Assign Now
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 

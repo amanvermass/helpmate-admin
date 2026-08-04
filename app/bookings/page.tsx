@@ -32,6 +32,7 @@ import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
 import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
 import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal";
 import { EditBookingModal } from "@/components/bookings/EditBookingModal";
+import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
 
 export default function BookingsPage() {
   const router = useRouter();
@@ -45,6 +46,7 @@ export default function BookingsPage() {
   const [inspectionBooking, setInspectionBooking] = useState<Booking | null>(null);
   const [otpBooking, setOtpBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [drawerBooking, setDrawerBooking] = useState<Booking | null>(null);
 
   const filteredBookings = bookings.filter((b) => {
     if (activeStatusFilter === "All") return true;
@@ -57,19 +59,23 @@ export default function BookingsPage() {
     setCreatedBookingToast(newBooking);
   };
 
-  const handlePartnerAssigned = (bookingId: string, technician: Technician) => {
-    setBookings(
-      bookings.map((b) =>
-        b.id === bookingId
-          ? {
-              ...b,
-              status: "Assigned",
-              technicianName: technician.name,
-              technicianId: technician.id,
-            }
-          : b
-      )
-    );
+  const handlePartnerAssigned = (bookingId: string, technician: Technician | null) => {
+    const update = (b: Booking): Booking => {
+      if (b.id !== bookingId) return b;
+      return {
+        ...b,
+        status: technician
+          ? b.status === "Pending" || b.status === "Waiting For Assignment"
+            ? "Assigned"
+            : b.status
+          : "Pending",
+        technicianName: technician ? technician.name : undefined,
+        technicianId: technician ? technician.id : undefined,
+      };
+    };
+
+    setBookings((prev) => prev.map(update));
+    setDrawerBooking((prev) => (prev && prev.id === bookingId ? update(prev) : prev));
   };
 
   const handleInspectionApproved = (bookingId: string, updatedQuote: number, remarks: string) => {
@@ -105,6 +111,7 @@ export default function BookingsPage() {
 
   const handleBookingUpdated = (updated: Booking) => {
     setBookings(bookings.map((b) => (b.id === updated.id ? updated : b)));
+    setDrawerBooking((prev) => (prev && prev.id === updated.id ? updated : prev));
   };
 
   const columns: Column<Booking>[] = [
@@ -157,10 +164,20 @@ export default function BookingsPage() {
       header: "Assigned Partner",
       accessor: (row) =>
         row.technicianName ? (
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            {row.technicianName}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 truncate max-w-[130px]" title={row.technicianName}>
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              {row.technicianName}
+            </span>
+            <button
+              type="button"
+              onClick={() => setAssignBooking(row)}
+              title="Change Assigned Partner"
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-brand-50 hover:text-brand-600 dark:bg-slate-800 dark:hover:bg-brand-950 text-slate-500 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+            >
+              Change
+            </button>
+          </div>
         ) : (
           <button
             type="button"
@@ -209,7 +226,7 @@ export default function BookingsPage() {
           <button
             type="button"
             onClick={() => router.push(`/bookings/${row.id}`)}
-            title="View Booking Details"
+            title="View Full Booking Details Page"
             className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all cursor-pointer"
           >
             <Eye className="w-4 h-4" />
@@ -329,6 +346,13 @@ export default function BookingsPage() {
         isOpen={!!editingBooking}
         onClose={() => setEditingBooking(null)}
         onBookingUpdated={handleBookingUpdated}
+      />
+
+      <BookingDetailsDrawer
+        booking={drawerBooking}
+        isOpen={!!drawerBooking}
+        onClose={() => setDrawerBooking(null)}
+        onAssignPartner={(b) => setAssignBooking(b)}
       />
 
       {/* RIGHT BOTTOM POPUP: CREATED BOOKING INVOICE TOAST */}

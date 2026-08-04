@@ -82,13 +82,28 @@ export default function InvoiceDetailPage() {
 
       {/* Top Back Navigation Bar - Hidden on Print */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 print:hidden">
-        <Link
-          href="/billing"
-          className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Billing & Invoices Ledger</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) {
+                router.back();
+              } else {
+                router.push(booking.id ? `/bookings/${booking.id}` : "/bookings");
+              }
+            }}
+            className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Booking ({booking.id})</span>
+          </button>
+          <Link
+            href="/billing"
+            className="px-3 py-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all"
+          >
+            Billing Ledger
+          </Link>
+        </div>
 
         <div className="flex items-center gap-2">
           <button
