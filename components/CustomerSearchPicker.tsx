@@ -191,7 +191,7 @@ export function CustomerSearchPicker({
         /* SEARCHABLE CUSTOMER DROPDOWN PICKER */
         <div className="space-y-2">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
@@ -201,13 +201,13 @@ export function CustomerSearchPicker({
                 setIsOpen(true);
               }}
               placeholder="Search customer by Full Name or Mobile Phone Number..."
-              className="w-full pl-9 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 shadow-xs"
+              className="w-full pl-10 pr-10 h-[42px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 shadow-xs text-xs"
             />
             {searchTerm ? (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -215,7 +215,7 @@ export function CustomerSearchPicker({
               <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <ChevronDown className="w-4 h-4" />
               </button>

@@ -38,6 +38,7 @@ export default function TechniciansPage() {
   const [partnerName, setPartnerName] = useState("");
   const [partnerPhone, setPartnerPhone] = useState("");
   const [partnerEmail, setPartnerEmail] = useState("");
+  const [partnerAvatar, setPartnerAvatar] = useState("");
   const [partnerCategory, setPartnerCategory] = useState("AC Servicing & Repair");
   const [partnerLocality, setPartnerLocality] = useState("Sigra");
   const [partnerAadhaar, setPartnerAadhaar] = useState("");
@@ -52,6 +53,24 @@ export default function TechniciansPage() {
   >("Verified Clean");
   const [partnerPoliceStation, setPartnerPoliceStation] = useState("Sigra Police Station");
   const [partnerPoliceToken, setPartnerPoliceToken] = useState("");
+  const [partnerPoliceDoc, setPartnerPoliceDoc] = useState("");
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setter(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const [viewTech, setViewTech] = useState<Technician | null>(null);
   const [detailTab, setDetailTab] = useState<"overview" | "kyc" | "jobs" | "earnings">("overview");
   const [editTech, setEditTech] = useState<Technician | null>(null);
@@ -757,29 +776,73 @@ export default function TechniciansPage() {
                     bondedInsurance: true,
                     joiningDate: "Today",
                     lastPayoutDate: "N/A",
-                    avatar: "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
+                    avatar: partnerAvatar || "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=150&auto=format&fit=crop&q=80",
+                    aadhaarDocUrl: partnerAadhaarDoc || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+                    guarantorAadhaarDocUrl: partnerGuarantorAadhaarDoc || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+                    policeDocUrl: partnerPoliceDoc || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
                   };
 
                   setTechs([newPartner, ...techs]);
                   setPartnerName("");
                   setPartnerPhone("");
                   setPartnerEmail("");
+                  setPartnerAvatar("");
                   setPartnerAadhaar("");
                   setPartnerAadhaarDoc("");
                   setPartnerGuarantorName("");
                   setPartnerGuarantorPhone("");
                   setPartnerGuarantorAddress("");
                   setPartnerGuarantorAadhaar("");
+                  setPartnerGuarantorAadhaarDoc("");
                   setPartnerPoliceToken("");
+                  setPartnerPoliceDoc("");
                   setIsAddPartnerOpen(false);
                 }}
                 className="flex-1 p-6 overflow-y-auto space-y-6"
               >
-                {/* SECTION 1: PARTNER PERSONAL DETAILS */}
+                {/* SECTION 1: PARTNER PERSONAL DETAILS & PROFILE PHOTO UPLOAD */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-4">
                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <User className="w-4 h-4 text-brand-600" />
-                    <span>1. Partner Personal Information & Category</span>
+                    <span>1. Partner Profile Photo & Personal Details</span>
+                  </div>
+
+                  {/* Partner Profile Photo Upload Box */}
+                  <div className="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0 border border-slate-200 dark:border-slate-600 flex items-center justify-center shadow-xs">
+                      {partnerAvatar ? (
+                        <img src={partnerAvatar} alt="Partner Profile Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-8 h-8 text-slate-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1.5 w-full text-xs">
+                      <label className="font-extrabold text-slate-900 dark:text-white block">
+                        Upload Partner Profile Photo / Avatar *
+                      </label>
+                      <p className="text-[11px] text-slate-500">
+                        Upload official photo (JPG, PNG) or enter image URL for app profile card.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <label className="px-3 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-950 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-bold text-[11px] cursor-pointer flex items-center gap-1.5 shrink-0 justify-center">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Browse Image File...</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFileUpload(e, setPartnerAvatar)}
+                            className="hidden"
+                          />
+                        </label>
+                        <input
+                          type="text"
+                          value={partnerAvatar}
+                          onChange={(e) => setPartnerAvatar(e.target.value)}
+                          placeholder="Or paste Profile Image URL..."
+                          className="flex-1 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono text-slate-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -793,7 +856,7 @@ export default function TechniciansPage() {
                         value={partnerName}
                         onChange={(e) => setPartnerName(e.target.value)}
                         placeholder="e.g. Ramesh Chandra Yadav"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                       />
                     </div>
 
@@ -807,7 +870,7 @@ export default function TechniciansPage() {
                         value={partnerPhone}
                         onChange={(e) => setPartnerPhone(e.target.value)}
                         placeholder="+91 98390 12345"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                       />
                     </div>
 
@@ -821,7 +884,7 @@ export default function TechniciansPage() {
                         value={partnerEmail}
                         onChange={(e) => setPartnerEmail(e.target.value)}
                         placeholder="e.g. ramesh.yadav@gmail.com"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                       />
                     </div>
 
@@ -835,17 +898,17 @@ export default function TechniciansPage() {
                         value={partnerLocality}
                         onChange={(e) => setPartnerLocality(e.target.value)}
                         placeholder="Sigra, Varanasi"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* SECTION 2: BIOMETRIC AADHAAR IDENTITY */}
+                {/* SECTION 2: BIOMETRIC AADHAAR IDENTITY & DOCUMENT UPLOAD */}
                 <div className="p-5 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-4">
                   <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-extrabold text-sm border-b border-blue-200 dark:border-blue-800 pb-2">
                     <ShieldCheck className="w-4 h-4 text-blue-600" />
-                    <span>2. Partner Aadhaar Biometric Verification & Document Upload</span>
+                    <span>2. Partner Aadhaar Biometric Verification & Image Upload</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -859,30 +922,48 @@ export default function TechniciansPage() {
                         value={partnerAadhaar}
                         onChange={(e) => setPartnerAadhaar(e.target.value)}
                         placeholder="7821-4920-1102"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-blue-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-blue-500"
                       />
                     </div>
                   </div>
 
-                  {/* Partner Aadhaar Card Upload Box */}
+                  {/* Partner Aadhaar Card Image Upload Box */}
                   <div className="space-y-1 text-xs">
                     <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                      Partner Aadhaar Card (Front & Back) Document Upload *
+                      Partner Aadhaar Card (Front & Back Image / Document) *
                     </label>
-                    <div className="p-3.5 rounded-xl border border-dashed border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-blue-600" />
-                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                          {partnerAadhaarDoc ? "Partner_Aadhaar_Doc.jpg Uploaded" : "Upload Partner Aadhaar (PDF/JPG)..."}
+                    <div className="p-3.5 rounded-xl border border-dashed border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {partnerAadhaarDoc ? (
+                          <img src={partnerAadhaarDoc} alt="Partner Aadhaar Doc" className="w-10 h-10 object-cover rounded-lg border border-blue-300 shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0 border border-blue-200">
+                            <Upload className="w-5 h-5 text-blue-600" />
+                          </div>
+                        )}
+                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold truncate">
+                          {partnerAadhaarDoc ? "Aadhaar_Document_Uploaded.jpg" : "Select Aadhaar Card Image file..."}
                         </span>
                       </div>
-                      <input
-                        type="text"
-                        value={partnerAadhaarDoc}
-                        onChange={(e) => setPartnerAadhaarDoc(e.target.value)}
-                        placeholder="Paste Partner Aadhaar Card Image URL..."
-                        className="w-1/2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono"
-                      />
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <label className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] cursor-pointer flex items-center gap-1.5 shrink-0 justify-center shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Image...</span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => handleFileUpload(e, setPartnerAadhaarDoc)}
+                            className="hidden"
+                          />
+                        </label>
+                        <input
+                          type="text"
+                          value={partnerAadhaarDoc}
+                          onChange={(e) => setPartnerAadhaarDoc(e.target.value)}
+                          placeholder="Or paste Aadhaar Image URL..."
+                          className="w-full sm:w-48 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono text-slate-900 dark:text-white"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -891,7 +972,7 @@ export default function TechniciansPage() {
                 <div className="p-5 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-4">
                   <div className="flex items-center gap-2 text-purple-900 dark:text-purple-300 font-extrabold text-sm border-b border-purple-200 dark:border-purple-800 pb-2">
                     <ShieldAlert className="w-4 h-4 text-purple-600" />
-                    <span>3. Guarantor / Reference Person (Taking Partner Guarantee)</span>
+                    <span>3. Guarantor / Reference Person Identity & Document Upload</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -904,7 +985,7 @@ export default function TechniciansPage() {
                         value={partnerGuarantorName}
                         onChange={(e) => setPartnerGuarantorName(e.target.value)}
                         placeholder="e.g. Suresh Chandra Yadav (Guarantor)"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -917,7 +998,7 @@ export default function TechniciansPage() {
                         value={partnerGuarantorPhone}
                         onChange={(e) => setPartnerGuarantorPhone(e.target.value)}
                         placeholder="+91 98390 88210"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -931,7 +1012,7 @@ export default function TechniciansPage() {
                         value={partnerGuarantorAadhaar}
                         onChange={(e) => setPartnerGuarantorAadhaar(e.target.value)}
                         placeholder="7821-4920-5592"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-purple-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-purple-500"
                       />
                     </div>
 
@@ -944,39 +1025,57 @@ export default function TechniciansPage() {
                         value={partnerGuarantorAddress}
                         onChange={(e) => setPartnerGuarantorAddress(e.target.value)}
                         placeholder="Sigra Colony, Varanasi"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
                       />
                     </div>
                   </div>
 
-                  {/* Guarantor Aadhaar Card Upload Box */}
+                  {/* Guarantor Aadhaar Card Image Upload Box */}
                   <div className="space-y-1 text-xs">
                     <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                      Guarantor Person Aadhaar Card Document Upload *
+                      Guarantor Person Aadhaar Card Document Image *
                     </label>
-                    <div className="p-3.5 rounded-xl border border-dashed border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-purple-600" />
-                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold">
-                          {partnerGuarantorAadhaarDoc ? "Guarantor_Aadhaar_Doc.jpg Uploaded" : "Upload Guarantor Aadhaar (PDF/JPG)..."}
+                    <div className="p-3.5 rounded-xl border border-dashed border-purple-300 dark:border-purple-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {partnerGuarantorAadhaarDoc ? (
+                          <img src={partnerGuarantorAadhaarDoc} alt="Guarantor Aadhaar Doc" className="w-10 h-10 object-cover rounded-lg border border-purple-300 shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-950 flex items-center justify-center shrink-0 border border-purple-200">
+                            <Upload className="w-5 h-5 text-purple-600" />
+                          </div>
+                        )}
+                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold truncate">
+                          {partnerGuarantorAadhaarDoc ? "Guarantor_Aadhaar_Uploaded.jpg" : "Select Guarantor Aadhaar file..."}
                         </span>
                       </div>
-                      <input
-                        type="text"
-                        value={partnerGuarantorAadhaarDoc}
-                        onChange={(e) => setPartnerGuarantorAadhaarDoc(e.target.value)}
-                        placeholder="Paste Guarantor Aadhaar Card Image URL..."
-                        className="w-1/2 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono"
-                      />
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <label className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] cursor-pointer flex items-center gap-1.5 shrink-0 justify-center shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Image...</span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => handleFileUpload(e, setPartnerGuarantorAadhaarDoc)}
+                            className="hidden"
+                          />
+                        </label>
+                        <input
+                          type="text"
+                          value={partnerGuarantorAadhaarDoc}
+                          onChange={(e) => setPartnerGuarantorAadhaarDoc(e.target.value)}
+                          placeholder="Or paste Guarantor Aadhaar URL..."
+                          className="w-full sm:w-48 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono text-slate-900 dark:text-white"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* SECTION 4: POLICE VERIFICATION & THANA CLEARANCE */}
+                {/* SECTION 4: POLICE VERIFICATION & THANA CLEARANCE DOCUMENT UPLOAD */}
                 <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 space-y-4">
                   <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-extrabold text-sm border-b border-amber-200 dark:border-amber-800 pb-2">
                     <ShieldCheck className="w-4 h-4 text-amber-600" />
-                    <span>4. Police Verification & Local Thana PCC Clearance</span>
+                    <span>4. Police Verification & Local Thana PCC Clearance Document Upload</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -987,7 +1086,7 @@ export default function TechniciansPage() {
                       <select
                         value={partnerPoliceStatus}
                         onChange={(e) => setPartnerPoliceStatus(e.target.value as any)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500"
                       >
                         <option value="Verified Clean">Verified Clean (PCC Issued)</option>
                         <option value="Submitted to Local Thana">Submitted to Local Thana</option>
@@ -1003,7 +1102,7 @@ export default function TechniciansPage() {
                       <select
                         value={partnerPoliceStation}
                         onChange={(e) => setPartnerPoliceStation(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                       >
                         <option value="Sigra Police Station">Sigra Police Station</option>
                         <option value="Lanka Thana">Lanka Thana</option>
@@ -1023,8 +1122,48 @@ export default function TechniciansPage() {
                         value={partnerPoliceToken}
                         onChange={(e) => setPartnerPoliceToken(e.target.value)}
                         placeholder="PCC-VAR-2026-8819"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
+                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500"
                       />
+                    </div>
+                  </div>
+
+                  {/* Police Verification PCC Certificate Image Upload Box */}
+                  <div className="space-y-1 text-xs">
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                      Police Thana Clearance Certificate (PCC Document Image)
+                    </label>
+                    <div className="p-3.5 rounded-xl border border-dashed border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                        {partnerPoliceDoc ? (
+                          <img src={partnerPoliceDoc} alt="Police Certificate" className="w-10 h-10 object-cover rounded-lg border border-amber-300 shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center shrink-0 border border-amber-200">
+                            <Upload className="w-5 h-5 text-amber-600" />
+                          </div>
+                        )}
+                        <span className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold truncate">
+                          {partnerPoliceDoc ? "Police_Clearance_Cert.jpg" : "Upload PCC Certificate (PDF/JPG)..."}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <label className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] cursor-pointer flex items-center gap-1.5 shrink-0 justify-center shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Image...</span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => handleFileUpload(e, setPartnerPoliceDoc)}
+                            className="hidden"
+                          />
+                        </label>
+                        <input
+                          type="text"
+                          value={partnerPoliceDoc}
+                          onChange={(e) => setPartnerPoliceDoc(e.target.value)}
+                          placeholder="Or paste PCC Certificate URL..."
+                          className="w-full sm:w-48 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-slate-50 dark:bg-slate-900 font-mono text-slate-900 dark:text-white"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

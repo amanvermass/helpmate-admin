@@ -119,13 +119,13 @@ export function CrudForm({
                       value={formData[field.name] ?? ""}
                       onChange={(e) => handleChange(field.name, e.target.value)}
                       placeholder={field.placeholder}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-brand-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-[42px] text-xs text-slate-900 font-medium focus:outline-none focus:border-brand-500"
                     />
                   ) : field.type === "select" ? (
                     <select
                       value={formData[field.name] ?? ""}
                       onChange={(e) => handleChange(field.name, e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-brand-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-[42px] text-xs text-slate-900 font-medium focus:outline-none focus:border-brand-500"
                     >
                       <option value="">Select option...</option>
                       {field.options?.map((opt) => (

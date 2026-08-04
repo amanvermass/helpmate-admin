@@ -75,7 +75,7 @@ export function CustomSelect({
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`w-full ${
-          size === "sm" ? "px-2.5 py-1.5 rounded-xl text-xs" : "p-2.5 rounded-xl text-xs"
+          size === "sm" ? "h-9 px-2.5 rounded-xl text-xs" : "h-[42px] px-3 rounded-xl text-xs"
         } border bg-white dark:bg-slate-800 text-left font-bold flex items-center justify-between transition-all outline-none ${
           disabled
             ? "bg-slate-100 dark:bg-slate-800/80 text-slate-400 cursor-not-allowed border-slate-200 dark:border-slate-700"

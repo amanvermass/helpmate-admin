@@ -214,6 +214,9 @@ export interface Technician {
   bankAccountNumber?: string;
   ifscCode?: string;
   upiId?: string;
+  aadhaarDocUrl?: string;
+  guarantorAadhaarDocUrl?: string;
+  policeDocUrl?: string;
 }
 
 export interface SettlementRecord {
