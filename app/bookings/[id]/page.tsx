@@ -167,65 +167,71 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       `}</style>
 
       {/* ─── CLEAN DETAIL TOP BAR (Enterprise Style) ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 print:hidden">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+      {/* Top Header Bar & Action Controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5 print:hidden">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 flex-wrap">
             <Link
               href="/bookings"
-              className="text-xs font-bold text-slate-500 hover:text-brand-600 dark:text-slate-400 flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-slate-500 hover:text-brand-600 dark:text-slate-400 flex items-center gap-1 transition-colors bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Bookings Directory
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Bookings Directory
             </Link>
             <span className="text-slate-300 dark:text-slate-700 font-bold">•</span>
-            <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800">
+            <span className="font-mono text-xs font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
               {currentBooking.id}
             </span>
             <button
               type="button"
               onClick={handleCopyId}
-              className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-white flex items-center gap-1"
+              className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer"
             >
-              <Copy className="w-3 h-3" />
-              {copied ? "Copied" : "Copy"}
+              <Copy className="w-3.5 h-3.5 text-slate-400" />
+              <span>{copied ? "Copied ID!" : "Copy Booking ID"}</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-3 pt-1 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {currentBooking.serviceTitle}
             </h1>
             <span
-              className={`px-3 py-0.5 rounded-full text-xs font-extrabold ${
+              className={`px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-xs ${
                 currentBooking.status === "Completed"
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
                   : currentBooking.status === "In Progress" || currentBooking.status === "Assigned"
-                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
+                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800"
               }`}
             >
-              ● {currentBooking.status}
+              <span className="w-2 h-2 rounded-full bg-current inline-block animate-pulse" />
+              <span>{currentBooking.status}</span>
+            </span>
+
+            <span className="px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[11px] font-bold">
+              SAC: 998719
             </span>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Top Header Action Buttons - Single Line Guaranteed */}
+        <div className="flex items-center gap-2 flex-nowrap overflow-x-auto no-scrollbar shrink-0">
           {currentBooking.technicianName ? (
             <button
               type="button"
               onClick={() => setIsAssignOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Change Fleet Partner</span>
+              <ShieldCheck className="w-4 h-4 shrink-0" />
+              <span>Reassign Fleet Partner</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => setIsAssignOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>Assign Fleet Partner</span>
             </button>
           )}
@@ -234,9 +240,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <button
               type="button"
               onClick={() => setIsInspectionOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
-              <Wrench className="w-4 h-4" />
+              <Wrench className="w-4 h-4 shrink-0" />
               <span>Diagnostic Quote</span>
             </button>
           )}
@@ -245,9 +251,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <button
               type="button"
               onClick={() => setIsOtpOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
-              <KeyRound className="w-4 h-4" />
+              <KeyRound className="w-4 h-4 shrink-0" />
               <span>Verify Job OTP</span>
             </button>
           )}
@@ -255,63 +261,172 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-4 h-4 shrink-0" />
             <span>Print Tax Invoice</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsEditOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-4 h-4 shrink-0" />
             <span>Edit Booking</span>
           </button>
+        </div>
+      </div>
+
+      {/* ─── VISUAL BOOKING LIFECYCLE PROGRESS TRACKER BANNER ─── */}
+      <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-brand-500" />
+            <span>Booking Lifecycle Status Track</span>
+          </span>
+          <span className="text-slate-500 font-semibold">
+            Varanasi Zone • Scheduled: <strong className="text-slate-900 dark:text-white">{currentBooking.date || "30 July 2026"}</strong>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs pt-1">
+          <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 space-y-1">
+            <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px]">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>1. Booking Placed</span>
+            </div>
+            <span className="text-[10px] text-emerald-700 dark:text-emerald-400 block font-medium">Customer Request Confirmed</span>
+          </div>
+
+          <div className={`p-3 rounded-2xl border space-y-1 ${
+            currentBooking.technicianName
+              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+              : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
+          }`}>
+            <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>2. Partner Fleet</span>
+            </div>
+            <span className="text-[10px] font-medium block">
+              {currentBooking.technicianName ? `Assigned to ${currentBooking.technicianName}` : "Awaiting Partner Match"}
+            </span>
+          </div>
+
+          <div className={`p-3 rounded-2xl border space-y-1 ${
+            currentBooking.basePrice > 0
+              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+          }`}>
+            <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
+              <Wrench className="w-3.5 h-3.5" />
+              <span>3. Inspection & Quote</span>
+            </div>
+            <span className="text-[10px] font-medium block">Rate: ₹{base} Base Verified</span>
+          </div>
+
+          <div className={`p-3 rounded-2xl border space-y-1 ${
+            currentBooking.status === "In Progress" || currentBooking.status === "Completed"
+              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+          }`}>
+            <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
+              <Clock className="w-3.5 h-3.5" />
+              <span>4. Service Execution</span>
+            </div>
+            <span className="text-[10px] font-medium block">On-Site Work in Varanasi</span>
+          </div>
+
+          <div className={`p-3 rounded-2xl border space-y-1 col-span-2 sm:col-span-1 ${
+            currentBooking.isOtpVerified || currentBooking.status === "Completed"
+              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+          }`}>
+            <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>5. OTP & Settled</span>
+            </div>
+            <span className="text-[10px] font-medium block">
+              {currentBooking.isOtpVerified ? "Job Closed & Paid Clean" : `Security Code: ${currentBooking.otpCode || "4920"}`}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* ─── ENHANCED 2-COLUMN RECORD DETAIL LAYOUT ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Column (7 Cols): Primary Specifications, Multi-Service Line Items, Fleet & Audit */}
+        {/* Left Column (7 Cols): Primary Specifications, Appliance Technical Data, Multi-Service Line Items, Fleet & Diagnostic Reports */}
         <div className="lg:col-span-7 space-y-6">
 
-          {/* Order Specifications Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+          {/* Card 1: Order Specifications & Technical Appliance Metadata */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Booking Information & Specifications
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-brand-600" /> Booking Specifications & Technical Meta
               </span>
-              <span className="text-xs font-extrabold text-brand-600 dark:text-brand-400">
+              <span className="text-xs font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
                 {currentBooking.category}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Service Package</span>
                 <div className="font-extrabold text-slate-900 dark:text-white text-sm">{currentBooking.serviceTitle}</div>
-                <div className="text-slate-500 font-semibold">{currentBooking.subCategory || currentBooking.packageTitle || "Standard Service Package"}</div>
+                <div className="text-slate-500 font-semibold">{currentBooking.subCategory || currentBooking.packageTitle || "Standard Home Service Package"}</div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Schedule Slot</span>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Schedule Slot & Location</span>
                 <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-brand-500" />
-                  {currentBooking.date || "2026-07-28"} • {currentBooking.timeSlot || "10:00 AM - 11:30 AM"}
+                  {currentBooking.date || "30 July 2026"} • {currentBooking.timeSlot || "10:00 AM - 11:30 AM"}
                 </div>
                 <div className="text-slate-500 font-semibold">{currentBooking.locality}, {currentBooking.city || "Varanasi"}</div>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Destination Service Address</span>
+            {/* Appliance / Equipment Technical Breakdown Grid */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider block border-b border-slate-200 dark:border-slate-700 pb-1.5">
+                Appliance & Equipment Technical Specifications
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-semibold">Equipment Type</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Split Inverter AC (1.5 Ton)</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-semibold">Brand / Manufacturer</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Daikin / Voltas Heavy Duty</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-semibold">Service Warranty</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">30 Days HelpMate Shield</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-semibold">Refrigerant Type</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">R32 Eco Gas (Normal)</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-semibold">Installation Location</span>
+                  <span className="font-bold text-slate-900 dark:text-white">Master Bedroom (2nd Floor)</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] font-semibold">Rate SAC Code</span>
+                  <span className="font-mono font-bold text-brand-600 dark:text-brand-400">998719 (GST 18%)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Destination Service Address */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block">Full Delivery / Service Address</span>
               <div className="font-bold text-slate-900 dark:text-white flex items-start gap-2 text-sm leading-relaxed">
                 <MapPin className="w-4 h-4 text-brand-600 shrink-0 mt-1" />
                 <div>
-                  <div>{currentBooking.address || "D-38/21, Sigra Central"}</div>
+                  <div>{currentBooking.address || "D-38/21, Sigra Central Main Road"}</div>
                   <div className="text-xs text-slate-500 font-semibold mt-0.5">
                     {currentBooking.locality}, {currentBooking.city || "Varanasi"} - {currentBooking.pincode || "221002"}
                   </div>
@@ -321,17 +436,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
             {currentBooking.notes && (
               <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs space-y-1">
-                <span className="font-extrabold text-amber-800 dark:text-amber-300 block">Special Customer Notes:</span>
+                <span className="font-extrabold text-amber-800 dark:text-amber-300 block flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                  Special Customer Request Notes:
+                </span>
                 <p className="text-amber-900 dark:text-amber-200 font-medium">{currentBooking.notes}</p>
               </div>
             )}
           </div>
 
-          {/* ─── NEW: MULTIPLE SERVICES IN SINGLE BOOKING CARD ─── */}
+          {/* Card 2: Multi-Service Included Line Items */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Services Line Items (3 Included Services)
+                Itemized Service Line Items (Single Booking Bundle)
               </span>
               <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                 30 Days HelpMate Warranty
@@ -339,7 +457,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="space-y-3 text-xs">
-              {/* Primary Service Item */}
+              {/* Line Item 1 */}
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
@@ -348,14 +466,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       Primary Service
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500">1 Unit • Includes standard safety check & inspection</p>
+                  <p className="text-[11px] text-slate-500">1 Unit • Includes standard jet wash & safety inspection</p>
                 </div>
-                <div className="text-right font-black text-slate-900 dark:text-white text-sm">
+                <div className="text-right font-black text-slate-900 dark:text-white text-sm font-mono">
                   ₹{base}
                 </div>
               </div>
 
-              {/* Additional Service Item 2 */}
+              {/* Line Item 2 */}
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
@@ -364,14 +482,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       Add-on Included
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500">1 Unit • Chemical & coil pressure cleaning</p>
+                  <p className="text-[11px] text-slate-500">1 Unit • Chemical & coil pressure deep cleaning</p>
                 </div>
-                <div className="text-right font-black text-slate-900 dark:text-white text-sm">
+                <div className="text-right font-black text-slate-900 dark:text-white text-sm font-mono">
                   ₹299
                 </div>
               </div>
 
-              {/* Additional Service Item 3 */}
+              {/* Line Item 3 */}
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
@@ -382,24 +500,24 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <p className="text-[11px] text-slate-500">1 Unit • Full diagnostic report & circuit testing</p>
                 </div>
-                <div className="text-right font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                <div className="text-right font-black text-emerald-600 dark:text-emerald-400 text-xs font-mono">
                   FREE
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Assigned Fleet Specialist Card */}
+          {/* Card 3: Assigned Fleet Partner & Vehicle Details */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Assigned Fleet Partner
+                Assigned Fleet Specialist & Partner KYC
               </span>
               {currentBooking.technicianName && (
                 <button
                   type="button"
                   onClick={() => setIsAssignOpen(true)}
-                  className="text-xs font-bold text-brand-600 hover:underline cursor-pointer"
+                  className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer"
                 >
                   Change Partner
                 </button>
@@ -407,23 +525,59 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {currentBooking.technicianName ? (
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-sm shadow-xs">
-                    {currentBooking.technicianName[0]}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+                      {currentBooking.technicianName[0]}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-1.5">
+                        {currentBooking.technicianName}
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium">Senior AC & Home Service Partner • Varanasi</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded">
+                          ★ 4.9 Rating (148 Jobs)
+                        </span>
+                        <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-950 px-2 py-0.5 rounded">
+                          Thana PCC Verified Clean
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
-                      {currentBooking.technicianName}
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    </h4>
-                    <p className="text-xs text-slate-500 font-medium">Verified HelpMate Partner • Varanasi</p>
+
+                  <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
+                    <a
+                      href={`tel:${currentBooking.technicianPhone || "+919935098765"}`}
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>Call Partner</span>
+                    </a>
+                    <Link
+                      href="/technicians"
+                      className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <span>Fleet Profile</span>
+                    </Link>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">★ 4.9 Rating</span>
-                  <span className="block text-[10px] text-slate-400 font-semibold">140+ Jobs Done</span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Fleet Bike / Vehicle No</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">UP 65 AB 4920</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Base Operating Zone</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{currentBooking.locality || "Sigra"}, Varanasi</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 col-span-2 sm:col-span-1">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Police PCC Token</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">PCC-VAR-2026-8819</span>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -446,99 +600,113 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
-          {/* Job Lifecycle Timeline Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Job Audit & Lifecycle Timeline
-            </span>
+          {/* Card 4: Diagnostic Inspection & Safety Report */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <Wrench className="w-4 h-4 text-blue-600" /> Technician Diagnostic Inspection Report
+              </span>
+              <span className="text-[11px] font-extrabold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                Verified On-Site
+              </span>
+            </div>
 
-            <div className="space-y-4 relative pl-5 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
-              <div className="flex items-start gap-3 relative z-10">
-                <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-xs">✓</div>
-                <div>
-                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Booking Registered</h5>
-                  <p className="text-[11px] text-slate-400">Created via HelpMate Varanasi Engine</p>
-                </div>
+            <div className="p-4 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 space-y-2">
+              <span className="font-extrabold text-blue-900 dark:text-blue-300 block">Pre-Service Inspection Remarks:</span>
+              <p className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                {currentBooking.inspectionRemarks || "Nitrogen pressure tested at 350 PSI. Cleaned indoor coil with anti-bacterial foam wash. Capacitor replaced and gas level verified at 65 PSI."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-[10px] text-slate-400 block font-bold">Gas Pressure</span>
+                <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">65 PSI (Normal)</span>
               </div>
-
-              <div className="flex items-start gap-3 relative z-10">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-xs ${currentBooking.technicianName ? "bg-emerald-500 text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}>
-                  {currentBooking.technicianName ? "✓" : "2"}
-                </div>
-                <div>
-                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Technician Dispatched</h5>
-                  <p className="text-[11px] text-slate-400">
-                    {currentBooking.technicianName ? `Assigned to ${currentBooking.technicianName}` : "Pending assignment"}
-                  </p>
-                </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-[10px] text-slate-400 block font-bold">Electrical Voltage</span>
+                <span className="font-mono font-extrabold text-slate-900 dark:text-white">220V (Earthing PASS)</span>
               </div>
-
-              <div className="flex items-start gap-3 relative z-10">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-xs ${currentBooking.isOtpVerified ? "bg-emerald-500 text-white" : "bg-slate-200 dark:bg-slate-800 text-slate-400"}`}>
-                  {currentBooking.isOtpVerified ? "✓" : "3"}
-                </div>
-                <div>
-                  <h5 className="font-bold text-xs text-slate-900 dark:text-white">Job Closure & OTP Verification</h5>
-                  <p className="text-[11px] text-slate-400">
-                    {currentBooking.isOtpVerified ? `OTP ${currentBooking.otpCode || "4920"} verified successfully` : `Job Closure OTP: ${currentBooking.otpCode || "4920"}`}
-                  </p>
-                </div>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-center">
+                <span className="text-[10px] text-slate-400 block font-bold">Parts Replaced</span>
+                <span className="font-extrabold text-slate-900 dark:text-white">Capacitor 45uF</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ─── RIGHT COLUMN (5 Cols): NORMAL UN-SCROLLED SIDEBAR ─── */}
+        {/* ─── RIGHT COLUMN (5 Cols): CUSTOMER CRM, UPI PAYMENT LEDGER & AUDIT ─── */}
         <div className="lg:col-span-5 space-y-6">
 
-          {/* Customer CRM Profile Card */}
+          {/* Card 1: Customer CRM & Contact Intelligence Profile */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Customer CRM Profile
-            </span>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                Customer CRM & Contact Profile
+              </span>
+              <span className="text-[10px] font-extrabold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800">
+                VIP Household Client
+              </span>
+            </div>
 
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="w-11 h-11 rounded-2xl bg-brand-500 text-white font-black flex items-center justify-center text-base shadow-xs">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-brand-600 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
                 {currentBooking.customerName[0]}
               </div>
               <div>
-                <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">{currentBooking.customerName}</h4>
-                <span className="text-[10px] font-bold text-slate-500 block">
-                  Varanasi Household Client
+                <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{currentBooking.customerName}</h4>
+                <span className="text-[11px] font-bold text-slate-500 block">
+                  Varanasi Resident • 4 Past Bookings (LTV: ₹6,480)
                 </span>
               </div>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                <span className="flex items-center gap-1.5 text-slate-400 font-semibold"><Phone className="w-3.5 h-3.5" /> Phone</span>
-                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.customerPhone}</span>
+            <div className="space-y-2.5 text-xs pt-1">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <span className="flex items-center gap-2 text-slate-500 font-semibold"><Phone className="w-4 h-4 text-brand-600" /> Mobile Phone</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900 dark:text-white">{currentBooking.customerPhone}</span>
+                  <a
+                    href={`tel:${currentBooking.customerPhone}`}
+                    className="p-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 hover:bg-emerald-100 font-bold"
+                  >
+                    Call
+                  </a>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300 gap-2">
-                <span className="flex items-center gap-1.5 text-slate-400 font-semibold shrink-0"><Mail className="w-3.5 h-3.5" /> Email</span>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-slate-500 font-semibold shrink-0"><Mail className="w-4 h-4 text-brand-600" /> Email Address</span>
                 <span className="font-bold text-slate-900 dark:text-white select-all break-all text-right">
-                  {currentBooking.customerEmail || `${currentBooking.customerName.toLowerCase().replace(/\s+/g, "")}@helpmate.com`}
+                  {currentBooking.customerEmail || `${currentBooking.customerName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`}
                 </span>
               </div>
+
+              {currentBooking.customerGstin && (
+                <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-between">
+                  <span className="text-purple-700 dark:text-purple-300 font-semibold text-[11px]">B2B Customer GSTIN</span>
+                  <span className="font-mono font-bold text-purple-900 dark:text-purple-200">{currentBooking.customerGstin}</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* ─── ENHANCED UPI PAYMENT & TRANSACTION DETAILS CARD ─── */}
+          {/* Card 2: Complete Payment & UPI Gateway Ledger */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Payment & UPI Gateway Ledger
               </span>
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                ● Paid & Verified
+              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                ● Paid & Verified Clean
               </span>
             </div>
 
             {/* UPI & Transaction IDs */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2.5 text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] uppercase font-bold text-slate-400">Payment Gateway Method</span>
-                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.paymentMethod || "UPI Online"}</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.paymentMethod || "UPI Digital Prepaid"}</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -566,28 +734,43 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             {/* Price & Tax Invoice Breakdown */}
             <div className="space-y-2 text-xs pt-1">
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Base Services Price</span>
-                <span className="font-semibold text-slate-900 dark:text-white">₹{base.toLocaleString()}</span>
+                <span>Base Service Amount</span>
+                <span className="font-mono font-semibold text-slate-900 dark:text-white">₹{base.toLocaleString()}</span>
               </div>
 
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Platform Convenience Fee</span>
-                <span className="font-semibold text-slate-900 dark:text-white">₹{convenienceFee}</span>
+                <span className="font-mono font-semibold text-slate-900 dark:text-white">₹{convenienceFee}</span>
               </div>
 
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>CGST (9%)</span>
-                <span className="font-semibold text-slate-900 dark:text-white">₹{cgst}</span>
+                <span className="font-mono font-semibold text-slate-900 dark:text-white">₹{cgst}</span>
               </div>
 
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>SGST (9%)</span>
-                <span className="font-semibold text-slate-900 dark:text-white">₹{sgst}</span>
+                <span className="font-mono font-semibold text-slate-900 dark:text-white">₹{sgst}</span>
               </div>
 
               <div className="border-t border-slate-200 dark:border-slate-800 pt-2.5 flex justify-between text-sm font-extrabold text-slate-900 dark:text-white">
-                <span>Total Amount (GST Incl.)</span>
-                <span className="text-brand-600 dark:text-brand-400 text-base">₹{finalTotal.toLocaleString()}</span>
+                <span>Grand Total Amount</span>
+                <span className="text-emerald-600 dark:text-emerald-400 text-base font-mono">₹{finalTotal.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Revenue & Commission Split Box */}
+            <div className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs space-y-1.5">
+              <span className="font-extrabold text-emerald-900 dark:text-emerald-300 block text-[10px] uppercase">
+                Platform Commission & Fleet Split
+              </span>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-slate-600 dark:text-slate-400">Partner Payout (75%)</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{Math.round(base * 0.75)}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-slate-600 dark:text-slate-400">HelpMate Platform Earnings (25%)</span>
+                <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">₹{Math.round(base * 0.25)}</span>
               </div>
             </div>
 
@@ -596,29 +779,35 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               onClick={() => router.push(`/billing/${currentBooking.id}`)}
               className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
-              <FileText className="w-4 h-4" />
-              <span>Tax Invoice</span>
+              <FileText className="w-4 h-4 text-brand-400" />
+              <span>Open Tax Invoice Details</span>
             </button>
           </div>
 
-          {/* Operations & Calling Audit Log */}
+          {/* Card 3: Operations & Calling Audit Log */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs text-xs">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Operations & Calling Audit
+              Operations & Calling Audit Log
             </span>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-400 font-semibold">Calling Dispatcher</span>
-                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingPerson || "Pooja Sharma (Dispatch)"}</span>
+                <span className="text-slate-400 font-semibold">Calling Agent</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingPerson || "Pooja Sharma (Dispatch Agent)"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400 font-semibold">Operations Managed By</span>
+                <span className="text-slate-400 font-semibold">Operations Manager</span>
                 <span className="font-bold text-slate-900 dark:text-white">{currentBooking.handledBy || "Aman Verma (HQ)"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400 font-semibold">Calling Date</span>
-                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingDate || "2026-07-25"}</span>
+                <span className="text-slate-400 font-semibold">Confirmation Date</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingDate || "30 July 2026"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold">Job Security OTP</span>
+                <span className="font-mono font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 text-[11px]">
+                  {currentBooking.otpCode || "4920"}
+                </span>
               </div>
             </div>
           </div>

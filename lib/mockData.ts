@@ -329,6 +329,7 @@ export interface Booking {
   status: BookingStatus;
   technicianName?: string;
   technicianId?: string;
+  technicianPhone?: string;
   date: string;
   timeSlot: string;
   paymentMethod: "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet" | "Online" | "Partial Payment";
