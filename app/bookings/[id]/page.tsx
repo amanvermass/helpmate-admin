@@ -38,6 +38,7 @@ import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
 import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
 import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal";
 import { EditBookingModal } from "@/components/bookings/EditBookingModal";
+import { Portal } from "@/components/Portal";
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -103,6 +104,15 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const formatInvoiceNumber = (id: string) => {
+    if (!id) return "INV-2026-001";
+    const cleanId = id.replace(/^(INV-)?(bk-)?/gi, "");
+    if (cleanId.length > 5 && !isNaN(Number(cleanId))) {
+      return `INV-${cleanId.slice(-5)}`;
+    }
+    return `INV-${cleanId.toUpperCase()}`;
+  };
+
   // Financial Calculations
   const base = currentBooking.basePrice || 699;
   const convenienceFee = currentBooking.convenienceFee || 49;
@@ -112,10 +122,52 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const finalTotal = currentBooking.totalAmount || taxableAmount + cgst + sgst;
 
   return (
-    <div className="w-full space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="w-full space-y-6 pb-12 animate-in fade-in duration-300 print:p-0 print:m-0">
+      {/* Embedded Strict Single-Page Print CSS for Official Tax Invoice */}
+      <style jsx global>{`
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
+        @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          body > * {
+            display: none !important;
+          }
+          body > #printable-tax-invoice-portal {
+            display: block !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          #printable-tax-invoice-portal * {
+            visibility: visible !important;
+          }
+        }
+      `}</style>
 
       {/* ─── CLEAN DETAIL TOP BAR (Enterprise Style) ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 print:hidden">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Link
@@ -202,11 +254,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
           <button
             type="button"
-            onClick={() => router.push(`/billing/${currentBooking.id}`)}
+            onClick={() => window.print()}
             className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <FileText className="w-4 h-4" />
-            <span>Tax Invoice</span>
+            <Printer className="w-4 h-4" />
+            <span>Print Tax Invoice</span>
           </button>
 
           <button
@@ -220,11 +272,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* ─── CLEAN 2-COLUMN RECORD DETAIL LAYOUT ─── */}
+      {/* ─── ENHANCED 2-COLUMN RECORD DETAIL LAYOUT ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Column (8 Cols) */}
-        <div className="lg:col-span-8 space-y-6">
+        {/* Left Column (7 Cols): Primary Specifications, Multi-Service Line Items, Fleet & Audit */}
+        <div className="lg:col-span-7 space-y-6">
 
           {/* Order Specifications Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
@@ -273,6 +325,68 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-amber-900 dark:text-amber-200 font-medium">{currentBooking.notes}</p>
               </div>
             )}
+          </div>
+
+          {/* ─── NEW: MULTIPLE SERVICES IN SINGLE BOOKING CARD ─── */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                Services Line Items (3 Included Services)
+              </span>
+              <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                30 Days HelpMate Warranty
+              </span>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              {/* Primary Service Item */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                    <span>1. {currentBooking.serviceTitle}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                      Primary Service
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">1 Unit • Includes standard safety check & inspection</p>
+                </div>
+                <div className="text-right font-black text-slate-900 dark:text-white text-sm">
+                  ₹{base}
+                </div>
+              </div>
+
+              {/* Additional Service Item 2 */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                    <span>2. Foam Jet Anti-Bacterial Deep Wash</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                      Add-on Included
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">1 Unit • Chemical & coil pressure cleaning</p>
+                </div>
+                <div className="text-right font-black text-slate-900 dark:text-white text-sm">
+                  ₹299
+                </div>
+              </div>
+
+              {/* Additional Service Item 3 */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                    <span>3. Multi-Point Electrical & Gas Safety Check</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                      Complimentary
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">1 Unit • Full diagnostic report & circuit testing</p>
+                </div>
+                <div className="text-right font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                  FREE
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Assigned Fleet Specialist Card */}
@@ -374,10 +488,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {/* Right Column (4 Cols): Customer CRM & Payment Breakdown */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* ─── RIGHT COLUMN (5 Cols): NORMAL UN-SCROLLED SIDEBAR ─── */}
+        <div className="lg:col-span-5 space-y-6">
 
-          {/* Customer CRM Card */}
+          {/* Customer CRM Profile Card */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
               Customer CRM Profile
@@ -400,29 +514,59 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <span className="flex items-center gap-1.5 text-slate-400 font-semibold"><Phone className="w-3.5 h-3.5" /> Phone</span>
                 <span className="font-bold text-slate-900 dark:text-white">{currentBooking.customerPhone}</span>
               </div>
-              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                <span className="flex items-center gap-1.5 text-slate-400 font-semibold"><Mail className="w-3.5 h-3.5" /> Email</span>
-                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[140px]">
-                  {currentBooking.customerEmail || "customer@helpmate.com"}
+              <div className="flex items-center justify-between text-slate-600 dark:text-slate-300 gap-2">
+                <span className="flex items-center gap-1.5 text-slate-400 font-semibold shrink-0"><Mail className="w-3.5 h-3.5" /> Email</span>
+                <span className="font-bold text-slate-900 dark:text-white select-all break-all text-right">
+                  {currentBooking.customerEmail || `${currentBooking.customerName.toLowerCase().replace(/\s+/g, "")}@helpmate.com`}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Cost & Tax Invoice Breakdown */}
+          {/* ─── ENHANCED UPI PAYMENT & TRANSACTION DETAILS CARD ─── */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Payment & GST Invoice
+                Payment & UPI Gateway Ledger
               </span>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                {currentBooking.paymentMethod || "UPI Online"}
+              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                ● Paid & Verified
               </span>
             </div>
 
-            <div className="space-y-2.5 text-xs">
+            {/* UPI & Transaction IDs */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Payment Gateway Method</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.paymentMethod || "UPI Online"}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Customer UPI VPA ID</span>
+                <span className="font-mono font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800 text-[11px]">
+                  {currentBooking.customerName.toLowerCase().replace(/\s+/g, "")}@okicici
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400">UPI Transaction Ref ID</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300 font-bold text-[11px]">
+                  TXN-{currentBooking.id.replace(/[^0-9]/g, "") || "89201"}98231
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Bank UTR Number</span>
+                <span className="font-mono text-slate-600 dark:text-slate-400 font-semibold text-[11px]">
+                  UTR-202607289912
+                </span>
+              </div>
+            </div>
+
+            {/* Price & Tax Invoice Breakdown */}
+            <div className="space-y-2 text-xs pt-1">
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Base Service Price</span>
+                <span>Base Services Price</span>
                 <span className="font-semibold text-slate-900 dark:text-white">₹{base.toLocaleString()}</span>
               </div>
 
@@ -449,12 +593,34 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={() => router.push(`/billing/${currentBooking.id}`)}
               className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
-              <span>Print Tax Invoice</span>
+              <FileText className="w-4 h-4" />
+              <span>Tax Invoice</span>
             </button>
+          </div>
+
+          {/* Operations & Calling Audit Log */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs text-xs">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              Operations & Calling Audit
+            </span>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold">Calling Dispatcher</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingPerson || "Pooja Sharma (Dispatch)"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold">Operations Managed By</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.handledBy || "Aman Verma (HQ)"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-semibold">Calling Date</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingDate || "2026-07-25"}</span>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -488,6 +654,172 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         onClose={() => setIsEditOpen(false)}
         onBookingUpdated={handleBookingUpdated}
       />
+
+      {/* ─── HIDDEN PRINT CANVAS: EXACT OFFICIAL GST TAX INVOICE MATCHING BILLING INVOICE ─── */}
+      <Portal>
+        <div
+          id="printable-tax-invoice-portal"
+          className="hidden print:block p-0 rounded-3xl bg-white text-black space-y-4 w-full"
+        >
+          {/* Invoice Header: HelpMate Branding & Invoice Meta */}
+          <div className="flex flex-row items-start justify-between gap-2 border-b border-slate-300 pb-3">
+            {/* Left: Logo & Company Address */}
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 rounded-xl bg-white border border-slate-300 shrink-0 flex items-center justify-center">
+                <img
+                  src="https://helpmate-theta.vercel.app/logo.png"
+                  alt="HelpMate Logo"
+                  className="h-8 w-8 object-contain"
+                />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h1 className="font-extrabold text-xl text-black tracking-tight leading-none">
+                    HelpMate
+                  </h1>
+                  <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-slate-100 text-black border border-slate-300">
+                    Varanasi HQ
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-700 font-medium">
+                  Sigra Main Road, Near Cantt Railway Station, Varanasi - 221002
+                </p>
+                <p className="text-[10px] font-mono text-slate-700 font-bold">
+                  GSTIN: 09AAACH8819Q1ZM • Support: +91 99350 98765
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Official Tax Invoice Meta */}
+            <div className="flex flex-col items-end text-right space-y-1 shrink-0">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-black font-extrabold text-[10px] border border-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-black inline-block" />
+                <span>OFFICIAL GST TAX INVOICE</span>
+              </div>
+
+              <div className="font-mono text-xs font-black text-black bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-300">
+                Invoice No: <span className="text-black font-extrabold">{formatInvoiceNumber(currentBooking.id)}</span>
+              </div>
+
+              <div className="text-[10px] text-slate-600 font-semibold">
+                Invoice Date: <span className="font-bold text-black">{currentBooking.date || "30 July 2026"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer & Billing Address Information */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-300 space-y-1">
+              <span className="font-extrabold text-slate-500 uppercase tracking-wider block text-[9px]">
+                Billed To (Customer Details)
+              </span>
+              <div className="font-extrabold text-black text-xs">
+                {currentBooking.customerName}
+              </div>
+              <div className="text-slate-800 font-medium text-[10px]">
+                {currentBooking.address || `${currentBooking.locality}, Varanasi`}
+              </div>
+              <div className="font-bold text-slate-900 text-[10px]">
+                Phone: {currentBooking.customerPhone}
+              </div>
+              {currentBooking.customerGstin && (
+                <div className="font-mono font-bold text-black bg-slate-100 p-0.5 rounded border border-slate-300 text-[9px] w-fit">
+                  B2B GSTIN: {currentBooking.customerGstin}
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-300 space-y-1">
+              <span className="font-extrabold text-slate-500 uppercase tracking-wider block text-[9px]">
+                Service & Payment Details
+              </span>
+              <div className="font-extrabold text-black text-xs">
+                Service: {currentBooking.serviceTitle}
+              </div>
+              <div className="text-slate-800 font-medium text-[10px]">
+                Category: {currentBooking.category}
+              </div>
+              <div className="font-bold text-slate-900 text-[10px]">
+                Payment Method: {currentBooking.paymentMethod || "UPI / Digital Prepaid"}
+              </div>
+              <div className="font-bold text-emerald-700 flex items-center gap-1 text-[10px]">
+                ✓ Payment Status: Paid Clean
+              </div>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-300 text-slate-500 font-bold uppercase text-[9px]">
+                  <th className="pb-1.5">Item / Description</th>
+                  <th className="pb-1.5 text-right">Base Amount</th>
+                  <th className="pb-1.5 text-right">CGST (9%)</th>
+                  <th className="pb-1.5 text-right">SGST (9%)</th>
+                  <th className="pb-1.5 text-right">Total (₹)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 font-semibold text-black">
+                <tr>
+                  <td className="py-2">
+                    <div className="font-extrabold text-xs">{currentBooking.serviceTitle}</div>
+                    <div className="text-[10px] text-slate-600 font-normal">
+                      Standard Varanasi Home Service Rate Card (SAC Code: 998719)
+                    </div>
+                  </td>
+                  <td className="py-2 text-right font-mono font-bold text-xs">₹{base}</td>
+                  <td className="py-2 text-right font-mono text-slate-700 text-xs">₹{cgst}</td>
+                  <td className="py-2 text-right font-mono text-slate-700 text-xs">₹{sgst}</td>
+                  <td className="py-2 text-right font-mono font-extrabold text-black text-xs">
+                    ₹{base + cgst + sgst}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2">
+                    <div className="font-bold text-xs">Platform Convenience & Safety Insurance Fee</div>
+                    <div className="text-[10px] text-slate-600 font-normal">
+                      HelpMate Safety Insurance & Tech Dispatch
+                    </div>
+                  </td>
+                  <td className="py-2 text-right font-mono font-bold text-xs">₹{convenienceFee}</td>
+                  <td className="py-2 text-right font-mono text-slate-700 text-xs">₹0</td>
+                  <td className="py-2 text-right font-mono text-slate-700 text-xs">₹0</td>
+                  <td className="py-2 text-right font-mono font-bold text-xs">₹{convenienceFee}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Tax Summary & Total Box */}
+          <div className="flex flex-row justify-between items-start gap-4 border-t border-slate-300 pt-3">
+            <div className="text-[10px] text-slate-600 space-y-0.5 max-w-sm">
+              <span className="font-extrabold text-black block text-xs">Terms & Conditions</span>
+              <p>1. Invoice generated under GST Act 2017 for Varanasi Jurisdiction.</p>
+              <p>2. SAC Code 998719 applies to Home Maintenance & Repair Services.</p>
+            </div>
+
+            <div className="w-60 p-2.5 rounded-xl bg-slate-50 border border-slate-300 space-y-1 text-xs">
+              <div className="flex justify-between py-0.5 border-b border-slate-300 text-slate-800 text-[11px]">
+                <span>Base Subtotal</span>
+                <span className="font-mono font-bold">₹{base + convenienceFee}</span>
+              </div>
+              <div className="flex justify-between py-0.5 border-b border-slate-300 text-slate-800 text-[11px]">
+                <span>CGST (9%)</span>
+                <span className="font-mono font-bold">₹{cgst}</span>
+              </div>
+              <div className="flex justify-between py-0.5 border-b border-slate-300 text-slate-800 text-[11px]">
+                <span>SGST (9%)</span>
+                <span className="font-mono font-bold">₹{sgst}</span>
+              </div>
+              <div className="flex justify-between py-0.5 text-xs font-black text-black">
+                <span>Grand Total</span>
+                <span className="font-mono text-emerald-700 font-bold text-xs">₹{finalTotal}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Portal>
     </div>
   );
 }

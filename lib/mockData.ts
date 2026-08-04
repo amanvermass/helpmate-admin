@@ -1080,6 +1080,10 @@ const generateMockBookings = (): Booking[] => {
       paymentMethod: paymentMethods[i % paymentMethods.length],
       isOtpVerified: status === "Completed",
       otpCode: String(1000 + (i * 37) % 8999),
+      callingDate: `2026-07-${15 + (i % 12)}`,
+      callingPerson: ["Pooja Sharma (Dispatch)", "Sunil Gupta (Caller)", "Ritu Singh (Support)", "Anita Roy (CRM)"][i % 4],
+      handledBy: ["Aman Verma (HQ)", "Varanasi Ops Admin", "Rajeev Verma (Lead)", "Priya Sharma (Ops)"][i % 4],
+      notes: i % 3 === 0 ? "Customer requested morning slot. Handle with care." : undefined,
     });
   }
 

@@ -31,8 +31,11 @@ import { Portal } from "@/components/Portal";
 export interface Column<T> {
   key: string;
   header: string;
-  accessor?: (row: T) => React.ReactNode;
+  accessor?: (row: T, index?: number) => React.ReactNode;
   sortable?: boolean;
+  sticky?: "left" | "right";
+  stickyLeftOffset?: number;
+  className?: string;
 }
 
 export interface DataTableProps<T extends Record<string, any>> {
@@ -97,6 +100,30 @@ export function DataTable<T extends Record<string, any>>({
   React.useEffect(() => {
     setData(initialData);
   }, [initialData]);
+
+  // Compute sticky offsets for left columns
+  const calculatedLeftOffsets = useMemo(() => {
+    let accumulator = 44; // starting after checkbox (44px)
+    const offsets: Record<string, number> = {};
+    columns.forEach((col) => {
+      if (col.sticky === "left") {
+        if (col.stickyLeftOffset !== undefined) {
+          offsets[col.key] = col.stickyLeftOffset;
+          accumulator = col.stickyLeftOffset + (col.key === "id" ? 130 : 170);
+        } else {
+          offsets[col.key] = accumulator;
+          const estWidth = col.key === "id" ? 130 : col.key === "customerName" ? 170 : 130;
+          accumulator += estWidth;
+        }
+      }
+    });
+    return offsets;
+  }, [columns]);
+
+  const leftStickyCols = useMemo(() => columns.filter((c) => c.sticky === "left"), [columns]);
+  const lastLeftStickyKey = leftStickyCols.length > 0 ? leftStickyCols[leftStickyCols.length - 1].key : null;
+
+  const hasLeftSticky = leftStickyCols.length > 0;
 
   const filteredData = useMemo(() => {
     return data.filter((row) => {
@@ -364,10 +391,16 @@ export function DataTable<T extends Record<string, any>>({
 
         {/* Main Table Content */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
+          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300 border-collapse">
+            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="py-3.5 px-4 w-10 align-middle">
+                <th
+                  className={`py-3.5 px-3 w-[44px] min-w-[44px] max-w-[44px] align-middle ${
+                    hasLeftSticky
+                      ? "sticky left-0 z-20 bg-slate-100 dark:bg-slate-800"
+                      : ""
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={isAllSelected}
@@ -378,13 +411,35 @@ export function DataTable<T extends Record<string, any>>({
                 {columns.map((col) => {
                   const isActionsCol =
                     col.header.toLowerCase().includes("action") ||
-                    col.key.toLowerCase().includes("action");
+                    col.key.toLowerCase().includes("action") ||
+                    col.sticky === "right";
+
+                  const isLeftSticky = col.sticky === "left";
+                  const isRightSticky = col.sticky === "right";
+                  const isLastLeft = col.key === lastLeftStickyKey;
+
+                  const stickyStyle: React.CSSProperties = isLeftSticky
+                    ? { position: "sticky", left: `${calculatedLeftOffsets[col.key] || 0}px`, zIndex: 20 }
+                    : isRightSticky
+                    ? { position: "sticky", right: 0, zIndex: 20 }
+                    : {};
+
+                  const stickyClass = isLeftSticky
+                    ? `bg-slate-100 dark:bg-slate-800 ${
+                        isLastLeft ? "shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)]" : ""
+                      }`
+                    : isRightSticky
+                    ? "bg-slate-100 dark:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.1)]"
+                    : "";
 
                   return (
                     <th
                       key={col.key}
+                      style={stickyStyle}
                       onClick={() => col.sortable !== false && handleSort(col.key)}
-                      className={`py-3.5 px-4 align-middle cursor-pointer select-none ${isActionsCol ? "text-right" : ""}`}
+                      className={`py-3.5 px-4 align-middle cursor-pointer select-none whitespace-nowrap ${
+                        isActionsCol ? "text-right" : ""
+                      } ${stickyClass} ${col.className || ""}`}
                     >
                       <div className={`flex items-center gap-1.5 ${isActionsCol ? "justify-end" : ""}`}>
                         <span>{col.header}</span>
@@ -395,30 +450,47 @@ export function DataTable<T extends Record<string, any>>({
                 })}
                 {showMetadata && (
                   <>
-                    <th className="py-3.5 px-4 align-middle">Created By / Date</th>
-                    <th className="py-3.5 px-4 align-middle">Updated By / Date</th>
+                    <th className="py-3.5 px-4 align-middle whitespace-nowrap">Created By / Date</th>
+                    <th className="py-3.5 px-4 align-middle whitespace-nowrap">Updated By / Date</th>
                   </>
                 )}
-                {hasDefaultActionsColumn && <th className="py-3.5 px-4 text-right align-middle">Actions</th>}
+                {hasDefaultActionsColumn && (
+                  <th className="py-3.5 px-4 text-right align-middle whitespace-nowrap sticky right-0 z-20 bg-slate-100 dark:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.1)]">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + 1 + (showMetadata ? 2 : 0) + (hasDefaultActionsColumn ? 1 : 0)} className="py-12 text-center text-slate-400 align-middle">
+                  <td
+                    colSpan={columns.length + 1 + (showMetadata ? 2 : 0) + (hasDefaultActionsColumn ? 1 : 0)}
+                    className="py-12 text-center text-slate-400 align-middle"
+                  >
                     <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                     <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No matching records found</p>
                     <p className="text-xs text-slate-400 mt-1">Try resetting filters or adding new data.</p>
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((row) => {
+                paginatedData.map((row, rowIndex) => {
                   const idStr = String(row[idField]);
                   const isSelected = selectedIds.has(idStr);
+                  const globalRowIndex = (currentPage - 1) * pageSize + rowIndex + 1;
 
                   return (
-                    <tr key={idStr} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="py-3.5 px-4 align-middle">
+                    <tr
+                      key={idStr}
+                      className="group hover:bg-slate-50/90 dark:hover:bg-slate-800/60 transition-colors"
+                    >
+                      <td
+                        className={`py-3.5 px-3 w-[44px] min-w-[44px] max-w-[44px] align-middle ${
+                          hasLeftSticky
+                            ? "sticky left-0 z-20 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800"
+                            : ""
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -430,11 +502,36 @@ export function DataTable<T extends Record<string, any>>({
                       {columns.map((col) => {
                         const isActionsCol =
                           col.header.toLowerCase().includes("action") ||
-                          col.key.toLowerCase().includes("action");
+                          col.key.toLowerCase().includes("action") ||
+                          col.sticky === "right";
+
+                        const isLeftSticky = col.sticky === "left";
+                        const isRightSticky = col.sticky === "right";
+                        const isLastLeft = col.key === lastLeftStickyKey;
+
+                        const stickyStyle: React.CSSProperties = isLeftSticky
+                          ? { position: "sticky", left: `${calculatedLeftOffsets[col.key] || 0}px`, zIndex: 20 }
+                          : isRightSticky
+                          ? { position: "sticky", right: 0, zIndex: 20 }
+                          : {};
+
+                        const stickyClass = isLeftSticky
+                          ? `bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 ${
+                              isLastLeft ? "shadow-[4px_0_8px_-2px_rgba(0,0,0,0.08)]" : ""
+                            }`
+                          : isRightSticky
+                          ? "bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]"
+                          : "";
 
                         return (
-                          <td key={col.key} className={`py-3.5 px-4 align-middle ${isActionsCol ? "text-right" : ""}`}>
-                            {col.accessor ? col.accessor(row) : row[col.key]}
+                          <td
+                            key={col.key}
+                            style={stickyStyle}
+                            className={`py-3.5 px-4 align-middle whitespace-nowrap ${
+                              isActionsCol ? "text-right" : ""
+                            } ${stickyClass} ${col.className || ""}`}
+                          >
+                            {col.accessor ? col.accessor(row, globalRowIndex) : row[col.key]}
                           </td>
                         );
                       })}
