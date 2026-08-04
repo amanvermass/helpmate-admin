@@ -16,8 +16,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>("light");
 
   useEffect(() => {
-    // Clean up any stale dark class on initial mount to guarantee pure Light Mode by default
-    document.documentElement.classList.remove("dark");
     const saved = localStorage.getItem("helpmate_theme");
     if (saved === "dark") {
       setThemeState("dark");
@@ -29,12 +27,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = (newTheme: ThemeMode) => {
-    setThemeState(newTheme);
-    localStorage.setItem("helpmate_theme", newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
+    const applyThemeChange = () => {
+      setThemeState(newTheme);
+      localStorage.setItem("helpmate_theme", newTheme);
+      if (newTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    };
+
+    // Use native View Transitions API if supported for silky Top-Left to Bottom-Right sweep
+    if (typeof document !== "undefined" && "startViewTransition" in document) {
+      (document as any).startViewTransition(() => {
+        applyThemeChange();
+      });
     } else {
-      document.documentElement.classList.remove("dark");
+      applyThemeChange();
     }
   };
 

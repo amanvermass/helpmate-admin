@@ -21,6 +21,30 @@ body {
   overflow-x: hidden;
 }
 
+/* ─── DIAGONAL SWEEP THEME ANIMATION (TOP-LEFT TO BOTTOM-RIGHT) ─── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+  animation: sweepTopLeftToBottomRight 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes sweepTopLeftToBottomRight {
+  from {
+    clip-path: circle(0% at 0 0);
+  }
+  to {
+    clip-path: circle(160% at 0 0);
+  }
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

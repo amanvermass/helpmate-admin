@@ -413,13 +413,6 @@ export function BookingWizardModal({
 
       aadhaarNumber: newCustAadhaarNumber || "7821-4920-1102",
       aadhaarDocUrl: newCustAadhaarDocUrl,
-      guarantorName: newCustGuarantorName,
-      guarantorPhone: newCustGuarantorPhone,
-      guarantorAddress: newCustGuarantorAddress,
-      guarantorAadhaarNumber: newCustGuarantorAadhaarNumber,
-      policeStatus: newCustPoliceStatus,
-      policeStationName: newCustPoliceStation,
-      policeTokenNumber: newCustPoliceToken || `PCC-VAR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
     };
 
     setCustomerList([createdCust, ...customerList]);

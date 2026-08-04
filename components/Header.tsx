@@ -214,7 +214,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-brand-500 transition-colors cursor-pointer shrink-0"
           title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
         >
-          {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+          {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
         </button>
 
         {/* Notifications Drawer Toggle */}

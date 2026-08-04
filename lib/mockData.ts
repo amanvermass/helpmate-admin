@@ -343,31 +343,34 @@ export interface Customer {
   id: string;
   name: string;
   phone: string;
+  alternatePhone?: string;
   email: string;
   locality: string;
+  pincode?: string;
   address: string;
+  secondaryLocality?: string;
+  secondaryAddress?: string;
   tier: "Crown Elite" | "VIP" | "Standard";
   totalSpend: number;
   totalBookings: number;
   lastBookingDate: string;
   joinedDate: string;
+  avatar?: string;
+  customerType?: "Individual Household" | "Commercial Business / B2B";
+  companyName?: string;
+  customerGstin?: string;
+  householdType?: "Family Home" | "Apartment / Flat" | "Villa / Bungalow" | "Commercial Office / Shop";
+  registeredAppliances?: string[];
+  preferredLanguage?: "Hindi" | "English" | "Bhojpuri";
+  preferredTimeSlot?: "Morning (9am-12pm)" | "Afternoon (12pm-4pm)" | "Evening (4pm-8pm)";
+  loyaltyPoints?: number;
+  walletBalance?: number;
+  preferredPaymentMethod?: string;
+  crmManager?: string;
 
-  // Customer Identity & Aadhaar Verification
+  // Customer Identity & Aadhaar Verification (Optional for Customer KYC)
   aadhaarNumber?: string;
   aadhaarDocUrl?: string;
-
-  // Guarantor / Reference Person (Taking Customer Guarantee)
-  guarantorName?: string;
-  guarantorPhone?: string;
-  guarantorAddress?: string;
-  guarantorAadhaarNumber?: string;
-  guarantorAadhaarDocUrl?: string;
-
-  // Police Verification & Security Records
-  policeStatus?: "Pending Verification" | "Verified Clean" | "Submitted to Local Thana" | "Exempted";
-  policeTokenNumber?: string;
-  policeStationName?: string;
-  policeCertificateUrl?: string;
 }
 
 export interface AuditLog {
@@ -1149,39 +1152,87 @@ export const initialCustomers: Customer[] = [
     id: "cust-1",
     name: "Rajesh Kumar Agrawal",
     phone: "+91 77050 04040",
+    alternatePhone: "+91 98390 99881",
     email: "rajesh.agrawal@gmail.com",
     locality: "Sigra",
-    address: "D-58/16C Shashtri Nagar Colony, Sigra, Varanasi",
+    pincode: "221002",
+    address: "D-58/16C Shashtri Nagar Colony, Sigra Main Road, Varanasi",
+    secondaryLocality: "Mahmoorganj",
+    secondaryAddress: "B-12/40 Shop No. 4, Mahmoorganj Commercial Complex, Varanasi",
     tier: "Crown Elite",
     totalSpend: 34500,
-    totalBookings: 2,
-    lastBookingDate: "Today",
+    totalBookings: 8,
+    lastBookingDate: "Today, 04:30 PM",
     joinedDate: "12 Jan 2024",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    customerType: "Commercial Business / B2B",
+    companyName: "Agrawal Electricals & Retail Solutions",
+    customerGstin: "09AABCH1234H1Z5",
+    householdType: "Commercial Office / Shop",
+    registeredAppliances: ["3x Inverter AC 1.5 Ton", "1x Commercial Water Cooler", "1x Main Distribution Panel"],
+    preferredLanguage: "Hindi",
+    preferredTimeSlot: "Morning (9am-12pm)",
+    loyaltyPoints: 1250,
+    walletBalance: 1250,
+    preferredPaymentMethod: "UPI Digital Prepaid (Google Pay)",
+    crmManager: "Pooja Sharma (Dispatch HQ)",
     aadhaarNumber: "7821-4920-1102",
     aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
-    policeStatus: "Verified Clean",
-    policeStationName: "Sigra Police Station",
-    policeTokenNumber: "PCC-VAR-2026-8819",
-    policeCertificateUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
   },
   {
     id: "cust-2",
     name: "Dr. Ananya Mukherjee",
     phone: "+91 94501 22910",
+    alternatePhone: "+91 94501 99000",
     email: "ananya.bhu@yahoo.in",
     locality: "Lanka / Assi Ghat",
+    pincode: "221005",
     address: "Plot 12, Assi Ghat Road, Near BHU Gate, Lanka, Varanasi",
+    secondaryLocality: "BHU Campus",
+    secondaryAddress: "Faculty Quarter 45, Professor Colony, BHU Campus, Varanasi",
     tier: "Crown Elite",
     totalSpend: 28900,
-    totalBookings: 1,
-    lastBookingDate: "Today",
+    totalBookings: 6,
+    lastBookingDate: "Yesterday",
     joinedDate: "05 Mar 2024",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    customerType: "Individual Household",
+    householdType: "Villa / Bungalow",
+    registeredAppliances: ["2x Split AC 1.5 Ton", "1x RO Water Purifier", "1x Front Load Washing Machine"],
+    preferredLanguage: "English",
+    preferredTimeSlot: "Evening (4pm-8pm)",
+    loyaltyPoints: 940,
+    walletBalance: 450,
+    preferredPaymentMethod: "Credit Card (HDFC Bank)",
+    crmManager: "Sunil Gupta (Varanasi Ops)",
     aadhaarNumber: "4920-1102-8821",
     aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
-    policeStatus: "Submitted to Local Thana",
-    policeStationName: "Lanka Thana",
-    policeTokenNumber: "PCC-VAR-2026-9042",
-    policeCertificateUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "cust-3",
+    name: "Sanjay Mishra",
+    phone: "+91 98390 11928",
+    email: "sanjay.mishra@helpmate.com",
+    locality: "Mahmoorganj",
+    pincode: "221010",
+    address: "B-32/12 Tulsipur, Near Galaxy Hospital, Mahmoorganj, Varanasi",
+    tier: "VIP",
+    totalSpend: 14200,
+    totalBookings: 4,
+    lastBookingDate: "28 Jul 2026",
+    joinedDate: "18 Jun 2024",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    customerType: "Individual Household",
+    householdType: "Apartment / Flat",
+    registeredAppliances: ["1x Split AC", "1x Refrigerator 350L"],
+    preferredLanguage: "Hindi",
+    preferredTimeSlot: "Afternoon (12pm-4pm)",
+    loyaltyPoints: 480,
+    walletBalance: 200,
+    preferredPaymentMethod: "Cash on Service",
+    crmManager: "Ritu Singh (Support)",
+    aadhaarNumber: "3310-9920-8812",
+    aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
   },
 ];
 
