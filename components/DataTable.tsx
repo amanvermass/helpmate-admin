@@ -415,7 +415,7 @@ export function DataTable<T extends Record<string, any>>({
                     col.sticky === "right";
 
                   const isLeftSticky = col.sticky === "left";
-                  const isRightSticky = col.sticky === "right";
+                  const isRightSticky = col.sticky === "right" || isActionsCol;
                   const isLastLeft = col.key === lastLeftStickyKey;
 
                   const stickyStyle: React.CSSProperties = isLeftSticky
@@ -506,7 +506,7 @@ export function DataTable<T extends Record<string, any>>({
                           col.sticky === "right";
 
                         const isLeftSticky = col.sticky === "left";
-                        const isRightSticky = col.sticky === "right";
+                        const isRightSticky = col.sticky === "right" || isActionsCol;
                         const isLastLeft = col.key === lastLeftStickyKey;
 
                         const stickyStyle: React.CSSProperties = isLeftSticky
@@ -550,7 +550,7 @@ export function DataTable<T extends Record<string, any>>({
                       )}
 
                       {hasDefaultActionsColumn && (
-                        <td className="py-4 px-4 text-right">
+                        <td className="py-4 px-4 text-right sticky right-0 z-20 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"

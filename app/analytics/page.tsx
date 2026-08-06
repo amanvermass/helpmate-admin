@@ -54,68 +54,25 @@ export default function AnalyticsPage() {
             </select>
           </div>
         </div>
-      </div>
 
-      {/* 4 Analytics KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs relative overflow-hidden group hover:border-emerald-500 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold uppercase tracking-wider">
-            <span>Gross Revenue Growth</span>
-            <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-4 h-4" />
-            </span>
+        {/* Integrated Glass Metrics Summary Strip */}
+        <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Gross Revenue</span>
+            <span className="font-extrabold text-emerald-400 text-sm">₹18,45,000 (+24.8%)</span>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">
-            ₹18,45,000
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Active Customers</span>
+            <span className="font-extrabold text-brand-300 text-sm">3,420 Users (88.4%)</span>
           </div>
-          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-            <ArrowUpRight className="w-3.5 h-3.5" /> +24.8% YoY Expansion
-          </span>
-        </div>
-
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs relative overflow-hidden group hover:border-brand-500 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold uppercase tracking-wider">
-            <span>Active Customer Base</span>
-            <span className="p-2 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 group-hover:scale-110 transition-transform">
-              <Users className="w-4 h-4" />
-            </span>
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Fleet Velocity</span>
+            <span className="font-extrabold text-purple-300 text-sm">412 Partners (99.2%)</span>
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-brand-600 dark:text-brand-400 font-mono">
-            3,420 Users
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Order Basket</span>
+            <span className="font-extrabold text-amber-300 text-sm">₹1,380 (+12.4%)</span>
           </div>
-          <span className="text-[11px] text-brand-600 dark:text-brand-400 font-bold flex items-center gap-1">
-            <CheckCircle className="w-3.5 h-3.5" /> 88.4% Retention Rate
-          </span>
-        </div>
-
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs relative overflow-hidden group hover:border-purple-500 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold uppercase tracking-wider">
-            <span>Fleet Dispatch Velocity</span>
-            <span className="p-2 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400 group-hover:scale-110 transition-transform">
-              <UserCheck className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 font-mono">
-            412 Partners
-          </div>
-          <span className="text-[11px] text-purple-700 dark:text-purple-300 font-bold block">
-            99.2% On-Time Arrival
-          </span>
-        </div>
-
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs relative overflow-hidden group hover:border-amber-500 transition-all">
-          <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold uppercase tracking-wider">
-            <span>Average Order Basket</span>
-            <span className="p-2 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 group-hover:scale-110 transition-transform">
-              <Zap className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">
-            ₹1,380
-          </div>
-          <span className="text-[11px] text-amber-700 dark:text-amber-300 font-bold block">
-            +12.4% MoM Basket Value
-          </span>
         </div>
       </div>
 

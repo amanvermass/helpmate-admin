@@ -26,6 +26,9 @@ import {
   TrendingUp,
   CheckCircle2,
   X,
+  Megaphone,
+  Image as ImageIcon,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
 import { Portal } from "@/components/Portal";
@@ -180,6 +183,21 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           href: "/pricing",
         },
         {
+          title: "Banners & Visitor Popups",
+          icon: Megaphone,
+          href: "/banners",
+        },
+        {
+          title: "Image Sections",
+          icon: ImageIcon,
+          href: "/image-sections",
+        },
+        {
+          title: "FAQ Manager",
+          icon: MessageCircleQuestion,
+          href: "/faq",
+        },
+        {
           title: "Locations & Pincodes",
           icon: Building2,
           href: "/locations",
@@ -259,11 +277,10 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">HelpMate</span>
               <span
-                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
-                  isPartner
+                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${isPartner
                     ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                     : "bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border-brand-200 dark:border-brand-800"
-                }`}
+                  }`}
               >
                 {isPartner ? "PARTNER" : "ADMIN"}
               </span>
@@ -328,24 +345,21 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                       <button
                         type="button"
                         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group cursor-pointer ${
-                          isSubActive
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group cursor-pointer ${isSubActive
                             ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold border border-brand-200 dark:border-brand-800"
                             : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <Icon
-                            className={`w-4 h-4 transition-colors ${
-                              isSubActive ? "text-brand-600 dark:text-brand-400" : "text-slate-400 group-hover:text-brand-600"
-                            }`}
+                            className={`w-4 h-4 transition-colors ${isSubActive ? "text-brand-600 dark:text-brand-400" : "text-slate-400 group-hover:text-brand-600"
+                              }`}
                           />
                           <span>{item.title}</span>
                         </div>
                         <ChevronDown
-                          className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
-                            isSettingsOpen ? "rotate-180" : ""
-                          }`}
+                          className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isSettingsOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </button>
 
@@ -360,11 +374,10 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                                 key={sub.href}
                                 href={sub.href}
                                 onClick={onCloseMobile}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                  isActive
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${isActive
                                     ? "bg-brand-500 text-white font-bold shadow-lux"
                                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                                }`}
+                                  }`}
                               >
                                 <SubIcon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-slate-400"}`} />
                                 <span>{sub.label}</span>
@@ -387,17 +400,15 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                     key={item.href || item.title}
                     href={item.href || "#"}
                     onClick={onCloseMobile}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group ${
-                      isActive
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group ${isActive
                         ? "bg-brand-500 text-white shadow-lux"
                         : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <Icon
-                        className={`w-4 h-4 transition-colors ${
-                          isActive ? "text-white" : "text-slate-400 group-hover:text-brand-600 dark:group-hover:text-brand-400"
-                        }`}
+                        className={`w-4 h-4 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-600 dark:group-hover:text-brand-400"
+                          }`}
                       />
                       <span>{item.title}</span>
                     </div>

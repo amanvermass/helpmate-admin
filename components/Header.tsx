@@ -92,7 +92,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
   ];
 
   return (
-    <header ref={headerRef} className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200 shadow-xs">
+    <header ref={headerRef} style={{ minHeight: "4rem", height: "4rem" }} className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200 shadow-xs">
       {/* Mobile Hamburger & Header Breadcrumbs Navigation */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
@@ -141,11 +141,10 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
                       setRole(r);
                       setIsRoleOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
-                      role === r
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${role === r
                         ? "bg-brand-500 text-white"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}
+                      }`}
                   >
                     <span>{r}</span>
                     {role === r && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
@@ -306,11 +305,10 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
             className="flex items-center gap-1.5 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <div
-              className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl ${
-                isPartner
+              className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl ${isPartner
                   ? "bg-gradient-to-tr from-emerald-600 to-teal-600"
                   : "bg-gradient-to-tr from-brand-600 to-purple-600"
-              } flex items-center justify-center font-bold text-white text-xs shadow-xs`}
+                } flex items-center justify-center font-bold text-white text-xs shadow-xs`}
             >
               {isPartner ? "RY" : "AV"}
             </div>
@@ -327,9 +325,8 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
             <div className="absolute right-0 mt-2 w-60 sm:w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 space-y-1 animate-in zoom-in-95 duration-150">
               <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
                 <div
-                  className={`w-9 h-9 rounded-xl ${
-                    isPartner ? "bg-emerald-600" : "bg-brand-500"
-                  } text-white font-black text-sm flex items-center justify-center shrink-0 shadow-lux`}
+                  className={`w-9 h-9 rounded-xl ${isPartner ? "bg-emerald-600" : "bg-brand-500"
+                    } text-white font-black text-sm flex items-center justify-center shrink-0 shadow-lux`}
                 >
                   {isPartner ? "RY" : "AV"}
                 </div>

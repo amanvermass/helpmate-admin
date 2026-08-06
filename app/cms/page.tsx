@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
-import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown } from "lucide-react";
+import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown, FileImage, Upload, Megaphone, Eye, Sparkles, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 
 interface ServiceOfferingRow {
   id: string;
@@ -13,6 +13,7 @@ interface ServiceOfferingRow {
   price: number;
   duration: string;
   description?: string;
+  thumbnailUrl?: string;
 }
 
 import { CustomSelect } from "@/components/CustomSelect";
@@ -87,6 +88,17 @@ export default function CmsPage() {
   const [localities, setLocalities] = useState<VaranasiLocality[]>(varanasiLocalities);
   const [activeTab, setActiveTab] = useState<"services" | "addons" | "pincodes">("services");
 
+  // Website Visitor Promo Popup Banner State
+  const [isBannerEnabled, setIsBannerEnabled] = useState(true);
+  const [bannerImageUrl, setBannerImageUrl] = useState(
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=80"
+  );
+  const [secondBannerIconUrl, setSecondBannerIconUrl] = useState(
+    "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=300&auto=format&fit=crop&q=80"
+  );
+  const [targetLinkUrl, setTargetLinkUrl] = useState("https://helpmate-theta.vercel.app/services/ac");
+  const [isBannerPreviewOpen, setIsBannerPreviewOpen] = useState(false);
+
   // Selected Service Details & Add-ons Modal State
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
@@ -148,6 +160,19 @@ export default function CmsPage() {
   };
 
   const serviceColumns: Column<ServiceItem>[] = [
+    {
+      key: "thumbnailUrl",
+      header: "Thumbnail",
+      accessor: (row) => (
+        <div className="w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0 group">
+          <img
+            src={row.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80"}
+            alt={row.title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        </div>
+      ),
+    },
     {
       key: "title",
       header: "Service Package Title",
@@ -234,7 +259,7 @@ export default function CmsPage() {
         <div className="flex items-center justify-end gap-1.5">
           <button
             type="button"
-            onClick={() => setIsAddServiceOpen(true)}
+            onClick={() => openEditServiceDrawer(row)}
             title="Edit Service Package"
             className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-all border border-slate-200 dark:border-slate-700"
           >
@@ -400,6 +425,7 @@ export default function CmsPage() {
 
   // Step 1 State: Master Category & Option to Add New Category
   const [serviceCategory, setServiceCategory] = useState("AC Service & Repair");
+  const [serviceThumbnail, setServiceThumbnail] = useState("https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80");
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [customCategories, setCustomCategories] = useState<string[]>([]);
@@ -473,6 +499,47 @@ export default function CmsPage() {
     setShowInlineAddAddon(false);
   };
 
+  // Unified Edit & Add Service Drawer State
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+
+  const openAddServiceDrawer = () => {
+    setEditingServiceId(null);
+    setServiceCategory("AC Service & Repair");
+    setSelectedSubcategory("Split AC");
+    setServiceOfferings([
+      {
+        id: `offering-${Date.now()}`,
+        title: "",
+        type: "Service",
+        price: 699,
+        duration: "45 mins",
+        description: "",
+        thumbnailUrl: "",
+      },
+    ]);
+    setSelectedAddonIdsInDrawer(["add-1", "add-2"]);
+    setIsAddServiceOpen(true);
+  };
+
+  const openEditServiceDrawer = (item: ServiceItem) => {
+    setEditingServiceId(item.id);
+    setServiceCategory(item.category);
+    setSelectedSubcategory(item.subcategory || "");
+    setServiceOfferings([
+      {
+        id: item.id,
+        title: item.title,
+        type: item.systemType?.[0] || "Service",
+        price: item.price,
+        duration: item.duration,
+        description: item.subtitle || "",
+        thumbnailUrl: item.thumbnailUrl || "",
+      },
+    ]);
+    setSelectedAddonIdsInDrawer(item.addons?.map((a) => a.id) || []);
+    setIsAddServiceOpen(true);
+  };
+
   const handleCreateService = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -485,40 +552,59 @@ export default function CmsPage() {
 
     const linkedAddonObjects = addons.filter((a) => selectedAddonIdsInDrawer.includes(a.id));
 
-    const newServicesList: ServiceItem[] = validOfferings.map((off, idx) => ({
-      id: `srv-${Date.now()}-${idx}`,
-      category: finalCategory as any,
-      subcategory: selectedSubcategory || undefined,
-      title: off.title,
-      subtitle: off.description || `Expert ${off.type} service with 30-day HelpMate guarantee`,
-      price: off.price || 699,
-      originalPrice: Math.round((off.price || 699) * 1.3),
-      duration: off.duration || "45 mins",
-      rating: 5.0,
-      reviewsCount: 1,
-      isInspectionBased: false,
-      isPopular: idx === 0,
-      systemType: [off.type],
-      addons: linkedAddonObjects,
-      status: "Active",
-      createdBy: "Admin Dispatcher",
-      createdDate: "Just Now",
-    }));
+    if (editingServiceId) {
+      // EDIT MODE: Update existing service package
+      const firstOff = validOfferings[0];
+      setServices((prev) =>
+        prev.map((s) =>
+          s.id === editingServiceId
+            ? {
+                ...s,
+                category: finalCategory as any,
+                subcategory: selectedSubcategory || undefined,
+                title: firstOff.title,
+                subtitle: firstOff.description || `Expert ${firstOff.type} service with 30-day HelpMate guarantee`,
+                price: firstOff.price || 699,
+                originalPrice: Math.round((firstOff.price || 699) * 1.3),
+                duration: firstOff.duration || "45 mins",
+                systemType: [firstOff.type],
+                thumbnailUrl: firstOff.thumbnailUrl || serviceThumbnail,
+                addons: linkedAddonObjects,
+              }
+            : s
+        )
+      );
+    } else {
+      // CREATE MODE: Add new service packages
+      const newServicesList: ServiceItem[] = validOfferings.map((off, idx) => ({
+        id: `srv-${Date.now()}-${idx}`,
+        category: finalCategory as any,
+        subcategory: selectedSubcategory || undefined,
+        title: off.title,
+        subtitle: off.description || `Expert ${off.type} service with 30-day HelpMate guarantee`,
+        price: off.price || 699,
+        originalPrice: Math.round((off.price || 699) * 1.3),
+        duration: off.duration || "45 mins",
+        rating: 5.0,
+        reviewsCount: 1,
+        isInspectionBased: false,
+        isPopular: idx === 0,
+        systemType: [off.type],
+        thumbnailUrl: off.thumbnailUrl || serviceThumbnail,
+        addons: linkedAddonObjects,
+        status: "Active",
+        createdBy: "Admin Dispatcher",
+        createdDate: "Just Now",
+      }));
+
+      setServices([...newServicesList, ...services]);
+    }
 
     if (isAddingNewCategory && newCategoryName.trim()) {
       setCustomCategories([...customCategories, newCategoryName.trim()]);
     }
 
-    setServices([...newServicesList, ...services]);
-    setServiceOfferings([
-      {
-        id: `offering-${Date.now()}`,
-        title: "",
-        type: "Service",
-        price: 699,
-        duration: "45 mins",
-      },
-    ]);
+    setEditingServiceId(null);
     setIsAddingNewCategory(false);
     setNewCategoryName("");
     setIsAddServiceOpen(false);
@@ -584,7 +670,7 @@ export default function CmsPage() {
           <button
             type="button"
             onClick={() => {
-              if (activeTab === "services") setIsAddServiceOpen(true);
+              if (activeTab === "services") openAddServiceDrawer();
               else if (activeTab === "addons") setIsAddAddonOpen(true);
               else setIsAddPincodeOpen(true);
             }}
@@ -782,7 +868,9 @@ export default function CmsPage() {
             >
               <div className="space-y-4 overflow-y-auto pr-1">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add New Service Package</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                    {editingServiceId ? "Edit Service Package" : "Add New Service Package"}
+                  </h3>
                   <button type="button" onClick={() => setIsAddServiceOpen(false)} className="text-slate-400 hover:text-slate-600">
                     <X className="w-5 h-5" />
                   </button>
@@ -949,6 +1037,49 @@ export default function CmsPage() {
                               placeholder="e.g. Includes deep foam jet cleaning, drain line clearing & 30-day warranty"
                               className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
                             />
+                          </div>
+
+                          {/* SIXTH FIELD: Custom Service Image Upload */}
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 space-y-1.5">
+                            <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                              <span>Custom Package Image</span>
+                              <span className="text-brand-600 font-extrabold text-[9px] uppercase">Upload File or URL</span>
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-brand-500 shrink-0 bg-slate-200 dark:bg-slate-700">
+                                <img
+                                  src={off.thumbnailUrl || serviceThumbnail}
+                                  alt="Package Thumbnail"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <label className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs">
+                                <Upload className="w-3 h-3" />
+                                <span>Upload Custom Image</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (re) => {
+                                        handleUpdateOfferingRow(idx, "thumbnailUrl", re.target?.result as string);
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                              <input
+                                type="url"
+                                value={off.thumbnailUrl || ""}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "thumbnailUrl", e.target.value)}
+                                placeholder="Or paste image URL"
+                                className="flex-1 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[10px] outline-none focus:border-brand-500"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))
@@ -1743,6 +1874,62 @@ export default function CmsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </Portal>
+      )}
+
+      {/* LIVE PURE IMAGE WEBSITE VISITOR POPUP PREVIEW MODAL */}
+      {isBannerPreviewOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="relative max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200 group">
+              {/* Close Button at top right */}
+              <button
+                type="button"
+                onClick={() => setIsBannerPreviewOpen(false)}
+                className="absolute top-4 right-4 z-30 p-2 rounded-full bg-slate-950/70 text-white hover:bg-slate-950 transition-colors shadow-lg cursor-pointer"
+                title="Close Visitor Modal Preview"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Pure Image Banner Container (No Text, Only Banner Image) */}
+              <div className="relative w-full aspect-[16/9] sm:aspect-[16/8] bg-slate-900">
+                <img
+                  src={bannerImageUrl}
+                  alt="Pure Image Visitor Promo Popup Banner"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Optional Second Image Icon Overlay Badge at bottom left */}
+                {secondBannerIconUrl && (
+                  <div className="absolute bottom-4 left-4 z-20 p-2 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-2xl border border-white/40 flex items-center gap-2 max-w-[200px]">
+                    <img
+                      src={secondBannerIconUrl}
+                      alt="Second Icon Badge"
+                      className="w-8 h-8 object-contain rounded-lg shrink-0"
+                    />
+                    <span className="text-[10px] font-extrabold text-slate-900 dark:text-white leading-tight">
+                      Verified Partner Offer
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Bar Footer */}
+              <div className="p-4 bg-slate-900 text-white flex items-center justify-between text-xs">
+                <span className="text-slate-400 text-[11px] font-mono truncate max-w-sm">
+                  Click Target: {targetLinkUrl}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsBannerPreviewOpen(false)}
+                  className="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold cursor-pointer"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
           </div>
         </Portal>
       )}

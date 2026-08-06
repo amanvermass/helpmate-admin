@@ -298,17 +298,17 @@ export default function ExecutiveDashboard() {
                 {/* Y-Axis Scale */}
                 <div className="flex flex-col justify-between text-right shrink-0 py-1" style={{ height: "200px" }}>
                   {chartMode === "revenue"
-                    ? ["₹15L", "₹12L", "₹9L", "₹6L", "₹3L", "₹0"].map((l) => (
+                    ? ["₹16L", "₹12L", "₹8L", "₹4L", "₹0"].map((l) => (
                         <span key={l} className="text-[10px] font-mono font-bold text-slate-400">{l}</span>
                       ))
-                    : ["1,500", "1,200", "900", "600", "300", "0"].map((l) => (
+                    : ["1,600", "1,200", "800", "400", "0"].map((l) => (
                         <span key={l} className="text-[10px] font-mono font-bold text-slate-400">{l}</span>
                       ))}
                 </div>
 
                 {/* Chart Grid with SVG Area Path & Nodes */}
                 <div className="flex-1 min-w-0 relative" style={{ height: "200px" }}>
-                  {[0, 20, 40, 60, 80, 100].map((pct) => (
+                  {[0, 25, 50, 75, 100].map((pct) => (
                     <div
                       key={pct}
                       className="absolute left-0 right-0 border-t border-slate-100 dark:border-slate-800/70"
@@ -316,50 +316,72 @@ export default function ExecutiveDashboard() {
                     />
                   ))}
 
-                  {/* SVG Smooth Curved Area Graph */}
-                  <svg className="w-full h-full overflow-visible relative z-10" viewBox="0 0 700 200" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
+                  {/* SVG Smooth Curved Area Graph - Dynamically Computed for Revenue vs Bookings */}
+                  {(() => {
+                    const data = analyticsData.monthlyChart;
+                    const maxVal = chartMode === "revenue" ? 1600000 : 1600;
+                    const pts = data.map((d, i) => {
+                      const val = chartMode === "revenue" ? d.revenue : d.bookings;
+                      const x = (i / (data.length - 1)) * 700;
+                      const y = 190 - (val / maxVal) * 170; // top padding
+                      return { x, y };
+                    });
 
-                    <path
-                      d={chartMode === "revenue"
-                        ? "M 0 150 C 60 140, 100 125, 140 110 C 180 95, 230 75, 280 65 C 330 55, 380 40, 430 30 C 490 20, 550 15, 600 10 C 650 8, 680 5, 700 3 L 700 200 L 0 200 Z"
-                        : "M 0 160 C 60 150, 100 132, 140 120 C 180 105, 230 85, 280 72 C 330 60, 380 45, 430 35 C 490 22, 550 15, 600 10 C 650 8, 680 5, 700 3 L 700 200 L 0 200 Z"
-                      }
-                      fill="url(#chartGradient)"
-                    />
+                    let lineD = `M ${pts[0].x} ${pts[0].y}`;
+                    for (let i = 0; i < pts.length - 1; i++) {
+                      const curr = pts[i];
+                      const next = pts[i + 1];
+                      const cp1x = curr.x + (next.x - curr.x) / 2;
+                      const cp1y = curr.y;
+                      const cp2x = curr.x + (next.x - curr.x) / 2;
+                      const cp2y = next.y;
+                      lineD += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
+                    }
+                    const areaD = `${lineD} L 700 200 L 0 200 Z`;
 
-                    <path
-                      d={chartMode === "revenue"
-                        ? "M 0 150 C 60 140, 100 125, 140 110 C 180 95, 230 75, 280 65 C 330 55, 380 40, 430 30 C 490 20, 550 15, 600 10 C 650 8, 680 5, 700 3"
-                        : "M 0 160 C 60 150, 100 132, 140 120 C 180 105, 230 85, 280 72 C 330 60, 380 45, 430 35 C 490 22, 550 15, 600 10 C 650 8, 680 5, 700 3"
-                      }
-                      fill="none"
-                      stroke="#4f46e5"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                    return (
+                      <svg className="w-full h-full overflow-visible relative z-10" viewBox="0 0 700 200" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={chartMode === "revenue" ? "#4f46e5" : "#10b981"} stopOpacity="0.35" />
+                            <stop offset="100%" stopColor={chartMode === "revenue" ? "#4f46e5" : "#10b981"} stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+
+                        <path d={areaD} fill="url(#chartGradient)" className="transition-all duration-500 ease-in-out" />
+                        <path
+                          d={lineD}
+                          fill="none"
+                          stroke={chartMode === "revenue" ? "#4f46e5" : "#10b981"}
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          className="transition-all duration-500 ease-in-out"
+                        />
+                      </svg>
+                    );
+                  })()}
 
                   <div className="absolute inset-0 flex justify-between items-stretch z-20 pointer-events-auto">
                     {analyticsData.monthlyChart.map((m) => {
                       const val = chartMode === "revenue" ? m.revenue : m.bookings;
-                      const maxVal = chartMode === "revenue" ? 1500000 : 1500;
+                      const maxVal = chartMode === "revenue" ? 1600000 : 1600;
                       const pct = Math.min((val / maxVal) * 100, 100);
-                      const topPos = 100 - pct;
+                      const topPos = 100 - (10 + (pct * 85) / 100); // matches Y-axis 10% to 95% range
 
                       return (
                         <div key={m.month} className="relative flex-1 group flex flex-col items-center">
                           <div className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-extrabold px-3 py-1 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl border border-slate-700 dark:border-slate-200 z-30">
-                            {m.month}: ₹{(m.revenue / 100000).toFixed(1)}L ({m.bookings} jobs)
+                            {chartMode === "revenue"
+                              ? `${m.month}: ₹${(m.revenue / 100000).toFixed(2)} Lakhs (${m.bookings} Dispatches)`
+                              : `${m.month}: ${m.bookings} Jobs Dispatched (₹${(m.revenue / 100000).toFixed(2)}L)`}
                           </div>
 
                           <div
-                            className="absolute w-3.5 h-3.5 -ml-1.75 -mt-1.75 rounded-full bg-white dark:bg-slate-900 border-2.5 border-brand-600 shadow-md group-hover:scale-150 group-hover:bg-brand-600 group-hover:border-white transition-all cursor-pointer"
+                            className={`absolute w-3.5 h-3.5 -ml-1.75 -mt-1.75 rounded-full bg-white dark:bg-slate-900 border-2.5 shadow-md group-hover:scale-150 transition-all duration-500 cursor-pointer ${
+                              chartMode === "revenue"
+                                ? "border-brand-600 group-hover:bg-brand-600 group-hover:border-white"
+                                : "border-emerald-600 group-hover:bg-emerald-600 group-hover:border-white"
+                            }`}
                             style={{ top: `${topPos}%`, left: "50%" }}
                           />
                         </div>
@@ -374,7 +396,9 @@ export default function ExecutiveDashboard() {
                 {analyticsData.monthlyChart.map((m) => (
                   <div key={m.month} className="flex-1 text-center">
                     <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 block">{m.month}</span>
-                    <span className="text-[10px] text-slate-400 font-mono font-medium block">{m.bookings} jobs</span>
+                    <span className="text-[10px] text-slate-400 font-mono font-medium block">
+                      {chartMode === "revenue" ? `₹${(m.revenue / 100000).toFixed(1)}L` : `${m.bookings} jobs`}
+                    </span>
                   </div>
                 ))}
               </div>

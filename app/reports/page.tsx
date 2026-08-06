@@ -76,32 +76,26 @@ export default function ReportsPage() {
             </button>
           </div>
         </div>
-      </div>
 
-      {/* 4 Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {reportsSummary.map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={idx}
-              className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs relative overflow-hidden group hover:border-brand-500 transition-all"
-            >
-              <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold uppercase tracking-wider">
-                <span>{item.title}</span>
-                <span className={`p-2 rounded-xl ${item.bg} group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-4 h-4" />
-                </span>
-              </div>
-              <div className={`text-2xl sm:text-3xl font-black font-mono ${item.color}`}>
-                {item.value}
-              </div>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> {item.change}
-              </span>
-            </div>
-          );
-        })}
+        {/* Integrated Glass Metrics Summary Strip */}
+        <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Bookings Volume</span>
+            <span className="font-extrabold text-white text-sm">1,420 Jobs (+14.2%)</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">Gross Revenue</span>
+            <span className="font-extrabold text-emerald-400 text-sm">₹18,45,000</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">GST Collected (18%)</span>
+            <span className="font-extrabold text-purple-300 text-sm">₹2,81,440</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
+            <span className="text-[10px] text-slate-400 font-bold uppercase block">25% HelpMate Comm.</span>
+            <span className="font-extrabold text-amber-300 text-sm">₹4,61,250</span>
+          </div>
+        </div>
       </div>
 
       {/* Report Selection Sub-tabs */}

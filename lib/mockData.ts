@@ -32,6 +32,7 @@ export interface ServiceItem {
   isInspectionBased?: boolean;
   addons?: ServiceAddon[];
   systemType?: string[];
+  thumbnailUrl?: string;
   status: "Active" | "Inactive";
   createdBy?: string;
   createdDate?: string;
@@ -51,11 +52,23 @@ export interface CategoryItem {
   name: string;
   slug: string;
   icon: string;
+  iconUrl?: string;
+  secondImageIconUrl?: string;
   subcategoriesCount: number;
   subcategories?: string[];
   servicesCount: number;
   status: "Active" | "Inactive";
   subServices?: CategorySubService[];
+}
+
+export interface VisitorPromoPopupConfig {
+  isEnabled: boolean;
+  bannerImageUrl: string;
+  secondImageIconUrl?: string;
+  targetLinkUrl: string;
+  headlineText?: string;
+  showFrequency: "Every Visit" | "Once per Session" | "Once per 24 Hours";
+  closeDelaySeconds: number;
 }
 
 export interface SubCategoryItem {
