@@ -15,10 +15,28 @@ import {
   Link as LinkIcon,
   CheckCircle2,
   Sliders,
-  Edit,
+  Edit2,
   Layers,
   Power,
   Trash2,
+  Smartphone,
+  Monitor,
+  ExternalLink,
+  Zap,
+  Globe,
+  Clock,
+  MousePointer,
+  Check,
+  ChevronRight,
+  ShieldCheck,
+  Tag,
+  BarChart3,
+  Copy,
+  Info,
+  Phone,
+  Play,
+  CheckCircle,
+  FileText,
 } from "lucide-react";
 
 interface PromoBannerItem {
@@ -29,21 +47,48 @@ interface PromoBannerItem {
   secondImageIconUrl?: string;
   targetUrl: string;
   status: "Active" | "Inactive";
+  clicksCount?: number;
 }
 
 export default function BannersPage() {
   const [activeTab, setActiveTab] = useState<"popupModal" | "secondIcons" | "homepageBanners">("popupModal");
 
-  // WEBSITE VISITOR PURE IMAGE POPUP BANNER STATE
+  // POPUP STYLE MODE: "rich_text_image" | "pure_image"
+  const [popupStyle, setPopupStyle] = useState<"rich_text_image" | "pure_image">("rich_text_image");
+
+  // WEBSITE VISITOR POPUP COMMON STATE
   const [isBannerEnabled, setIsBannerEnabled] = useState(true);
-  const [bannerImageUrl, setBannerImageUrl] = useState(
+  const [targetLinkUrl, setTargetLinkUrl] = useState("https://helpmate-theta.vercel.app/services/ac");
+  const [popupDelaySeconds, setPopupDelaySeconds] = useState(3);
+  const [popupFrequency, setPopupFrequency] = useState<"once_per_session" | "every_page" | "once_24h">("once_per_session");
+  const [isBannerPreviewOpen, setIsBannerPreviewOpen] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // STYLE 1: RICH TEXT + IMAGE MODE STATE
+  const [richBannerImage, setRichBannerImage] = useState(
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=80"
+  );
+  const [warrantyBadgeText, setWarrantyBadgeText] = useState("FREE 45 DAYS WARRANTY");
+  const [supportPhoneText, setSupportPhoneText] = useState("0542-2974740 • 7705004040");
+  const [appStoreBtnText, setAppStoreBtnText] = useState("Get it on Google Play");
+  const [specialOfferBadgeText, setSpecialOfferBadgeText] = useState("SPECIAL OFFER");
+  const [offerHeadline, setOfferHeadline] = useState("15% OFF ON YOUR SECOND AC SERVICE");
+  const [offerFeaturePills, setOfferFeaturePills] = useState("PRICE, QUALITY, SERVICE");
+  const [featuredServicesSectionTitle, setFeaturedServicesSectionTitle] = useState("FEATURED AC SERVICES");
+  const [featuredServicesListText, setFeaturedServicesListText] = useState(
+    "Gas Filling, AC Repairing, Duct Cleaning, Electrical Control Setup, Compressor Cleaning, Installation, Uninstallation, AC Shifting, Filter Replacement, Thermostat & Capacitor Replacement"
+  );
+
+  // STYLE 2: PURE IMAGE MODE STATE
+  const [pureBannerImageUrl, setPureBannerImageUrl] = useState(
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=80"
   );
   const [secondBannerIconUrl, setSecondBannerIconUrl] = useState(
     "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=300&auto=format&fit=crop&q=80"
   );
-  const [targetLinkUrl, setTargetLinkUrl] = useState("https://helpmate-theta.vercel.app/services/ac");
-  const [isBannerPreviewOpen, setIsBannerPreviewOpen] = useState(false);
+  const [badgeText, setBadgeText] = useState("Verified Partner Special Offer");
+  const [badgePosition, setBadgePosition] = useState<"bottom-left" | "bottom-right" | "top-left" | "top-right">("bottom-left");
 
   // CATEGORY SECOND IMAGE ICONS STATE
   const [categories, setCategories] = useState<CategoryItem[]>(() => {
@@ -78,6 +123,7 @@ export default function BannersPage() {
       secondImageIconUrl: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=300&auto=format&fit=crop&q=80",
       targetUrl: "https://helpmate-theta.vercel.app/services/ac",
       status: "Active",
+      clicksCount: 1420,
     },
     {
       id: "b-2",
@@ -87,6 +133,7 @@ export default function BannersPage() {
       secondImageIconUrl: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=300&auto=format&fit=crop&q=80",
       targetUrl: "https://helpmate-theta.vercel.app/services/cleaning",
       status: "Active",
+      clicksCount: 890,
     },
   ]);
 
@@ -133,6 +180,7 @@ export default function BannersPage() {
       secondImageIconUrl: newBannerSecondIconUrl,
       targetUrl: newBannerTargetUrl,
       status: "Active",
+      clicksCount: 0,
     };
 
     setPromoBanners([newBanner, ...promoBanners]);
@@ -140,14 +188,36 @@ export default function BannersPage() {
     setIsAddBannerOpen(false);
   };
 
+  const togglePromoBannerStatus = (id: string) => {
+    setPromoBanners((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: b.status === "Active" ? "Inactive" : "Active" } : b))
+    );
+  };
+
+  const copyTargetUrl = () => {
+    navigator.clipboard.writeText(targetLinkUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const parsedFeaturedServices = featuredServicesListText
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const parsedOfferPills = offerFeaturePills
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   const categoryIconColumns: Column<CategoryItem>[] = [
     {
       key: "name",
-      header: "Category Title & Icons",
+      header: "Category & Icons",
       accessor: (row) => (
         <div className="flex items-center gap-3">
           <div className="flex items-center -space-x-2 shrink-0">
-            <div className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-brand-500 bg-slate-100 dark:bg-slate-800 shadow-sm z-10">
+            <div className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-brand-500 bg-slate-100 dark:bg-slate-800 shadow-md z-10">
               <img
                 src={row.iconUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=120&auto=format&fit=crop&q=80"}
                 alt={row.name}
@@ -155,11 +225,11 @@ export default function BannersPage() {
               />
             </div>
             {row.secondImageIconUrl && (
-              <div className="w-8 h-8 rounded-2xl overflow-hidden border-2 border-purple-500 bg-slate-100 dark:bg-slate-800 shadow-sm">
+              <div className="w-8 h-8 rounded-2xl overflow-hidden border-2 border-purple-500 bg-white dark:bg-slate-800 shadow-md">
                 <img
                   src={row.secondImageIconUrl}
                   alt="2nd Icon Badge"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain p-0.5"
                 />
               </div>
             )}
@@ -176,24 +246,30 @@ export default function BannersPage() {
       header: "Primary Icon Preview",
       accessor: (row) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl overflow-hidden border border-brand-400 bg-slate-100">
+          <div className="w-8 h-8 rounded-xl overflow-hidden border border-brand-300 dark:border-brand-800 bg-slate-100 shrink-0">
             <img src={row.iconUrl} alt="Primary Icon" className="w-full h-full object-cover" />
           </div>
-          <span className="text-[10px] text-slate-400 max-w-[150px] truncate font-mono">{row.iconUrl}</span>
+          <span className="text-[10px] text-slate-400 max-w-[140px] truncate font-mono">{row.iconUrl}</span>
         </div>
       ),
     },
     {
       key: "secondImageIconUrl",
-      header: "Second Image Icon Option",
+      header: "2nd Badge Icon Option",
       accessor: (row) => (
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl overflow-hidden border border-purple-400 bg-white p-0.5">
-            <img src={row.secondImageIconUrl} alt="Second Icon" className="w-full h-full object-contain" />
-          </div>
-          <span className="text-[10px] text-purple-600 font-mono font-bold max-w-[150px] truncate">
-            {row.secondImageIconUrl || "Not Set"}
-          </span>
+          {row.secondImageIconUrl ? (
+            <>
+              <div className="w-8 h-8 rounded-xl overflow-hidden border border-purple-400 bg-white p-0.5 shrink-0 shadow-xs">
+                <img src={row.secondImageIconUrl} alt="Second Icon" className="w-full h-full object-contain" />
+              </div>
+              <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono font-bold max-w-[140px] truncate">
+                {row.secondImageIconUrl}
+              </span>
+            </>
+          ) : (
+            <span className="text-[10px] text-slate-400 italic">Not Set</span>
+          )}
         </div>
       ),
     },
@@ -204,75 +280,10 @@ export default function BannersPage() {
         <button
           type="button"
           onClick={() => openEditCategoryIcons(row)}
-          className="px-3 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
         >
-          <Edit className="w-3.5 h-3.5" />
+          <Edit2 className="w-3.5 h-3.5" />
           <span>Manage Image Icons</span>
-        </button>
-      ),
-    },
-  ];
-
-  const promoBannerColumns: Column<PromoBannerItem>[] = [
-    {
-      key: "title",
-      header: "Banner Title & Image",
-      accessor: (row) => (
-        <div className="flex items-center gap-3">
-          <div className="w-16 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 shrink-0">
-            <img src={row.imageUrl} alt={row.title} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-slate-900 dark:text-white text-xs">{row.title}</span>
-            <span className="text-[10px] text-slate-400 font-mono max-w-xs truncate">{row.targetUrl}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "secondImageIconUrl",
-      header: "2nd Icon Badge",
-      accessor: (row) => (
-        <div className="flex items-center gap-2">
-          {row.secondImageIconUrl ? (
-            <div className="w-8 h-8 rounded-xl overflow-hidden border border-purple-400 bg-white p-0.5">
-              <img src={row.secondImageIconUrl} alt="2nd Badge" className="w-full h-full object-contain" />
-            </div>
-          ) : (
-            <span className="text-[10px] text-slate-400 italic">None</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "location",
-      header: "Display Location",
-      accessor: (row) => (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
-          {row.location}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      accessor: (row) => (
-        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 w-fit">
-          <CheckCircle2 className="w-3 h-3" /> {row.status}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      accessor: (row) => (
-        <button
-          type="button"
-          onClick={() => setPromoBanners(promoBanners.filter((b) => b.id !== row.id))}
-          className="p-1.5 rounded-lg bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-all cursor-pointer"
-          title="Delete Banner"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
         </button>
       ),
     },
@@ -280,277 +291,831 @@ export default function BannersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Executive Top Banner Header */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-purple-700 to-indigo-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <Megaphone className="w-4 h-4" /> Promotional Banners & Popups CMS
+
+      {/* EXECUTIVE TOP BANNER HEADER */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-purple-700 to-indigo-800 text-white shadow-lux flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-white rounded-full translate-y-1/2" />
+        </div>
+        <div className="relative z-10 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5 w-fit">
+              <Megaphone className="w-3 h-3" /> Promotional Banners & Popups CMS
+            </span>
+            <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live System Active
+            </span>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Website Visitor Popups & Image Banners</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
-            Dedicated CMS page to manage full-image visitor modal popups, 2nd image icon options, and homepage offer banners.
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight">Banners & Visitor Popups</h1>
+          <p className="text-xs text-white/85 max-w-xl font-medium">
+            Manage website visitor popups (Rich Text + Image OR Pure Image), category 2nd image badges, and hero offer banners.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="relative z-10 flex items-center gap-3 shrink-0">
           <button
             type="button"
             onClick={() => setIsBannerPreviewOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-400 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-purple-900 font-extrabold text-xs shadow-lux transition-all flex items-center gap-2 cursor-pointer shrink-0"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4 text-purple-600" />
             <span>Test Live Visitor Popup</span>
           </button>
         </div>
       </div>
 
-      {/* Tab Controls */}
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold w-fit">
-        <button
-          type="button"
-          onClick={() => setActiveTab("popupModal")}
-          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-            activeTab === "popupModal"
-              ? "bg-purple-600 text-white shadow-lux"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          <Megaphone className="w-4 h-4" />
-          <span>Website Visitor Pure Image Popup</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("secondIcons")}
-          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-            activeTab === "secondIcons"
-              ? "bg-purple-600 text-white shadow-lux"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Category 2nd Image Icons</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("homepageBanners")}
-          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
-            activeTab === "homepageBanners"
-              ? "bg-purple-600 text-white shadow-lux"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          <ImageIcon className="w-4 h-4" />
-          <span>Homepage Offer Banners</span>
-        </button>
+      {/* MODERN TAB NAVIGATION */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveTab("popupModal")}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === "popupModal"
+                ? "bg-brand-600 text-white shadow-md font-black"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Megaphone className="w-4 h-4" />
+            <span>Website Visitor Popup Manager</span>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "popupModal" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+              {isBannerEnabled ? "LIVE" : "OFF"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("secondIcons")}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === "secondIcons"
+                ? "bg-brand-600 text-white shadow-md font-black"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Category 2nd Image Icons</span>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "secondIcons" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+              {categories.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("homepageBanners")}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === "homepageBanners"
+                ? "bg-brand-600 text-white shadow-md font-black"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span>Homepage Offer Banners</span>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "homepageBanners" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+              {promoBanners.length}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* TAB 1: WEBSITE VISITOR PURE IMAGE POPUP BANNER CMS */}
+      {/* TAB 1: WEBSITE VISITOR POPUP BANNER CMS */}
       {activeTab === "popupModal" && (
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-900/60 space-y-5 shadow-lux relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
-                <Megaphone className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                    Website Visitor Popup Banner CMS (Pure Image Mode)
-                  </h3>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                      isBannerEnabled
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          {/* LEFT 7 COLS: FORM CONTROLS */}
+          <div className="lg:col-span-7 space-y-5">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-sm">
+              
+              {/* Status & Style Selector Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 border border-purple-200 dark:border-purple-800 shrink-0">
+                    <Megaphone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      Website Visitor Popup CMS
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Configure visitor promotional modal design style & content.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                    isBannerEnabled
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                      : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  }`}>
+                    {isBannerEnabled ? "● LIVE ON WEBSITE" : "○ DISABLED"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsBannerEnabled(!isBannerEnabled)}
+                    className={`w-12 h-6.5 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer flex items-center ${
+                      isBannerEnabled ? "bg-emerald-500 justify-end" : "bg-slate-300 dark:bg-slate-700 justify-start"
                     }`}
                   >
-                    {isBannerEnabled ? "LIVE ON WEBSITE" : "DISABLED"}
-                  </span>
+                    <span className="w-4 h-4 rounded-full bg-white shadow-md block" />
+                  </button>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Controls the full-bleed image popup modal displayed when visitors open helpmate-theta.vercel.app
-                </p>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Popup Status:</span>
+              {/* POPUP STYLE SWITCHER BUTTONS */}
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <label className="text-xs font-extrabold text-slate-900 dark:text-white block flex items-center justify-between">
+                  <span>Select Popup Design Style Option:</span>
+                  <span className="text-[10px] text-purple-600 font-bold uppercase">2 Styles Supported</span>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPopupStyle("rich_text_image")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
+                      popupStyle === "rich_text_image"
+                        ? "border-brand-600 bg-brand-50/60 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 ring-1 ring-brand-600 font-extrabold"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4 text-purple-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-black">Rich Text + Image Mode</div>
+                      <div className="text-[10px] opacity-75">Offer title, hotline & checklist</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPopupStyle("pure_image")}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
+                      popupStyle === "pure_image"
+                        ? "border-brand-600 bg-brand-50/60 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 ring-1 ring-brand-600 font-extrabold"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300"
+                    }`}
+                  >
+                    <ImageIcon className="w-4 h-4 text-purple-600 shrink-0" />
+                    <div>
+                      <div className="text-xs font-black">Pure Image Mode</div>
+                      <div className="text-[10px] opacity-75">Full-bleed banner image only</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* FORM FIELDS FOR STYLE 1: RICH TEXT + IMAGE */}
+              {popupStyle === "rich_text_image" ? (
+                <div className="space-y-4">
+                  {/* Image & Left Badge */}
+                  <div className="p-4 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/60 space-y-3">
+                    <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
+                      <span>Left Side Showcase Photo & Warranty Badge</span>
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Left Image URL</label>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="url"
+                            value={richBannerImage}
+                            onChange={(e) => setRichBannerImage(e.target.value)}
+                            className="flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-xs outline-none"
+                            placeholder="Image URL..."
+                          />
+                          <label className="p-2 rounded-xl bg-purple-600 text-white font-bold text-xs cursor-pointer shrink-0">
+                            <Upload className="w-3.5 h-3.5" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (re) => setRichBannerImage(re.target?.result as string);
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Top-Left Warranty Badge Text</label>
+                        <input
+                          type="text"
+                          value={warrantyBadgeText}
+                          onChange={(e) => setWarrantyBadgeText(e.target.value)}
+                          className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-medium"
+                          placeholder="e.g. FREE 45 DAYS WARRANTY"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Header: Phone, Subtitle & App Store Button */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Support Phone Numbers</label>
+                      <input
+                        type="text"
+                        value={supportPhoneText}
+                        onChange={(e) => setSupportPhoneText(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold outline-none"
+                        placeholder="0542-2974740 • 7705004040"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Top Right App CTA Button Text</label>
+                      <input
+                        type="text"
+                        value={appStoreBtnText}
+                        onChange={(e) => setAppStoreBtnText(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold outline-none"
+                        placeholder="Get it on Google Play"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Special Offer Box Content */}
+                  <div className="p-4 rounded-2xl bg-pink-50/50 dark:bg-purple-950/20 border border-pink-200 dark:border-purple-900/60 space-y-3">
+                    <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block">
+                      Special Offer Box Details
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Badge Title</label>
+                        <input
+                          type="text"
+                          value={specialOfferBadgeText}
+                          onChange={(e) => setSpecialOfferBadgeText(e.target.value)}
+                          className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-bold"
+                          placeholder="SPECIAL OFFER"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Offer Tag Pills (comma separated)</label>
+                        <input
+                          type="text"
+                          value={offerFeaturePills}
+                          onChange={(e) => setOfferFeaturePills(e.target.value)}
+                          className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-bold"
+                          placeholder="PRICE, QUALITY, SERVICE"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Main Offer Headline</label>
+                        <input
+                          type="text"
+                          value={offerHeadline}
+                          onChange={(e) => setOfferHeadline(e.target.value)}
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-black outline-none focus:border-brand-500"
+                          placeholder="15% OFF ON YOUR SECOND AC SERVICE"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Featured Services Checklist */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Services Section Title</label>
+                        <input
+                          type="text"
+                          value={featuredServicesSectionTitle}
+                          onChange={(e) => setFeaturedServicesSectionTitle(e.target.value)}
+                          className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-bold"
+                          placeholder="FEATURED AC SERVICES"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Checklist Items (comma separated)</label>
+                        <textarea
+                          rows={3}
+                          value={featuredServicesListText}
+                          onChange={(e) => setFeaturedServicesListText(e.target.value)}
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-medium resize-none"
+                          placeholder="Gas Filling, AC Repairing, Duct Cleaning..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* FORM FIELDS FOR STYLE 2: PURE IMAGE */
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3">
+                    <label className="font-extrabold text-slate-900 dark:text-white text-xs block flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <ImageIcon className="w-4 h-4 text-brand-600" />
+                        <span>Main Pure Image Banner</span>
+                      </span>
+                      <span className="text-[10px] text-brand-600 dark:text-brand-400 font-bold uppercase">Image File / Direct Link</span>
+                    </label>
+
+                    <div className="flex gap-3 items-center">
+                      <div className="w-28 h-20 rounded-2xl overflow-hidden border-2 border-brand-500 shrink-0 bg-slate-200 dark:bg-slate-700 shadow-md relative group">
+                        <img
+                          src={pureBannerImageUrl}
+                          alt="Visitor Banner Image"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <label className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Upload Image</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (re) => {
+                                    setPureBannerImageUrl(re.target?.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                          <span className="text-[11px] text-slate-400 font-medium">PNG, JPG, WebP up to 5MB</span>
+                        </div>
+                        <input
+                          type="url"
+                          value={pureBannerImageUrl}
+                          onChange={(e) => setPureBannerImageUrl(e.target.value)}
+                          placeholder="Or paste direct image URL (https://...)"
+                          className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-brand-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 space-y-3">
+                    <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        <span>Secondary Icon Badge & Overlay Text</span>
+                      </span>
+                      <span className="text-[10px] text-purple-600 font-bold uppercase">Badge Preview</span>
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex gap-2 items-center">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-purple-500 shrink-0 bg-white dark:bg-slate-800 shadow-md p-1">
+                          <img
+                            src={secondBannerIconUrl}
+                            alt="Second Icon Badge"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                          <label className="px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer w-fit shadow-xs">
+                            <Upload className="w-3 h-3" />
+                            <span>Upload Icon</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (re) => {
+                                    setSecondBannerIconUrl(re.target?.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                          <input
+                            type="url"
+                            value={secondBannerIconUrl}
+                            onChange={(e) => setSecondBannerIconUrl(e.target.value)}
+                            placeholder="Icon URL..."
+                            className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-[10px] outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-0.5">Badge Text</label>
+                          <input
+                            type="text"
+                            value={badgeText}
+                            onChange={(e) => setBadgeText(e.target.value)}
+                            placeholder="e.g. Verified Partner Special Offer"
+                            className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500 font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-0.5">Badge Position</label>
+                          <select
+                            value={badgePosition}
+                            onChange={(e) => setBadgePosition(e.target.value as any)}
+                            className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none focus:border-purple-500 font-bold cursor-pointer"
+                          >
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="bottom-right">Bottom Right</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="top-right">Top Right</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TARGET REDIRECTION & POPUP DISPLAY BEHAVIOR */}
+              <div className="space-y-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Banner Click Target URL (Website Redirection)
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <LinkIcon className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="url"
+                        value={targetLinkUrl}
+                        onChange={(e) => setTargetLinkUrl(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-brand-500"
+                        placeholder="https://helpmate-theta.vercel.app/services/ac"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={copyTargetUrl}
+                      className="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-brand-600 font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLink ? "Copied!" : "Copy"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Popup Delay Timer
+                    </label>
+                    <select
+                      value={popupDelaySeconds}
+                      onChange={(e) => setPopupDelaySeconds(Number(e.target.value))}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none font-bold cursor-pointer"
+                    >
+                      <option value={0}>Instant (0 sec)</option>
+                      <option value={2}>2 Seconds</option>
+                      <option value={3}>3 Seconds (Recommended)</option>
+                      <option value={5}>5 Seconds</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Display Frequency
+                    </label>
+                    <select
+                      value={popupFrequency}
+                      onChange={(e) => setPopupFrequency(e.target.value as any)}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none font-bold cursor-pointer"
+                    >
+                      <option value="once_per_session">Once Per Session</option>
+                      <option value="once_24h">Once Every 24 Hours</option>
+                      <option value="every_page">Every Page Load (Test Mode)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* RIGHT 5 COLS: STICKY INTERACTIVE PREVIEW CANVAS */}
+          <div className="lg:col-span-5 sticky self-start" style={{ top: "calc(5rem + 1.5rem)" }}>
+            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+              
+              {/* Device Preview Header Bar */}
+              <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/30">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span className="font-black text-xs text-slate-900 dark:text-white">Live Interactive Studio</span>
+                </div>
+
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("desktop")}
+                    className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                      previewDevice === "desktop"
+                        ? "bg-brand-600 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                    title="Desktop Preview"
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("mobile")}
+                    className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                      previewDevice === "mobile"
+                        ? "bg-brand-600 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                    title="Mobile Preview"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Website Canvas Mockup Frame */}
+              <div className="p-4 bg-slate-950/90 relative overflow-hidden flex items-center justify-center min-h-[420px]">
+                
+                {/* Background blurred mockup */}
+                <div className="absolute inset-0 opacity-15 pointer-events-none p-4 space-y-4 filter blur-xs">
+                  <div className="h-8 bg-slate-700 rounded-xl w-full" />
+                  <div className="h-32 bg-slate-800 rounded-2xl w-full" />
+                </div>
+
+                {/* STYLE 1: RICH TEXT + IMAGE PREVIEW IN STUDIO */}
+                {popupStyle === "rich_text_image" ? (
+                  <div className={`relative transition-all duration-300 z-10 ${
+                    previewDevice === "mobile" ? "w-[260px]" : "w-[380px]"
+                  }`}>
+                    <div className="rounded-2xl overflow-hidden shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 relative">
+                      {/* Close button */}
+                      <div className="absolute top-2 right-2 z-30 w-6 h-6 rounded-full bg-slate-900/80 text-white flex items-center justify-center">
+                        <X className="w-3 h-3" />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-12">
+                        {/* Left image half */}
+                        <div className="md:col-span-5 relative bg-slate-800 min-h-[140px] md:min-h-[220px]">
+                          <img
+                            src={richBannerImage}
+                            alt="Showcase"
+                            className="w-full h-full object-cover"
+                          />
+                          {warrantyBadgeText && (
+                            <div className="absolute top-2 left-2 w-12 h-12 rounded-full border border-dashed border-white/80 text-white font-black text-[7px] uppercase tracking-wider flex items-center justify-center text-center p-1 bg-black/40 backdrop-blur-xs">
+                              {warrantyBadgeText}
+                            </div>
+                          )}
+                          <div className="absolute bottom-2 left-2 bg-white/95 dark:bg-slate-900/95 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800 text-[8px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                            <span>HM</span>
+                            <span className="truncate">Helpmate</span>
+                          </div>
+                        </div>
+
+                        {/* Right text content half */}
+                        <div className="md:col-span-7 p-3 space-y-2 text-left">
+                          <div>
+                            <span className="text-[7px] font-black uppercase text-purple-700 dark:text-purple-400 block tracking-widest">
+                              BOOK VERIFIED SUPPORT
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-800 dark:text-slate-200 block truncate">
+                              📞 {supportPhoneText}
+                            </span>
+                          </div>
+
+                          {/* Offer card */}
+                          <div className="p-2 rounded-xl bg-pink-50/60 dark:bg-purple-950/40 border border-pink-200 dark:border-purple-800/60 space-y-1">
+                            <span className="text-[7px] font-black uppercase text-purple-800 dark:text-purple-300 block">
+                              {specialOfferBadgeText}
+                            </span>
+                            <h5 className="font-black text-[10px] text-slate-900 dark:text-white leading-tight">
+                              {offerHeadline}
+                            </h5>
+                            <div className="flex flex-wrap gap-1">
+                              {parsedOfferPills.map((pill) => (
+                                <span key={pill} className="text-[6px] font-black bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1 py-0.2 rounded border border-slate-200">
+                                  {pill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Services */}
+                          <div>
+                            <span className="text-[7px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-widest block mb-1">
+                              ✨ {featuredServicesSectionTitle}
+                            </span>
+                            <div className="grid grid-cols-2 gap-1 text-[7px] font-bold text-slate-700 dark:text-slate-300">
+                              {parsedFeaturedServices.slice(0, 6).map((svc) => (
+                                <span key={svc} className="flex items-center gap-0.5 truncate">
+                                  <CheckCircle className="w-2 h-2 text-emerald-500 shrink-0" /> {svc}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* STYLE 2: PURE IMAGE PREVIEW IN STUDIO */
+                  <div className={`relative transition-all duration-300 z-10 ${
+                    previewDevice === "mobile" ? "w-[240px]" : "w-[340px]"
+                  }`}>
+                    <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-slate-900 group">
+                      <div className="absolute top-2.5 right-2.5 z-30 p-1.5 rounded-full bg-slate-950/70 text-white hover:bg-slate-950 transition-colors shadow-lg">
+                        <X className="w-3.5 h-3.5" />
+                      </div>
+
+                      <div className="relative w-full aspect-[16/10] bg-slate-800 overflow-hidden">
+                        <img
+                          src={pureBannerImageUrl}
+                          alt="Pure Image Promo Popup"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+
+                        {secondBannerIconUrl && (
+                          <div className={`absolute z-20 p-1.5 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-white/40 flex items-center gap-1.5 max-w-[170px] ${
+                            badgePosition === "bottom-left" ? "bottom-2.5 left-2.5" :
+                            badgePosition === "bottom-right" ? "bottom-2.5 right-2.5" :
+                            badgePosition === "top-left" ? "top-2.5 left-2.5" : "top-2.5 right-2.5"
+                          }`}>
+                            <img
+                              src={secondBannerIconUrl}
+                              alt="Second Icon Badge"
+                              className="w-6 h-6 object-contain rounded-md shrink-0"
+                            />
+                            <span className="text-[9px] font-black text-slate-900 dark:text-white leading-tight truncate">
+                              {badgeText}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Info Footer */}
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 text-[11px] text-slate-500 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Triggers in <strong>{popupDelaySeconds}s</strong></span>
+                </span>
                 <button
                   type="button"
-                  onClick={() => setIsBannerEnabled(!isBannerEnabled)}
-                  className={`w-12 h-6.5 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer flex items-center ${
-                    isBannerEnabled ? "bg-emerald-500 justify-end" : "bg-slate-300 dark:bg-slate-700 justify-start"
-                  }`}
+                  onClick={() => setIsBannerPreviewOpen(true)}
+                  className="font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <span className="w-4 h-4 rounded-full bg-white shadow-md block" />
+                  Full Screen Test Modal →
                 </button>
-              </label>
+              </div>
+
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* MAIN POPUP BANNER IMAGE UPLOAD */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-              <label className="font-extrabold text-slate-900 dark:text-white text-xs block flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <ImageIcon className="w-4 h-4 text-brand-600" />
-                  <span>1. Main Popup Banner Image (Full Pure Image Modal)</span>
-                </span>
-                <span className="text-[10px] text-brand-600 font-bold uppercase">Image Preview</span>
-              </label>
-
-              <div className="flex gap-3 items-center">
-                <div className="w-28 h-24 rounded-2xl overflow-hidden border-2 border-brand-500 shrink-0 bg-slate-200 dark:bg-slate-700 shadow-md relative group">
-                  <img
-                    src={bannerImageUrl}
-                    alt="Visitor Banner Image"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <label className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer w-fit shadow-xs">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload Main Banner Image</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (re) => {
-                            setBannerImageUrl(re.target?.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                  <input
-                    type="url"
-                    value={bannerImageUrl}
-                    onChange={(e) => setBannerImageUrl(e.target.value)}
-                    placeholder="Or paste direct image URL (https://...)"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-brand-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* SECOND IMAGE ICON MANAGE OPTION */}
-            <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 space-y-3">
-              <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
-                  <span>2. Second Image Icon / Secondary Badge Option</span>
-                </span>
-                <span className="text-[10px] text-purple-600 font-bold uppercase">Badge Icon Preview</span>
-              </label>
-
-              <div className="flex gap-3 items-center">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-purple-500 shrink-0 bg-white dark:bg-slate-800 shadow-md relative group p-1">
-                  <img
-                    src={secondBannerIconUrl}
-                    alt="Second Icon Badge"
-                    className="w-full h-full object-contain group-hover:scale-110 transition-transform"
-                  />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <label className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer w-fit shadow-xs">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload 2nd Image Icon</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (re) => {
-                            setSecondBannerIconUrl(re.target?.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                  <input
-                    type="url"
-                    value={secondBannerIconUrl}
-                    onChange={(e) => setSecondBannerIconUrl(e.target.value)}
-                    placeholder="Or paste 2nd image icon URL (https://...)"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-purple-500"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* TARGET REDIRECTION LINK */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
-            <div className="w-full sm:flex-1">
-              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                Banner Click Target URL (Website Redirection)
-              </label>
-              <div className="relative">
-                <LinkIcon className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input
-                  type="url"
-                  value={targetLinkUrl}
-                  onChange={(e) => setTargetLinkUrl(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-brand-500"
-                  placeholder="https://helpmate-theta.vercel.app/services/ac"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsBannerPreviewOpen(true)}
-              className="w-full sm:w-auto mt-5 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <Eye className="w-4 h-4 text-brand-400" />
-              <span>Test Live Pure Image Popup</span>
-            </button>
-          </div>
         </div>
       )}
 
       {/* TAB 2: CATEGORY 2ND IMAGE ICONS CMS */}
       {activeTab === "secondIcons" && (
-        <div className="space-y-4">
+        <div className="space-y-5">
+          <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-xs text-purple-900 dark:text-purple-300 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 shrink-0 text-purple-600" />
+              <span>
+                <strong>Category 2nd Image Icons:</strong> Upload secondary icon badges for category cards shown across the website header and service grids.
+              </span>
+            </div>
+            <span className="font-extrabold text-[11px] bg-purple-200 dark:bg-purple-900 px-3 py-1 rounded-full shrink-0">
+              {categories.length} Categories
+            </span>
+          </div>
+
           <DataTable
             columns={categoryIconColumns}
             data={categories}
-            searchPlaceholder="Search category..."
+            searchPlaceholder="Search category by name..."
           />
         </div>
       )}
 
       {/* TAB 3: HOMEPAGE OFFER BANNERS */}
       {activeTab === "homepageBanners" && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
-              Homepage Carousel & Hero Banners ({promoBanners.length})
-            </h3>
+            <div>
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">
+                Homepage Carousel & Offer Banners ({promoBanners.length})
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Manage promotional banners placed in hero carousels and checkout sidebars.
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setIsAddBannerOpen(true)}
-              className="px-4 py-2 rounded-xl bg-brand-600 text-white font-extrabold text-xs shadow-md flex items-center gap-1 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4" /> Add Offer Banner
             </button>
           </div>
 
-          <DataTable
-            columns={promoBannerColumns}
-            data={promoBanners}
-            searchPlaceholder="Search banner title..."
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {promoBanners.map((banner) => (
+              <div
+                key={banner.id}
+                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
+              >
+                <div>
+                  <div className="relative aspect-[16/9] bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <img
+                      src={banner.imageUrl}
+                      alt={banner.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+
+                    <div className="absolute top-3 left-3 z-10">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1 ${
+                        banner.status === "Active"
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-900/80 text-white backdrop-blur-md"
+                      }`}>
+                        <CheckCircle2 className="w-3 h-3" /> {banner.status}
+                      </span>
+                    </div>
+
+                    {banner.secondImageIconUrl && (
+                      <div className="absolute bottom-3 right-3 z-10 w-9 h-9 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1 shadow-md border border-white/40">
+                        <img
+                          src={banner.secondImageIconUrl}
+                          alt="2nd Badge"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-0.5 rounded-full border border-brand-200 dark:border-brand-800">
+                        {banner.location}
+                      </span>
+                      {banner.clicksCount !== undefined && (
+                        <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                          <MousePointer className="w-3 h-3 text-purple-500" /> {banner.clicksCount} Clicks
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="font-extrabold text-slate-900 dark:text-white text-xs leading-snug line-clamp-2">
+                      {banner.title}
+                    </h4>
+
+                    <p className="text-[10px] text-slate-400 font-mono truncate">
+                      {banner.targetUrl}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => togglePromoBannerStatus(banner.id)}
+                    className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-colors cursor-pointer ${
+                      banner.status === "Active"
+                        ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    }`}
+                  >
+                    {banner.status === "Active" ? "Pause Banner" : "Activate Banner"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPromoBanners(promoBanners.filter((b) => b.id !== banner.id))}
+                    className="p-1.5 rounded-xl bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors cursor-pointer"
+                    title="Delete Banner"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -581,7 +1146,6 @@ export default function BannersPage() {
               </div>
 
               <form onSubmit={handleSaveCategoryIcons} className="space-y-4 text-xs">
-                {/* PRIMARY ICON */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
                   <label className="font-bold text-slate-900 dark:text-white block flex items-center justify-between">
                     <span>Primary Category Icon Image</span>
@@ -618,7 +1182,6 @@ export default function BannersPage() {
                   </div>
                 </div>
 
-                {/* SECOND IMAGE ICON */}
                 <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 space-y-2">
                   <label className="font-bold text-purple-900 dark:text-purple-300 block flex items-center justify-between">
                     <span>Second Image Icon / Secondary Badge Option</span>
@@ -726,8 +1289,8 @@ export default function BannersPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 space-y-2">
-                  <label className="font-bold text-slate-900 block flex items-center justify-between">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <label className="font-bold text-slate-900 dark:text-white block flex items-center justify-between">
                     <span>Main Banner Image</span>
                   </label>
                   <div className="flex gap-2 items-center">
@@ -752,22 +1315,22 @@ export default function BannersPage() {
                       value={newBannerImageUrl}
                       onChange={(e) => setNewBannerImageUrl(e.target.value)}
                       placeholder="Image URL..."
-                      className="flex-1 p-1.5 rounded-lg border border-slate-200 font-mono text-[10px]"
+                      className="flex-1 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 font-mono text-[10px]"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setIsAddBannerOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 font-bold text-xs text-slate-600"
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-600 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-brand-600 text-white font-extrabold shadow-md"
+                    className="px-5 py-2 rounded-xl bg-brand-600 text-white font-extrabold shadow-md cursor-pointer"
                   >
                     Save Banner
                   </button>
@@ -778,61 +1341,189 @@ export default function BannersPage() {
         </Portal>
       )}
 
-      {/* LIVE PURE IMAGE WEBSITE VISITOR POPUP PREVIEW MODAL */}
+      {/* LIVE FULL SCREEN WEBSITE VISITOR POPUP TEST PREVIEW MODAL */}
       {isBannerPreviewOpen && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="relative max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200 group">
-              {/* Close Button at top right */}
-              <button
-                type="button"
-                onClick={() => setIsBannerPreviewOpen(false)}
-                className="absolute top-4 right-4 z-30 p-2 rounded-full bg-slate-950/70 text-white hover:bg-slate-950 transition-colors shadow-lg cursor-pointer"
-                title="Close Visitor Modal Preview"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Pure Image Banner Container (No Text, Only Banner Image) */}
-              <div className="relative w-full aspect-[16/9] sm:aspect-[16/8] bg-slate-900">
-                <img
-                  src={bannerImageUrl}
-                  alt="Pure Image Visitor Promo Popup Banner"
-                  className="w-full h-full object-cover"
-                />
-
-                {/* Optional Second Image Icon Overlay Badge at bottom left */}
-                {secondBannerIconUrl && (
-                  <div className="absolute bottom-4 left-4 z-20 p-2 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-2xl border border-white/40 flex items-center gap-2 max-w-[200px]">
-                    <img
-                      src={secondBannerIconUrl}
-                      alt="Second Icon Badge"
-                      className="w-8 h-8 object-contain rounded-lg shrink-0"
-                    />
-                    <span className="text-[10px] font-extrabold text-slate-900 dark:text-white leading-tight">
-                      Verified Partner Offer
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Bar Footer */}
-              <div className="p-4 bg-slate-900 text-white flex items-center justify-between text-xs">
-                <span className="text-slate-400 text-[11px] font-mono truncate max-w-sm">
-                  Click Target: {targetLinkUrl}
-                </span>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+            
+            {/* FULL SCREEN MODAL BODY */}
+            {popupStyle === "rich_text_image" ? (
+              /* STYLE 1: EXACT MATCH TO USER'S SCREENSHOT (RICH TEXT + IMAGE) */
+              <div className="relative max-w-4xl w-full rounded-[36px] overflow-hidden shadow-2xl bg-white dark:bg-slate-900 border border-white/20 animate-in zoom-in-95 duration-200 text-slate-900 dark:text-white">
+                
+                {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setIsBannerPreviewOpen(false)}
-                  className="px-4 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold cursor-pointer"
+                  className="absolute top-5 right-5 z-40 w-10 h-10 rounded-full bg-[#352c42] text-white hover:bg-slate-900 flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+                  title="Close Preview"
                 >
-                  Close Preview
+                  <X className="w-5 h-5" />
                 </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-12 min-h-[480px]">
+                  {/* Left Side: Photo + Badges */}
+                  <div className="md:col-span-5 relative bg-slate-800 overflow-hidden min-h-[260px] md:min-h-full">
+                    <img
+                      src={richBannerImage}
+                      alt="Service Technician Showcase"
+                      className="w-full h-full object-cover"
+                    />
+
+                    {/* Circular Warranty Badge top left */}
+                    {warrantyBadgeText && (
+                      <div className="absolute top-6 left-6 z-20 w-24 h-24 rounded-full border-2 border-dashed border-white/80 text-white font-black text-[9px] uppercase tracking-wider flex items-center justify-center text-center p-2 backdrop-blur-xs bg-black/20 shadow-xl">
+                        {warrantyBadgeText}
+                      </div>
+                    )}
+
+                    {/* Helpmate Logo & Subtitle bottom left */}
+                    <div className="absolute bottom-6 left-6 z-20 flex flex-col gap-1">
+                      <div className="px-3.5 py-1.5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-white/40 shadow-xl flex items-center gap-2 w-fit">
+                        <div className="w-6 h-6 rounded-md bg-[#6b1652] text-white font-black text-[10px] flex items-center justify-center">
+                          HM
+                        </div>
+                        <span className="font-black text-xs text-slate-900 dark:text-white tracking-tight">
+                          HELPMATE
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/90 font-bold italic drop-shadow-md pl-1">
+                        Helpmate for your home care
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right Side: Rich Text, Offer Box & Checklist */}
+                  <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                    {/* Top Support & App Store Row */}
+                    <div className="flex items-start justify-between gap-4 pr-12">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-black uppercase text-[#6b1652] dark:text-purple-400 tracking-widest block">
+                          BOOK VERIFIED SUPPORT
+                        </span>
+                        <div className="flex items-center gap-2 text-sm sm:text-base font-black text-[#4a0d39] dark:text-white">
+                          <Phone className="w-4 h-4 text-[#6b1652] dark:text-purple-400" />
+                          <span>{supportPhoneText}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => window.open(targetLinkUrl, "_blank")}
+                        className="px-4 py-2 rounded-full bg-[#0e0c1a] hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer transition-colors shrink-0"
+                      >
+                        <Play className="w-3 h-3 fill-white" />
+                        <span>{appStoreBtnText}</span>
+                      </button>
+                    </div>
+
+                    {/* Special Offer Highlight Box */}
+                    <div className="rounded-3xl border border-[#f0c7e2] dark:border-purple-900/60 bg-[#fbf2f8] dark:bg-purple-950/30 p-5 space-y-3 shadow-2xs">
+                      <span className="text-[10px] font-black uppercase text-[#731257] dark:text-purple-300 tracking-widest block">
+                        {specialOfferBadgeText}
+                      </span>
+                      <h3 className="font-black text-lg sm:text-xl text-[#0e0c1a] dark:text-white leading-tight">
+                        {offerHeadline}
+                      </h3>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {parsedOfferPills.map((pill) => (
+                          <span key={pill} className="px-3 py-1 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[9px] font-black uppercase tracking-wider border border-slate-200/80 dark:border-slate-700">
+                            {pill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Featured Services Checklist */}
+                    <div className="space-y-3">
+                      <span className="text-[11px] font-bold text-[#6b1652] dark:text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {featuredServicesSectionTitle}
+                      </span>
+
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-bold text-slate-800 dark:text-slate-200">
+                        {parsedFeaturedServices.map((service) => (
+                          <div key={service} className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-800">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </div>
+                            <span className="truncate">{service}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bottom Action */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                      <span className="text-slate-400 text-[11px] font-mono truncate max-w-xs">
+                        {targetLinkUrl}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsBannerPreviewOpen(false)}
+                        className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold cursor-pointer transition-colors shadow-sm"
+                      >
+                        Close Modal Preview
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* STYLE 2: PURE IMAGE MODAL PREVIEW */
+              <div className="relative max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200 group">
+                <button
+                  type="button"
+                  onClick={() => setIsBannerPreviewOpen(false)}
+                  className="absolute top-4 right-4 z-30 p-2 rounded-full bg-slate-950/80 text-white hover:bg-slate-950 transition-colors shadow-lg cursor-pointer"
+                  title="Close Visitor Modal Preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="relative w-full aspect-[16/9] sm:aspect-[16/8] bg-slate-900">
+                  <img
+                    src={pureBannerImageUrl}
+                    alt="Pure Image Visitor Promo Popup Banner"
+                    className="w-full h-full object-cover"
+                  />
+
+                  {secondBannerIconUrl && (
+                    <div className={`absolute z-20 p-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-white/40 flex items-center gap-2 max-w-[220px] ${
+                      badgePosition === "bottom-left" ? "bottom-4 left-4" :
+                      badgePosition === "bottom-right" ? "bottom-4 right-4" :
+                      badgePosition === "top-left" ? "top-4 left-4" : "top-4 right-4"
+                    }`}>
+                      <img
+                        src={secondBannerIconUrl}
+                        alt="Second Icon Badge"
+                        className="w-8 h-8 object-contain rounded-lg shrink-0"
+                      />
+                      <span className="text-[11px] font-extrabold text-slate-900 dark:text-white leading-tight">
+                        {badgeText}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 bg-slate-900 text-white flex items-center justify-between text-xs border-t border-slate-800">
+                  <span className="text-slate-400 text-[11px] font-mono truncate max-w-sm">
+                    Target URL: {targetLinkUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsBannerPreviewOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold cursor-pointer transition-colors shadow-sm"
+                  >
+                    Close Preview
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </Portal>
       )}
+
     </div>
   );
 }

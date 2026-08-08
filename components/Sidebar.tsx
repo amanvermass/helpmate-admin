@@ -188,7 +188,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           href: "/banners",
         },
         {
-          title: "Image Sections",
+          title: "Where we Serve",
           icon: ImageIcon,
           href: "/image-sections",
         },
