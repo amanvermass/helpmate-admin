@@ -552,19 +552,18 @@ export function BookingWizardModal({
 
     const randomNum = Math.floor(9000 + Math.random() * 999);
     const generatedBookingId = `HM-VAR-${randomNum}`;
-    const generatedJobId = `HM-JOB-${randomNum}`;
+    const bookingNum = bookingToEdit ? bookingToEdit.id.replace(/[^0-9]/g, "") : String(randomNum);
 
-    // Ensure all services in list have unique serviceId & serviceCode
+    // Ensure all services in list have unique serviceId & serviceCode tied to the booking ID
     const finalServicesList = selectedServicesList.map((item, index) => ({
       ...item,
-      serviceId: item.serviceId || `SRV-${item.id}-${Math.floor(1000 + Math.random() * 9000)}`,
-      serviceCode: item.serviceCode || `HM-SRV-${101 + index}`,
+      serviceId: item.serviceId || `SRV-${item.id}-${index + 1}`,
+      serviceCode: item.serviceCode || `HM-SVC-${bookingNum}-${String(index + 1).padStart(2, "0")}`,
     }));
 
     if (bookingToEdit) {
       const updated: Booking = {
         ...bookingToEdit,
-        jobId: bookingToEdit.jobId || generatedJobId,
         customerName: customerName || bookingToEdit.customerName,
         customerPhone: customerPhone || bookingToEdit.customerPhone,
         customerEmail: customerEmail || bookingToEdit.customerEmail,
@@ -603,7 +602,7 @@ export function BookingWizardModal({
 
     const created: Booking = {
       id: generatedBookingId,
-      jobId: generatedJobId,
+      jobId: generatedBookingId,
       customerName: customerName || "Rajesh Kumar Agrawal",
       customerPhone: customerPhone || "+91 98390 12345",
       customerEmail: customerEmail || "rajesh@gmail.com",

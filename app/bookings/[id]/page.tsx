@@ -179,10 +179,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </Link>
             <span className="text-slate-300 dark:text-slate-700 font-bold">•</span>
             <span className="font-mono text-xs font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
-              INV: {currentBooking.id}
-            </span>
-            <span className="font-mono text-xs font-extrabold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2.5 py-1 rounded-lg border border-purple-200 dark:border-purple-800">
-              JOB ID: {currentBooking.jobId || `HM-JOB-${currentBooking.id.replace(/[^0-9]/g, "") || "8821"}`}
+              BOOKING ID: {currentBooking.id}
             </span>
             <button
               type="button"
@@ -190,7 +187,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5 text-slate-400" />
-              <span>{copied ? "Copied ID!" : "Copy IDs"}</span>
+              <span>{copied ? "Copied ID!" : "Copy Booking ID"}</span>
             </button>
           </div>
 
@@ -482,7 +479,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
                         <span>{idx + 1}. {item.title}</span>
                         <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300">
-                          {item.serviceCode || item.serviceId || `HM-SRV-${101 + idx}`}
+                          {item.serviceCode || `HM-SVC-${currentBooking.id.replace(/[^0-9]/g, "")}-${String(idx + 1).padStart(2, "0")}`}
                         </span>
                         {item.category && (
                           <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
@@ -503,7 +500,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
                       <span>1. {currentBooking.serviceTitle}</span>
                       <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300">
-                        HM-SRV-101
+                        HM-SVC-{currentBooking.id.replace(/[^0-9]/g, "")}-01
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">1 Unit • Includes standard jet wash & safety inspection</p>

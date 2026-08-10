@@ -228,20 +228,55 @@ export default function InvoiceDetailPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-semibold text-slate-800 dark:text-slate-200">
-              <tr>
-                <td className="py-4">
-                  <div className="font-extrabold text-slate-900 dark:text-white">{booking.serviceName || booking.serviceTitle}</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
-                    Standard Varanasi Home Service Rate Card (SAC Code: 998719)
-                  </div>
-                </td>
-                <td className="py-4 text-right font-mono font-bold">₹{booking.basePrice}</td>
-                <td className="py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{booking.cgst}</td>
-                <td className="py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{booking.sgst}</td>
-                <td className="py-4 text-right font-mono font-extrabold text-slate-900 dark:text-white">
-                  ₹{booking.basePrice + booking.cgst + booking.sgst}
-                </td>
-              </tr>
+              {booking.servicesList && booking.servicesList.length > 0 ? (
+                booking.servicesList.map((item, idx) => {
+                  const itemCode = item.serviceCode || `HM-SVC-${booking.id.replace(/[^0-9]/g, "")}-${String(idx + 1).padStart(2, "0")}`;
+                  const itemBase = item.price * item.quantity;
+                  const itemCgst = Math.round(itemBase * 0.09 * 100) / 100;
+                  const itemSgst = Math.round(itemBase * 0.09 * 100) / 100;
+                  return (
+                    <tr key={item.id || idx}>
+                      <td className="py-4">
+                        <div className="flex items-center gap-2 font-extrabold text-slate-900 dark:text-white">
+                          <span>{item.title}</span>
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200">
+                            {itemCode}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                          Qty: {item.quantity} • SAC Code: 998719 • ₹{item.price} unit price
+                        </div>
+                      </td>
+                      <td className="py-4 text-right font-mono font-bold">₹{itemBase}</td>
+                      <td className="py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{itemCgst}</td>
+                      <td className="py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{itemSgst}</td>
+                      <td className="py-4 text-right font-mono font-extrabold text-slate-900 dark:text-white">
+                        ₹{itemBase + itemCgst + itemSgst}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td className="py-4">
+                    <div className="flex items-center gap-2 font-extrabold text-slate-900 dark:text-white">
+                      <span>{booking.serviceName || booking.serviceTitle}</span>
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-200">
+                        HM-SVC-{booking.id.replace(/[^0-9]/g, "")}-01
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                      Standard Varanasi Home Service Rate Card (SAC Code: 998719)
+                    </div>
+                  </td>
+                  <td className="py-4 text-right font-mono font-bold">₹{booking.basePrice}</td>
+                  <td className="py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{booking.cgst}</td>
+                  <td className="py-4 text-right font-mono text-slate-600 dark:text-slate-400">₹{booking.sgst}</td>
+                  <td className="py-4 text-right font-mono font-extrabold text-slate-900 dark:text-white">
+                    ₹{booking.basePrice + booking.cgst + booking.sgst}
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td className="py-4">
                   <div className="font-bold text-slate-900 dark:text-white">Platform Convenience & Safety Insurance Fee</div>
