@@ -278,8 +278,22 @@ export type BookingStatus =
   | "Refunded"
   | "Rejected";
 
-export interface Booking {
+export interface SelectedServiceItem {
   id: string;
+  serviceId?: string; // Unique Service ID e.g. SRV-8821-1
+  serviceCode?: string; // Unique Service Item Code e.g. HM-SRV-101
+  title: string;
+  price: number;
+  quantity: number;
+  category?: string;
+  duration?: string;
+}
+
+export type AddressRecipientType = "Self" | "Family Member" | "Friend / Neighbor" | "Office / Work" | "Other";
+
+export interface Booking {
+  id: string; // Booking / Invoice ID
+  jobId?: string; // Unique Job Tracking Code e.g. HM-JOB-8821
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
@@ -297,6 +311,10 @@ export interface Booking {
   packageTitle?: string;
   addons?: string[];
   systemType?: string;
+  servicesList?: SelectedServiceItem[];
+  addressRecipientType?: AddressRecipientType;
+  recipientName?: string;
+  recipientPhone?: string;
 
   // Pricing & GST Engine
   basePrice: number;

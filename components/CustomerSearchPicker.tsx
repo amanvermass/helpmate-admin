@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Customer } from "@/lib/mockData";
+import { useState, useRef, useEffect, ReactNode } from "react";
+import { Customer, AddressRecipientType, varanasiLocalities } from "@/lib/mockData";
+import { CustomSelect } from "@/components/CustomSelect";
 import {
   Search,
   UserPlus,
@@ -13,6 +14,11 @@ import {
   CheckCircle2,
   X,
   Sparkles,
+  Home,
+  Users,
+  HeartHandshake,
+  Briefcase,
+  HelpCircle,
 } from "lucide-react";
 
 interface CustomerSearchPickerProps {
@@ -37,7 +43,11 @@ export function CustomerSearchPicker({
   const [newPhone, setNewPhone] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newLocality, setNewLocality] = useState("Sigra");
+  const [newPincode, setNewPincode] = useState("221002");
   const [newAddress, setNewAddress] = useState("");
+  const [recipientType, setRecipientType] = useState<AddressRecipientType>("Self");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,6 +78,7 @@ export function CustomerSearchPicker({
       phone: newPhone,
       email: newEmail || `${newName.toLowerCase().replace(/\s+/g, "")}@gmail.com`,
       locality: newLocality,
+      pincode: newPincode,
       address: newAddress || `${newLocality}, Varanasi`,
       tier: "Standard",
       totalSpend: 0,
@@ -85,7 +96,18 @@ export function CustomerSearchPicker({
     setNewPhone("");
     setNewEmail("");
     setNewAddress("");
+    setRecipientType("Self");
+    setRecipientName("");
+    setRecipientPhone("");
   };
+
+  const recipientTypeOptions: { type: AddressRecipientType; label: string; icon: any; color: string }[] = [
+    { type: "Self", label: "Myself / Home", icon: Home, color: "border-brand-500 bg-brand-50/60 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300" },
+    { type: "Family Member", label: "Family Member", icon: Users, color: "border-purple-500 bg-purple-50/60 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300" },
+    { type: "Friend / Neighbor", label: "Friend / Neighbor", icon: HeartHandshake, color: "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300" },
+    { type: "Office / Work", label: "Office / Work", icon: Briefcase, color: "border-slate-500 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200" },
+    { type: "Other", label: "Other Person", icon: HelpCircle, color: "border-amber-500 bg-amber-50/60 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300" },
+  ];
 
   return (
     <div className="space-y-2 text-xs relative" ref={dropdownRef}>
@@ -99,30 +121,31 @@ export function CustomerSearchPicker({
             setIsAddingNew(!isAddingNew);
             setIsOpen(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-[11px] shadow-lux flex items-center gap-1.5 transition-all"
+          className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-[11px] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <UserPlus className="w-3.5 h-3.5" />
           <span>{isAddingNew ? "Cancel New Customer" : "+ Add New Customer"}</span>
         </button>
       </div>
 
-      {/* INLINE NEW CUSTOMER CREATION CARD */}
+      {/* INLINE NEW CUSTOMER CREATION CARD WITH ADDRESS & RECIPIENT BADGE FLOW */}
       {isAddingNew ? (
-        <div className="p-4 rounded-2xl bg-brand-50/80 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 space-y-3 animate-in fade-in duration-200">
+        <div className="p-4 rounded-2xl bg-brand-50/90 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800 space-y-4 animate-in fade-in duration-200 shadow-md">
           <div className="flex items-center justify-between border-b border-brand-200 dark:border-brand-800 pb-2">
-            <span className="font-extrabold text-xs text-brand-900 dark:text-brand-300 flex items-center gap-1.5">
+            <span className="font-extrabold text-xs text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-brand-600" /> Create & Auto-Select New Customer
             </span>
             <button
               type="button"
               onClick={() => setIsAddingNew(false)}
-              className="text-slate-400 hover:text-slate-600"
+              className="text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Personal Info Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                 Full Name *
@@ -163,16 +186,92 @@ export function CustomerSearchPicker({
                 className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
               />
             </div>
+          </div>
+
+          {/* RECIPIENT RELATIONSHIP BADGE SELECTOR */}
+          <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 space-y-2.5">
+            <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
+              <span>Who is this address & booking for?</span>
+              <span className="text-[10px] text-purple-600 font-bold uppercase">Recipient Badge</span>
+            </label>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {recipientTypeOptions.map((opt) => {
+                const Icon = opt.icon;
+                const isSelected = recipientType === opt.type;
+                return (
+                  <button
+                    key={opt.type}
+                    type="button"
+                    onClick={() => setRecipientType(opt.type)}
+                    className={`p-2.5 rounded-xl border text-center font-bold text-[11px] transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                      isSelected
+                        ? opt.color + " shadow-xs ring-1"
+                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="leading-tight">{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {recipientType !== "Self" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Recipient Person Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder="e.g. Rajesh Sharma (Father)"
+                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Recipient Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    value={recipientPhone}
+                    onChange={(e) => setRecipientPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Location & Address inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <CustomSelect
+              label="Varanasi Base Locality *"
+              value={newLocality}
+              onChange={(val) => {
+                setNewLocality(val);
+                const foundLoc = varanasiLocalities.find((l) => l.name === val);
+                if (foundLoc) setNewPincode(foundLoc.pincode);
+              }}
+              options={varanasiLocalities.map((loc) => ({
+                value: loc.name,
+                label: `${loc.name} (${loc.pincode})`,
+              }))}
+            />
 
             <div>
               <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Varanasi Base Locality
+                Full Delivery / Service Street Address & Landmark *
               </label>
               <input
                 type="text"
-                value={newLocality}
-                onChange={(e) => setNewLocality(e.target.value)}
-                placeholder="Sigra, Varanasi"
+                value={newAddress}
+                onChange={(e) => setNewAddress(e.target.value)}
+                placeholder="House / Flat No., Street, Colony, Landmark..."
                 className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
               />
             </div>
@@ -181,7 +280,7 @@ export function CustomerSearchPicker({
           <button
             type="button"
             onClick={handleCreateAndSelectCustomer}
-            className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-extrabold text-xs shadow-lux flex items-center justify-center gap-1.5 transition-colors"
+            className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Save & Auto-Select New Customer</span>
@@ -200,95 +299,71 @@ export function CustomerSearchPicker({
                 setSearchTerm(e.target.value);
                 setIsOpen(true);
               }}
-              placeholder="Search customer by Full Name or Mobile Phone Number..."
-              className="w-full pl-10 pr-10 h-[42px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 shadow-xs text-xs"
+              placeholder="Type customer name or mobile number..."
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-xs"
             />
-            {searchTerm ? (
+            {selectedCustomer && (
               <button
                 type="button"
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                onClick={() => onSelectCustomer(null as any)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <ChevronDown className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Dropdown Options List */}
-          {isOpen && (
-            <div className="absolute z-[999] mt-1 w-full max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredCustomers.length > 0 ? (
-                filteredCustomers.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => {
-                      onSelectCustomer(c, false);
-                      setIsOpen(false);
-                      setSearchTerm("");
-                    }}
-                    className={`w-full p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors ${selectedCustomer?.id === c.id
-                        ? "bg-brand-50/50 dark:bg-brand-950/30 font-bold"
-                        : ""
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
-                        <User className="w-4 h-4 text-brand-600" />
-                      </div>
-                      <div>
-                        <div className="font-extrabold text-slate-900 dark:text-white text-xs">
-                          {c.name}
-                        </div>
-                        <div className="text-[11px] font-mono text-slate-500 font-bold">
-                          {c.phone} {c.email ? `• ${c.email}` : ""}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                      {c.tier}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="p-4 text-center text-slate-400 font-semibold">
-                  No existing customers match "{searchTerm}".
+          {/* Selected Customer Pill */}
+          {selectedCustomer && (
+            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div>
+                  <span className="font-extrabold text-slate-900 dark:text-white block">{selectedCustomer.name}</span>
+                  <span className="text-[11px] text-slate-500 font-mono">{selectedCustomer.phone} • {selectedCustomer.locality}</span>
                 </div>
-              )}
+              </div>
+              <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                Selected
+              </span>
             </div>
           )}
 
-          {/* Selected Customer Active Badge Card */}
-          {selectedCustomer && (
-            <div className="p-3.5 rounded-2xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 flex items-center justify-between text-xs animate-in fade-in duration-150">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
-                  <CheckCircle2 className="w-5 h-5" />
+          {/* Dropdown Options Popup */}
+          {isOpen && (
+            <div className="absolute left-0 right-0 top-full mt-1 z-[9999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-1.5 shadow-2xl max-h-60 overflow-y-auto space-y-1 animate-in fade-in-50 duration-150">
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map((cust) => {
+                  const isSelected = selectedCustomer?.id === cust.id;
+                  return (
+                    <button
+                      key={cust.id}
+                      type="button"
+                      onClick={() => {
+                        onSelectCustomer(cust);
+                        setIsOpen(false);
+                      }}
+                      className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-brand-600 text-white shadow-xs"
+                          : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white"
+                      }`}
+                    >
+                      <div>
+                        <span className="font-extrabold text-xs block">{cust.name}</span>
+                        <span className={`text-[10px] font-mono ${isSelected ? "text-brand-100" : "text-slate-500"}`}>
+                          {cust.phone} • {cust.locality}
+                        </span>
+                      </div>
+                      {isSelected && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="p-3 text-center text-xs text-slate-400">
+                  No matching customers found. Click <strong>"+ Add New Customer"</strong> to create one.
                 </div>
-                <div>
-                  <span className="font-black text-slate-900 dark:text-white block text-sm">
-                    {selectedCustomer.name}
-                  </span>
-                  <span className="text-[11px] font-mono font-bold text-brand-600">
-                    {selectedCustomer.phone} {selectedCustomer.email ? `• ${selectedCustomer.email}` : ""}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-extrabold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-[11px]"
-              >
-                Change Customer
-              </button>
+              )}
             </div>
           )}
         </div>

@@ -179,7 +179,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </Link>
             <span className="text-slate-300 dark:text-slate-700 font-bold">•</span>
             <span className="font-mono text-xs font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
-              {currentBooking.id}
+              INV: {currentBooking.id}
+            </span>
+            <span className="font-mono text-xs font-extrabold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2.5 py-1 rounded-lg border border-purple-200 dark:border-purple-800">
+              JOB ID: {currentBooking.jobId || `HM-JOB-${currentBooking.id.replace(/[^0-9]/g, "") || "8821"}`}
             </span>
             <button
               type="button"
@@ -187,7 +190,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer"
             >
               <Copy className="w-3.5 h-3.5 text-slate-400" />
-              <span>{copied ? "Copied ID!" : "Copy Booking ID"}</span>
+              <span>{copied ? "Copied ID!" : "Copy IDs"}</span>
             </button>
           </div>
 
@@ -420,9 +423,24 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* Destination Service Address */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1.5 text-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Full Delivery / Service Address</span>
+            {/* Destination Service Address & Recipient Details */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Full Delivery / Service Address</span>
+                {currentBooking.addressRecipientType && (
+                  <span className="text-[10px] font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 px-2 py-0.5 rounded-full border border-purple-300">
+                    Recipient: {currentBooking.addressRecipientType}
+                  </span>
+                )}
+              </div>
+
+              {currentBooking.addressRecipientType && currentBooking.addressRecipientType !== "Self" && (
+                <div className="p-2.5 rounded-xl bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 font-bold text-xs flex items-center justify-between">
+                  <span>👤 Recipient Contact: {currentBooking.recipientName || "Family / Friend"}</span>
+                  {currentBooking.recipientPhone && <span className="font-mono">{currentBooking.recipientPhone}</span>}
+                </div>
+              )}
+
               <div className="font-bold text-slate-900 dark:text-white flex items-start gap-2 text-sm leading-relaxed">
                 <MapPin className="w-4 h-4 text-brand-600 shrink-0 mt-1" />
                 <div>
@@ -449,7 +467,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Itemized Service Line Items (Single Booking Bundle)
+                Itemized Service Line Items ({currentBooking.servicesList?.length || 1} Services)
               </span>
               <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                 30 Days HelpMate Warranty
@@ -457,53 +475,44 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="space-y-3 text-xs">
-              {/* Line Item 1 */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-                    <span>1. {currentBooking.serviceTitle}</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
-                      Primary Service
-                    </span>
+              {currentBooking.servicesList && currentBooking.servicesList.length > 0 ? (
+                currentBooking.servicesList.map((item, idx) => (
+                  <div key={item.id || idx} className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                        <span>{idx + 1}. {item.title}</span>
+                        <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300">
+                          {item.serviceCode || item.serviceId || `HM-SRV-${101 + idx}`}
+                        </span>
+                        {item.category && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                            {item.category}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500">Qty: {item.quantity} • ₹{item.price} each</p>
+                    </div>
+                    <div className="text-right font-black text-slate-900 dark:text-white text-sm font-mono">
+                      ₹{(item.price * item.quantity).toLocaleString()}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-500">1 Unit • Includes standard jet wash & safety inspection</p>
-                </div>
-                <div className="text-right font-black text-slate-900 dark:text-white text-sm font-mono">
-                  ₹{base}
-                </div>
-              </div>
-
-              {/* Line Item 2 */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-                    <span>2. Foam Jet Anti-Bacterial Deep Wash</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                      Add-on Included
-                    </span>
+                ))
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                      <span>1. {currentBooking.serviceTitle}</span>
+                      <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300">
+                        HM-SRV-101
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500">1 Unit • Includes standard jet wash & safety inspection</p>
                   </div>
-                  <p className="text-[11px] text-slate-500">1 Unit • Chemical & coil pressure deep cleaning</p>
-                </div>
-                <div className="text-right font-black text-slate-900 dark:text-white text-sm font-mono">
-                  ₹299
-                </div>
-              </div>
-
-              {/* Line Item 3 */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
-                    <span>3. Multi-Point Electrical & Gas Safety Check</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                      Complimentary
-                    </span>
+                  <div className="text-right font-black text-slate-900 dark:text-white text-sm font-mono">
+                    ₹{base}
                   </div>
-                  <p className="text-[11px] text-slate-500">1 Unit • Full diagnostic report & circuit testing</p>
                 </div>
-                <div className="text-right font-black text-emerald-600 dark:text-emerald-400 text-xs font-mono">
-                  FREE
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

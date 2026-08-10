@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, ReactNode } from "react";
-import { ChevronDown, CheckCircle2, Plus } from "lucide-react";
+import { ChevronDown, CheckCircle2, Plus, Search } from "lucide-react";
 
 export interface CustomSelectOption {
   value: string;
@@ -20,6 +20,7 @@ export interface CustomSelectProps {
   className?: string;
   disabled?: boolean;
   size?: "sm" | "md";
+  searchable?: boolean;
 }
 
 export function CustomSelect({
@@ -33,8 +34,10 @@ export function CustomSelect({
   className = "",
   disabled = false,
   size = "md",
+  searchable = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,6 +51,10 @@ export function CustomSelect({
   }, []);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  const filteredOptions = searchable && searchTerm.trim()
+    ? options.filter((opt) => opt.label.toLowerCase().includes(searchTerm.toLowerCase()))
+    : options;
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -101,11 +108,26 @@ export function CustomSelect({
       {isOpen && !disabled && (
         <div
           className={`absolute left-0 right-0 top-full mt-1 z-[9999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${
-            size === "sm" ? "rounded-xl p-1 shadow-lg max-h-52" : "rounded-2xl p-1.5 shadow-xl max-h-60"
-          } space-y-0.5 animate-in fade-in-50 zoom-in-95 duration-150 overflow-y-auto`}
+            size === "sm" ? "rounded-xl p-1 shadow-lg max-h-60" : "rounded-2xl p-1.5 shadow-xl max-h-72"
+          } space-y-1 animate-in fade-in-50 zoom-in-95 duration-150 overflow-y-auto`}
         >
-          {options.length > 0 ? (
-            options.map((opt) => {
+          {searchable && (
+            <div className="relative p-1 border-b border-slate-100 dark:border-slate-800">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+            </div>
+          )}
+
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((opt) => {
               const isSelected = opt.value === value;
               return (
                 <button
@@ -114,6 +136,7 @@ export function CustomSelect({
                   onClick={() => {
                     onChange(opt.value);
                     setIsOpen(false);
+                    setSearchTerm("");
                   }}
                   className={`w-full ${
                     size === "sm"
@@ -121,7 +144,7 @@ export function CustomSelect({
                       : "px-3 py-2 rounded-xl text-xs font-bold"
                   } text-left flex items-center justify-between transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-brand-500 text-white shadow-xs"
+                      ? "bg-brand-600 text-white shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -136,7 +159,7 @@ export function CustomSelect({
               );
             })
           ) : (
-            <div className="p-2 text-center text-xs text-slate-400 italic">No options available</div>
+            <div className="p-3 text-center text-xs text-slate-400 italic">No options found</div>
           )}
         </div>
       )}

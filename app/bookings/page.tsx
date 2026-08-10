@@ -135,18 +135,23 @@ export default function BookingsPage() {
   const columns: Column<Booking>[] = [
     {
       key: "id",
-      header: "Invoice no",
+      header: "Invoice & Job ID",
       sticky: "left",
       stickyLeftOffset: 44,
-      className: "w-[130px] min-w-[130px] max-w-[130px]",
+      className: "w-[150px] min-w-[150px] max-w-[150px]",
       accessor: (row) => (
-        <button
-          type="button"
-          onClick={() => router.push(`/bookings/${row.id}`)}
-          className="font-mono font-bold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer text-xs"
-        >
-          {row.id}
-        </button>
+        <div className="flex flex-col">
+          <button
+            type="button"
+            onClick={() => router.push(`/bookings/${row.id}`)}
+            className="font-mono font-extrabold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer text-xs"
+          >
+            {row.id}
+          </button>
+          <span className="text-[10px] font-mono font-extrabold text-purple-600 dark:text-purple-400">
+            {row.jobId || `HM-JOB-${row.id.replace(/[^0-9]/g, "") || "8821"}`}
+          </span>
+        </div>
       ),
       sortable: true,
     },
@@ -154,7 +159,7 @@ export default function BookingsPage() {
       key: "customerName",
       header: "Customer Name",
       sticky: "left",
-      stickyLeftOffset: 174,
+      stickyLeftOffset: 194,
       className: "w-[170px] min-w-[170px] max-w-[170px]",
       accessor: (row) => (
         <span className="font-extrabold text-slate-900 dark:text-white truncate max-w-[150px] block" title={row.customerName}>
@@ -194,10 +199,25 @@ export default function BookingsPage() {
     },
     {
       key: "serviceTitle",
-      header: "Work",
+      header: "Work & Service IDs",
       accessor: (row) => (
-        <div className="max-w-[190px] truncate font-bold text-slate-900 dark:text-white" title={row.serviceTitle}>
-          {row.serviceTitle}
+        <div className="max-w-[200px] space-y-0.5" title={row.serviceTitle}>
+          <div className="truncate font-bold text-slate-900 dark:text-white">
+            {row.serviceTitle}
+          </div>
+          {row.servicesList && row.servicesList.length > 0 ? (
+            <div className="flex items-center gap-1 flex-wrap">
+              {row.servicesList.map((s, idx) => (
+                <span key={s.id || idx} className="text-[9px] font-mono font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 px-1.5 py-0.2 rounded border border-purple-200">
+                  {s.serviceCode || `HM-SRV-${101 + idx}`}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-[9px] font-mono font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.2 rounded border border-brand-200">
+              HM-SRV-101
+            </span>
+          )}
         </div>
       ),
       sortable: true,

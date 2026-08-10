@@ -33,8 +33,12 @@ import {
   Briefcase,
   ExternalLink,
   Sparkles,
+  Home,
+  HeartHandshake,
+  HelpCircle,
 } from "lucide-react";
-import { initialCustomers, Customer, varanasiLocalities, initialBookings } from "@/lib/mockData";
+import { initialCustomers, Customer, varanasiLocalities, initialBookings, AddressRecipientType } from "@/lib/mockData";
+import { CustomSelect } from "@/components/CustomSelect";
 import { DataTable, Column } from "@/components/DataTable";
 import { Portal } from "@/components/Portal";
 
@@ -59,10 +63,13 @@ export default function CustomersPage() {
   const [newAadhaarNumber, setNewAadhaarNumber] = useState("");
   const [newAadhaarDocUrl, setNewAadhaarDocUrl] = useState("");
 
-  // 2. Location States
+  // 2. Location & Recipient States
   const [newLocality, setNewLocality] = useState("Sigra");
   const [newPincode, setNewPincode] = useState("221002");
   const [newAddress, setNewAddress] = useState("");
+  const [newRecipientType, setNewRecipientType] = useState<AddressRecipientType>("Self");
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [newRecipientPhone, setNewRecipientPhone] = useState("");
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1170,14 +1177,80 @@ export default function CustomersPage() {
                   </div>
                 </div>
 
-                {/* SECTION 2: LOCATION & ADDRESS */}
+                {/* SECTION 2: LOCATION & RECIPIENT RELATIONSHIP BADGE FLOW */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-4">
                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <MapPin className="w-4 h-4 text-brand-600" />
-                    <span>2. Service Location & Delivery Address</span>
+                    <span>2. Service Location & Address Recipient</span>
                   </div>
 
-                  <div className="space-y-3 text-xs">
+                  {/* RECIPIENT RELATIONSHIP BADGES */}
+                  <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 space-y-3">
+                    <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
+                      <span>Who is this address & booking for?</span>
+                      <span className="text-[10px] text-purple-600 font-bold uppercase">Recipient Badge</span>
+                    </label>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {[
+                        { type: "Self" as AddressRecipientType, label: "Myself / Home", icon: Home, color: "border-brand-500 bg-brand-50/60 text-brand-700" },
+                        { type: "Family Member" as AddressRecipientType, label: "Family Member", icon: Users, color: "border-purple-500 bg-purple-50/60 text-purple-700" },
+                        { type: "Friend / Neighbor" as AddressRecipientType, label: "Friend / Neighbor", icon: HeartHandshake, color: "border-indigo-500 bg-indigo-50/60 text-indigo-700" },
+                        { type: "Office / Work" as AddressRecipientType, label: "Office / Work", icon: Briefcase, color: "border-slate-500 bg-slate-100 text-slate-800" },
+                        { type: "Other" as AddressRecipientType, label: "Other Person", icon: HelpCircle, color: "border-amber-500 bg-amber-50/60 text-amber-700" },
+                      ].map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = newRecipientType === opt.type;
+                        return (
+                          <button
+                            key={opt.type}
+                            type="button"
+                            onClick={() => setNewRecipientType(opt.type)}
+                            className={`p-2.5 rounded-xl border text-center font-bold text-xs transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                              isSelected
+                                ? opt.color + " shadow-xs ring-1"
+                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-purple-300"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 shrink-0" />
+                            <span className="text-[11px] leading-tight">{opt.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {newRecipientType !== "Self" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                        <div>
+                          <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                            Recipient Person Name *
+                          </label>
+                          <input
+                            type="text"
+                            value={newRecipientName}
+                            onChange={(e) => setNewRecipientName(e.target.value)}
+                            placeholder="e.g. Rajesh Sharma (Father)"
+                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                            Recipient Contact Phone Number *
+                          </label>
+                          <input
+                            type="tel"
+                            value={newRecipientPhone}
+                            onChange={(e) => setNewRecipientPhone(e.target.value)}
+                            placeholder="+91 98765 43210"
+                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                         Varanasi Locality Zone *
