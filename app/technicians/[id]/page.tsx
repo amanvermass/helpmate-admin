@@ -32,6 +32,7 @@ import {
   Receipt,
   Users,
 } from "lucide-react";
+import { DataTable, Column } from "@/components/DataTable";
 
 export default function TechnicianDetailPage() {
   const params = useParams();
@@ -44,7 +45,7 @@ export default function TechnicianDetailPage() {
 
   const [activeTab, setActiveTab] = useState<"overview" | "kyc" | "jobs" | "earnings">("overview");
 
-  // Sample Completed Jobs (Minimum 10 entries)
+  // Sample Completed Jobs (Expanded Dataset for Pagination)
   const partnerJobs = [
     {
       id: "BK-VAR-9981",
@@ -156,9 +157,174 @@ export default function TechnicianDetailPage() {
       netShare: 1238,
       status: "Completed",
     },
+    {
+      id: "BK-VAR-9870",
+      customerName: "Kavita Gupta",
+      serviceTitle: tech.category + " - Power Jet Wash & Chemical Foam Cleansing",
+      locality: "Sigra, Varanasi",
+      date: "06 Jul 2026",
+      totalAmount: 2199,
+      commissionFee: 550,
+      netShare: 1649,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9855",
+      customerName: "Sanjay Rastogi",
+      serviceTitle: tech.category + " - Drain Pipe Unclogging & Water Pressure Test",
+      locality: "Mahmoorganj, Varanasi",
+      date: "01 Jul 2026",
+      totalAmount: 1350,
+      commissionFee: 338,
+      netShare: 1012,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9842",
+      customerName: "Anjali Chaurasia",
+      serviceTitle: tech.category + " - Anti-Bacterial Sanitization Wash",
+      locality: "Lanka, Varanasi",
+      date: "27 Jun 2026",
+      totalAmount: 1899,
+      commissionFee: 475,
+      netShare: 1424,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9830",
+      customerName: "Rahul Dev",
+      serviceTitle: tech.category + " - PCB Repair & Transformer Testing",
+      locality: "Sarnath, Varanasi",
+      date: "23 Jun 2026",
+      totalAmount: 2750,
+      commissionFee: 688,
+      netShare: 2062,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9818",
+      customerName: "Meenakshi Joshi",
+      serviceTitle: tech.category + " - Comprehensive Annual Preventive Maintenance",
+      locality: "Bhelupur, Varanasi",
+      date: "19 Jun 2026",
+      totalAmount: 3499,
+      commissionFee: 875,
+      netShare: 2624,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9805",
+      customerName: "Alok Chaurasia",
+      serviceTitle: tech.category + " - Outdoor Coil High-Pressure Scouring",
+      locality: "Cantonment, Varanasi",
+      date: "15 Jun 2026",
+      totalAmount: 1599,
+      commissionFee: 400,
+      netShare: 1199,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9791",
+      customerName: "Shalini Rai",
+      serviceTitle: tech.category + " - Gas Leak Testing & Valve Soldering",
+      locality: "Assi Ghat, Varanasi",
+      date: "11 Jun 2026",
+      totalAmount: 2899,
+      commissionFee: 725,
+      netShare: 2174,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9778",
+      customerName: "Rakesh Verma",
+      serviceTitle: tech.category + " - Water Filter Scrubbing & UV Lamp Swap",
+      locality: "Sigra, Varanasi",
+      date: "07 Jun 2026",
+      totalAmount: 1199,
+      commissionFee: 300,
+      netShare: 899,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9764",
+      customerName: "Abhishek Singh",
+      serviceTitle: tech.category + " - Short Circuit & Main Line Fault Isolation",
+      locality: "Mahmoorganj, Varanasi",
+      date: "03 Jun 2026",
+      totalAmount: 1450,
+      commissionFee: 363,
+      netShare: 1087,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9750",
+      customerName: "Archana Tripathi",
+      serviceTitle: tech.category + " - Dual Split Jet Servicing (2 Units)",
+      locality: "Lanka, Varanasi",
+      date: "29 May 2026",
+      totalAmount: 3299,
+      commissionFee: 825,
+      netShare: 2474,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9736",
+      customerName: "Deepak Pandey",
+      serviceTitle: tech.category + " - Hydro Descaling & Flush Clean",
+      locality: "Bhelupur, Varanasi",
+      date: "25 May 2026",
+      totalAmount: 1799,
+      commissionFee: 450,
+      netShare: 1349,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9722",
+      customerName: "Neha Agarwal",
+      serviceTitle: tech.category + " - Washing Machine Drum Overhaul",
+      locality: "Godowlia, Varanasi",
+      date: "21 May 2026",
+      totalAmount: 2100,
+      commissionFee: 525,
+      netShare: 1575,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9708",
+      customerName: "Rohit Srivastava",
+      serviceTitle: tech.category + " - Refrigerator Thermostat Calibration",
+      locality: "Shivpur, Varanasi",
+      date: "17 May 2026",
+      totalAmount: 1699,
+      commissionFee: 425,
+      netShare: 1274,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9694",
+      customerName: "Pooja Yadav",
+      serviceTitle: tech.category + " - Hydro Pressure Drain Clearance",
+      locality: "Sarnath, Varanasi",
+      date: "13 May 2026",
+      totalAmount: 1250,
+      commissionFee: 313,
+      netShare: 937,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9680",
+      customerName: "Sunil Rastogi",
+      serviceTitle: tech.category + " - Electrical MCB Panel Replacement",
+      locality: "Sigra, Varanasi",
+      date: "09 May 2026",
+      totalAmount: 1950,
+      commissionFee: 488,
+      netShare: 1462,
+      status: "Completed",
+    },
   ];
 
-  // Weekly Settlement Ledger (Minimum 10 entries)
+  // Weekly Settlement Ledger (Expanded Dataset for Pagination)
   const weeklySettlements = [
     {
       id: "SET-VAR-2026-32",
@@ -262,13 +428,256 @@ export default function TechnicianDetailPage() {
     {
       id: "SET-VAR-2026-23",
       cycle: "30 May - 05 Jun 2026",
-      grossAmount: 14500,
-      commissionFee: 3625,
-      netPayout: 10875,
+      grossAmount: 18900,
+      commissionFee: 4725,
+      netPayout: 14175,
       bankName: "HDFC Bank",
-      utr: "UTR98987110",
+      utr: "UTR98978114",
       status: "Settled",
       date: "06 Jun 2026",
+    },
+    {
+      id: "SET-VAR-2026-22",
+      cycle: "23 May - 29 May 2026",
+      grossAmount: 23500,
+      commissionFee: 5875,
+      netPayout: 17625,
+      bankName: "HDFC Bank",
+      utr: "UTR98941098",
+      status: "Settled",
+      date: "30 May 2026",
+    },
+    {
+      id: "SET-VAR-2026-21",
+      cycle: "16 May - 22 May 2026",
+      grossAmount: 16200,
+      commissionFee: 4050,
+      netPayout: 12150,
+      bankName: "HDFC Bank",
+      utr: "UTR98904552",
+      status: "Settled",
+      date: "23 May 2026",
+    },
+    {
+      id: "SET-VAR-2026-20",
+      cycle: "09 May - 15 May 2026",
+      grossAmount: 19800,
+      commissionFee: 4950,
+      netPayout: 14850,
+      bankName: "HDFC Bank",
+      utr: "UTR98867120",
+      status: "Settled",
+      date: "16 May 2026",
+    },
+    {
+      id: "SET-VAR-2026-19",
+      cycle: "02 May - 08 May 2026",
+      grossAmount: 21500,
+      commissionFee: 5375,
+      netPayout: 16125,
+      bankName: "HDFC Bank",
+      utr: "UTR98830491",
+      status: "Settled",
+      date: "09 May 2026",
+    },
+    {
+      id: "SET-VAR-2026-18",
+      cycle: "25 Apr - 01 May 2026",
+      grossAmount: 17400,
+      commissionFee: 4350,
+      netPayout: 13050,
+      bankName: "HDFC Bank",
+      utr: "UTR98792011",
+      status: "Settled",
+      date: "02 May 2026",
+    },
+    {
+      id: "SET-VAR-2026-17",
+      cycle: "18 Apr - 24 Apr 2026",
+      grossAmount: 22800,
+      commissionFee: 5700,
+      netPayout: 17100,
+      bankName: "HDFC Bank",
+      utr: "UTR98754118",
+      status: "Settled",
+      date: "25 Apr 2026",
+    },
+  ];
+
+  // DataTable Job Columns Definition
+  const jobColumns: Column<any>[] = [
+    {
+      key: "id",
+      header: "Booking ID",
+      accessor: (row) => (
+        <Link
+          href={`/bookings/${row.id}`}
+          className="font-mono text-xs font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800 hover:underline inline-flex items-center gap-1"
+        >
+          <span>#{row.id}</span>
+          <ExternalLink className="w-3 h-3" />
+        </Link>
+      ),
+      sortable: true,
+    },
+    {
+      key: "serviceTitle",
+      header: "Service & Locality",
+      accessor: (row) => (
+        <div>
+          <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">{row.serviceTitle}</h4>
+          <span className="text-[10px] text-slate-400 font-bold">{row.locality}</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      key: "customerName",
+      header: "Customer",
+      accessor: (row) => (
+        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+          {row.customerName}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "date",
+      header: "Date",
+      accessor: (row) => (
+        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 font-mono">
+          {row.date}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "totalAmount",
+      header: "Gross Bill",
+      accessor: (row) => (
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">
+          ₹{row.totalAmount.toLocaleString("en-IN")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "commissionFee",
+      header: "25% Fee",
+      accessor: (row) => (
+        <span className="font-mono text-slate-400 text-xs">
+          ₹{row.commissionFee.toLocaleString("en-IN")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "netShare",
+      header: "Partner Net Share",
+      accessor: (row) => (
+        <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+          ₹{row.netShare.toLocaleString("en-IN")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "status",
+      header: "Status",
+      accessor: (row) => (
+        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800">
+          {row.status}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      accessor: (row) => (
+        <Link
+          href={`/bookings/${row.id}`}
+          className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-[11px] shadow-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+        >
+          <span>View Job</span>
+          <ArrowLeft className="w-3 h-3 rotate-180" />
+        </Link>
+      ),
+    },
+  ];
+
+  // DataTable Settlement Columns Definition
+  const settlementColumns: Column<any>[] = [
+    {
+      key: "id",
+      header: "Settlement ID",
+      accessor: (row) => (
+        <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+          {row.id}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "cycle",
+      header: "Weekly Cycle",
+      accessor: (row) => (
+        <div>
+          <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">{row.cycle}</h4>
+          <span className="text-[10px] text-slate-400 font-mono">Date: {row.date}</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
+      key: "grossAmount",
+      header: "Gross Billings",
+      accessor: (row) => (
+        <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">
+          ₹{row.grossAmount.toLocaleString("en-IN")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "commissionFee",
+      header: "Platform Fee (25%)",
+      accessor: (row) => (
+        <span className="font-mono text-slate-400 text-xs">
+          ₹{row.commissionFee.toLocaleString("en-IN")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "netPayout",
+      header: "Net Credited Payout",
+      accessor: (row) => (
+        <span className="font-mono font-black text-brand-600 dark:text-brand-400 text-xs">
+          ₹{row.netPayout.toLocaleString("en-IN")}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "utr",
+      header: "Bank Ref / UTR",
+      accessor: (row) => (
+        <div>
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">{row.bankName}</span>
+          <span className="font-mono text-[10px] text-slate-400">{row.utr}</span>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      accessor: (row) => (
+        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800">
+          {row.status}
+        </span>
+      ),
+      sortable: true,
     },
   ];
 
@@ -722,31 +1131,29 @@ export default function TechnicianDetailPage() {
         </div>
       )}
 
-      {/* ─── TAB 3: COMPLETED JOBS (REMOVED DISPATCHES WORD, MINIMUM 10 ENTRIES) ─── */}
+      {/* ─── TAB 3: COMPLETED JOBS (WITH PAGINATED DATATABLE) ─── */}
       {activeTab === "jobs" && (
         <div className="space-y-6">
-          {/* Top Job Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Completed Jobs</span>
+              <span className="text-slate-400 font-extrabold uppercase text-[10px]">Lifetime Jobs Completed</span>
               <div className="text-2xl font-black text-slate-900 dark:text-white font-mono">
-                {partnerJobs.length} Jobs
+                {tech.totalJobs} Jobs
               </div>
-              <span className="text-[11px] text-emerald-600 font-extrabold">100% Successful Resolution</span>
+              <span className="text-[11px] text-emerald-600 font-bold">100% Verified OTP Closed</span>
             </div>
 
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Avg Turnaround Time</span>
-              <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
-                42 Minutes
+              <span className="text-slate-400 font-extrabold uppercase text-[10px]">Average Job Rating</span>
+              <div className="text-2xl font-black text-amber-500 font-mono flex items-center gap-1.5">
+                <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
+                <span>{tech.rating} / 5.0</span>
               </div>
-              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> Fast On-Site Resolution
-              </span>
+              <span className="text-[11px] text-slate-500 font-semibold">Based on customer feedback</span>
             </div>
 
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Gross Revenue Generated</span>
+              <span className="text-slate-400 font-extrabold uppercase text-[10px]">Gross Revenue Serviced</span>
               <div className="text-2xl font-black text-brand-600 dark:text-brand-400 font-mono">
                 ₹{tech.totalEarnings.toLocaleString()}
               </div>
@@ -754,84 +1161,25 @@ export default function TechnicianDetailPage() {
             </div>
           </div>
 
-          {/* Completed Jobs History List */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-brand-600" />
                 <span>Completed Jobs History</span>
               </h3>
-              <span className="text-xs font-bold text-slate-500">
-                Showing {partnerJobs.length} Completed Jobs
-              </span>
             </div>
 
-            <div className="space-y-3">
-              {partnerJobs.map((j) => (
-                <div
-                  key={j.id}
-                  className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group shadow-xs"
-                >
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <Link
-                        href={`/bookings/${j.id}`}
-                        className="font-mono font-extrabold text-brand-600 dark:text-brand-400 text-sm group-hover:underline flex items-center gap-1"
-                      >
-                        <span>#{j.id}</span>
-                        <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Link>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800">
-                        {j.status}
-                      </span>
-                      <span className="text-xs text-slate-400 font-semibold">•</span>
-                      <span className="text-xs text-slate-500 font-semibold flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{j.date}</span>
-                      </span>
-                    </div>
-
-                    <h4 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      {j.serviceTitle}
-                    </h4>
-
-                    <p className="text-xs text-slate-500 font-semibold flex items-center gap-2">
-                      <User className="w-3.5 h-3.5 text-brand-500" />
-                      <span>Customer: <strong>{j.customerName}</strong> ({j.locality})</span>
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-6 justify-between md:justify-end shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-700">
-                    <div className="text-left md:text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">HelpMate 25% Fee</span>
-                      <span className="font-mono font-extrabold text-slate-500 text-xs block">
-                        ₹{j.commissionFee}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Partner Net Share</span>
-                      <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-lg">
-                        ₹{j.netShare}
-                      </span>
-                    </div>
-
-                    <Link
-                      href={`/bookings/${j.id}`}
-                      className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-brand-600 hover:text-white text-slate-800 dark:text-slate-200 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5"
-                    >
-                      <span>View Job Details</span>
-                      <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DataTable
+              columns={jobColumns}
+              data={partnerJobs}
+              searchPlaceholder="Search completed jobs by ID, customer, service, locality..."
+              statusField="status"
+            />
           </div>
         </div>
       )}
 
-      {/* ─── TAB 4: EARNINGS & WEEKLY SETTLEMENT (SIMPLIFIED BANK CARD + 10 SETTLEMENT ROWS) ─── */}
+      {/* ─── TAB 4: EARNINGS & WEEKLY SETTLEMENT (WITH PAGINATED DATATABLE) ─── */}
       {activeTab === "earnings" && (
         <div className="space-y-6">
           {/* Top Settlement KPI Cards */}
@@ -869,7 +1217,7 @@ export default function TechnicianDetailPage() {
             </div>
           </div>
 
-          {/* SIMPLIFIED BANK CARD: SHOWING STRICTLY BANK NAME AND MANAGE BUTTON */}
+          {/* SIMPLIFIED BANK CARD */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3.5">
               <div className="p-3.5 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800 shadow-xs">
@@ -895,7 +1243,7 @@ export default function TechnicianDetailPage() {
             </button>
           </div>
 
-          {/* WEEKLY SETTLEMENT PAYOUT LEDGER TABLE (MINIMUM 10 ENTRIES) */}
+          {/* WEEKLY SETTLEMENT PAYOUT LEDGER TABLE (WITH PAGINATED DATATABLE) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
@@ -904,64 +1252,14 @@ export default function TechnicianDetailPage() {
                   Weekly Settlement Payout Ledger
                 </h3>
               </div>
-              <span className="text-xs font-bold text-slate-500">
-                {weeklySettlements.length} Weekly Cycles Recorded
-              </span>
             </div>
 
-            <div className="space-y-3">
-              {weeklySettlements.map((ws) => (
-                <div
-                  key={ws.id}
-                  className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                        {ws.id}
-                      </span>
-                      <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">
-                        Cycle: {ws.cycle}
-                      </h4>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800">
-                        {ws.status}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-500 font-semibold flex items-center gap-3">
-                      <span>Payout Date: {ws.date}</span>
-                      <span>•</span>
-                      <span className="font-mono">Bank: {ws.bankName}</span>
-                      <span>•</span>
-                      <span className="font-mono text-[11px]">Ref UTR: {ws.utr}</span>
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-6 justify-between md:justify-end shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-700">
-                    <div className="text-left md:text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Gross Service Billings</span>
-                      <span className="font-mono font-bold text-slate-600 dark:text-slate-300 text-xs block">
-                        ₹{ws.grossAmount.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-
-                    <div className="text-left md:text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase block">25% HelpMate Comm.</span>
-                      <span className="font-mono font-bold text-slate-400 text-xs block">
-                        -₹{ws.commissionFee.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase block">Net Bank Credit</span>
-                      <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-lg block">
-                        ₹{ws.netPayout.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DataTable
+              columns={settlementColumns}
+              data={weeklySettlements}
+              searchPlaceholder="Search weekly settlements by ID, cycle, bank UTR..."
+              statusField="status"
+            />
           </div>
         </div>
       )}

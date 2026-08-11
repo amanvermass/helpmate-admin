@@ -370,11 +370,11 @@ export default function CategoriesPage() {
           <button
             type="button"
             onClick={() => openEditDrawer(row)}
-            title="Edit Category & Icons"
-            className="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-purple-50 text-slate-700 dark:text-slate-300 hover:text-purple-600 transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+            title="Edit Category Details"
+            className="px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-600 hover:text-white dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Edit className="w-3.5 h-3.5" />
-            <span>Upload / Edit Icon</span>
+            <span>Edit</span>
           </button>
 
           <button
@@ -531,10 +531,11 @@ export default function CategoriesPage() {
                     <button
                       type="button"
                       onClick={() => openEditDrawer(cat)}
-                      className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-purple-600 hover:border-purple-300 dark:group-hover:text-purple-400 transition-colors cursor-pointer"
-                      title="Manage Category & Icon Details"
+                      className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Edit Category Details"
                     >
-                      <ArrowRight className="w-4 h-4" />
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
                     </button>
 
                     <button
