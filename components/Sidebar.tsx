@@ -248,13 +248,17 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           href: "/users",
         },
         {
+          title: "Notifications Hub",
+          icon: MessageSquare,
+          href: "/notifications",
+        },
+        {
           title: "Settings & Analytics",
           icon: Settings,
           subItems: [
             { label: "General Settings", href: "/settings", icon: Settings },
             { label: "Reports & Exports", href: "/reports", icon: BarChart3 },
             { label: "Executive Analytics", href: "/analytics", icon: TrendingUp },
-            { label: "System Notifications", href: "/notifications", icon: MessageSquare },
             { label: "Customer Reviews", href: "/reviews", icon: Star },
           ],
         },
