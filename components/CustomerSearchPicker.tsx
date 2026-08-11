@@ -13,7 +13,6 @@ import {
   MapPin,
   CheckCircle2,
   X,
-  Sparkles,
   Home,
   Users,
   HeartHandshake,
@@ -133,7 +132,7 @@ export function CustomerSearchPicker({
         <div className="p-4 rounded-2xl bg-brand-50/90 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-800 space-y-4 animate-in fade-in duration-200 shadow-md">
           <div className="flex items-center justify-between border-b border-brand-200 dark:border-brand-800 pb-2">
             <span className="font-extrabold text-xs text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-brand-600" /> Create & Auto-Select New Customer
+              <UserPlus className="w-4 h-4 text-brand-600" /> Create & Auto-Select New Customer
             </span>
             <button
               type="button"
@@ -277,14 +276,23 @@ export function CustomerSearchPicker({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCreateAndSelectCustomer}
-            className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Save & Auto-Select New Customer</span>
-          </button>
+          <div className="pt-2 border-t border-brand-200 dark:border-brand-800 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAddingNew(false)}
+              className="px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs hover:bg-slate-100 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateAndSelectCustomer}
+              className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white rounded-xl font-black text-xs shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer ring-2 ring-emerald-500/30"
+            >
+              <CheckCircle2 className="w-4.5 h-4.5 text-white" />
+              <span>SAVE & AUTO-SELECT CUSTOMER</span>
+            </button>
+          </div>
         </div>
       ) : (
         /* SEARCHABLE CUSTOMER DROPDOWN PICKER */

@@ -29,6 +29,7 @@ export interface ServiceItem {
   rating: number;
   reviewsCount: number;
   isPopular?: boolean;
+  isTrending?: boolean;
   isInspectionBased?: boolean;
   addons?: ServiceAddon[];
   systemType?: string[];
@@ -1055,6 +1056,8 @@ const generateMockBookings = (): Booking[] => {
   ];
 
   const customers = [
+    { name: "Rajesh Kumar Agrawal", phone: "+91 77050 04040" },
+    { name: "Sunita Agrawal", phone: "+91 94501 88200" },
     { name: "Rakesh Verma", phone: "+91 98390 12001" },
     { name: "Kavita Gupta", phone: "+91 94152 33412" },
     { name: "Abhishek Singh", phone: "+91 99180 77123" },
@@ -1090,7 +1093,7 @@ const generateMockBookings = (): Booking[] => {
   const paymentMethods: Array<Booking["paymentMethod"]> = ["UPI", "Cash on Service", "Card", "Helpmate Wallet", "Online"];
 
   const generated: Booking[] = [];
-  for (let i = 6; i <= 85; i++) {
+  for (let i = 6; i <= 140; i++) {
     const numStr = String(8820 + i);
     const id = `HM-VAR-${numStr}`;
     const cust = customers[i % customers.length];
@@ -1130,7 +1133,7 @@ const generateMockBookings = (): Booking[] => {
       status,
       technicianName: status !== "Pending" && status !== "Waiting For Assignment" ? tech.name : undefined,
       technicianId: status !== "Pending" && status !== "Waiting For Assignment" ? tech.id : undefined,
-      date: i % 2 === 0 ? "Today, 02:00 PM" : "Yesterday",
+      date: i % 2 === 0 ? `2026-08-${String(1 + (i % 10)).padStart(2, '0')}, 02:00 PM` : `2026-07-${String(10 + (i % 15)).padStart(2, '0')}`,
       timeSlot: "02:00 PM - 03:30 PM",
       paymentMethod: paymentMethods[i % paymentMethods.length],
       isOtpVerified: status === "Completed",

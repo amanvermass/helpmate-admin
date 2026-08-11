@@ -11,6 +11,7 @@ import {
   FileCheck,
   ArrowLeft,
   Edit,
+  Edit2,
   User,
   ShieldCheck,
   ShieldAlert,
@@ -43,52 +44,243 @@ export default function TechnicianDetailPage() {
 
   const [activeTab, setActiveTab] = useState<"overview" | "kyc" | "jobs" | "earnings">("overview");
 
-  // Sample job dispatches
+  // Sample Completed Jobs (Minimum 10 entries)
   const partnerJobs = [
     {
-      id: "BK-9981",
+      id: "BK-VAR-9981",
       customerName: "Alok Verma",
       serviceTitle: tech.category + " - Power Jet Wash & Gas Check",
       locality: tech.locality + ", Varanasi",
       date: "Today, 11:30 AM",
-      totalAmount: 1499,
-      commissionFee: 374,
-      netShare: 1125,
+      totalAmount: 1999,
+      commissionFee: 500,
+      netShare: 1499,
       status: "Completed",
     },
     {
-      id: "BK-9942",
+      id: "BK-VAR-9975",
+      customerName: "Rajesh Agrawal",
+      serviceTitle: tech.category + " - Filter Cartridge & RO Sanitization",
+      locality: "Sigra, Varanasi",
+      date: "08 Aug 2026",
+      totalAmount: 1499,
+      commissionFee: 375,
+      netShare: 1124,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9968",
       customerName: "Vikram Malhotra",
-      serviceTitle: tech.category + " - Full Inspection & Repair",
+      serviceTitle: tech.category + " - Full Deep Hydro Wash",
       locality: "Lanka, Varanasi",
-      date: "Yesterday, 03:15 PM",
+      date: "05 Aug 2026",
       totalAmount: 2890,
       commissionFee: 722,
       netShare: 2168,
       status: "Completed",
     },
     {
-      id: "BK-9890",
+      id: "BK-VAR-9954",
       customerName: "Siddharth Gupta",
-      serviceTitle: tech.category + " - Emergency Breakdown Service",
-      locality: "Mahmoorganj, Varanasi",
-      date: "01 Aug 2026",
+      serviceTitle: tech.category + " - Commercial Unit Hydro Repair",
+      locality: "Cantonment, Varanasi",
+      date: "02 Aug 2026",
+      totalAmount: 4000,
+      commissionFee: 1000,
+      netShare: 3000,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9941",
+      customerName: "Sunita Agrawal",
+      serviceTitle: tech.category + " - Inverter AC Gas Refilling (R32)",
+      locality: "Assi Ghat, Varanasi",
+      date: "29 Jul 2026",
+      totalAmount: 2500,
+      commissionFee: 625,
+      netShare: 1875,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9932",
+      customerName: "B.P. Srivastava",
+      serviceTitle: tech.category + " - Villa Deep Hydro Cleaning",
+      locality: "Lahurabir, Varanasi",
+      date: "26 Jul 2026",
+      totalAmount: 5500,
+      commissionFee: 1375,
+      netShare: 4125,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9920",
+      customerName: "Amitabh Verma",
+      serviceTitle: tech.category + " - Motor & Capacitor Replacement",
+      locality: "Rathyatra, Varanasi",
+      date: "22 Jul 2026",
       totalAmount: 1850,
       commissionFee: 462,
       netShare: 1388,
       status: "Completed",
     },
+    {
+      id: "BK-VAR-9912",
+      customerName: "Priya Sharma",
+      serviceTitle: tech.category + " - Degreasing & Filter Wash",
+      locality: "Bhelupur, Varanasi",
+      date: "18 Jul 2026",
+      totalAmount: 1299,
+      commissionFee: 325,
+      netShare: 974,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9899",
+      customerName: "Ramesh Pandey",
+      serviceTitle: tech.category + " - Copper Pipe Welding & Leak Repair",
+      locality: "Godowlia, Varanasi",
+      date: "14 Jul 2026",
+      totalAmount: 3200,
+      commissionFee: 800,
+      netShare: 2400,
+      status: "Completed",
+    },
+    {
+      id: "BK-VAR-9884",
+      customerName: "Manoj Tripathi",
+      serviceTitle: tech.category + " - Heating Element & Thermostat Replacement",
+      locality: "Shivpur, Varanasi",
+      date: "10 Jul 2026",
+      totalAmount: 1650,
+      commissionFee: 412,
+      netShare: 1238,
+      status: "Completed",
+    },
+  ];
+
+  // Weekly Settlement Ledger (Minimum 10 entries)
+  const weeklySettlements = [
+    {
+      id: "SET-VAR-2026-32",
+      cycle: "01 Aug - 07 Aug 2026",
+      grossAmount: 18400,
+      commissionFee: 4600,
+      netPayout: 13800,
+      bankName: "HDFC Bank",
+      utr: "UTR99281044",
+      status: "Settled",
+      date: "08 Aug 2026",
+    },
+    {
+      id: "SET-VAR-2026-31",
+      cycle: "25 Jul - 31 Jul 2026",
+      grossAmount: 22000,
+      commissionFee: 5500,
+      netPayout: 16500,
+      bankName: "HDFC Bank",
+      utr: "UTR99254110",
+      status: "Settled",
+      date: "01 Aug 2026",
+    },
+    {
+      id: "SET-VAR-2026-30",
+      cycle: "18 Jul - 24 Jul 2026",
+      grossAmount: 16800,
+      commissionFee: 4200,
+      netPayout: 12600,
+      bankName: "HDFC Bank",
+      utr: "UTR99218902",
+      status: "Settled",
+      date: "25 Jul 2026",
+    },
+    {
+      id: "SET-VAR-2026-29",
+      cycle: "11 Jul - 17 Jul 2026",
+      grossAmount: 19500,
+      commissionFee: 4875,
+      netPayout: 14625,
+      bankName: "HDFC Bank",
+      utr: "UTR99187622",
+      status: "Settled",
+      date: "18 Jul 2026",
+    },
+    {
+      id: "SET-VAR-2026-28",
+      cycle: "04 Jul - 10 Jul 2026",
+      grossAmount: 24200,
+      commissionFee: 6050,
+      netPayout: 18150,
+      bankName: "HDFC Bank",
+      utr: "UTR99154301",
+      status: "Settled",
+      date: "11 Jul 2026",
+    },
+    {
+      id: "SET-VAR-2026-27",
+      cycle: "27 Jun - 03 Jul 2026",
+      grossAmount: 15600,
+      commissionFee: 3900,
+      netPayout: 11700,
+      bankName: "HDFC Bank",
+      utr: "UTR99120994",
+      status: "Settled",
+      date: "04 Jul 2026",
+    },
+    {
+      id: "SET-VAR-2026-26",
+      cycle: "20 Jun - 26 Jun 2026",
+      grossAmount: 21000,
+      commissionFee: 5250,
+      netPayout: 15750,
+      bankName: "HDFC Bank",
+      utr: "UTR99088123",
+      status: "Settled",
+      date: "27 Jun 2026",
+    },
+    {
+      id: "SET-VAR-2026-25",
+      cycle: "13 Jun - 19 Jun 2026",
+      grossAmount: 17900,
+      commissionFee: 4475,
+      netPayout: 13425,
+      bankName: "HDFC Bank",
+      utr: "UTR99052199",
+      status: "Settled",
+      date: "20 Jun 2026",
+    },
+    {
+      id: "SET-VAR-2026-24",
+      cycle: "06 Jun - 12 Jun 2026",
+      grossAmount: 20400,
+      commissionFee: 5100,
+      netPayout: 15300,
+      bankName: "HDFC Bank",
+      utr: "UTR99014022",
+      status: "Settled",
+      date: "13 Jun 2026",
+    },
+    {
+      id: "SET-VAR-2026-23",
+      cycle: "30 May - 05 Jun 2026",
+      grossAmount: 14500,
+      commissionFee: 3625,
+      netPayout: 10875,
+      bankName: "HDFC Bank",
+      utr: "UTR98987110",
+      status: "Settled",
+      date: "06 Jun 2026",
+    },
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200 pb-16">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
         <Link
           href="/technicians"
           className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 text-brand-500" />
           <span>Back to Partner Fleet Directory</span>
         </Link>
 
@@ -154,7 +346,7 @@ export default function TechnicianDetailPage() {
           <div className="flex items-center gap-3 flex-wrap shrink-0">
             <a
               href={`tel:${tech.phone}`}
-              className="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
             >
               <Phone className="w-4 h-4" />
               <span>Call Partner</span>
@@ -164,7 +356,7 @@ export default function TechnicianDetailPage() {
               href={`https://wa.me/${tech.phone.replace(/[^0-9]/g, "")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2.5 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-bold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
             >
               <ExternalLink className="w-4 h-4" />
               <span>WhatsApp Dispatch</span>
@@ -173,54 +365,76 @@ export default function TechnicianDetailPage() {
         </div>
       </div>
 
-      {/* 4 Section Tabs Navigation */}
-      <div className="border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-1">
+      {/* ─── HIGH-CONTRAST SEGMENTED TAB BAR ─── */}
+      <div className="bg-slate-100 dark:bg-slate-800/90 p-1.5 rounded-2xl flex flex-wrap sm:flex-nowrap items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-inner w-full sm:w-fit text-xs font-extrabold">
         <button
+          type="button"
           onClick={() => setActiveTab("overview")}
-          className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === "overview"
-              ? "bg-brand-600 text-white shadow-xs"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+              ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
           }`}
         >
           <User className="w-4 h-4" />
-          <span>Partner Overview & Biometric KYC</span>
+          <span>Overview & Biometric KYC</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("kyc")}
-          className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === "kyc"
-              ? "bg-brand-600 text-white shadow-xs"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+              ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>Identity & Guarantor Verification</span>
+          <span>Identity & Verification</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("jobs")}
-          className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === "jobs"
-              ? "bg-brand-600 text-white shadow-xs"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+              ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
           }`}
         >
           <Briefcase className="w-4 h-4" />
-          <span>Completed Job Dispatches ({tech.totalJobs})</span>
+          <span>Completed Jobs</span>
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+              activeTab === "jobs"
+                ? "bg-white/20 text-white"
+                : "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300"
+            }`}
+          >
+            {partnerJobs.length}
+          </span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("earnings")}
-          className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
             activeTab === "earnings"
-              ? "bg-brand-600 text-white shadow-xs"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+              ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
           }`}
         >
           <Wallet className="w-4 h-4" />
-          <span>Earnings & Weekly Settlement Ledger</span>
+          <span>Earnings & Weekly Settlement</span>
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+              activeTab === "earnings"
+                ? "bg-white/20 text-white"
+                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+            }`}
+          >
+            {weeklySettlements.length}
+          </span>
         </button>
       </div>
 
@@ -248,7 +462,7 @@ export default function TechnicianDetailPage() {
                 <span className="p-2 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400"><Briefcase className="w-4 h-4" /></span>
               </div>
               <div className="text-2xl sm:text-3xl font-black text-brand-600 dark:text-brand-400 font-mono">
-                {tech.totalJobs} Dispatches
+                {partnerJobs.length} Jobs
               </div>
               <span className="text-[11px] text-slate-500 font-semibold">Varanasi Active Fleet</span>
             </div>
@@ -508,17 +722,17 @@ export default function TechnicianDetailPage() {
         </div>
       )}
 
-      {/* TAB 3: COMPLETED JOB DISPATCHES */}
+      {/* ─── TAB 3: COMPLETED JOBS (REMOVED DISPATCHES WORD, MINIMUM 10 ENTRIES) ─── */}
       {activeTab === "jobs" && (
         <div className="space-y-6">
           {/* Top Job Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Dispatches</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Completed Jobs</span>
               <div className="text-2xl font-black text-slate-900 dark:text-white font-mono">
-                {tech.totalJobs} Dispatches
+                {partnerJobs.length} Jobs
               </div>
-              <span className="text-[11px] text-slate-500 font-semibold">Active Fleet Dispatcher</span>
+              <span className="text-[11px] text-emerald-600 font-extrabold">100% Successful Resolution</span>
             </div>
 
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
@@ -540,12 +754,12 @@ export default function TechnicianDetailPage() {
             </div>
           </div>
 
-          {/* Job Dispatch Cards List */}
+          {/* Completed Jobs History List */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-brand-600" />
-                <span>Job Dispatches & Completion History</span>
+                <span>Completed Jobs History</span>
               </h3>
               <span className="text-xs font-bold text-slate-500">
                 Showing {partnerJobs.length} Completed Jobs
@@ -556,7 +770,7 @@ export default function TechnicianDetailPage() {
               {partnerJobs.map((j) => (
                 <div
                   key={j.id}
-                  className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+                  className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group shadow-xs"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -617,7 +831,7 @@ export default function TechnicianDetailPage() {
         </div>
       )}
 
-      {/* TAB 4: EARNINGS & WEEKLY SETTLEMENT LEDGER */}
+      {/* ─── TAB 4: EARNINGS & WEEKLY SETTLEMENT (SIMPLIFIED BANK CARD + 10 SETTLEMENT ROWS) ─── */}
       {activeTab === "earnings" && (
         <div className="space-y-6">
           {/* Top Settlement KPI Cards */}
@@ -655,60 +869,100 @@ export default function TechnicianDetailPage() {
             </div>
           </div>
 
-          {/* Bank Account Details Card */}
+          {/* SIMPLIFIED BANK CARD: SHOWING STRICTLY BANK NAME AND MANAGE BUTTON */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3.5 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800 shadow-xs">
+                <Building className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                  Registered Bank Account
+                </span>
+                <h4 className="font-black text-slate-900 dark:text-white text-base">
+                  HDFC Bank (Sigra Branch)
+                </h4>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => alert(`Manage Payout Bank Account Specs for ${tech.name}`)}
+              className="px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux transition-all flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <Edit2 className="w-4 h-4" />
+              <span>Manage Bank Account</span>
+            </button>
+          </div>
+
+          {/* WEEKLY SETTLEMENT PAYOUT LEDGER TABLE (MINIMUM 10 ENTRIES) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-brand-600" />
+                <Receipt className="w-5 h-5 text-emerald-600" />
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                  Registered Bank Payout Profile
+                  Weekly Settlement Payout Ledger
                 </h3>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-bold">
-                Bank Account Verified
+              <span className="text-xs font-bold text-slate-500">
+                {weeklySettlements.length} Weekly Cycles Recorded
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Bank Name</span>
-                <span className="font-extrabold text-slate-900 dark:text-white">HDFC Bank (Sigra Branch)</span>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Account Number</span>
-                <span className="font-mono font-extrabold text-slate-900 dark:text-white">•••• •••• 4910</span>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">IFSC Code</span>
-                <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400">HDFC0000214</span>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Payout Frequency</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Weekly (Every Monday)</span>
-              </div>
+            <div className="space-y-3">
+              {weeklySettlements.map((ws) => (
+                <div
+                  key={ws.id}
+                  className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <span className="font-mono text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                        {ws.id}
+                      </span>
+                      <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">
+                        Cycle: {ws.cycle}
+                      </h4>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800">
+                        {ws.status}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 font-semibold flex items-center gap-3">
+                      <span>Payout Date: {ws.date}</span>
+                      <span>•</span>
+                      <span className="font-mono">Bank: {ws.bankName}</span>
+                      <span>•</span>
+                      <span className="font-mono text-[11px]">Ref UTR: {ws.utr}</span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-6 justify-between md:justify-end shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-700">
+                    <div className="text-left md:text-right">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">Gross Service Billings</span>
+                      <span className="font-mono font-bold text-slate-600 dark:text-slate-300 text-xs block">
+                        ₹{ws.grossAmount.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="text-left md:text-right">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">25% HelpMate Comm.</span>
+                      <span className="font-mono font-bold text-slate-400 text-xs block">
+                        -₹{ws.commissionFee.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase block">Net Bank Credit</span>
+                      <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-lg block">
+                        ₹{ws.netPayout.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Last Payout Proof Receipt */}
-          {tech.payoutProofUrl && (
-            <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3">
-                <FileCheck className="w-6 h-6 text-emerald-600" />
-                <div>
-                  <span className="font-extrabold text-slate-900 dark:text-white block">Last Weekly Settlement Bank UTR Receipt</span>
-                  <span className="text-[11px] text-slate-500">Ref UTR: UTR-VAR-202608-9921 • Transferred ₹12,300</span>
-                </div>
-              </div>
-              <a
-                href={tech.payoutProofUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs"
-              >
-                View UTR Receipt
-              </a>
-            </div>
-          )}
         </div>
       )}
     </div>

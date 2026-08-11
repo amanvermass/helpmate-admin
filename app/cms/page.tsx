@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
-import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown, FileImage, Upload, Megaphone, Eye, Sparkles, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
+import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown, FileImage, Upload, Megaphone, Eye, Flame, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 
 interface ServiceOfferingRow {
   id: string;
@@ -159,6 +159,12 @@ export default function CmsPage() {
     });
   };
 
+  const handleToggleTrending = (serviceId: string) => {
+    setServices((prev) =>
+      prev.map((srv) => (srv.id === serviceId ? { ...srv, isTrending: !srv.isTrending } : srv))
+    );
+  };
+
   const serviceColumns: Column<ServiceItem>[] = [
     {
       key: "thumbnailUrl",
@@ -178,13 +184,20 @@ export default function CmsPage() {
       header: "Service Package Title",
       accessor: (row) => (
         <div className="flex flex-col">
-          <button
-            type="button"
-            onClick={() => setSelectedService(row)}
-            className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 text-left transition-colors"
-          >
-            {row.title}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedService(row)}
+              className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 text-left transition-colors"
+            >
+              {row.title}
+            </button>
+            {row.isTrending && (
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white shadow-xs">
+                🔥 BEST SELLER
+              </span>
+            )}
+          </div>
           <span className="text-[10px] text-slate-400 max-w-xs truncate">{row.subtitle}</span>
         </div>
       ),
@@ -257,6 +270,18 @@ export default function CmsPage() {
       header: "Actions",
       accessor: (row) => (
         <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => handleToggleTrending(row.id)}
+            title={row.isTrending ? "Remove from Trending Best Sellers" : "Feature as Trending Best Seller"}
+            className={`p-1.5 rounded-lg transition-all border cursor-pointer ${
+              row.isTrending
+                ? "bg-gradient-to-r from-amber-500 to-rose-600 text-white border-amber-400 shadow-sm"
+                : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-100"
+            }`}
+          >
+            <Flame className={`w-3.5 h-3.5 ${row.isTrending ? "fill-white text-white" : "text-amber-500"}`} />
+          </button>
           <button
             type="button"
             onClick={() => openEditServiceDrawer(row)}

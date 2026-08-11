@@ -10,15 +10,13 @@ import {
   Users,
   X,
   Save,
-  LayoutGrid,
   Layers,
   Search,
   GripVertical,
   Globe,
   CheckCircle2,
   Camera,
-  ArrowRight,
-  Sparkles,
+  Flame,
   ChevronRight,
   FileText,
   TrendingUp,
@@ -26,8 +24,10 @@ import {
   Clock,
   Heart,
   Tag,
+  Upload,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
+import { initialServices, ServiceItem } from "@/lib/mockData";
 
 interface ZoneCard {
   id: string;
@@ -40,16 +40,7 @@ interface ZoneCard {
   sortOrder: number;
 }
 
-interface HeroSection {
-  id: string;
-  title: string;
-  subtitle: string;
-  imageUrl: string;
-  ctaText: string;
-  ctaLink: string;
-  badgeText: string;
-  isActive: boolean;
-}
+
 
 interface ServiceCard {
   id: string;
@@ -187,10 +178,7 @@ const initialZones: ZoneCard[] = [
   },
 ];
 
-const initialHeroes: HeroSection[] = [
-  { id: "hero-1", title: "Varanasi's Most Trusted Home Services", subtitle: "Book background-verified professionals for deep cleaning, AC servicing, electrical, plumbing & more — instantly.", imageUrl: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&auto=format&fit=crop&q=80", ctaText: "Book a Service Now", ctaLink: "/services", badgeText: "4.9★ Rated — 12,000+ Bookings", isActive: true },
-  { id: "hero-2", title: "Professional AC Servicing at Your Doorstep", subtitle: "Power-Jet foam cleaning, filter wash, and refrigerant check — done in 45 minutes by certified technicians.", imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=80", ctaText: "Book AC Service", ctaLink: "/services/ac", badgeText: "Starting ₹399", isActive: false },
-];
+
 
 const initialServiceCards: ServiceCard[] = [
   { id: "svc-1", title: "Elite Deep Cleaning", description: "Full-home sanitisation using industrial hydro-pressure equipment.", imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80", price: "₹999", category: "Cleaning", isActive: true, sortOrder: 1 },
@@ -286,15 +274,44 @@ const initialTrendingServices: TrendingServiceCard[] = [
   },
 ];
 
-type TabType = "zones" | "heroes" | "services" | "trending";
+type TabType = "zones" | "trending";
 
 export default function ImageSectionsPage() {
   const [activeTab, setActiveTab] = useState<TabType>("zones");
   const [searchQuery, setSearchQuery] = useState("");
   const [zones, setZones] = useState<ZoneCard[]>(initialZones);
-  const [heroes, setHeroes] = useState<HeroSection[]>(initialHeroes);
   const [serviceCards, setServiceCards] = useState<ServiceCard[]>(initialServiceCards);
   const [trendingServices, setTrendingServices] = useState<TrendingServiceCard[]>(initialTrendingServices);
+
+  const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogServices, setCatalogServices] = useState<ServiceItem[]>(initialServices);
+
+  const toggleCatalogServiceInTrending = (srv: ServiceItem) => {
+    const exists = trendingServices.some((t) => t.title.toLowerCase() === srv.title.toLowerCase());
+    if (exists) {
+      setTrendingServices(trendingServices.filter((t) => t.title.toLowerCase() !== srv.title.toLowerCase()));
+    } else {
+      const newTrendingItem: TrendingServiceCard = {
+        id: `trend-${srv.id}`,
+        title: srv.title,
+        category: srv.category,
+        durationMins: parseInt(srv.duration) || 60,
+        rating: srv.rating || 4.9,
+        reviewsCount: srv.reviewsCount || 100,
+        description: srv.subtitle || "Popular service with top customer ratings in Varanasi.",
+        discountPercentage: srv.originalPrice > srv.price ? `${Math.round(((srv.originalPrice - srv.price) / srv.originalPrice) * 100)}% OFF` : "BESTSELLER",
+        price: String(srv.price),
+        originalPrice: String(srv.originalPrice),
+        imageUrl: srv.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
+        bookCtaText: "Book Now →",
+        bookCtaLink: "/services",
+        isActive: true,
+        sortOrder: trendingServices.length + 1,
+      };
+      setTrendingServices([...trendingServices, newTrendingItem]);
+    }
+  };
 
   const [serveHeader, setServeHeader] = useState<WhereWeServeHeader>(initialWhereWeServeHeader);
   const [editingHeader, setEditingHeader] = useState(false);
@@ -308,7 +325,6 @@ export default function ImageSectionsPage() {
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; type: TabType; name: string } | null>(null);
 
   const [zoneModal, setZoneModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<ZoneCard> }>({ open: false, mode: "add", data: {} });
-  const [heroModal, setHeroModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<HeroSection> }>({ open: false, mode: "add", data: {} });
   const [serviceModal, setServiceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<ServiceCard> }>({ open: false, mode: "add", data: {} });
   const [trendingModal, setTrendingModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<TrendingServiceCard> }>({ open: false, mode: "add", data: {} });
 
@@ -324,16 +340,7 @@ export default function ImageSectionsPage() {
     setZoneModal({ open: false, mode: "add", data: {} });
   };
 
-  const saveHero = () => {
-    const d = heroModal.data;
-    if (!d.title || !d.imageUrl) return;
-    if (heroModal.mode === "add") {
-      setHeroes([...heroes, { id: `hero-${Date.now()}`, title: d.title!, subtitle: d.subtitle || "", imageUrl: d.imageUrl!, ctaText: d.ctaText || "Book Now", ctaLink: d.ctaLink || "/", badgeText: d.badgeText || "", isActive: d.isActive ?? true }]);
-    } else {
-      setHeroes(heroes.map((h) => h.id === d.id ? { ...h, ...d } as HeroSection : h));
-    }
-    setHeroModal({ open: false, mode: "add", data: {} });
-  };
+
 
   const saveService = () => {
     const d = serviceModal.data;
@@ -377,8 +384,6 @@ export default function ImageSectionsPage() {
   const confirmDelete = () => {
     if (!deleteModal) return;
     if (deleteModal.type === "zones") setZones(zones.filter((z) => z.id !== deleteModal.id));
-    if (deleteModal.type === "heroes") setHeroes(heroes.filter((h) => h.id !== deleteModal.id));
-    if (deleteModal.type === "services") setServiceCards(serviceCards.filter((s) => s.id !== deleteModal.id));
     if (deleteModal.type === "trending") setTrendingServices(trendingServices.filter((t) => t.id !== deleteModal.id));
     setDeleteModal(null);
   };
@@ -394,7 +399,6 @@ export default function ImageSectionsPage() {
   };
 
   const filteredZones = zones.filter((z) => !searchQuery || z.name.toLowerCase().includes(searchQuery.toLowerCase()) || z.city.toLowerCase().includes(searchQuery.toLowerCase()));
-  const filteredHeroes = heroes.filter((h) => !searchQuery || h.title.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredServices = serviceCards.filter((s) => !searchQuery || s.title.toLowerCase().includes(searchQuery.toLowerCase()));
   const filteredTrending = trendingServices.filter((t) => !searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase()) || t.category.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -402,9 +406,7 @@ export default function ImageSectionsPage() {
 
   const tabs: { id: TabType; label: string; icon: React.ElementType; count: number }[] = [
     { id: "zones", label: "Where We Serve (Zones)", icon: MapPin, count: zones.length },
-    { id: "trending", label: "Trending Best Sellers", icon: TrendingUp, count: trendingServices.length },
-    { id: "heroes", label: "Hero Banners", icon: LayoutGrid, count: heroes.length },
-    { id: "services", label: "Service Cards", icon: Layers, count: serviceCards.length },
+    { id: "trending", label: "Trending Best Sellers", icon: Flame, count: trendingServices.length },
   ];
 
   return (
@@ -421,11 +423,11 @@ export default function ImageSectionsPage() {
           </span>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight">Website Sections CMS</h1>
           <p className="text-xs text-white/85 max-w-xl font-medium">
-            Manage neighborhood zones, trending best-seller packages, hero banners, and service feature cards shown on your website.
+            Manage neighborhood zones and trending best-seller packages shown on your website.
           </p>
         </div>
         <div className="relative z-10 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/20 shrink-0">
-          {([["Total", zones.length + heroes.length + serviceCards.length + trendingServices.length], ["Active", zones.filter(z => z.isActive).length + heroes.filter(h => h.isActive).length + serviceCards.filter(s => s.isActive).length + trendingServices.filter(t => t.isActive).length], ["Sections", 4]] as [string, number][]).map(([label, val], i, arr) => (
+          {([["Total", zones.length + trendingServices.length], ["Active", zones.filter(z => z.isActive).length + trendingServices.filter(t => t.isActive).length], ["Sections", 2]] as [string, number][]).map(([label, val], i, arr) => (
             <div key={label} className="flex items-center gap-3">
               <div className="text-center">
                 <div className="font-black text-lg text-white leading-none">{val}</div>
@@ -461,13 +463,11 @@ export default function ImageSectionsPage() {
           <button type="button"
             onClick={() => {
               if (activeTab === "zones") setZoneModal({ open: true, mode: "add", data: { name: "", city: "Varanasi", proCount: 0, imageUrl: "", isActive: true, areas: [], sortOrder: zones.length + 1 } });
-              else if (activeTab === "trending") setTrendingModal({ open: true, mode: "add", data: { title: "", category: "Cleaning", durationMins: 120, rating: 4.9, reviewsCount: 100, description: "", discountPercentage: "25% OFF", price: "1999", originalPrice: "2499", imageUrl: "", bookCtaText: "Book Now →", bookCtaLink: "/services", isActive: true, sortOrder: trendingServices.length + 1 } });
-              else if (activeTab === "heroes") setHeroModal({ open: true, mode: "add", data: { title: "", subtitle: "", imageUrl: "", ctaText: "", ctaLink: "", badgeText: "", isActive: true } });
-              else setServiceModal({ open: true, mode: "add", data: { title: "", description: "", imageUrl: "", price: "", category: "", isActive: true, sortOrder: serviceCards.length + 1 } });
+              else setIsCatalogPickerOpen(true);
             }}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs cursor-pointer shadow-sm transition-colors shrink-0">
             <Plus className="w-3.5 h-3.5" />
-            {activeTab === "zones" ? "Add Zone" : activeTab === "trending" ? "Add Package" : activeTab === "heroes" ? "Add Banner" : "Add Card"}
+            {activeTab === "zones" ? "Add Zone" : "Select Service from Catalog"}
           </button>
         </div>
       </div>
@@ -657,13 +657,9 @@ export default function ImageSectionsPage() {
             )}
           </div>
 
-          {/* ADMIN CARDS EDIT GRID */}
+          {/* ADMIN CARDS EDIT GRID & SELECTION */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-black text-sm text-slate-900 dark:text-white">
-                Manage Trending Package Cards ({trendingServices.length})
-              </h3>
-            </div>
+           
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredTrending.map((item) => (
@@ -685,20 +681,23 @@ export default function ImageSectionsPage() {
 
                     <div className="flex items-center justify-between pt-1">
                       <span className="font-black text-xs text-purple-600 dark:text-purple-400">₹{item.price} <span className="text-slate-400 line-through text-[10px]">₹{item.originalPrice}</span></span>
-                      <span className="text-[10px] text-slate-400 font-mono">#{item.sortOrder}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Rank #{item.sortOrder}</span>
                     </div>
                   </div>
 
                   <div className="px-3 pb-3 flex items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onClick={() => setTrendingModal({ open: true, mode: "edit", data: { ...item } })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand-600 transition-colors cursor-pointer" title="Edit Card"><Edit2 className="w-3.5 h-3.5" /></button>
-                    <button type="button" onClick={() => setTrendingServices(trendingServices.map((t) => t.id === item.id ? { ...t, isActive: !t.isActive } : t))} className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${item.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{item.isActive ? "Live" : "Hidden"}</button>
-                    <button type="button" onClick={() => setDeleteModal({ open: true, id: item.id, type: "trending", name: item.title })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors cursor-pointer ml-auto" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button type="button" onClick={() => setTrendingServices(trendingServices.map((t) => t.id === item.id ? { ...t, isActive: !t.isActive } : t))} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${item.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{item.isActive ? "Live" : "Hidden"}</button>
+                    <button type="button" onClick={() => setTrendingServices(trendingServices.filter((t) => t.id !== item.id))} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer text-[10px] font-extrabold ml-auto flex items-center gap-1" title="Remove from Trending"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
                   </div>
                 </div>
               ))}
-              <button type="button" onClick={() => setTrendingModal({ open: true, mode: "add", data: { title: "", category: "Cleaning", durationMins: 120, rating: 4.9, reviewsCount: 100, description: "", discountPercentage: "25% OFF", price: "1999", originalPrice: "2499", imageUrl: "", bookCtaText: "Book Now →", bookCtaLink: "/services", isActive: true, sortOrder: trendingServices.length + 1 } })} className="rounded-2xl border-2 border-dashed border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 h-56 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-purple-400 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center"><Plus className="w-5 h-5 text-purple-600" /></div>
-                <span className="text-xs font-bold text-purple-600">Add Trending Package</span>
+
+              <button type="button" onClick={() => setIsCatalogPickerOpen(true)} className="rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/20 h-56 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 hover:bg-amber-100/50 transition-all text-center p-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lux">
+                  <Flame className="w-6 h-6 fill-white" />
+                </div>
+                <span className="text-xs font-black text-slate-900 dark:text-white">Select Service from Catalog</span>
+                <span className="text-[10px] font-semibold text-slate-500 max-w-[180px]">Pick any service from Catalog to add to Trending</span>
               </button>
             </div>
           </div>
@@ -706,86 +705,9 @@ export default function ImageSectionsPage() {
         </div>
       )}
 
-      {/* TAB 3: HEROES */}
-      {activeTab === "heroes" && (
-        <div className="space-y-4">
-          <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-xs text-purple-900 dark:text-purple-300 flex items-center gap-2">
-            <LayoutGrid className="w-4 h-4 shrink-0" />
-            <span>Hero banners appear at the <strong>top of your homepage</strong>. Only one active banner is shown to website visitors at a time.</span>
-          </div>
-          <div className="grid grid-cols-1 gap-5">
-            {filteredHeroes.map((hero) => (
-              <div key={hero.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm ${hero.isActive ? "border-purple-300 dark:border-purple-700 ring-1 ring-purple-200 dark:ring-purple-800" : "border-slate-200 dark:border-slate-700"}`}>
-                <div className="flex flex-col sm:flex-row">
-                  <div className="relative sm:w-64 h-40 sm:h-auto bg-slate-100 dark:bg-slate-800 shrink-0 overflow-hidden">
-                    <img src={hero.imageUrl} alt={hero.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&q=80"; }} />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
-                    {hero.badgeText && <div className="absolute bottom-2 left-2 bg-yellow-400 text-slate-900 text-[9px] font-black px-2 py-0.5 rounded-full">{hero.badgeText}</div>}
-                  </div>
-                  <div className="flex-1 p-4 flex flex-col justify-between">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-black text-sm text-slate-900 dark:text-white leading-snug">{hero.title}</h3>
-                        {hero.isActive && <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-500 text-white shrink-0">ACTIVE</span>}
-                      </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-2">{hero.subtitle}</p>
-                      <div className="flex items-center gap-2 text-[11px]">
-                        <span className="text-purple-600 dark:text-purple-400 font-bold flex items-center gap-1"><ArrowRight className="w-3 h-3" />{hero.ctaText}</span>
-                        <span className="text-slate-400">→ {hero.ctaLink}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 pt-2">
-                      <button type="button" onClick={() => setHeroModal({ open: true, mode: "edit", data: { ...hero } })} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-brand-600 text-xs font-bold cursor-pointer transition-colors"><Edit2 className="w-3 h-3" />Edit</button>
-                      <button type="button" onClick={() => setHeroes(heroes.map((h) => h.id === hero.id ? { ...h, isActive: !h.isActive } : h))} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${hero.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}><CheckCircle2 className="w-3 h-3" />{hero.isActive ? "Active" : "Set Active"}</button>
-                      <button type="button" onClick={() => setDeleteModal({ open: true, id: hero.id, type: "heroes", name: hero.title })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors cursor-pointer ml-auto"><Trash2 className="w-3.5 h-3.5" /></button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={() => setHeroModal({ open: true, mode: "add", data: { title: "", subtitle: "", imageUrl: "", ctaText: "", ctaLink: "", badgeText: "", isActive: true } })} className="rounded-2xl border-2 border-dashed border-purple-200 dark:border-purple-800 bg-purple-50/50 h-28 flex items-center justify-center gap-2 cursor-pointer hover:border-purple-400 transition-all">
-              <Plus className="w-4 h-4 text-purple-600" /><span className="text-xs font-bold text-purple-600">Add Hero Banner</span>
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* TAB 4: SERVICE CARDS */}
-      {activeTab === "services" && (
-        <div className="space-y-4">
-          <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
-            <Layers className="w-4 h-4 shrink-0" />
-            <span>Service cards appear in the <strong>"Our Services"</strong> grid. Each card shows a photo, title, description, and starting price.</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredServices.map((svc) => (
-              <div key={svc.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${svc.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 opacity-60"}`}>
-                <div className="relative h-36 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <img src={svc.imageUrl} alt={svc.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80"; }} />
-                  <div className="absolute bottom-2 left-2 bg-purple-900/80 text-white text-[9px] font-black px-2 py-0.5 rounded-md backdrop-blur-sm">{svc.category}</div>
-                  <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${svc.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{svc.isActive ? "LIVE" : "HIDDEN"}</div>
-                </div>
-                <div className="p-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-black text-sm text-slate-900 dark:text-white">{svc.title}</h3>
-                    <span className="font-black text-purple-600 dark:text-purple-400 text-sm">{svc.price}</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 line-clamp-2">{svc.description}</p>
-                </div>
-                <div className="px-3 pb-3 flex items-center gap-1.5">
-                  <button type="button" onClick={() => setServiceModal({ open: true, mode: "edit", data: { ...svc } })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand-600 transition-colors cursor-pointer"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => setServiceCards(serviceCards.map((s) => s.id === svc.id ? { ...s, isActive: !s.isActive } : s))} className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${svc.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{svc.isActive ? "Live" : "Hidden"}</button>
-                  <button type="button" onClick={() => setDeleteModal({ open: true, id: svc.id, type: "services", name: svc.title })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors cursor-pointer ml-auto"><Trash2 className="w-3.5 h-3.5" /></button>
-                </div>
-              </div>
-            ))}
-            <button type="button" onClick={() => setServiceModal({ open: true, mode: "add", data: { title: "", description: "", imageUrl: "", price: "", category: "", isActive: true, sortOrder: serviceCards.length + 1 } })} className="rounded-2xl border-2 border-dashed border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/20 h-64 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-indigo-400 transition-all">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center"><Plus className="w-5 h-5 text-indigo-600" /></div>
-              <span className="text-xs font-bold text-indigo-600">Add Service Card</span>
-            </button>
-          </div>
-        </div>
-      )}
+
+
 
       {/* ZONE PREVIEW MODAL */}
       {previewZone && (
@@ -906,8 +828,29 @@ export default function ImageSectionsPage() {
               </div>
               <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Zone Image URL *</label>
-                  <input type="text" placeholder="/bhu-gate.png or https://..." value={zoneModal.data.imageUrl || ""} onChange={(e) => setZoneModal({ ...zoneModal, data: { ...zoneModal.data, imageUrl: e.target.value } })} className={inputCls} />
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Upload Zone Image *</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold cursor-pointer hover:bg-purple-100 transition-colors w-full">
+                      <Upload className="w-4 h-4 text-purple-600" />
+                      <span>Upload Image File</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setZoneModal({ ...zoneModal, data: { ...zoneModal.data, imageUrl: reader.result as string } });
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    <input type="text" placeholder="Or paste image URL (https://...)" value={zoneModal.data.imageUrl || ""} onChange={(e) => setZoneModal({ ...zoneModal, data: { ...zoneModal.data, imageUrl: e.target.value } })} className={inputCls} />
+                  </div>
                   {zoneModal.data.imageUrl && <img src={zoneModal.data.imageUrl} alt="preview" className="mt-2 w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -948,103 +891,7 @@ export default function ImageSectionsPage() {
         </Portal>
       )}
 
-      {/* HERO MODAL */}
-      {heroModal.open && (
-        <Portal>
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                <h2 className="font-black text-slate-900 dark:text-white text-base">{heroModal.mode === "add" ? "Add Hero Banner" : "Edit Hero Banner"}</h2>
-                <button type="button" onClick={() => setHeroModal({ open: false, mode: "add", data: {} })} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"><X className="w-4 h-4 text-slate-500" /></button>
-              </div>
-              <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Banner Image URL *</label>
-                  <input type="url" placeholder="https://..." value={heroModal.data.imageUrl || ""} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, imageUrl: e.target.value } })} className={inputCls} />
-                  {heroModal.data.imageUrl && <img src={heroModal.data.imageUrl} alt="preview" className="mt-2 w-full h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Headline *</label>
-                  <input type="text" placeholder="Varanasi's Most Trusted Home Services" value={heroModal.data.title || ""} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, title: e.target.value } })} className={inputCls} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Subheadline</label>
-                  <textarea rows={2} placeholder="Book background-verified professionals..." value={heroModal.data.subtitle || ""} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, subtitle: e.target.value } })} className={`${inputCls} resize-none`} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">CTA Button Text</label>
-                    <input type="text" placeholder="Book Now" value={heroModal.data.ctaText || ""} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, ctaText: e.target.value } })} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">CTA Link</label>
-                    <input type="text" placeholder="/services" value={heroModal.data.ctaLink || ""} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, ctaLink: e.target.value } })} className={inputCls} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Badge Text</label>
-                  <input type="text" placeholder="4.9★ Rated — 12,000+ Bookings" value={heroModal.data.badgeText || ""} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, badgeText: e.target.value } })} className={inputCls} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="hero-active" checked={heroModal.data.isActive ?? true} onChange={(e) => setHeroModal({ ...heroModal, data: { ...heroModal.data, isActive: e.target.checked } })} className="w-4 h-4 rounded accent-purple-600 cursor-pointer" />
-                  <label htmlFor="hero-active" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Set as Active Banner</label>
-                </div>
-              </div>
-              <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
-                <button type="button" onClick={() => setHeroModal({ open: false, mode: "add", data: {} })} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-pointer transition-colors">Cancel</button>
-                <button type="button" onClick={saveHero} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"><Save className="w-3.5 h-3.5" />Save Banner</button>
-              </div>
-            </div>
-          </div>
-        </Portal>
-      )}
 
-      {/* SERVICE CARD MODAL */}
-      {serviceModal.open && (
-        <Portal>
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
-                <h2 className="font-black text-slate-900 dark:text-white text-base">{serviceModal.mode === "add" ? "Add Service Card" : "Edit Service Card"}</h2>
-                <button type="button" onClick={() => setServiceModal({ open: false, mode: "add", data: {} })} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"><X className="w-4 h-4 text-slate-500" /></button>
-              </div>
-              <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Card Image URL *</label>
-                  <input type="url" placeholder="https://images.unsplash.com/..." value={serviceModal.data.imageUrl || ""} onChange={(e) => setServiceModal({ ...serviceModal, data: { ...serviceModal.data, imageUrl: e.target.value } })} className={inputCls} />
-                  {serviceModal.data.imageUrl && <img src={serviceModal.data.imageUrl} alt="preview" className="mt-2 w-full h-24 object-cover rounded-xl border border-slate-200 dark:border-slate-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Title *</label>
-                  <input type="text" placeholder="Elite Deep Cleaning" value={serviceModal.data.title || ""} onChange={(e) => setServiceModal({ ...serviceModal, data: { ...serviceModal.data, title: e.target.value } })} className={inputCls} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Description</label>
-                  <textarea rows={2} placeholder="Full-home sanitisation..." value={serviceModal.data.description || ""} onChange={(e) => setServiceModal({ ...serviceModal, data: { ...serviceModal.data, description: e.target.value } })} className={`${inputCls} resize-none`} />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Starting Price</label>
-                    <input type="text" placeholder="₹999" value={serviceModal.data.price || ""} onChange={(e) => setServiceModal({ ...serviceModal, data: { ...serviceModal.data, price: e.target.value } })} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Category</label>
-                    <input type="text" placeholder="Cleaning" value={serviceModal.data.category || ""} onChange={(e) => setServiceModal({ ...serviceModal, data: { ...serviceModal.data, category: e.target.value } })} className={inputCls} />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="svc-active" checked={serviceModal.data.isActive ?? true} onChange={(e) => setServiceModal({ ...serviceModal, data: { ...serviceModal.data, isActive: e.target.checked } })} className="w-4 h-4 rounded accent-purple-600 cursor-pointer" />
-                  <label htmlFor="svc-active" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Show on website (Live)</label>
-                </div>
-              </div>
-              <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
-                <button type="button" onClick={() => setServiceModal({ open: false, mode: "add", data: {} })} className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-pointer transition-colors">Cancel</button>
-                <button type="button" onClick={saveService} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"><Save className="w-3.5 h-3.5" />Save Card</button>
-              </div>
-            </div>
-          </div>
-        </Portal>
-      )}
 
       {/* DELETE MODAL */}
       {deleteModal?.open && (
@@ -1059,6 +906,107 @@ export default function ImageSectionsPage() {
               <div className="flex gap-2">
                 <button type="button" onClick={() => setDeleteModal(null)} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-pointer transition-colors">Cancel</button>
                 <button type="button" onClick={confirmDelete} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 cursor-pointer transition-colors">Delete</button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+      {/* ─── CATALOG SERVICE SELECTION MODAL (PICK FROM EXISTING SERVICES) ─── */}
+      {isCatalogPickerOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-500 to-rose-600 text-white">
+                <div className="flex items-center gap-2.5">
+                  <Flame className="w-5 h-5 fill-white text-white" />
+                  <div>
+                    <h3 className="font-extrabold text-white text-base">Select Service from Catalog</h3>
+                    <p className="text-xs text-amber-100">Choose existing services to feature in website Trending Best Sellers</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCatalogPickerOpen(false)}
+                  className="p-1.5 rounded-xl hover:bg-white/20 text-white cursor-pointer transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={catalogSearch}
+                    onChange={(e) => setCatalogSearch(e.target.value)}
+                    placeholder="Search catalog service name or category..."
+                    className="w-full h-10 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white outline-none focus:border-amber-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Catalog Services List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {catalogServices
+                  .filter((s) => !catalogSearch || s.title.toLowerCase().includes(catalogSearch.toLowerCase()) || s.category.toLowerCase().includes(catalogSearch.toLowerCase()))
+                  .map((srv) => {
+                    const isAlreadyTrending = trendingServices.some((t) => t.title.toLowerCase() === srv.title.toLowerCase());
+                    return (
+                      <div
+                        key={srv.id}
+                        className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-amber-300 transition-all flex items-center justify-between gap-4 shadow-xs"
+                      >
+                        <div className="flex items-center gap-3.5">
+                          <img
+                            src={srv.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80"}
+                            alt={srv.title}
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">{srv.title}</h4>
+                              <span className="px-2 py-0.5 rounded text-[9px] font-black bg-brand-50 text-brand-600 border border-brand-200">
+                                {srv.category}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-2 mt-0.5">
+                              <span className="font-mono font-bold text-slate-900 dark:text-white">₹{srv.price}</span>
+                              <span className="text-slate-400 line-through text-[10px]">₹{srv.originalPrice}</span>
+                              <span>•</span>
+                              <span className="text-amber-500 font-bold">★ {srv.rating}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleCatalogServiceInTrending(srv)}
+                          className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                            isAlreadyTrending
+                              ? "bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-600 hover:text-white"
+                              : "bg-amber-500 hover:bg-amber-600 text-white shadow-lux"
+                          }`}
+                        >
+                          <Flame className={`w-3.5 h-3.5 ${isAlreadyTrending ? "text-rose-600" : "fill-white text-white"}`} />
+                          <span>{isAlreadyTrending ? "Remove from Trending" : "+ Add to Trending"}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsCatalogPickerOpen(false)}
+                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-extrabold text-xs shadow-lux cursor-pointer"
+                >
+                  Done Managing Trending
+                </button>
               </div>
             </div>
           </div>

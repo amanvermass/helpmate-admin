@@ -34,6 +34,7 @@ import {
   Minus,
   Check,
   Edit2,
+  Sliders,
   Filter,
 } from "lucide-react";
 import {
@@ -326,8 +327,8 @@ export function BookingWizardModal({
   // Selected Saved Address ID (Default: addr-1)
   const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string>("addr-1");
 
-  // Saved Addresses list for selected customer
-  const savedAddressesList = [
+  // Dynamic Saved Addresses list for selected customer
+  const [savedAddresses, setSavedAddresses] = useState([
     {
       id: "addr-1",
       label: "Home (Primary)",
@@ -368,9 +369,12 @@ export function BookingWizardModal({
       pincode: "221001",
       address: "Flat 202, Dashashwamedh Road, Godowlia, Varanasi",
     },
-  ];
+  ]);
 
-  const selectSavedAddress = (item: typeof savedAddressesList[0]) => {
+  const [isManagingAddresses, setIsManagingAddresses] = useState(false);
+  const [editingAddressObj, setEditingAddressObj] = useState<typeof savedAddresses[0] | null>(null);
+
+  const selectSavedAddress = (item: typeof savedAddresses[0]) => {
     setSelectedSavedAddressId(item.id);
     setLocality(item.locality);
     setPincode(item.pincode);
@@ -383,6 +387,44 @@ export function BookingWizardModal({
       setRecipientName("");
       setRecipientPhone("");
     }
+  };
+
+  const handleToggleManageAddresses = () => {
+    if (isManagingAddresses) {
+      setEditingAddressObj(null); // Automatically close edit form when Done Managing is clicked!
+      setIsManagingAddresses(false);
+    } else {
+      setIsManagingAddresses(true);
+    }
+  };
+
+  const handleSaveEditAddressItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAddressObj) return;
+
+    setSavedAddresses(
+      savedAddresses.map((a) => (a.id === editingAddressObj.id ? editingAddressObj : a))
+    );
+
+    if (selectedSavedAddressId === editingAddressObj.id) {
+      selectSavedAddress(editingAddressObj);
+    }
+    setEditingAddressObj(null);
+    setIsManagingAddresses(false); // On save, hide edit and delete options!
+  };
+
+  const handleDeleteSavedAddressItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (savedAddresses.length <= 1) {
+      alert("At least one saved address must remain.");
+      return;
+    }
+    const filtered = savedAddresses.filter((a) => a.id !== id);
+    setSavedAddresses(filtered);
+    if (selectedSavedAddressId === id && filtered.length > 0) {
+      selectSavedAddress(filtered[0]);
+    }
+    setIsManagingAddresses(false); // On delete, hide edit and delete options!
   };
 
   const selectAddNewCustomAddress = () => {
@@ -659,7 +701,7 @@ export function BookingWizardModal({
   ];
 
   const isCustomNewAddressMode = selectedSavedAddressId === "new_custom";
-  const activeSavedAddressObj = savedAddressesList.find((a) => a.id === selectedSavedAddressId);
+  const activeSavedAddressObj = savedAddresses.find((a) => a.id === selectedSavedAddressId);
 
   return (
     <Portal>
@@ -820,65 +862,282 @@ export function BookingWizardModal({
                 </div>
 
                 {/* SAVED ADDRESSES LIST FOR SELECTED CUSTOMER */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="font-extrabold text-slate-900 dark:text-white text-xs block">
                       Saved Addresses for {customerName || "Customer"}
                     </label>
-                    <span className="text-[10px] text-purple-600 font-bold uppercase">Select Saved or Add New</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {savedAddressesList.map((item) => {
-                      const isSelected = selectedSavedAddressId === item.id;
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => selectSavedAddress(item)}
-                          className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                            isSelected
-                              ? "border-brand-600 bg-brand-50/80 dark:bg-brand-950/80 shadow-sm ring-1 ring-brand-600"
-                              : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                              {isSelected && <Check className="w-3.5 h-3.5 text-brand-600 shrink-0" />}
-                              {item.label}
-                            </span>
-                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
-                              {item.type}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                            {item.address}
-                          </p>
-                          {item.type !== "Self" && item.recipientName && (
-                            <p className="text-[10px] text-purple-700 dark:text-purple-300 font-bold mt-1">
-                              👤 Recipient: {item.recipientName}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-
                     <button
                       type="button"
-                      onClick={selectAddNewCustomAddress}
-                      className={`p-3 rounded-2xl border-2 border-dashed text-left cursor-pointer transition-all flex flex-col items-center justify-center gap-1 ${
-                        isCustomNewAddressMode
-                          ? "border-brand-600 bg-brand-50/80 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-bold ring-1 ring-brand-600"
-                          : "border-purple-300 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 hover:border-purple-500"
+                      onClick={handleToggleManageAddresses}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isManagingAddresses
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 hover:bg-purple-100"
                       }`}
                     >
-                      <Plus className="w-4 h-4 text-purple-600" />
-                      <span className="text-xs font-bold">+ Add New Custom Address</span>
+                      <Sliders className="w-3.5 h-3.5" />
+                      <span>{isManagingAddresses ? "Done Managing" : "⚙️ Manage Addresses"}</span>
                     </button>
                   </div>
+
+                  {/* 2-COLUMN GRID OF SAVED ADDRESSES & INLINE EDIT FORM AFTER THE ROW */}
+                  {(() => {
+                    // Group addresses into pairs of 2 for grid rows
+                    const rows: (typeof savedAddresses)[] = [];
+                    for (let i = 0; i < savedAddresses.length; i += 2) {
+                      rows.push(savedAddresses.slice(i, i + 2));
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        {rows.map((rowItems, rowIndex) => {
+                          const hasEditingItem = rowItems.some((item) => item.id === editingAddressObj?.id);
+
+                          return (
+                            <div key={`row-${rowIndex}`} className="space-y-3">
+                              {/* ROW LINE OF 2 ADDRESS CARDS */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                {rowItems.map((item) => {
+                                  const isSelected = selectedSavedAddressId === item.id;
+                                  const isEditingThisCard = editingAddressObj?.id === item.id;
+
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      onClick={() => selectSavedAddress(item)}
+                                      className={`p-4 rounded-2xl border text-left cursor-pointer transition-all relative group ${
+                                        isEditingThisCard
+                                          ? "border-purple-600 bg-purple-50/90 dark:bg-purple-950/90 ring-2 ring-purple-600 shadow-md"
+                                          : isSelected
+                                          ? "border-brand-600 bg-brand-50/80 dark:bg-brand-950/80 shadow-sm ring-1 ring-brand-600"
+                                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300"
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between mb-1.5">
+                                        <span className="font-extrabold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                                          {isSelected && <Check className="w-3.5 h-3.5 text-brand-600 shrink-0" />}
+                                          {item.label}
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                                            {item.type}
+                                          </span>
+                                          {isManagingAddresses && (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSelectedSavedAddressId(item.id);
+                                                  setEditingAddressObj({ ...item });
+                                                }}
+                                                title="Edit Saved Address"
+                                                className="p-1 rounded-lg bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+                                              >
+                                                <Edit2 className="w-3 h-3" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => handleDeleteSavedAddressItem(item.id, e)}
+                                                title="Delete Old Address"
+                                                className="p-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </button>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                        {item.address}
+                                      </p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* IF AN ADDRESS IN THIS ROW IS BEING EDITED: RENDER EDIT FORM DIRECTLY AFTER THIS ROW LINE */}
+                              {hasEditingItem && editingAddressObj && (
+                                <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border-2 border-purple-500/90 space-y-5 my-3 shadow-xl animate-in fade-in duration-200">
+                                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                                    <div className="flex items-center gap-2 text-purple-900 dark:text-purple-200 font-extrabold text-sm">
+                                      <Edit2 className="w-4 h-4 text-purple-600" />
+                                      <span>Editing Saved Address: <strong>{editingAddressObj.label}</strong></span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingAddressObj(null)}
+                                      className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                    <div>
+                                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Address Label (e.g. Home, Office)</label>
+                                      <input
+                                        type="text"
+                                        value={editingAddressObj.label}
+                                        onChange={(e) => setEditingAddressObj({ ...editingAddressObj, label: e.target.value })}
+                                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-purple-500"
+                                        required
+                                      />
+                                    </div>
+
+                                    <CustomSelect
+                                      label="Varanasi Service Locality *"
+                                      value={editingAddressObj.locality}
+                                      onChange={(val) => {
+                                        const foundLoc = varanasiLocalities.find((l) => l.name === val);
+                                        setEditingAddressObj({
+                                          ...editingAddressObj,
+                                          locality: val,
+                                          pincode: foundLoc ? foundLoc.pincode : editingAddressObj.pincode,
+                                        });
+                                      }}
+                                      options={varanasiLocalities.map((loc) => ({
+                                        value: loc.name,
+                                        label: `${loc.name} (${loc.pincode})`,
+                                      }))}
+                                      placeholder="Select Locality..."
+                                    />
+                                  </div>
+
+                                  {/* RECIPIENT RELATIONSHIP BADGE SELECTOR */}
+                                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <label className="font-extrabold text-slate-900 dark:text-white text-xs block flex items-center justify-between">
+                                      <span>Recipient Relationship Badge</span>
+                                      <span className="text-[10px] text-purple-600 font-bold uppercase">Recipient Badge</span>
+                                    </label>
+
+                                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                      {recipientTypeOptions.map((opt) => {
+                                        const Icon = opt.icon;
+                                        const isSelectedBadge = editingAddressObj.type === opt.type;
+                                        return (
+                                          <button
+                                            key={opt.type}
+                                            type="button"
+                                            onClick={() => setEditingAddressObj({ ...editingAddressObj, type: opt.type })}
+                                            className={`p-3 rounded-xl border text-center font-bold text-xs transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                                              isSelectedBadge
+                                                ? opt.color + " shadow-xs ring-1"
+                                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-purple-300"
+                                            }`}
+                                          >
+                                            <Icon className="w-4 h-4 shrink-0" />
+                                            <span className="text-[11px] leading-tight">{opt.label}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+
+                                    {editingAddressObj.type !== "Self" && (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-200 dark:border-slate-700">
+                                        <div>
+                                          <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Recipient Person Name *</label>
+                                          <input
+                                            type="text"
+                                            value={editingAddressObj.recipientName || ""}
+                                            onChange={(e) => setEditingAddressObj({ ...editingAddressObj, recipientName: e.target.value })}
+                                            placeholder="e.g. Rajesh Sharma (Father)"
+                                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-purple-500"
+                                          />
+                                        </div>
+
+                                        <div>
+                                          <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Recipient Contact Phone Number *</label>
+                                          <input
+                                            type="tel"
+                                            value={editingAddressObj.recipientPhone || ""}
+                                            onChange={(e) => setEditingAddressObj({ ...editingAddressObj, recipientPhone: e.target.value })}
+                                            placeholder="+91 98765 43210"
+                                            className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-purple-500"
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                    <div>
+                                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">City</label>
+                                      <input
+                                        type="text"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none text-xs"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Pincode</label>
+                                      <input
+                                        type="text"
+                                        value={editingAddressObj.pincode}
+                                        onChange={(e) => setEditingAddressObj({ ...editingAddressObj, pincode: e.target.value })}
+                                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none text-xs"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-1.5 text-xs">
+                                    <label className="font-bold text-slate-700 dark:text-slate-300 block">Full Delivery / Service Address & Landmark *</label>
+                                    <textarea
+                                      rows={2.5}
+                                      value={editingAddressObj.address}
+                                      onChange={(e) => setEditingAddressObj({ ...editingAddressObj, address: e.target.value })}
+                                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
+                                      required
+                                    />
+                                  </div>
+
+                                  <div className="flex gap-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingAddressObj(null)}
+                                      className="px-5 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 cursor-pointer transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleSaveEditAddressItem}
+                                      className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-extrabold text-xs shadow-lux flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                                    >
+                                      <CheckCircle2 className="w-4 h-4" />
+                                      <span>Save Address Changes</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        <button
+                          type="button"
+                          onClick={selectAddNewCustomAddress}
+                          className={`w-full p-3.5 rounded-2xl border-2 border-dashed text-left cursor-pointer transition-all flex items-center justify-center gap-2 ${
+                            isCustomNewAddressMode
+                              ? "border-brand-600 bg-brand-50/80 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 font-bold ring-1 ring-brand-600"
+                              : "border-purple-300 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 hover:border-purple-500"
+                          }`}
+                        >
+                          <Plus className="w-4 h-4 text-purple-600" />
+                          <span className="text-xs font-bold">+ Add New Custom Address</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* IF SAVED ADDRESS IS SELECTED: SHOW COMPACT SUMMARY CARD ONLY */}
-                {!isCustomNewAddressMode && activeSavedAddressObj && (
+                {/* IF SAVED ADDRESS IS SELECTED & NOT EDITING: SHOW COMPACT SUMMARY CARD */}
+
+                {/* IF SAVED ADDRESS IS SELECTED & NOT EDITING: SHOW COMPACT SUMMARY CARD */}
+                {!isCustomNewAddressMode && activeSavedAddressObj && !editingAddressObj && (
                   <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-500/80 space-y-2 text-xs animate-in fade-in-50 duration-200">
                     <div className="flex items-center justify-between">
                       <span className="font-extrabold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">

@@ -150,7 +150,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       ],
     },
     {
-      sectionTitle: "Fleet & Customers",
+      sectionTitle: "Partners & Customers",
       items: [
         {
           title: "Customers",
@@ -158,7 +158,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           href: "/customers",
         },
         {
-          title: "Partner Fleet",
+          title: "Partners",
           icon: UserCheck,
           href: "/technicians",
         },
@@ -182,6 +182,11 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           icon: Tag,
           href: "/pricing",
         },
+      ],
+    },
+    {
+      sectionTitle: "Website Management",
+      items: [
         {
           title: "Banners & Visitor Popups",
           icon: Megaphone,
@@ -201,6 +206,11 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Locations & Pincodes",
           icon: Building2,
           href: "/locations",
+        },
+        {
+          title: "Media Library",
+          icon: FileImage,
+          href: "/media",
         },
       ],
     },
@@ -236,11 +246,6 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "User Management & RBAC",
           icon: ShieldCheck,
           href: "/users",
-        },
-        {
-          title: "Media Library",
-          icon: FileImage,
-          href: "/media",
         },
         {
           title: "Settings & Analytics",

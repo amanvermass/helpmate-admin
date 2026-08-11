@@ -25,6 +25,7 @@ import {
   ShieldAlert,
   User,
   Briefcase,
+  Building,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 
@@ -38,7 +39,9 @@ export default function TechniciansPage() {
   // Full Partner Onboarding Form States (Aadhaar, Guarantor, Police Thana)
   const [partnerName, setPartnerName] = useState("");
   const [partnerPhone, setPartnerPhone] = useState("");
+  const [partnerPhoneVerified, setPartnerPhoneVerified] = useState(false);
   const [partnerEmail, setPartnerEmail] = useState("");
+  const [partnerEmailVerified, setPartnerEmailVerified] = useState(false);
   const [partnerAvatar, setPartnerAvatar] = useState("");
   const [partnerCategory, setPartnerCategory] = useState("AC Servicing & Repair");
   const [partnerLocality, setPartnerLocality] = useState("Sigra");
@@ -46,6 +49,9 @@ export default function TechniciansPage() {
   const [partnerAadhaarDoc, setPartnerAadhaarDoc] = useState("");
   const [partnerGuarantorName, setPartnerGuarantorName] = useState("");
   const [partnerGuarantorPhone, setPartnerGuarantorPhone] = useState("");
+  const [guarantorPhoneVerified, setGuarantorPhoneVerified] = useState(false);
+  const [partnerGuarantorEmail, setPartnerGuarantorEmail] = useState("");
+  const [guarantorEmailVerified, setGuarantorEmailVerified] = useState(false);
   const [partnerGuarantorAddress, setPartnerGuarantorAddress] = useState("");
   const [partnerGuarantorAadhaar, setPartnerGuarantorAadhaar] = useState("");
   const [partnerGuarantorAadhaarDoc, setPartnerGuarantorAadhaarDoc] = useState("");
@@ -404,7 +410,7 @@ export default function TechniciansPage() {
                 <span className="text-xl font-black text-amber-500 font-mono">★ {viewTech.rating} / 5.0</span>
               </div>
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Dispatches</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Completed Jobs</span>
                 <span className="text-xl font-black text-brand-600 dark:text-brand-400 font-mono">{viewTech.totalJobs} Jobs</span>
               </div>
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
@@ -530,39 +536,54 @@ export default function TechniciansPage() {
           </div>
         )}
 
-        {/* TAB 3: COMPLETED JOBS */}
+        {/* TAB 3: COMPLETED JOBS (MINIMUM 10 ENTRIES) */}
         {detailTab === "jobs" && (
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                Job Dispatches Completed by {viewTech.name}
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-brand-600" />
+                <span>Completed Jobs History</span>
               </h3>
               <span className="px-3 py-1 rounded-full bg-brand-50 text-brand-600 text-xs font-extrabold">
-                {viewTech.totalJobs} Completed Jobs
+                10 Completed Jobs Recorded
               </span>
             </div>
             <div className="space-y-3">
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-                <div>
-                  <span className="font-mono font-bold text-brand-600 text-sm">#BK-9981</span>
-                  <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">{viewTech.category} - Power Jet Service</h4>
-                  <p className="text-slate-500 font-semibold">Customer: Alok Verma (Sigra, Varanasi)</p>
+              {[
+                { id: "BK-VAR-9981", title: `${viewTech.category} - Power Jet Wash & Gas Check`, customer: "Alok Verma (Sigra)", price: "₹1,999", share: "₹1,499", date: "Today, 11:30 AM" },
+                { id: "BK-VAR-9975", title: `${viewTech.category} - Filter Cartridge & RO Sanitization`, customer: "Rajesh Agrawal (Sigra)", price: "₹1,499", share: "₹1,124", date: "08 Aug 2026" },
+                { id: "BK-VAR-9968", title: `${viewTech.category} - Full Deep Hydro Wash`, customer: "Vikram Malhotra (Lanka)", price: "₹2,890", share: "₹2,168", date: "05 Aug 2026" },
+                { id: "BK-VAR-9954", title: `${viewTech.category} - Commercial Unit Hydro Repair`, customer: "Siddharth Gupta (Cantonment)", price: "₹4,000", share: "₹3,000", date: "02 Aug 2026" },
+                { id: "BK-VAR-9941", title: `${viewTech.category} - Inverter AC Gas Refilling (R32)`, customer: "Sunita Agrawal (Assi Ghat)", price: "₹2,500", share: "₹1,875", date: "29 Jul 2026" },
+                { id: "BK-VAR-9932", title: `${viewTech.category} - Villa Deep Hydro Cleaning`, customer: "B.P. Srivastava (Lahurabir)", price: "₹5,500", share: "₹4,125", date: "26 Jul 2026" },
+                { id: "BK-VAR-9920", title: `${viewTech.category} - Motor & Capacitor Replacement`, customer: "Amitabh Verma (Rathyatra)", price: "₹1,850", share: "₹1,388", date: "22 Jul 2026" },
+                { id: "BK-VAR-9912", title: `${viewTech.category} - Degreasing & Filter Wash`, customer: "Priya Sharma (Bhelupur)", price: "₹1,299", share: "₹974", date: "18 Jul 2026" },
+                { id: "BK-VAR-9899", title: `${viewTech.category} - Copper Pipe Welding & Leak Repair`, customer: "Ramesh Pandey (Godowlia)", price: "₹3,200", share: "₹2,400", date: "14 Jul 2026" },
+                { id: "BK-VAR-9884", title: `${viewTech.category} - Heating Element Replacement`, customer: "Manoj Tripathi (Shivpur)", price: "₹1,650", share: "₹1,238", date: "10 Jul 2026" },
+              ].map((job) => (
+                <div key={job.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-mono font-bold text-brand-600 text-sm">#{job.id}</span>
+                    <h4 className="font-extrabold text-slate-900 dark:text-white text-sm">{job.title}</h4>
+                    <p className="text-slate-500 font-semibold">Customer: {job.customer} • {job.date}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono font-black text-emerald-600 text-base block">{job.share}</span>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded inline-block mt-0.5">Completed</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-mono font-black text-emerald-600 text-base">₹1,499</span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded block mt-0.5">Completed</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* TAB 4: EARNINGS & SETTLEMENT */}
+        {/* TAB 4: EARNINGS & SETTLEMENT (SIMPLIFIED BANK CARD WITH BANK NAME AND MANAGE BUTTON + 10 ROWS) */}
         {detailTab === "earnings" && (
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-sm">
             <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
               Partner Weekly Settlement & Commission Ledger
             </h3>
+            
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border">
                 <span className="text-slate-400 font-bold block uppercase text-[10px]">Gross Revenue</span>
@@ -576,6 +597,52 @@ export default function TechniciansPage() {
                 <span className="text-slate-400 font-bold block uppercase text-[10px]">Pending Weekly Payout</span>
                 <span className="text-xl font-black text-purple-600 font-mono">₹{viewTech.pendingPayout.toLocaleString()}</span>
               </div>
+            </div>
+
+            {/* SIMPLIFIED BANK CARD SHOWING STRICTLY BANK NAME AND MANAGE BUTTON */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Building className="w-5 h-5 text-brand-600" />
+                <div>
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase block">Payout Bank</span>
+                  <span className="font-black text-slate-900 dark:text-white text-sm">HDFC Bank (Sigra Branch)</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => alert(`Manage Bank Account for ${viewTech.name}`)}
+                className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs"
+              >
+                Manage Bank Account
+              </button>
+            </div>
+
+            {/* 10 WEEKLY SETTLEMENT ROWS */}
+            <div className="space-y-2 text-xs pt-2">
+              <span className="font-extrabold text-slate-900 dark:text-white block">Weekly Payout Cycles (10 Recorded)</span>
+              {[
+                { id: "SET-32", cycle: "01 Aug - 07 Aug 2026", net: "₹13,800", date: "08 Aug 2026" },
+                { id: "SET-31", cycle: "25 Jul - 31 Jul 2026", net: "₹16,500", date: "01 Aug 2026" },
+                { id: "SET-30", cycle: "18 Jul - 24 Jul 2026", net: "₹12,600", date: "25 Jul 2026" },
+                { id: "SET-29", cycle: "11 Jul - 17 Jul 2026", net: "₹14,625", date: "18 Jul 2026" },
+                { id: "SET-28", cycle: "04 Jul - 10 Jul 2026", net: "₹18,150", date: "11 Jul 2026" },
+                { id: "SET-27", cycle: "27 Jun - 03 Jul 2026", net: "₹11,700", date: "04 Jul 2026" },
+                { id: "SET-26", cycle: "20 Jun - 26 Jun 2026", net: "₹15,750", date: "27 Jun 2026" },
+                { id: "SET-25", cycle: "13 Jun - 19 Jun 2026", net: "₹13,425", date: "20 Jun 2026" },
+                { id: "SET-24", cycle: "06 Jun - 12 Jun 2026", net: "₹15,300", date: "13 Jun 2026" },
+                { id: "SET-23", cycle: "30 May - 05 Jun 2026", net: "₹10,875", date: "06 Jun 2026" },
+              ].map((s) => (
+                <div key={s.id} className="p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-emerald-600">{s.id}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">Cycle: {s.cycle}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-slate-400">Paid: {s.date}</span>
+                    <span className="font-mono font-black text-emerald-600">{s.net}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -848,12 +915,17 @@ export default function TechniciansPage() {
                   setTechs([newPartner, ...techs]);
                   setPartnerName("");
                   setPartnerPhone("");
+                  setPartnerPhoneVerified(false);
                   setPartnerEmail("");
+                  setPartnerEmailVerified(false);
                   setPartnerAvatar("");
                   setPartnerAadhaar("");
                   setPartnerAadhaarDoc("");
                   setPartnerGuarantorName("");
                   setPartnerGuarantorPhone("");
+                  setGuarantorPhoneVerified(false);
+                  setPartnerGuarantorEmail("");
+                  setGuarantorEmailVerified(false);
                   setPartnerGuarantorAddress("");
                   setPartnerGuarantorAadhaar("");
                   setPartnerGuarantorAadhaarDoc("");
@@ -924,31 +996,96 @@ export default function TechniciansPage() {
                     </div>
 
                     <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Mobile Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={partnerPhone}
-                        onChange={(e) => setPartnerPhone(e.target.value)}
-                        placeholder="+91 98390 12345"
-                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                          Mobile Phone Number *
+                        </label>
+                        {partnerPhoneVerified ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified Mobile
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!partnerPhone.trim()) { alert("Please enter Partner mobile phone number first."); return; }
+                              setPartnerPhoneVerified(true);
+                            }}
+                            className="text-[10px] font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 underline cursor-pointer"
+                          >
+                            Verify Mobile (OTP)
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="tel"
+                          required
+                          value={partnerPhone}
+                          onChange={(e) => {
+                            setPartnerPhone(e.target.value);
+                            if (partnerPhoneVerified) setPartnerPhoneVerified(false);
+                          }}
+                          placeholder="+91 98390 12345"
+                          className="w-full h-[42px] pl-3 pr-20 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+                        />
+                        {!partnerPhoneVerified && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!partnerPhone.trim()) { alert("Please enter Partner mobile phone number first."); return; }
+                              setPartnerPhoneVerified(true);
+                            }}
+                            className="absolute right-1.5 px-2.5 py-1 text-[10px] font-bold rounded-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xs cursor-pointer transition-colors"
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={partnerEmail}
-                        onChange={(e) => setPartnerEmail(e.target.value)}
-                        placeholder="e.g. ramesh.yadav@gmail.com"
-                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                          Email Address (Optional)
+                        </label>
+                        {partnerEmailVerified ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified Email
+                          </span>
+                        ) : partnerEmail.trim() ? (
+                          <button
+                            type="button"
+                            onClick={() => setPartnerEmailVerified(true)}
+                            className="text-[10px] font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400 underline cursor-pointer"
+                          >
+                            Verify Email
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium italic">Non-mandatory</span>
+                        )}
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="email"
+                          value={partnerEmail}
+                          onChange={(e) => {
+                            setPartnerEmail(e.target.value);
+                            if (partnerEmailVerified) setPartnerEmailVerified(false);
+                          }}
+                          placeholder="e.g. ramesh.yadav@gmail.com (optional)"
+                          className="w-full h-[42px] pl-3 pr-20 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+                        />
+                        {partnerEmail.trim() && !partnerEmailVerified && (
+                          <button
+                            type="button"
+                            onClick={() => setPartnerEmailVerified(true)}
+                            className="absolute right-1.5 px-2.5 py-1 text-[10px] font-bold rounded-lg bg-brand-600 hover:bg-brand-700 text-white shadow-xs cursor-pointer transition-colors"
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -1053,16 +1190,95 @@ export default function TechniciansPage() {
                     </div>
 
                     <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Guarantor Mobile Phone *
-                      </label>
-                      <input
-                        type="tel"
-                        value={partnerGuarantorPhone}
-                        onChange={(e) => setPartnerGuarantorPhone(e.target.value)}
-                        placeholder="+91 98390 88210"
-                        className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                          Guarantor Mobile Phone *
+                        </label>
+                        {guarantorPhoneVerified ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified Mobile
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!partnerGuarantorPhone.trim()) { alert("Please enter Guarantor mobile phone number first."); return; }
+                              setGuarantorPhoneVerified(true);
+                            }}
+                            className="text-[10px] font-bold text-purple-600 hover:text-purple-700 dark:text-purple-400 underline cursor-pointer"
+                          >
+                            Verify Mobile (OTP)
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="tel"
+                          value={partnerGuarantorPhone}
+                          onChange={(e) => {
+                            setPartnerGuarantorPhone(e.target.value);
+                            if (guarantorPhoneVerified) setGuarantorPhoneVerified(false);
+                          }}
+                          placeholder="+91 98390 88210"
+                          className="w-full h-[42px] pl-3 pr-20 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500 text-xs"
+                        />
+                        {!guarantorPhoneVerified && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!partnerGuarantorPhone.trim()) { alert("Please enter Guarantor mobile phone number first."); return; }
+                              setGuarantorPhoneVerified(true);
+                            }}
+                            className="absolute right-1.5 px-2.5 py-1 text-[10px] font-bold rounded-lg bg-purple-600 hover:bg-purple-700 text-white shadow-xs cursor-pointer transition-colors"
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block">
+                          Guarantor Email (Optional)
+                        </label>
+                        {guarantorEmailVerified ? (
+                          <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Verified Email
+                          </span>
+                        ) : partnerGuarantorEmail.trim() ? (
+                          <button
+                            type="button"
+                            onClick={() => setGuarantorEmailVerified(true)}
+                            className="text-[10px] font-bold text-purple-600 hover:text-purple-700 dark:text-purple-400 underline cursor-pointer"
+                          >
+                            Verify Email
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium italic">Non-mandatory</span>
+                        )}
+                      </div>
+                      <div className="relative flex items-center">
+                        <input
+                          type="email"
+                          value={partnerGuarantorEmail}
+                          onChange={(e) => {
+                            setPartnerGuarantorEmail(e.target.value);
+                            if (guarantorEmailVerified) setGuarantorEmailVerified(false);
+                          }}
+                          placeholder="e.g. suresh.guarantor@gmail.com (optional)"
+                          className="w-full h-[42px] pl-3 pr-20 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-purple-500 text-xs"
+                        />
+                        {partnerGuarantorEmail.trim() && !guarantorEmailVerified && (
+                          <button
+                            type="button"
+                            onClick={() => setGuarantorEmailVerified(true)}
+                            className="absolute right-1.5 px-2.5 py-1 text-[10px] font-bold rounded-lg bg-purple-600 hover:bg-purple-700 text-white shadow-xs cursor-pointer transition-colors"
+                          >
+                            Verify
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div>
