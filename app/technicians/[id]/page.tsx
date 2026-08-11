@@ -775,7 +775,7 @@ export default function TechnicianDetailPage() {
       </div>
 
       {/* ─── HIGH-CONTRAST SEGMENTED TAB BAR ─── */}
-      <div className="bg-slate-100 dark:bg-slate-800/90 p-1.5 rounded-2xl flex flex-wrap sm:flex-nowrap items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-inner w-full sm:w-fit text-xs font-extrabold">
+      <div className="bg-slate-100 dark:bg-slate-800/90 p-1.5 rounded-2xl flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-inner w-full sm:w-fit text-xs font-extrabold overflow-x-auto no-scrollbar max-w-full flex-nowrap">
         <button
           type="button"
           onClick={() => setActiveTab("overview")}
@@ -1064,68 +1064,262 @@ export default function TechnicianDetailPage() {
         </div>
       )}
 
-      {/* TAB 2: IDENTITY & GUARANTOR DOCUMENTS */}
+      {/* TAB 2: IDENTITY & GUARANTOR DOCUMENTS (MOBILE-FIRST RESPONSIVE GRID) */}
       {activeTab === "kyc" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Partner Aadhaar Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-brand-600" />
-                <span className="font-extrabold text-slate-900 dark:text-white text-base">
-                  Partner Biometric Aadhaar Card
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 1. Partner Biometric Aadhaar Card */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      Partner Biometric Aadhaar Card
+                    </h3>
+                    <p className="text-[11px] text-slate-400">UIDAI Instant Online Verification Passed</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200 dark:border-emerald-800 w-fit">
+                  Identity Verified
                 </span>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-bold">
-                Identity Verified
-              </span>
-            </div>
 
-            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3">
-                <FileCheck className="w-7 h-7 text-brand-600 shrink-0" />
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileCheck className="w-7 h-7 text-brand-600 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-white block truncate">
+                      Partner_Aadhaar_Card_Front_Back.pdf
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block">12-Digit UID: 7821-4920-1102</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert("Viewing Partner Aadhaar Card PDF Document")}
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
+                >
+                  View Document
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  <span className="font-bold text-slate-900 dark:text-white block">Partner_Aadhaar_Card_Front_Back.pdf</span>
-                  <span className="text-[11px] text-slate-400 font-mono">12-Digit: 7821-4920-1102</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Aadhaar Number</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">XXXX-XXXX-1102</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Biometric Auth</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Fingerprint + OTP</span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs"
-              >
-                View Document
-              </button>
             </div>
-          </div>
 
-          {/* Guarantor Aadhaar Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-purple-600" />
-                <span className="font-extrabold text-slate-900 dark:text-white text-base">
-                  Guarantor Person Aadhaar Card
+            {/* 2. Partner PAN & Tax Compliance Card */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
+                    <FileCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      PAN Card & Tax Compliance
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Section 194C TDS & Banking Audit Passed</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200 dark:border-emerald-800 w-fit">
+                  Tax Compliant
                 </span>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 text-[10px] font-bold">
-                Guarantor Verified
-              </span>
-            </div>
 
-            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-3">
-                <FileCheck className="w-7 h-7 text-purple-600 shrink-0" />
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileCheck className="w-7 h-7 text-emerald-600 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-white block truncate">
+                      Partner_PAN_Card_Record.pdf
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block">PAN: ABCDE1234F</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert("Viewing Partner PAN Card PDF")}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
+                >
+                  View PAN Card
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  <span className="font-bold text-slate-900 dark:text-white block">Guarantor_Aadhaar_Card_Record.pdf</span>
-                  <span className="text-[11px] text-slate-400 font-mono">Guarantor: Suresh Chandra Yadav</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">PAN Account No</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">ABCDE1234F</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">TDS Deduction</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">1% Individual Rate</span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-xs"
-              >
-                View Guarantor Aadhaar
-              </button>
+            </div>
+
+            {/* 3. Driving License & Transport RC Card */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 shrink-0">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      Driving License & Vehicle RC
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Transport Department RTO Verification</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 text-[10px] font-extrabold border border-blue-200 dark:border-blue-800 w-fit">
+                  DL Active
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileCheck className="w-7 h-7 text-blue-600 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-white block truncate">
+                      Partner_Driving_License_RC.pdf
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block">DL: UP65-2022-009812</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert("Viewing Partner Driving License Document")}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
+                >
+                  View DL Record
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Registered Vehicle</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">Hero Electric (UP65AB4910)</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">DL Validity</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">Valid till 2034</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Guarantor Person Aadhaar Card */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400 shrink-0">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      Guarantor Person Aadhaar Card
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Emergency & Financial Sponsor Verification</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 text-[10px] font-extrabold border border-purple-200 dark:border-purple-800 w-fit">
+                  Guarantor Verified
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileCheck className="w-7 h-7 text-purple-600 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-white block truncate">
+                      Guarantor_Aadhaar_Card_Record.pdf
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block">Suresh Chandra Yadav (Father)</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert("Viewing Guarantor Aadhaar Card PDF")}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
+                >
+                  View Guarantor Document
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Guarantor Name</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">Suresh Chandra Yadav</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Contact Number</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">+91 94152 88219</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Police Clearance Certificate (PCC) */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm lg:col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                      Police Clearance Certificate (PCC Safety Audit)
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Verified Police Thana Clearance Certificate</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200 dark:border-emerald-800 w-fit">
+                  PCC Passed
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileCheck className="w-7 h-7 text-emerald-600 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-white block truncate">
+                      Police_Clearance_Certificate_Sigra.pdf
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono block">Token: PCC-VAR-2026-8819</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert("Viewing Police Clearance Certificate")}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
+                >
+                  View PCC Certificate
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Local Police Thana</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">Sigra Police Station, Varanasi</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Safety Cover</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">₹5,00,000 Bonded Insurance</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Clearance Date</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">15 Jan 2026</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

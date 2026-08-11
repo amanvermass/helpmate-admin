@@ -956,7 +956,7 @@ export default function CustomerDetailPage() {
       </div>
 
       {/* ─── HIGH-CONTRAST LUXURY SEGMENTED TAB BAR (Matching Reference Image Style) ─── */}
-      <div className="bg-[#F1F3F9] dark:bg-slate-800/80 p-1.5 rounded-2xl flex flex-wrap sm:flex-nowrap items-center gap-1.5 border border-slate-200/80 dark:border-slate-700/80 shadow-xs w-full sm:w-fit">
+      <div className="bg-[#F1F3F9] dark:bg-slate-800/80 p-1.5 rounded-2xl flex items-center gap-1.5 border border-slate-200/80 dark:border-slate-700/80 shadow-xs w-full sm:w-fit overflow-x-auto no-scrollbar max-w-full flex-nowrap">
         <button
           type="button"
           onClick={() => setActiveTab("profile")}
