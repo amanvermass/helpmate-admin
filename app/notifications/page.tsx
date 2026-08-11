@@ -233,12 +233,12 @@ export default function NotificationsPage() {
         <div className="relative z-10 space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
-              Live Alert & Dispatch Center
+              Live Alert & Operations Center
             </span>
             <span className="text-xs text-white/80 font-bold">• 99.4% Delivery Success Rate</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Notification Dispatch Logs & Broadcast Hub
+            Notification Broadcast Logs & Operations Hub
           </h1>
           <p className="text-xs sm:text-sm text-white/90 max-w-xl font-medium">
             Real-time delivery audit logs for WhatsApp booking receipts, 4-digit SMS OTP codes, and instant fleet broadcasts.
@@ -261,7 +261,7 @@ export default function NotificationsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Total Dispatched</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Total Broadcasted</span>
             <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 flex items-center justify-center border border-brand-200 dark:border-brand-800">
               <Bell className="w-4.5 h-4.5" />
             </div>
@@ -299,7 +299,7 @@ export default function NotificationsPage() {
               <Radio className="w-4.5 h-4.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-amber-600 dark:text-amber-400">170 Dispatched</p>
+          <p className="text-2xl font-black text-amber-600 dark:text-amber-400">170 Sent</p>
           <p className="text-[11px] text-amber-600 font-bold">Varanasi Partner Fleet Alerts</p>
         </div>
       </div>
@@ -315,7 +315,7 @@ export default function NotificationsPage() {
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          Live Dispatch Logs ({logs.length})
+          Live Broadcast Logs ({logs.length})
         </button>
 
         <button
@@ -429,7 +429,7 @@ export default function NotificationsPage() {
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-xs">
           <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
             <h3 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
-              System Event Listeners & Automated Dispatches
+              System Event Listeners & Automated Broadcasts
             </h3>
             <p className="text-xs text-slate-500">
               Live automated triggers fired by customer bookings, partner assignments, and payout clearances.
@@ -457,7 +457,7 @@ export default function NotificationsPage() {
                 </div>
 
                 <div className="text-[10px] text-slate-400 font-mono font-bold pt-1 border-t border-slate-200 dark:border-slate-700">
-                  Total Dispatched: {trig.totalFired.toLocaleString()} triggers
+                  Total Fired: {trig.totalFired.toLocaleString()} triggers
                 </div>
               </div>
             ))}
@@ -487,7 +487,7 @@ export default function NotificationsPage() {
 
                 <div className="space-y-3">
                   <CustomSelect
-                    label="Dispatch Channel *"
+                    label="Notification Channel *"
                     value={broadcastForm.channel}
                     onChange={(val) =>
                       setBroadcastForm({ ...broadcastForm, channel: val as any })

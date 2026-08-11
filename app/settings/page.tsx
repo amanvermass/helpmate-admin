@@ -21,7 +21,7 @@ export default function SettingsPage() {
 
   // Settings State
   const [appName, setAppName] = useState("HelpMate Varanasi HQ");
-  const [dispatchRadius, setDispatchRadius] = useState("15 km");
+  const [assignmentRadius, setAssignmentRadius] = useState("15 km");
   const [commissionRate, setCommissionRate] = useState("25%");
   const [supportPhone, setSupportPhone] = useState("+91 542 2200 999");
   const [supportEmail, setSupportEmail] = useState("support@helpmate.net.in");
@@ -114,12 +114,12 @@ export default function SettingsPage() {
 
               <div>
                 <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
-                  Dispatch Radius Limit
+                  Service Area Radius Limit
                 </label>
                 <input
                   type="text"
-                  value={dispatchRadius}
-                  onChange={(e) => setDispatchRadius(e.target.value)}
+                  value={assignmentRadius}
+                  onChange={(e) => setAssignmentRadius(e.target.value)}
                   className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
                 />
               </div>
@@ -219,8 +219,8 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-amber-600" />
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white">Fleet Partner Dispatch Push Alerts</div>
-                    <div className="text-[11px] text-slate-500">Notify technicians when a new order is dispatched</div>
+                    <div className="font-bold text-slate-900 dark:text-white">Fleet Partner Job Push Alerts</div>
+                    <div className="text-[11px] text-slate-500">Notify technicians when a new order is assigned</div>
                   </div>
                 </div>
                 <input
@@ -235,7 +235,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-blue-600" />
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white">Email Tax Invoice Dispatches</div>
+                    <div className="font-bold text-slate-900 dark:text-white">Email Tax Invoice Receipts</div>
                     <div className="text-[11px] text-slate-500">Email GST invoices to customers automatically</div>
                   </div>
                 </div>

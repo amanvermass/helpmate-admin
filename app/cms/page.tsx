@@ -406,7 +406,7 @@ export default function CmsPage() {
     },
     {
       key: "activeBookings",
-      header: "Active Dispatch Load",
+      header: "Active Booking Load",
       accessor: (row) => <span className="font-bold text-slate-700 dark:text-slate-300">{row.activeBookings} Bookings</span>,
     },
     {
@@ -618,7 +618,7 @@ export default function CmsPage() {
         thumbnailUrl: off.thumbnailUrl || serviceThumbnail,
         addons: linkedAddonObjects,
         status: "Active",
-        createdBy: "Admin Dispatcher",
+        createdBy: "Admin Coordinator",
         createdDate: "Just Now",
       }));
 

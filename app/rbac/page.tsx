@@ -26,15 +26,15 @@ export default function RBACPage() {
       name: "Super Admin",
       members: "Aman Verma",
       description: "Full system administration, pricing overrides, and franchisee controls.",
-      permissions: ["Dashboard Analytics", "Service Pricing CMS", "Dispatch Control", "Audit Stream", "RBAC Management"],
+      permissions: ["Dashboard Analytics", "Service Pricing CMS", "Assignment Control", "Audit Stream", "RBAC Management"],
       color: "border-brand-200 bg-brand-50 text-brand-700",
     },
     {
       id: "role-2",
-      name: "Varanasi Dispatch Lead",
-      members: "3 Active Dispatchers",
+      name: "Varanasi Operations Lead",
+      members: "3 Active Coordinators",
       description: "Live booking pipeline management and technician fleet re-assignment.",
-      permissions: ["Dashboard Analytics", "Dispatch Control", "Technician Fleet View"],
+      permissions: ["Dashboard Analytics", "Assignment Control", "Technician Fleet View"],
       color: "border-blue-200 bg-blue-50 text-blue-700",
     },
     {
@@ -70,7 +70,7 @@ export default function RBACPage() {
             Role-Based Access Control (RBAC) & Audit Logs
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Configure permission matrices for Varanasi central dispatch, fleet managers, and view immutable audit streams.
+            Configure permission matrices for Varanasi central operations, fleet managers, and view immutable audit streams.
           </p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function RBACPage() {
             <ShieldCheck className="w-5 h-5 text-emerald-600" />
             <div>
               <h3 className="text-base font-extrabold text-slate-900">Live Varanasi System Audit Stream</h3>
-              <p className="text-xs text-slate-500">Immutable event logs for every dispatch, pricing edit & verification</p>
+              <p className="text-xs text-slate-500">Immutable event logs for every assignment, pricing edit & verification</p>
             </div>
           </div>
 

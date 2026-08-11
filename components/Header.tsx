@@ -66,7 +66,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
 
   const adminRoles: RoleType[] = [
     "Super Admin",
-    "Varanasi Dispatcher",
+    "Varanasi Operations Coordinator",
     "Fleet Inspector",
     "Billing & Finance Manager",
     "Support Agent",

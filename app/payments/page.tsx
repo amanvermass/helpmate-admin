@@ -205,7 +205,7 @@ export default function PaymentsPage() {
               <TrendingUp className="w-3 h-3 mr-0.5" /> +24.8%
             </span>
           </div>
-          <span className="text-[11px] text-slate-500 font-semibold block">Varanasi Dispatch Settlements</span>
+          <span className="text-[11px] text-slate-500 font-semibold block">Varanasi Operations Settlements</span>
         </div>
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
@@ -331,7 +331,7 @@ export default function PaymentsPage() {
                     <span className="font-bold">₹{Math.round(selectedTxn.amount * 0.82)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                    <span>Convenience & Dispatch Fee</span>
+                    <span>Convenience & Booking Fee</span>
                     <span className="font-bold">₹49</span>
                   </div>
                   <div className="flex justify-between text-slate-600 dark:text-slate-300">

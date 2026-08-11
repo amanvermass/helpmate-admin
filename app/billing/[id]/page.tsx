@@ -281,7 +281,7 @@ export default function InvoiceDetailPage() {
                 <td className="py-4">
                   <div className="font-bold text-slate-900 dark:text-white">Platform Convenience & Safety Insurance Fee</div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
-                    HelpMate Safety Insurance & Tech Dispatch
+                    HelpMate Safety Insurance & Tech Assignment
                   </div>
                 </td>
                 <td className="py-4 text-right font-mono font-bold">₹{booking.convenienceFee}</td>
@@ -444,7 +444,7 @@ export default function InvoiceDetailPage() {
                   <td className="py-2">
                     <div className="font-bold text-xs">Platform Convenience & Safety Insurance Fee</div>
                     <div className="text-[10px] text-slate-600 font-normal">
-                      HelpMate Safety Insurance & Tech Dispatch
+                      HelpMate Safety Insurance & Tech Assignment
                     </div>
                   </td>
                   <td className="py-2 text-right font-mono font-bold text-xs">₹{booking.convenienceFee}</td>

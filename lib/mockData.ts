@@ -180,7 +180,7 @@ export interface UserPermissions {
   rbac: ModulePermission;
 
   // Feature flags (auto-derived)
-  canDispatchJobs: boolean;
+  canAssignJobs: boolean;
   canEditServices: boolean;
   canProcessRefunds: boolean;
   canManageFleet: boolean;
@@ -193,7 +193,7 @@ export interface UserManagementItem {
   id: string;
   name: string;
   email: string;
-  role: "Super Admin" | "Varanasi Dispatcher" | "Fleet Inspector" | "Support Agent" | "Billing & Finance Manager" | "Service Partner" | string;
+  role: "Super Admin" | "Varanasi Operations Coordinator" | "Fleet Inspector" | "Support Agent" | "Billing & Finance Manager" | "Service Partner" | string;
   status: "Active" | "Suspended";
   lastLogin: string;
   phone?: string;
@@ -651,7 +651,7 @@ export const initialUsers: UserManagementItem[] = [
       analytics: { view: true, create: true, edit: true, delete: true },
       reports: { view: true, create: true, edit: true, delete: true },
       rbac: { view: true, create: true, edit: true, delete: true },
-      canDispatchJobs: true,
+      canAssignJobs: true,
       canEditServices: true,
       canProcessRefunds: true,
       canManageFleet: true,
@@ -663,8 +663,8 @@ export const initialUsers: UserManagementItem[] = [
   {
     id: "usr-2",
     name: "Siddharth Malhotra",
-    email: "dispatch.sigra@helpmate.net.in",
-    role: "Varanasi Dispatcher",
+    email: "operations.sigra@helpmate.net.in",
+    role: "Varanasi Operations Coordinator",
     status: "Active",
     lastLogin: "10 mins ago",
     phone: "+91 98390 22222",
@@ -687,7 +687,7 @@ export const initialUsers: UserManagementItem[] = [
       analytics: { view: false, create: false, edit: false, delete: false },
       reports: { view: false, create: false, edit: false, delete: false },
       rbac: { view: false, create: false, edit: false, delete: false },
-      canDispatchJobs: true,
+      canAssignJobs: true,
       canEditServices: false,
       canProcessRefunds: false,
       canManageFleet: true,
@@ -723,7 +723,7 @@ export const initialUsers: UserManagementItem[] = [
       analytics: { view: false, create: false, edit: false, delete: false },
       reports: { view: false, create: false, edit: false, delete: false },
       rbac: { view: false, create: false, edit: false, delete: false },
-      canDispatchJobs: true,
+      canAssignJobs: true,
       canEditServices: false,
       canProcessRefunds: true,
       canManageFleet: false,
@@ -759,7 +759,7 @@ export const initialUsers: UserManagementItem[] = [
       analytics: { view: true, create: false, edit: false, delete: false },
       reports: { view: true, create: false, edit: true, delete: false },
       rbac: { view: false, create: false, edit: false, delete: false },
-      canDispatchJobs: false,
+      canAssignJobs: false,
       canEditServices: true,
       canProcessRefunds: true,
       canManageFleet: false,
@@ -1139,7 +1139,7 @@ const generateMockBookings = (): Booking[] => {
       isOtpVerified: status === "Completed",
       otpCode: String(1000 + (i * 37) % 8999),
       callingDate: `2026-07-${15 + (i % 12)}`,
-      callingPerson: ["Pooja Sharma (Dispatch)", "Sunil Gupta (Caller)", "Ritu Singh (Support)", "Anita Roy (CRM)"][i % 4],
+      callingPerson: ["Pooja Sharma (Operations)", "Sunil Gupta (Caller)", "Ritu Singh (Support)", "Anita Roy (CRM)"][i % 4],
       handledBy: ["Aman Verma (HQ)", "Varanasi Ops Admin", "Rajeev Verma (Lead)", "Priya Sharma (Ops)"][i % 4],
       notes: i % 3 === 0 ? "Customer requested morning slot. Handle with care." : undefined,
     });
@@ -1226,7 +1226,7 @@ export const initialCustomers: Customer[] = [
     loyaltyPoints: 1250,
     walletBalance: 1250,
     preferredPaymentMethod: "UPI Digital Prepaid (Google Pay)",
-    crmManager: "Pooja Sharma (Dispatch HQ)",
+    crmManager: "Pooja Sharma (Operations HQ)",
     aadhaarNumber: "7821-4920-1102",
     aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
   },

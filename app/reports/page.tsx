@@ -186,7 +186,7 @@ export default function ReportsPage() {
             </div>
             <div>
               <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Full Bookings & Orders Dataset</h4>
-              <p className="text-xs text-slate-400">Complete itemized booking dispatches with address & PIN codes</p>
+              <p className="text-xs text-slate-400">Complete itemized booking assignments with address & PIN codes</p>
             </div>
           </div>
           <button

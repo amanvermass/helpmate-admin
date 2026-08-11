@@ -799,7 +799,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
               <div className="flex justify-between">
                 <span className="text-slate-400 font-semibold">Calling Agent</span>
-                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingPerson || "Pooja Sharma (Dispatch Agent)"}</span>
+                <span className="font-bold text-slate-900 dark:text-white">{currentBooking.callingPerson || "Pooja Sharma (Operations Agent)"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 font-semibold">Operations Manager</span>
@@ -974,7 +974,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   <td className="py-2">
                     <div className="font-bold text-xs">Platform Convenience & Safety Insurance Fee</div>
                     <div className="text-[10px] text-slate-600 font-normal">
-                      HelpMate Safety Insurance & Tech Dispatch
+                      HelpMate Safety Insurance & Tech Assignment
                     </div>
                   </td>
                   <td className="py-2 text-right font-mono font-bold text-xs">₹{convenienceFee}</td>

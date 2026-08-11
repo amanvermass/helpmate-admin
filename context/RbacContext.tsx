@@ -5,7 +5,7 @@ import { UserPermissions, initialUsers, UserManagementItem } from "@/lib/mockDat
 
 export type RoleType =
   | "Super Admin"
-  | "Varanasi Dispatcher"
+  | "Varanasi Operations Coordinator"
   | "Fleet Inspector"
   | "Billing & Finance Manager"
   | "Support Agent"
@@ -24,15 +24,15 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     categories: rwd, cms: rwd, pricing: rwd, locations: rwd,
     payments: rwd, billing: rwd, commission: rwd, coupons: rwd,
     reviews: rwd, media: rwd, analytics: rwd, reports: rwd, rbac: rwd,
-    canDispatchJobs: true, canEditServices: true, canProcessRefunds: true,
+    canAssignJobs: true, canEditServices: true, canProcessRefunds: true,
     canManageFleet: true, canExportReports: true, canManageRbac: true, canViewAuditLogs: true,
   },
-  "Varanasi Dispatcher": {
+  "Varanasi Operations Coordinator": {
     bookings: rw, inspections: rw, customers: rw, technicians: rw,
     categories: r, cms: o, pricing: o, locations: r,
     payments: o, billing: o, commission: o, coupons: o,
     reviews: r, media: o, analytics: o, reports: o, rbac: o,
-    canDispatchJobs: true, canEditServices: false, canProcessRefunds: false,
+    canAssignJobs: true, canEditServices: false, canProcessRefunds: false,
     canManageFleet: true, canExportReports: false, canManageRbac: false, canViewAuditLogs: true,
   },
   "Fleet Inspector": {
@@ -40,7 +40,7 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     categories: o, cms: o, pricing: o, locations: r,
     payments: o, billing: o, commission: o, coupons: o,
     reviews: r, media: o, analytics: o, reports: o, rbac: o,
-    canDispatchJobs: true, canEditServices: false, canProcessRefunds: false,
+    canAssignJobs: true, canEditServices: false, canProcessRefunds: false,
     canManageFleet: true, canExportReports: false, canManageRbac: false, canViewAuditLogs: false,
   },
   "Billing & Finance Manager": {
@@ -48,7 +48,7 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     categories: r, cms: rw, pricing: rw, locations: r,
     payments: rw, billing: rwd, commission: rw, coupons: rw,
     reviews: o, media: o, analytics: r, reports: rw, rbac: o,
-    canDispatchJobs: false, canEditServices: true, canProcessRefunds: true,
+    canAssignJobs: false, canEditServices: true, canProcessRefunds: true,
     canManageFleet: false, canExportReports: true, canManageRbac: false, canViewAuditLogs: true,
   },
   "Support Agent": {
@@ -56,7 +56,7 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     categories: o, cms: o, pricing: o, locations: o,
     payments: r, billing: r, commission: o, coupons: o,
     reviews: r, media: o, analytics: o, reports: o, rbac: o,
-    canDispatchJobs: true, canEditServices: false, canProcessRefunds: true,
+    canAssignJobs: true, canEditServices: false, canProcessRefunds: true,
     canManageFleet: false, canExportReports: false, canManageRbac: false, canViewAuditLogs: false,
   },
   "Service Partner": {
@@ -64,7 +64,7 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     categories: o, cms: o, pricing: o, locations: o,
     payments: r, billing: o, commission: o, coupons: o,
     reviews: o, media: o, analytics: o, reports: o, rbac: o,
-    canDispatchJobs: false, canEditServices: false, canProcessRefunds: false,
+    canAssignJobs: false, canEditServices: false, canProcessRefunds: false,
     canManageFleet: false, canExportReports: false, canManageRbac: false, canViewAuditLogs: false,
   },
 };

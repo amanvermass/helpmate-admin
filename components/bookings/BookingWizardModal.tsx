@@ -1507,7 +1507,7 @@ export function BookingWizardModal({
                     value={preferredPartnerId}
                     onChange={(val) => setPreferredPartnerId(val)}
                     options={[
-                      { value: "", label: `-- Auto-Dispatch (Next Available Tech in ${locality}) --` },
+                      { value: "", label: `-- Auto-Assign (Next Available Tech in ${locality}) --` },
                       ...initialTechnicians.map((tech) => ({
                         value: tech.id,
                         label: `${tech.name} (${tech.locality}) — ★ ${tech.rating}`,

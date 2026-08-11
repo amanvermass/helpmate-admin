@@ -28,8 +28,8 @@ export default function ApiDocsPage() {
   const endpoints = [
     {
       method: "POST",
-      path: "/api/v2/varanasi/dispatch",
-      desc: "Trigger instant 30-sec technician dispatch for Varanasi households.",
+      path: "/api/v2/varanasi/assignment",
+      desc: "Trigger instant 30-sec technician assignment for Varanasi households.",
     },
     {
       method: "GET",
@@ -63,7 +63,7 @@ export default function ApiDocsPage() {
             API Keys & Integration Documentation
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Programmatic dispatch APIs, real-time webhook events, and franchise developer credentials.
+            Programmatic assignment APIs, real-time webhook events, and franchise developer credentials.
           </p>
         </div>
       </div>
@@ -131,12 +131,12 @@ export default function ApiDocsPage() {
       {/* JSON Payload Example */}
       <div className="glass-panel p-6 rounded-2xl space-y-4 border border-slate-200">
         <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-brand-600" /> Dispatch Webhook Response Payload
+          <Terminal className="w-4 h-4 text-brand-600" /> Assignment Webhook Response Payload
         </h3>
 
         <pre className="p-4 rounded-xl bg-slate-900 text-emerald-400 text-xs font-mono overflow-x-auto">
 {`{
-  "event": "booking.dispatched",
+  "event": "booking.assigned",
   "booking_id": "HM-VAR-8821",
   "city": "Varanasi",
   "locality": "Sigra",

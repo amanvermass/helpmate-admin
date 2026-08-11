@@ -97,7 +97,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-xs text-slate-500 max-w-xs">
-            Sign in to access Varanasi central dispatch or Service Partner technician portal.
+            Sign in to access Varanasi central management or Service Partner technician portal.
           </p>
         </div>
 

@@ -713,7 +713,7 @@ export default function TechniciansPage() {
             </span>
           </div>
           <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
-            <Clock className="w-3 h-3 text-amber-500 inline" /> {onJobFleet} currently on active job dispatch
+            <Clock className="w-3 h-3 text-amber-500 inline" /> {onJobFleet} currently on active job assignment
           </p>
         </div>
 

@@ -72,7 +72,7 @@ export function AssignPartnerModal({
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                Fleet Dispatch Engine
+                Fleet Assignment Engine
               </span>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-1">
                 {isReassign ? "Change Assigned Partner" : "Assign Partner to Booking"}

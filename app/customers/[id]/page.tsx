@@ -1157,7 +1157,7 @@ export default function CustomerDetailPage() {
                 <span>Booking & Service History Ledger</span>
               </h3>
               <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                All dispatched technician orders and past servicing logs for {customer.name}
+                All assigned technician orders and past servicing logs for {customer.name}
               </p>
             </div>
           </div>

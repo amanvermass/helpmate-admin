@@ -44,8 +44,8 @@ export default function ExecutiveDashboard() {
   const [selectedLocality, setSelectedLocality] = useState<string>("All");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
   const [chartMode, setChartMode] = useState<"revenue" | "bookings">("revenue");
-  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
-  const [selectedBookingForDispatch, setSelectedBookingForDispatch] = useState<Booking | null>(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedBookingForAssign, setSelectedBookingForAssign] = useState<Booking | null>(null);
   const [assignedTechId, setAssignedTechId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -104,11 +104,11 @@ export default function ExecutiveDashboard() {
       partnerEarnings: Math.round(Number(newBooking.price) * 0.75 * 100) / 100,
       status: "Pending",
       date: "Just now",
-      timeSlot: "Immediate Dispatch",
+      timeSlot: "Immediate Assignment",
       paymentMethod: "UPI",
     };
     setBookings([created, ...bookings]);
-    setIsDispatchModalOpen(false);
+    setIsAssignModalOpen(false);
     setNewBooking({
       customerName: "",
       customerPhone: "",
@@ -121,17 +121,17 @@ export default function ExecutiveDashboard() {
   };
 
   const handleAssignTechnician = () => {
-    if (!selectedBookingForDispatch || !assignedTechId) return;
+    if (!selectedBookingForAssign || !assignedTechId) return;
     const tech = initialTechnicians.find((t) => t.id === assignedTechId);
     if (!tech) return;
     setBookings(
       bookings.map((b) =>
-        b.id === selectedBookingForDispatch.id
+        b.id === selectedBookingForAssign.id
           ? { ...b, status: "Assigned", technicianName: tech.name, technicianId: tech.id }
           : b
       )
     );
-    setSelectedBookingForDispatch(null);
+    setSelectedBookingForAssign(null);
     setAssignedTechId("");
   };
 
@@ -155,22 +155,22 @@ export default function ExecutiveDashboard() {
             Varanasi Operational Console
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Real-time executive oversight across 8 active service zones. Track revenue, fleet dispatch, and catalog metrics.
+            Real-time executive oversight across 8 active service zones. Track revenue, fleet assignment, and catalog metrics.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-400" />
-            <span>{pendingCount} Pending Dispatch</span>
+            <span>{pendingCount} Pending Assignment</span>
           </div>
           <button
             type="button"
-            onClick={() => setIsDispatchModalOpen(true)}
+            onClick={() => setIsAssignModalOpen(true)}
             className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Dispatch New Order</span>
+            <span>Assign New Order</span>
           </button>
         </div>
       </div>
@@ -372,8 +372,8 @@ export default function ExecutiveDashboard() {
                         <div key={m.month} className="relative flex-1 group flex flex-col items-center">
                           <div className="absolute -top-11 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-extrabold px-3 py-1 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl border border-slate-700 dark:border-slate-200 z-30">
                             {chartMode === "revenue"
-                              ? `${m.month}: ₹${(m.revenue / 100000).toFixed(2)} Lakhs (${m.bookings} Dispatches)`
-                              : `${m.month}: ${m.bookings} Jobs Dispatched (₹${(m.revenue / 100000).toFixed(2)}L)`}
+                              ? `${m.month}: ₹${(m.revenue / 100000).toFixed(2)} Lakhs (${m.bookings} Bookings)`
+                              : `${m.month}: ${m.bookings} Jobs Assigned (₹${(m.revenue / 100000).toFixed(2)}L)`}
                           </div>
 
                           <div
@@ -597,7 +597,7 @@ export default function ExecutiveDashboard() {
 
    
 
-      {/* ─── 5. FULL-WIDTH STANDALONE LIVE VARANASI DISPATCH FEED CONSOLE ─── */}
+      {/* ─── 5. FULL-WIDTH STANDALONE LIVE VARANASI ASSIGNMENT FEED CONSOLE ─── */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-5 w-full">
         {/* Table Header Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -607,7 +607,7 @@ export default function ExecutiveDashboard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Live Varanasi Dispatch Feed</h2>
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Live Varanasi Assignment Feed</h2>
                 <span className="text-[10px] font-extrabold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-2.5 py-0.5 rounded-full border border-brand-200 dark:border-brand-800">
                   {filteredBookings.length} Orders Active
                 </span>
@@ -661,7 +661,7 @@ export default function ExecutiveDashboard() {
                 <th className="py-3.5 px-4">Service Required</th>
                 <th className="py-3.5 px-4">Total Amount</th>
                 <th className="py-3.5 px-4">Assigned Technician</th>
-                <th className="py-3.5 px-4">Dispatch Status</th>
+                <th className="py-3.5 px-4">Assignment Status</th>
                 <th className="py-3.5 px-4 text-right">Quick Action</th>
               </tr>
             </thead>
@@ -669,7 +669,7 @@ export default function ExecutiveDashboard() {
               {filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-slate-400 italic">
-                    No Varanasi dispatch records matching your current filter.
+                    No Varanasi booking records matching your current filter.
                   </td>
                 </tr>
               ) : (
@@ -727,10 +727,10 @@ export default function ExecutiveDashboard() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => setSelectedBookingForDispatch(b)}
+                          onClick={() => setSelectedBookingForAssign(b)}
                           className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                         >
-                          {b.technicianName ? "Reassign" : "Dispatch"}
+                          {b.technicianName ? "Reassign" : "Assign Partner"}
                         </button>
                         <Link
                           href={`/bookings/${b.id}`}
@@ -750,7 +750,7 @@ export default function ExecutiveDashboard() {
       </div>
 
       {/* ─── ASSIGN TECHNICIAN MODAL ─── */}
-      {selectedBookingForDispatch && (
+      {selectedBookingForAssign && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -758,12 +758,12 @@ export default function ExecutiveDashboard() {
                 <div>
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Assign Fleet Specialist</h3>
                   <p className="text-xs text-slate-500">
-                    Order {selectedBookingForDispatch.id} · {selectedBookingForDispatch.locality}
+                    Order {selectedBookingForAssign.id} · {selectedBookingForAssign.locality}
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedBookingForDispatch(null)}
+                  onClick={() => setSelectedBookingForAssign(null)}
                   className="text-slate-400 hover:text-slate-600"
                 >
                   <X className="w-5 h-5" />
@@ -772,8 +772,8 @@ export default function ExecutiveDashboard() {
 
               <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
                 <span className="text-[10px] font-extrabold uppercase text-slate-400">Order Service Details</span>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{selectedBookingForDispatch.serviceTitle}</p>
-                <p className="text-[11px] text-slate-500">{selectedBookingForDispatch.customerName} ({selectedBookingForDispatch.address})</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white">{selectedBookingForAssign.serviceTitle}</p>
+                <p className="text-[11px] text-slate-500">{selectedBookingForAssign.customerName} ({selectedBookingForAssign.address})</p>
               </div>
 
               <div className="space-y-2">
@@ -810,7 +810,7 @@ export default function ExecutiveDashboard() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedBookingForDispatch(null)}
+                  onClick={() => setSelectedBookingForAssign(null)}
                   className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300"
                 >
                   Cancel
@@ -821,7 +821,7 @@ export default function ExecutiveDashboard() {
                   disabled={!assignedTechId}
                   className="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-extrabold text-xs shadow-xs cursor-pointer"
                 >
-                  Confirm Dispatch
+                  Confirm Assignment
                 </button>
               </div>
             </div>
@@ -829,8 +829,8 @@ export default function ExecutiveDashboard() {
         </Portal>
       )}
 
-      {/* ─── DISPATCH ORDER MODAL ─── */}
-      {isDispatchModalOpen && (
+      {/* ─── ASSIGN ORDER MODAL ─── */}
+      {isAssignModalOpen && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
             <form
@@ -839,10 +839,10 @@ export default function ExecutiveDashboard() {
             >
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Register Varanasi Dispatch Order</h3>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Register Varanasi Booking Order</h3>
                   <p className="text-xs text-slate-500">Direct booking creation across all 8 zones</p>
                 </div>
-                <button type="button" onClick={() => setIsDispatchModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <button type="button" onClick={() => setIsAssignModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -908,7 +908,7 @@ export default function ExecutiveDashboard() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsDispatchModalOpen(false)}
+                  onClick={() => setIsAssignModalOpen(false)}
                   className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300"
                 >
                   Cancel
@@ -917,7 +917,7 @@ export default function ExecutiveDashboard() {
                   type="submit"
                   className="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-xs cursor-pointer"
                 >
-                  Confirm & Dispatch
+                  Confirm & Create Order
                 </button>
               </div>
             </form>

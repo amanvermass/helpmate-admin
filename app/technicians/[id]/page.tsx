@@ -768,7 +768,7 @@ export default function TechnicianDetailPage() {
               className="px-5 py-3 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
             >
               <ExternalLink className="w-4 h-4" />
-              <span>WhatsApp Dispatch</span>
+              <span>WhatsApp Partner</span>
             </a>
           </div>
         </div>
@@ -1047,7 +1047,7 @@ export default function TechnicianDetailPage() {
               <div className="p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 space-y-3 shadow-md">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" /> Dispatch Performance Note
+                    <Sparkles className="w-4 h-4 text-amber-400" /> Partner Performance Note
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">

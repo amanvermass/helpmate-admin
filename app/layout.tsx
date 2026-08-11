@@ -6,7 +6,7 @@ import { RbacProvider } from "@/context/RbacContext";
 
 export const metadata: Metadata = {
   title: "HelpMate Admin Panel | Enterprise On-Demand Services Varanasi",
-  description: "Enterprise management panel for HelpMate home care services in Varanasi. Real-time booking dispatch, service CMS, fleet verification, and customer CRM.",
+  description: "Enterprise management panel for HelpMate home care services in Varanasi. Real-time booking assignment, service CMS, fleet verification, and customer CRM.",
 };
 
 export default function RootLayout({

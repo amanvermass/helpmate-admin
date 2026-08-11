@@ -237,7 +237,7 @@ export default function BookingsPage() {
     {
       key: "callingPerson",
       header: "Calling Person",
-      accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.callingPerson || "Pooja Sharma (Dispatch)"}</span>,
+      accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.callingPerson || "Pooja Sharma (Operations)"}</span>,
       sortable: true,
     },
     {
@@ -365,11 +365,11 @@ export default function BookingsPage() {
       <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <Calendar className="w-4 h-4" /> Single-City Dispatch Engine
+            <Calendar className="w-4 h-4" /> Single-City Assignment Engine
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Bookings & Dispatch Operations</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">Bookings & Operations Directory</h1>
           <p className="text-xs text-brand-100 mt-1 max-w-xl">
-            Manage Varanasi customer service bookings, technician dispatch assignments, live job status, and service quotes.
+            Manage Varanasi customer service bookings, technician partner assignments, live job status, and service quotes.
           </p>
         </div>
 
@@ -679,7 +679,7 @@ export default function BookingsPage() {
                     <td className="py-2">
                       <div className="font-bold text-xs">Platform Convenience & Safety Insurance Fee</div>
                       <div className="text-[10px] text-slate-600 font-normal">
-                        HelpMate Safety Insurance & Tech Dispatch
+                        HelpMate Safety Insurance & Tech Assignment
                       </div>
                     </td>
                     <td className="py-2 text-right font-mono font-bold text-xs">₹{printTargetBooking.convenienceFee || 49}</td>

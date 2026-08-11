@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
               Executive Analytics & Revenue Intelligence
             </h1>
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Real-time daily telemetry, booking velocity curves, partner dispatch metrics, and service category demand heatmaps across Varanasi.
+              Real-time daily telemetry, booking velocity curves, partner assignment metrics, and service category demand heatmaps across Varanasi.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
                 <Activity className="w-5 h-5 text-brand-600" />
                 <span>{activeMetric} Velocity & Dynamic Telemetry Curve</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Real-time daily dispatch volume across Varanasi Metro zones</p>
+              <p className="text-xs text-slate-400 mt-0.5">Real-time daily booking volume across Varanasi Metro zones</p>
             </div>
             <span className="px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 rounded-xl text-xs font-extrabold flex items-center gap-1 border border-emerald-200 dark:border-emerald-800 shrink-0">
               <ArrowUpRight className="w-4 h-4" />

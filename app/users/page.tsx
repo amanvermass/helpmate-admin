@@ -43,7 +43,7 @@ type ModuleKey =
 
 const modulesList: { key: ModuleKey; label: string; icon: any; desc: string }[] = [
   // Operations
-  { key: "bookings",    label: "Bookings & Jobs",          icon: CalendarCheck, desc: "Manage customer requests, live job dispatches & schedules" },
+  { key: "bookings",    label: "Bookings & Jobs",          icon: CalendarCheck, desc: "Manage customer requests, live job assignments & schedules" },
   { key: "inspections", label: "Inspections",               icon: Search,        desc: "On-site service inspections and quality verification" },
   // Fleet & Customers
   { key: "customers",   label: "Customers CRM",            icon: Users,         desc: "Access client profiles & Crown Elite memberships" },
@@ -90,7 +90,7 @@ const defaultModulePerms: Record<ModuleKey, ModulePermission> = {
 
 const defaultFullPermissions: UserPermissions = {
   ...defaultModulePerms,
-  canDispatchJobs: true,
+  canAssignJobs: true,
   canEditServices: false,
   canProcessRefunds: false,
   canManageFleet: false,
@@ -112,7 +112,7 @@ export default function UsersPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [locality, setLocality] = useState("Varanasi HQ");
-  const [role, setRole] = useState<UserManagementItem["role"]>("Varanasi Dispatcher");
+  const [role, setRole] = useState<UserManagementItem["role"]>("Varanasi Operations Coordinator");
   const [status, setStatus] = useState<"Active" | "Suspended">("Active");
   const [addPermissions, setAddPermissions] = useState<UserPermissions>(defaultFullPermissions);
 
@@ -230,7 +230,7 @@ export default function UsersPage() {
     return {
       ...targetPerms,
       [modKey]: updatedMod,
-      canDispatchJobs:   modKey === "bookings"    ? updatedMod.view || updatedMod.edit : targetPerms.canDispatchJobs,
+      canAssignJobs:   modKey === "bookings"    ? updatedMod.view || updatedMod.edit : targetPerms.canAssignJobs,
       canEditServices:   (modKey === "cms" || modKey === "pricing") ? updatedMod.edit || updatedMod.create : targetPerms.canEditServices,
       canProcessRefunds: modKey === "payments"    ? updatedMod.edit : targetPerms.canProcessRefunds,
       canManageFleet:    modKey === "technicians" ? updatedMod.edit || updatedMod.view : targetPerms.canManageFleet,
@@ -323,7 +323,7 @@ export default function UsersPage() {
                       onChange={(val) => setEditUser({ ...editUser, role: val as any })}
                       options={[
                         { value: "Super Admin", label: "Super Admin" },
-                        { value: "Varanasi Dispatcher", label: "Varanasi Dispatcher" },
+                        { value: "Varanasi Operations Coordinator", label: "Varanasi Operations Coordinator" },
                         { value: "Fleet Inspector", label: "Fleet Inspector" },
                         { value: "Support Agent", label: "Support Agent" },
                         { value: "Billing & Finance Manager", label: "Billing & Finance Manager" },
@@ -532,7 +532,7 @@ export default function UsersPage() {
                         className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold"
                       >
                         <option value="Super Admin">Super Admin</option>
-                        <option value="Varanasi Dispatcher">Varanasi Dispatcher</option>
+                        <option value="Varanasi Operations Coordinator">Varanasi Operations Coordinator</option>
                         <option value="Fleet Inspector">Fleet Inspector</option>
                         <option value="Support Agent">Support Agent</option>
                         <option value="Billing & Finance Manager">Billing & Finance Manager</option>
