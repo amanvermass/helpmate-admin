@@ -125,6 +125,19 @@ export default function PartnerBookingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Top Header Banner */}
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
+            <CalendarCheck className="w-4 h-4 text-emerald-400" /> Partner Job Dispatch Queue
+          </div>
+          <h1 className="text-2xl font-black tracking-tight">New Assigned Jobs</h1>
+          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+            View your active assigned service orders, customer location details, and complete jobs with customer OTP verification.
+          </p>
+        </div>
+      </div>
+
       <DataTable
         columns={columns}
         data={bookings}

@@ -84,7 +84,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       sectionTitle: "My Jobs & Orders",
       items: [
         {
-          title: "New Booked Jobs",
+          title: "New Assigned Jobs",
           icon: CalendarCheck,
           href: "/partner/bookings",
           badge: "2 New",
