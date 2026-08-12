@@ -144,11 +144,10 @@ export default function NotificationsPage() {
               key={f}
               type="button"
               onClick={() => setSelectedFilter(f)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                selectedFilter === f
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${selectedFilter === f
                   ? "bg-brand-500 text-white shadow-xs font-black"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
-              }`}
+                }`}
             >
               {f}
             </button>

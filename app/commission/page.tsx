@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { Portal } from "@/components/Portal";
 import {
   initialTechnicians,
@@ -195,18 +196,21 @@ export default function CommissionPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <button
-          type="button"
-          onClick={() => {
-            setEditingRule(row);
-            setEditRateInput(row.commissionPercentage);
-            setEditFloorInput(row.minimumCommissionFloor);
-          }}
-          className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 hover:text-brand-600 font-bold text-xs transition-colors flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-700"
-        >
-          <Edit2 className="w-3.5 h-3.5" /> Adjust Rate
-        </button>
+        <RowActionMenu
+          actions={[
+            {
+              label: "Adjust Rate",
+              icon: Edit2,
+              onClick: () => {
+                setEditingRule(row);
+                setEditRateInput(row.commissionPercentage);
+                setEditFloorInput(row.minimumCommissionFloor);
+              },
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -267,14 +271,14 @@ export default function CommissionPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <DollarSign className="w-4 h-4" /> Helpmate Revenue & Take-Rate Engine
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Commission & Revenue Ledger</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <DollarSign className="w-6 h-6 text-brand-600" />
+            <span>Commission & Revenue Ledger</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Real-time per-order commission breakdown, category-wise take-rate rules, and partner payout balance management.
           </p>
         </div>

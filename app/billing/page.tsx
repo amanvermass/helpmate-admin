@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { initialBookings, initialCustomers, Booking, Customer } from "@/lib/mockData";
 import {
   FileText,
@@ -194,43 +195,33 @@ export default function BillingPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <Link
-            href={`/billing/${row.id}`}
-            title="View Full Tax Invoice Page"
-            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors flex items-center justify-center"
-          >
-            <Eye className="w-3.5 h-3.5" />
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => handleOpenEdit(row)}
-            title="Edit GST Invoice Details"
-            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors"
-          >
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setDeleteInvoice(row)}
-            title="Delete Invoice"
-            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-red-50 text-slate-700 dark:text-slate-300 hover:text-red-600 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => window.print()}
-            title="Print Tax Invoice"
-            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "View",
+              icon: Eye,
+              href: `/billing/${row.id}`,
+            },
+            {
+              label: "Edit",
+              icon: Edit,
+              onClick: () => handleOpenEdit(row),
+            },
+            {
+              label: "Print",
+              icon: Printer,
+              onClick: () => window.print(),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              onClick: () => setDeleteInvoice(row),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -243,33 +234,32 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner with Generate Invoice Action */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <FileText className="w-4 h-4" /> GST Tax Engine & Invoicing
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Billing, GST Invoices & Tax Ledger</h1>
-          <p className="text-xs text-blue-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <FileText className="w-6 h-6 text-brand-600" />
+            <span>Billing, GST Invoices & Tax Ledger</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Automated B2C & B2B Tax Invoices, CGST (9%) + SGST (9%) split calculator, and digital receipt ledger.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              setSelectedCustomer(null);
-              setInvCustomerName("");
-              setInvCustomerPhone("");
-              setInvCustomerEmail("");
-              setIsAddInvoiceOpen(true);
-            }}
-            className="px-4 py-2.5 rounded-2xl bg-white text-blue-900 font-extrabold text-xs shadow-md hover:bg-blue-50 transition-all flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4 text-blue-600" />
-            <span>Generate New GST Invoice</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedCustomer(null);
+            setInvCustomerName("");
+            setInvCustomerPhone("");
+            setInvCustomerEmail("");
+            setIsAddInvoiceOpen(true);
+          }}
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Generate New GST Invoice</span>
+        </button>
       </div>
 
       {/* 4 Executive Quick Metric Cards */}

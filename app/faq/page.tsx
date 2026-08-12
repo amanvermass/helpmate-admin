@@ -138,31 +138,16 @@ export default function FaqPage() {
   return (
     <div className="space-y-6">
 
-      {/* PAGE HEADER — Brand Purple / Indigo Gradient */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-purple-700 to-indigo-800 text-white shadow-lux flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-white rounded-full translate-y-1/2" />
-        </div>
-        <div className="relative z-10 space-y-1">
-          <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5 w-fit">
-            <MessageCircleQuestion className="w-3 h-3" /> FAQ Section Manager
-          </span>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">FAQ Manager</h1>
-          <p className="text-xs text-white/85 max-w-xl font-medium">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <MessageCircleQuestion className="w-6 h-6 text-brand-600" />
+            <span>FAQ Manager</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage all frequently asked questions shown on your website. Add, edit, reorder, and toggle visibility.
           </p>
-        </div>
-        <div className="relative z-10 flex items-center gap-3 bg-white/10 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/20 shrink-0">
-          {([["Total FAQs", faqs.length], ["Live", activeCount], ["Hidden", faqs.length - activeCount]] as [string, number][]).map(([label, val], i, arr) => (
-            <div key={String(label)} className="flex items-center gap-3">
-              <div className="text-center">
-                <div className="font-black text-lg text-white leading-none">{val}</div>
-                <div className="text-[9px] text-white/70 font-bold uppercase tracking-wide mt-0.5">{label}</div>
-              </div>
-              {i < arr.length - 1 && <div className="w-px h-6 bg-white/20" />}
-            </div>
-          ))}
         </div>
       </div>
 

@@ -25,8 +25,10 @@ import {
   SlidersHorizontal,
   Clock,
   UserCheck,
+  MoreVertical,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
+import { RowActionMenu } from "@/components/RowActionMenu";
 
 export interface Column<T> {
   key: string;
@@ -551,42 +553,35 @@ export function DataTable<T extends Record<string, any>>({
 
                       {hasDefaultActionsColumn && (
                         <td className="py-4 px-4 text-right sticky right-0 z-20 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.08)]">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={() => (onRowView ? onRowView(row) : setViewingRow(row))}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-                              title="View Details"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            {onRowEdit && (
-                              <button
-                                type="button"
-                                onClick={() => onRowEdit(row)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 cursor-pointer"
-                                title="Edit Record"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleDuplicateRow(row)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 cursor-pointer"
-                              title="Duplicate Record"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeletingRow(row)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 cursor-pointer"
-                              title="Delete Record"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                          <RowActionMenu
+                            actions={[
+                              {
+                                label: "View",
+                                icon: Eye,
+                                onClick: () => (onRowView ? onRowView(row) : setViewingRow(row)),
+                              },
+                              ...(onRowEdit
+                                ? [
+                                    {
+                                      label: "Edit",
+                                      icon: Edit2,
+                                      onClick: () => onRowEdit(row),
+                                    },
+                                  ]
+                                : []),
+                              {
+                                label: "Duplicate",
+                                icon: Copy,
+                                onClick: () => handleDuplicateRow(row),
+                              },
+                              {
+                                label: "Delete",
+                                icon: Trash2,
+                                onClick: () => setDeletingRow(row),
+                                danger: true,
+                              },
+                            ]}
+                          />
                         </td>
                       )}
                     </tr>

@@ -31,8 +31,15 @@ import {
   CheckCircle,
   Receipt,
   Users,
+  Eye,
+  Navigation,
+  Truck,
+  Activity,
+  KeyRound,
+  Wrench,
 } from "lucide-react";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 
 export default function TechnicianDetailPage() {
   const params = useParams();
@@ -43,10 +50,46 @@ export default function TechnicianDetailPage() {
   const tech: Technician =
     initialTechnicians.find((t) => t.id === techId) || initialTechnicians[0];
 
-  const [activeTab, setActiveTab] = useState<"overview" | "kyc" | "jobs" | "earnings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "jobs" | "earnings">("overview");
+  const [showKycDetails, setShowKycDetails] = useState(false);
 
-  // Sample Completed Jobs (Expanded Dataset for Pagination)
+  // Active Ongoing Job Pipeline Data for Partner (Time Booked, Stage Tracker, Location)
+  const activeJob = {
+    id: "BK-VAR-9990",
+    customerName: "Sanjeev Tripathi",
+    customerPhone: "+91 98390 12345",
+    serviceTitle: tech.category + " - Split AC Power Jet Wash & Gas Pressure Check",
+    locality: "Sigra, Varanasi (Flat 302, Green Valley Apartments)",
+    bookedTime: "Today, 02:30 PM",
+    bookedSlot: "02:00 PM - 04:00 PM",
+    totalAmount: 2499,
+    commissionFee: 625,
+    netShare: 1874,
+    status: "Doing Job",
+    currentStage: 3, // 0: Assigned, 1: Going (En Route), 2: Reached Site, 3: Doing Job, 4: OTP Complete
+    stages: [
+      { id: 0, label: "Booked & Assigned", time: "02:00 PM", icon: CalendarCheck },
+      { id: 1, label: "Going / En Route", time: "02:12 PM", icon: Navigation },
+      { id: 2, label: "Reached Site", time: "02:22 PM", icon: MapPin },
+      { id: 3, label: "Doing Service Job", time: "Started 02:28 PM", icon: Wrench },
+      { id: 4, label: "OTP Completion", time: "Pending", icon: KeyRound },
+    ],
+  };
+
+  // Sample Completed & Active Jobs List
   const partnerJobs = [
+    {
+      id: activeJob.id,
+      customerName: activeJob.customerName,
+      serviceTitle: activeJob.serviceTitle,
+      locality: "Sigra, Varanasi",
+      date: activeJob.bookedTime,
+      totalAmount: activeJob.totalAmount,
+      commissionFee: activeJob.commissionFee,
+      netShare: activeJob.netShare,
+      status: "Doing Job (Stage 4/5)",
+      isLive: true,
+    },
     {
       id: "BK-VAR-9981",
       customerName: "Alok Verma",
@@ -583,10 +626,17 @@ export default function TechnicianDetailPage() {
     },
     {
       key: "status",
-      header: "Status",
+      header: "Status & Pipeline Stage",
       accessor: (row) => (
-        <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800">
-          {row.status}
+        <span
+          className={`px-2.5 py-0.5 rounded-full font-extrabold text-[10px] border inline-flex items-center gap-1 w-fit ${
+            row.isLive || row.status?.includes("Doing") || row.status?.includes("En Route")
+              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-700 animate-pulse"
+              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+          }`}
+        >
+          {row.isLive && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0" />}
+          <span>{row.status}</span>
         </span>
       ),
       sortable: true,
@@ -594,14 +644,17 @@ export default function TechnicianDetailPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <Link
-          href={`/bookings/${row.id}`}
-          className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-[11px] shadow-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
-        >
-          <span>View Job</span>
-          <ArrowLeft className="w-3 h-3 rotate-180" />
-        </Link>
+        <RowActionMenu
+          actions={[
+            {
+              label: "View Job Details",
+              icon: Eye,
+              href: `/bookings/${row.id}`,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -700,77 +753,73 @@ export default function TechnicianDetailPage() {
         </div>
       </div>
 
-      {/* Partner Executive Hero Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-brand-950 text-white border border-slate-800 shadow-xl space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="relative">
-              <img
-                src={tech.avatar}
-                alt={tech.name}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-brand-500 shadow-lg shrink-0"
-              />
-              <span className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 text-white rounded-full text-[10px] ring-4 ring-slate-950">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+      {/* Simple Clean Partner Header Card */}
+      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="relative">
+            <img
+              src={tech.avatar}
+              alt={tech.name}
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-brand-500 shadow-sm shrink-0"
+            />
+            <span className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 text-white rounded-full text-[10px] ring-4 ring-white dark:ring-slate-900">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{tech.name}</h1>
+              <span
+                className={`px-3 py-0.5 rounded-full text-xs font-extrabold border ${tech.status === "Available" || tech.status === "Approved"
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                    : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                  }`}
+              >
+                ● {tech.status}
+              </span>
+              <span className="px-3 py-0.5 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-extrabold">
+                {tech.role}
               </span>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black text-white">{tech.name}</h1>
-                <span
-                  className={`px-3 py-0.5 rounded-full text-xs font-extrabold border ${
-                    tech.status === "Available" || tech.status === "Approved"
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                      : "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                  }`}
-                >
-                  ● {tech.status}
-                </span>
-                <span className="px-3 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 text-xs font-extrabold">
-                  {tech.role}
-                </span>
-              </div>
+            <p className="text-xs text-brand-600 dark:text-brand-400 font-extrabold flex items-center gap-2">
+              <Building className="w-3.5 h-3.5 text-brand-500" />
+              <span>{tech.category} Specialist</span>
+              <span>•</span>
+              <MapPin className="w-3.5 h-3.5 text-brand-500" />
+              <span>{tech.locality} ({tech.pincode}), Varanasi</span>
+            </p>
 
-              <p className="text-xs text-brand-300 font-extrabold flex items-center gap-2">
-                <Building className="w-3.5 h-3.5 text-brand-400" />
-                <span>{tech.category} Specialist</span>
-                <span>•</span>
-                <MapPin className="w-3.5 h-3.5 text-brand-400" />
-                <span>{tech.locality} ({tech.pincode}), Varanasi</span>
-              </p>
-
-              <div className="flex items-center gap-4 text-xs text-slate-400 font-semibold pt-1 flex-wrap">
-                <span className="flex items-center gap-1 font-mono text-slate-200">
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" /> {tech.phone}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" /> Onboarded: {tech.joiningDate || "Jan 2025"}
-                </span>
-              </div>
+            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 font-semibold pt-1 flex-wrap">
+              <span className="flex items-center gap-1 font-mono text-slate-700 dark:text-slate-300 font-bold">
+                <Phone className="w-3.5 h-3.5 text-emerald-600" /> {tech.phone}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-slate-400" /> Onboarded: {tech.joiningDate || "Jan 2025"}
+              </span>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
-            <a
-              href={`tel:${tech.phone}`}
-              className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Call Partner</span>
-            </a>
-
-            <a
-              href={`https://wa.me/${tech.phone.replace(/[^0-9]/g, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-3 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs shadow-lg flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>WhatsApp Partner</span>
-            </a>
-          </div>
+        <div className="flex items-center gap-3 flex-wrap shrink-0">
+          <a
+            href={`tel:${tech.phone}`}
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <Phone className="w-4 h-4" />
+            <span>Call Partner</span>
+          </a>
+          <a
+            href={`https://wa.me/${tech.phone.replace(/[^0-9]/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <ExternalLink className="w-4 h-4" />
+            <span>WhatsApp Partner</span>
+          </a>
         </div>
       </div>
 
@@ -779,46 +828,30 @@ export default function TechnicianDetailPage() {
         <button
           type="button"
           onClick={() => setActiveTab("overview")}
-          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === "overview"
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${activeTab === "overview"
               ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
-          }`}
+            }`}
         >
           <User className="w-4 h-4" />
-          <span>Overview & Biometric KYC</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("kyc")}
-          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === "kyc"
-              ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Identity & Verification</span>
+          <span>Overview</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab("jobs")}
-          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === "jobs"
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${activeTab === "jobs"
               ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
-          }`}
+            }`}
         >
           <Briefcase className="w-4 h-4" />
           <span>Completed Jobs</span>
           <span
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === "jobs"
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === "jobs"
                 ? "bg-white/20 text-white"
                 : "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300"
-            }`}
+              }`}
           >
             {partnerJobs.length}
           </span>
@@ -827,20 +860,18 @@ export default function TechnicianDetailPage() {
         <button
           type="button"
           onClick={() => setActiveTab("earnings")}
-          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === "earnings"
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${activeTab === "earnings"
               ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
               : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
-          }`}
+            }`}
         >
           <Wallet className="w-4 h-4" />
           <span>Earnings & Weekly Settlement</span>
           <span
-            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
-              activeTab === "earnings"
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${activeTab === "earnings"
                 ? "bg-white/20 text-white"
                 : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-            }`}
+              }`}
           >
             {weeklySettlements.length}
           </span>
@@ -850,6 +881,92 @@ export default function TechnicianDetailPage() {
       {/* TAB 1: OVERVIEW & BIOMETRIC KYC SPECIFICATIONS */}
       {activeTab === "overview" && (
         <div className="space-y-6">
+          {/* Option Banner: Identity, Emergency Guarantor & Police Verification */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                    Identity, Guarantor & Police Verification Details
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    View biometric UIDAI Aadhaar, Emergency Guarantor details, and Police Thana clearance certificates.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowKycDetails(!showKycDetails)}
+                className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                <FileCheck className="w-4 h-4" />
+                <span>{showKycDetails ? "Hide Verification Details" : "Open Verification Details"}</span>
+              </button>
+            </div>
+
+            {/* Expanded Identity & Verification Details Box */}
+            {showKycDetails && (
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in">
+                {/* Aadhaar Card Spec */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-brand-600" /> Aadhaar Biometric
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">Verified</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono">UID: XXXX-XXXX-1102</p>
+                  <button
+                    type="button"
+                    onClick={() => alert("Viewing Partner Aadhaar Card PDF Document")}
+                    className="w-full py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-[11px] font-extrabold cursor-pointer"
+                  >
+                    View Aadhaar PDF
+                  </button>
+                </div>
+
+                {/* Guarantor Details Spec */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-purple-600" /> Emergency Guarantor
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 text-[10px] font-extrabold border border-purple-200">Suresh Yadav</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-semibold">Phone: +91 94150 00000 (Father/Brother)</p>
+                  <button
+                    type="button"
+                    onClick={() => alert("Viewing Guarantor Aadhaar & Address Proof")}
+                    className="w-full py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-extrabold cursor-pointer"
+                  >
+                    View Guarantor Specs
+                  </button>
+                </div>
+
+                {/* Police Clearance Spec */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <FileCheck className="w-4 h-4 text-emerald-600" /> Police Clearance NOC
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">Sigra Thana</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-mono">Ref: UP-VAR-POL-2026-9812</p>
+                  <button
+                    type="button"
+                    onClick={() => alert("Viewing Police Thana Clearance Certificate NOC")}
+                    className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold cursor-pointer"
+                  >
+                    View Police NOC
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           {/* Inside Tab Metrics Highlights */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs">
@@ -1064,270 +1181,185 @@ export default function TechnicianDetailPage() {
         </div>
       )}
 
-      {/* TAB 2: IDENTITY & GUARANTOR DOCUMENTS (MOBILE-FIRST RESPONSIVE GRID) */}
-      {activeTab === "kyc" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 1. Partner Biometric Aadhaar Card */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 shrink-0">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      Partner Biometric Aadhaar Card
-                    </h3>
-                    <p className="text-[11px] text-slate-400">UIDAI Instant Online Verification Passed</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200 dark:border-emerald-800 w-fit">
-                  Identity Verified
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileCheck className="w-7 h-7 text-brand-600 shrink-0" />
-                  <div className="min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate">
-                      Partner_Aadhaar_Card_Front_Back.pdf
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-mono block">12-Digit UID: 7821-4920-1102</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => alert("Viewing Partner Aadhaar Card PDF Document")}
-                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
-                >
-                  View Document
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Aadhaar Number</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">XXXX-XXXX-1102</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Biometric Auth</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Fingerprint + OTP</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Partner PAN & Tax Compliance Card */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
-                    <FileCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      PAN Card & Tax Compliance
-                    </h3>
-                    <p className="text-[11px] text-slate-400">Section 194C TDS & Banking Audit Passed</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200 dark:border-emerald-800 w-fit">
-                  Tax Compliant
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileCheck className="w-7 h-7 text-emerald-600 shrink-0" />
-                  <div className="min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate">
-                      Partner_PAN_Card_Record.pdf
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-mono block">PAN: ABCDE1234F</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => alert("Viewing Partner PAN Card PDF")}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
-                >
-                  View PAN Card
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">PAN Account No</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">ABCDE1234F</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">TDS Deduction</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">1% Individual Rate</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Driving License & Transport RC Card */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 shrink-0">
-                    <Award className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      Driving License & Vehicle RC
-                    </h3>
-                    <p className="text-[11px] text-slate-400">Transport Department RTO Verification</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 text-[10px] font-extrabold border border-blue-200 dark:border-blue-800 w-fit">
-                  DL Active
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileCheck className="w-7 h-7 text-blue-600 shrink-0" />
-                  <div className="min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate">
-                      Partner_Driving_License_RC.pdf
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-mono block">DL: UP65-2022-009812</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => alert("Viewing Partner Driving License Document")}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
-                >
-                  View DL Record
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Registered Vehicle</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">Hero Electric (UP65AB4910)</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">DL Validity</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">Valid till 2034</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Guarantor Person Aadhaar Card */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400 shrink-0">
-                    <ShieldAlert className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      Guarantor Person Aadhaar Card
-                    </h3>
-                    <p className="text-[11px] text-slate-400">Emergency & Financial Sponsor Verification</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 text-[10px] font-extrabold border border-purple-200 dark:border-purple-800 w-fit">
-                  Guarantor Verified
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileCheck className="w-7 h-7 text-purple-600 shrink-0" />
-                  <div className="min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate">
-                      Guarantor_Aadhaar_Card_Record.pdf
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-mono block">Suresh Chandra Yadav (Father)</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => alert("Viewing Guarantor Aadhaar Card PDF")}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
-                >
-                  View Guarantor Document
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Guarantor Name</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">Suresh Chandra Yadav</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Contact Number</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">+91 94152 88219</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 5. Police Clearance Certificate (PCC) */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm lg:col-span-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      Police Clearance Certificate (PCC Safety Audit)
-                    </h3>
-                    <p className="text-[11px] text-slate-400">Verified Police Thana Clearance Certificate</p>
-                  </div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200 dark:border-emerald-800 w-fit">
-                  PCC Passed
-                </span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileCheck className="w-7 h-7 text-emerald-600 shrink-0" />
-                  <div className="min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-white block truncate">
-                      Police_Clearance_Certificate_Sigra.pdf
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-mono block">Token: PCC-VAR-2026-8819</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => alert("Viewing Police Clearance Certificate")}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-colors shrink-0 w-full sm:w-auto text-center cursor-pointer"
-                >
-                  View PCC Certificate
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Local Police Thana</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">Sigra Police Station, Varanasi</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Safety Cover</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">₹5,00,000 Bonded Insurance</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">Clearance Date</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">15 Jan 2026</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── TAB 3: COMPLETED JOBS (WITH PAGINATED DATATABLE) ─── */}
+      {/* ─── TAB 3: COMPLETED & ACTIVE JOBS (WITH LIVE PIPELINE CARD & DATATABLE) ─── */}
       {activeTab === "jobs" && (
         <div className="space-y-6">
+          {/* 🚀 LIVE ACTIVE JOB PIPELINE CARD */}
+          {activeJob && (
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 relative overflow-hidden">
+              {/* Decorative Ambient Glow */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/5 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Header & Live Indicator */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-black text-slate-900 dark:text-white text-base sm:text-lg tracking-tight">
+                        Live Ongoing Job Pipeline
+                      </h3>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/40 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+                        <Activity className="w-3 h-3 animate-pulse" />
+                        <span>Partner Active Now</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">
+                      Partner is currently assigned and working on booking <strong className="text-brand-600 dark:text-brand-400">#{activeJob.id}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Booked Time & Slot Tag */}
+                <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-white/10 px-4 py-2 rounded-2xl border border-slate-200 dark:border-white/15 text-xs font-mono font-bold shrink-0">
+                  <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400 text-[10px] block font-sans">Time Booked & Slot</span>
+                    <span className="text-slate-900 dark:text-white">{activeJob.bookedTime} ({activeJob.bookedSlot})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Job & Customer Details Summary */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-extrabold block">Service Package</span>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm mt-0.5">{activeJob.serviceTitle}</h4>
+                  <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 dark:bg-brand-500/30 dark:text-brand-200 border border-brand-200 dark:border-brand-500/40 text-[10px] font-mono font-bold">
+                    Gross Bill: ₹{activeJob.totalAmount} • Partner Share: ₹{activeJob.netShare}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-extrabold block">Customer Contact</span>
+                  <p className="font-extrabold text-slate-900 dark:text-white text-xs mt-0.5">{activeJob.customerName}</p>
+                  <a href={`tel:${activeJob.customerPhone}`} className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-1 mt-0.5">
+                    <Phone className="w-3 h-3" /> {activeJob.customerPhone}
+                  </a>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-extrabold block">Job Location</span>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-start gap-1 mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                    <span>{activeJob.locality}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 📍 LIVE PIPELINE STAGE TRACKER (Track Line Perfectly Centered at top-[18px]) */}
+              <div className="pt-2 relative z-10 space-y-4">
+                <div className="flex items-center justify-between text-xs font-extrabold">
+                  <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    <span>Current Pipeline Stage:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-black underline underline-offset-4">
+                      {activeJob.stages[activeJob.currentStage].label} ({activeJob.stages[activeJob.currentStage].time})
+                    </span>
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                    Stage {activeJob.currentStage + 1} of {activeJob.stages.length}
+                  </span>
+                </div>
+
+                {/* Pipeline Visual Tracker Container */}
+                <div className="space-y-3 pt-1">
+                  {/* Circle Nodes & Connecting Line Row (Fixed Height h-10 = 40px) */}
+                  <div className="relative flex items-center justify-between h-10 px-5">
+                    {/* Background Track Line - Perfectly centered vertically at 50% of 40px circle height */}
+                    <div className="absolute top-1/2 left-5 right-5 h-1.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 rounded-full" />
+                    {/* Active Progress Line */}
+                    <div
+                      className="absolute top-1/2 left-5 h-1.5 bg-gradient-to-r from-brand-500 via-emerald-400 to-emerald-500 -translate-y-1/2 rounded-full transition-all duration-500"
+                      style={{ width: `${(activeJob.currentStage / (activeJob.stages.length - 1)) * 90}%` }}
+                    />
+
+                    {/* Circle Nodes */}
+                    {activeJob.stages.map((stage, index) => {
+                      const isCompleted = index < activeJob.currentStage;
+                      const isCurrent = index === activeJob.currentStage;
+                      const IconComp = stage.icon;
+
+                      return (
+                        <div
+                          key={stage.id}
+                          className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 z-10 shrink-0 ${
+                            isCompleted
+                              ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 scale-100"
+                              : isCurrent
+                              ? "bg-gradient-to-r from-amber-400 to-emerald-400 text-slate-950 font-black shadow-lg shadow-emerald-400/40 ring-4 ring-emerald-400/30 scale-110 animate-pulse"
+                              : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 shadow-xs"
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-5 h-5" />
+                          ) : (
+                            <IconComp className="w-4.5 h-4.5" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Stage Labels Row (Positioned below circle row) */}
+                  <div className="flex justify-between items-start">
+                    {activeJob.stages.map((stage, index) => {
+                      const isCompleted = index < activeJob.currentStage;
+                      const isCurrent = index === activeJob.currentStage;
+
+                      return (
+                        <div key={stage.id} className="text-center space-y-0.5 w-24 shrink-0">
+                          <span
+                            className={`block text-[11px] font-extrabold leading-tight ${
+                              isCurrent
+                                ? "text-emerald-600 dark:text-emerald-300 font-black"
+                                : isCompleted
+                                ? "text-slate-800 dark:text-slate-200"
+                                : "text-slate-400 dark:text-slate-500"
+                            }`}
+                          >
+                            {stage.label}
+                          </span>
+                          <span className="block text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold">
+                            {stage.time}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions Footer */}
+              <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Real-time GPS Tracking & Partner Verification Active</span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <Link
+                    href={`/bookings/${activeJob.id}`}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white font-extrabold text-xs transition-all border border-slate-200 dark:border-white/15 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-brand-600 dark:text-brand-300" />
+                    <span>View Booking Details</span>
+                  </Link>
+                  <a
+                    href={`tel:${activeJob.customerPhone}`}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call Customer</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
               <span className="text-slate-400 font-extrabold uppercase text-[10px]">Lifetime Jobs Completed</span>

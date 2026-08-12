@@ -270,35 +270,26 @@ export default function MediaPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-10">
 
-      {/* ─── 1. EXECUTIVE HERO HEADER ─── */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 dark:from-slate-900 dark:via-brand-950 dark:to-purple-950 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
-              Brand Assets Hub
-            </span>
-            <span className="text-xs text-white/80 font-bold">• Varanasi Campaign Media</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Media & Brand Asset Management
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <FileImage className="w-6 h-6 text-brand-600" />
+            <span>Media & Brand Asset Management</span>
           </h1>
-          <p className="text-xs sm:text-sm text-white/90 max-w-xl font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Upload, organize, and edit promotional banners, verified badge graphics, and service media files for Varanasi operations.
           </p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsUploadOpen(true)}
-            className="px-5 py-3 rounded-2xl bg-white hover:bg-slate-50 text-brand-700 font-extrabold text-xs shadow-lg transition-all cursor-pointer flex items-center gap-2 active:scale-95"
-          >
-            <Upload className="w-4 h-4 text-brand-600" />
-            <span>Upload New Asset</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsUploadOpen(true)}
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Upload className="w-4 h-4" />
+          <span>Upload New Asset</span>
+        </button>
       </div>
 
       {/* ─── 2. EXECUTIVE METRICS RIBBON ─── */}

@@ -26,53 +26,29 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
-      {/* Top Executive Glass Hero Header */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-brand-950 text-white border border-slate-800 shadow-xl space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-brand-300 text-xs font-extrabold uppercase tracking-wider mb-1">
-              <TrendingUp className="w-4 h-4" /> Executive Telemetry & Growth Insights
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">
-              Executive Analytics & Revenue Intelligence
-            </h1>
-            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Real-time daily telemetry, booking velocity curves, partner assignment metrics, and service category demand heatmaps across Varanasi.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value)}
-              className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-md outline-none cursor-pointer"
-            >
-              <option value="this_month" className="text-slate-900">This Month (July 2026)</option>
-              <option value="last_month" className="text-slate-900">Last Month (June 2026)</option>
-              <option value="quarter" className="text-slate-900">This Quarter (Q3 2026)</option>
-              <option value="year" className="text-slate-900">FY 2026-27 Full Year</option>
-            </select>
-          </div>
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-brand-600" />
+            <span>Executive Analytics & Revenue Intelligence</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            Real-time daily telemetry, booking velocity curves, partner assignment metrics, and service category demand heatmaps.
+          </p>
         </div>
 
-        {/* Integrated Glass Metrics Summary Strip */}
-        <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Gross Revenue</span>
-            <span className="font-extrabold text-emerald-400 text-sm">₹18,45,000 (+24.8%)</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Active Customers</span>
-            <span className="font-extrabold text-brand-300 text-sm">3,420 Users (88.4%)</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Fleet Velocity</span>
-            <span className="font-extrabold text-purple-300 text-sm">412 Partners (99.2%)</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Order Basket</span>
-            <span className="font-extrabold text-amber-300 text-sm">₹1,380 (+12.4%)</span>
-          </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <select
+            value={timePeriod}
+            onChange={(e) => setTimePeriod(e.target.value)}
+            className="p-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer"
+          >
+            <option value="this_month">This Month (July 2026)</option>
+            <option value="last_month">Last Month (June 2026)</option>
+            <option value="quarter">This Quarter (Q3 2026)</option>
+            <option value="year">FY 2026-27 Full Year</option>
+          </select>
         </div>
       </div>
 

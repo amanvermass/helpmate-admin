@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { Portal } from "@/components/Portal";
 import { initialServices, initialAddons, varanasiLocalities, ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
 import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown, FileImage, Upload, Megaphone, Eye, Flame, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
@@ -268,45 +269,33 @@ export default function CmsPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => handleToggleTrending(row.id)}
-            title={row.isTrending ? "Remove from Trending Best Sellers" : "Feature as Trending Best Seller"}
-            className={`p-1.5 rounded-lg transition-all border cursor-pointer ${
-              row.isTrending
-                ? "bg-gradient-to-r from-amber-500 to-rose-600 text-white border-amber-400 shadow-sm"
-                : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-100"
-            }`}
-          >
-            <Flame className={`w-3.5 h-3.5 ${row.isTrending ? "fill-white text-white" : "text-amber-500"}`} />
-          </button>
-          <button
-            type="button"
-            onClick={() => openEditServiceDrawer(row)}
-            title="Edit Service Package"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-all border border-slate-200 dark:border-slate-700"
-          >
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedService(row)}
-            title="Manage Connected Add-ons"
-            className="p-1.5 rounded-lg bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-all"
-          >
-            <Wrench className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setServices(services.filter((s) => s.id !== row.id))}
-            title="Delete Service Package"
-            className="p-1.5 rounded-lg bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: row.isTrending ? "Remove Trending" : "Set Trending",
+              icon: Flame,
+              onClick: () => handleToggleTrending(row.id),
+            },
+            {
+              label: "Edit",
+              icon: Edit,
+              onClick: () => openEditServiceDrawer(row),
+            },
+            {
+              label: "Add-ons",
+              icon: Wrench,
+              onClick: () => setSelectedService(row),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              onClick: () => setServices(services.filter((s) => s.id !== row.id)),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -370,25 +359,23 @@ export default function CmsPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => setIsAddAddonOpen(true)}
-            title="Edit Add-on Spare Part"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-all border border-slate-200 dark:border-slate-700"
-          >
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setAddons(addons.filter((a) => a.id !== row.id))}
-            title="Delete Add-on Spare Part"
-            className="p-1.5 rounded-lg bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "Edit Add-on",
+              icon: Edit,
+              onClick: () => setIsAddAddonOpen(true),
+            },
+            {
+              label: "Delete Add-on",
+              icon: Trash2,
+              onClick: () => setAddons(addons.filter((a) => a.id !== row.id)),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -421,25 +408,23 @@ export default function CmsPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => setIsAddPincodeOpen(true)}
-            title="Edit Serviceable Locality"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-all border border-slate-200 dark:border-slate-700"
-          >
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setLocalities(localities.filter((l) => l.id !== row.id))}
-            title="Delete Serviceable Locality"
-            className="p-1.5 rounded-lg bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "Edit Locality",
+              icon: Edit,
+              onClick: () => setIsAddPincodeOpen(true),
+            },
+            {
+              label: "Delete Locality",
+              icon: Trash2,
+              onClick: () => setLocalities(localities.filter((l) => l.id !== row.id)),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -679,38 +664,36 @@ export default function CmsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-700 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <Wrench className="w-4 h-4" /> HelpMate Varanasi Catalog CMS
-          </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Services & Master Pricing Catalog</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Wrench className="w-6 h-6 text-brand-600" />
+            <span>Services & Master Pricing Catalog</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage fixed service rates, diagnostic inspection charges, spare part add-ons, and Varanasi pincode serviceability rules.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              if (activeTab === "services") openAddServiceDrawer();
-              else if (activeTab === "addons") setIsAddAddonOpen(true);
-              else setIsAddPincodeOpen(true);
-            }}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-brand-600" />
-            <span>
-              {activeTab === "services"
-                ? "Add New Service"
-                : activeTab === "addons"
-                  ? "Add New Add-on"
-                  : "Add Service Zone"}
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (activeTab === "services") openAddServiceDrawer();
+            else if (activeTab === "addons") setIsAddAddonOpen(true);
+            else setIsAddPincodeOpen(true);
+          }}
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>
+            {activeTab === "services"
+              ? "Create Service Offer"
+              : activeTab === "addons"
+              ? "Add Spare Component"
+              : "Add Varanasi Pincode"}
+          </span>
+        </button>
       </div>
 
       {/* Tab Controls */}

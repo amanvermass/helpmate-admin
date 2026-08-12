@@ -215,7 +215,7 @@ export interface Technician {
   aadhaarVerified: boolean;
   policeVerified: boolean;
   bondedInsurance: boolean;
-  status: "Available" | "On Job" | "Offline" | "Approved" | "Pending" | "Rejected";
+  status: "Working" | "In Transit" | "Absent" | "Available" | "On Job" | "Offline" | "Approved" | "Pending" | "Rejected";
   joiningDate: string;
 
   // Earnings & Settlement
@@ -785,7 +785,7 @@ export const initialTechnicians: Technician[] = [
     aadhaarVerified: true,
     policeVerified: true,
     bondedInsurance: true,
-    status: "Approved",
+    status: "Working",
     joiningDate: "14 Jan 2024",
     totalEarnings: 284500,
     commissionPaid: 71125,
@@ -807,7 +807,7 @@ export const initialTechnicians: Technician[] = [
     aadhaarVerified: true,
     policeVerified: true,
     bondedInsurance: true,
-    status: "Approved",
+    status: "In Transit",
     joiningDate: "05 Nov 2023",
     totalEarnings: 412000,
     commissionPaid: 103000,
@@ -828,12 +828,33 @@ export const initialTechnicians: Technician[] = [
     aadhaarVerified: true,
     policeVerified: true,
     bondedInsurance: true,
-    status: "Pending",
+    status: "Absent",
     joiningDate: "20 Feb 2024",
     totalEarnings: 156000,
     commissionPaid: 39000,
     pendingPayout: 8500,
     lastPayoutDate: "15 Jan 2026",
+  },
+  {
+    id: "tech-104",
+    name: "Vikas Srivastava",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    role: "Master Plumber & Pipe Fitter",
+    category: "Plumbing",
+    locality: "Godowlia, Varanasi",
+    pincode: "221001",
+    phone: "+91 98388 77611",
+    rating: 4.88,
+    totalJobs: 245,
+    aadhaarVerified: true,
+    policeVerified: true,
+    bondedInsurance: true,
+    status: "Available",
+    joiningDate: "10 Mar 2024",
+    totalEarnings: 198000,
+    commissionPaid: 49500,
+    pendingPayout: 11200,
+    lastPayoutDate: "22 Jan 2026",
   },
 ];
 

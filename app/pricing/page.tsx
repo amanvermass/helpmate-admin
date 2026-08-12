@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import {
   initialCityPricing,
   CityPricingItem,
@@ -468,70 +469,61 @@ export default function PricingPage() {
     {
       key: "id",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              setEditingRate(row);
-              setRateForm({
-                serviceTitle: row.serviceTitle,
-                category: row.category,
-                basePrice: row.basePrice,
-                memberPrice: row.memberPrice,
-                convenienceFee: row.convenienceFee,
-                gstPercentage: row.gstPercentage,
-                commissionPercentage: row.commissionPercentage,
-                surgeMultiplier: row.surgeMultiplier,
-              });
-            }}
-            title="Edit Rate Card"
-            className="p-1.5 rounded-lg bg-slate-100 hover:bg-brand-50 dark:bg-slate-800 text-slate-600 hover:text-brand-600 transition-colors cursor-pointer"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDeleteRateCard(row.id)}
-            title="Delete Rate Card"
-            className="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 dark:bg-slate-800 text-slate-600 hover:text-red-600 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "Edit",
+              icon: Edit2,
+              onClick: () => {
+                setEditingRate(row);
+                setRateForm({
+                  serviceTitle: row.serviceTitle,
+                  category: row.category,
+                  basePrice: row.basePrice,
+                  memberPrice: row.memberPrice,
+                  convenienceFee: row.convenienceFee,
+                  gstPercentage: row.gstPercentage,
+                  commissionPercentage: row.commissionPercentage,
+                  surgeMultiplier: row.surgeMultiplier,
+                });
+              },
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              onClick: () => handleDeleteRateCard(row.id),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
 
   return (
     <div className="space-y-6  relative">
-      {/* Top Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-brand-600 via-purple-700 to-indigo-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="relative z-10 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
-              Full Calculator CMS Manager
-            </span>
-            <span className="text-xs text-white/80 font-bold">• Sticky Preview & Custom Popups Enabled</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Interactive Pricing Calculator Manager
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Tag className="w-6 h-6 text-brand-600" />
+            <span>Interactive Pricing Calculator Manager</span>
           </h1>
-          <p className="text-xs sm:text-sm text-white/90 max-w-xl font-medium">
-            Manage all fields, layout size tiers, add-ons, summary badges & guarantees with custom modals and real-time sticky live preview.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            Manage all fields, layout size tiers, add-ons, summary badges & guarantees with real-time sticky live preview.
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSaveCalculatorSettings}
-            className="px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-purple-900 font-extrabold text-xs shadow-lux transition-all cursor-pointer flex items-center gap-2"
-          >
-            <Save className="w-4 h-4 text-purple-600" />
-            <span>Save Calculator Settings</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleSaveCalculatorSettings}
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Save className="w-4 h-4" />
+          <span>Save Calculator Settings</span>
+        </button>
       </div>
 
       {/* TABS BAR: "Interactive Pricing Calculator CMS", "Fixed Rate Cards", "Inspection Engine Rules", "City Surge Matrix" */}

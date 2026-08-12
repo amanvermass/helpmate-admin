@@ -164,27 +164,16 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner matching Billing page style */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <CreditCard className="w-4 h-4" /> Single-City Operations Engine
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Payments & Financial Settlement Hub</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <CreditCard className="w-6 h-6 text-brand-600" />
+            <span>Payments & Financial Settlement Hub</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Real-time Varanasi customer transactions, online UPI / Credit Card receipts, Cash on Service collections, and instant customer refunds.
           </p>
-        </div>
-
-        <div className="flex gap-3 overflow-x-auto pb-1 sm:pb-0">
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[110px]">
-            <span className="text-xs text-brand-200 block font-semibold">City Hub</span>
-            <span className="text-lg font-black text-white">Varanasi</span>
-          </div>
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[110px]">
-            <span className="text-xs text-brand-200 block font-semibold">Total Revenue</span>
-            <span className="text-lg font-black text-emerald-300">₹{(totalVolume + 1485000).toLocaleString("en-IN")}</span>
-          </div>
         </div>
       </div>
 

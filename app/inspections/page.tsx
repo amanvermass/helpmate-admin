@@ -32,6 +32,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { initialBookings, Booking } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 
@@ -282,27 +283,22 @@ export default function InspectionsPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => setSelectedInspection(row)}
-            title="Open In-Page Full Inspection Details"
-            className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-brand-50 text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors flex items-center gap-1 text-[11px] font-bold px-2.5"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Details</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => openValidateModal(row)}
-            title="Validate Technician Diagnostic Quote"
-            className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors flex items-center gap-1 text-[11px] font-bold px-2.5"
-          >
-            <Wrench className="w-3.5 h-3.5" />
-            <span>Quote</span>
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "View Inspection Details",
+              icon: Eye,
+              onClick: () => setSelectedInspection(row),
+            },
+            {
+              label: "Validate Diagnostic Quote",
+              icon: Wrench,
+              onClick: () => openValidateModal(row),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -653,44 +649,21 @@ export default function InspectionsPage() {
       </div>
     );
   }
-
   // ==========================================
   // 2. MAIN DATATABLE INSPECTIONS LIST VIEW
   // ==========================================
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-600 via-amber-700 to-brand-700 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-amber-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <Wrench className="w-4 h-4" /> Diagnostic Inspections Management
-          </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">Inspection & Price Validation Queue</h1>
-          <p className="text-xs text-amber-100 mt-1 max-w-xl">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Wrench className="w-6 h-6 text-brand-600" />
+            <span>Inspection & Price Validation Queue</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Review site technician diagnostic quotes, validate spare parts + labour costs, track customer consent, and execute 4-digit OTP job completions.
           </p>
-        </div>
-
-        {/* Metric Counter Pills */}
-        <div className="grid grid-cols-3 sm:flex gap-2 sm:gap-3 shrink-0">
-          <div className="p-2.5 sm:p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[90px] sm:min-w-[110px]">
-            <span className="text-[10px] sm:text-xs text-amber-200 block font-semibold">Total Queue</span>
-            <span className="text-lg sm:text-xl font-black text-white">{bookings.length}</span>
-          </div>
-
-          <div className="p-2.5 sm:p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[90px] sm:min-w-[110px]">
-            <span className="text-[10px] sm:text-xs text-amber-200 block font-semibold">Approved</span>
-            <span className="text-lg sm:text-xl font-black text-emerald-300">
-              {bookings.filter((b) => b.inspectionApprovedByCustomer).length}
-            </span>
-          </div>
-
-          <div className="p-2.5 sm:p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[90px] sm:min-w-[110px]">
-            <span className="text-[10px] sm:text-xs text-amber-200 block font-semibold">Completed</span>
-            <span className="text-lg sm:text-xl font-black text-white">
-              {bookings.filter((b) => b.isOtpVerified).length}
-            </span>
-          </div>
         </div>
       </div>
 

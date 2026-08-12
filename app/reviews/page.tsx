@@ -50,14 +50,14 @@ export default function ReviewsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500 to-amber-700 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-amber-100 text-xs font-bold uppercase tracking-wider mb-1">
-            <Star className="w-4 h-4 fill-white" /> Quality Assurance & Ratings
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Review & Rating Moderation</h1>
-          <p className="text-xs text-amber-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Star className="w-6 h-6 text-brand-600" />
+            <span>Review & Rating Moderation</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Moderate customer service ratings and technician performance reviews.
           </p>
         </div>

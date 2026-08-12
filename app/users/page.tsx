@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CustomSelect } from "@/components/CustomSelect";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { initialUsers, UserManagementItem, UserPermissions, ModulePermission } from "@/lib/mockData";
 import {
   ShieldCheck,
@@ -158,25 +159,23 @@ export default function UsersPage() {
     {
       key: "id",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => setEditUser(JSON.parse(JSON.stringify(row)))}
-            title="Edit User & Permissions"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeleteUser(row)}
-            title="Delete User Account"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950 text-slate-600 dark:text-slate-300 hover:text-red-600 transition-all"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "Edit",
+              icon: Edit,
+              onClick: () => setEditUser(JSON.parse(JSON.stringify(row))),
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              onClick: () => setDeleteUser(row),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -243,28 +242,26 @@ export default function UsersPage() {
   return (
     <PermissionGuard permissionKey="canManageRbac">
       <div className="space-y-6">
-        {/* Top Header Banner matching Billing layout */}
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Simple Clean Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div>
-            <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-              <ShieldCheck className="w-4 h-4" /> Role & Permission Management Engine
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-tight">Admin User Management & RBAC Directory</h1>
-            <p className="text-xs text-brand-100 mt-1 max-w-xl">
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <ShieldCheck className="w-6 h-6 text-brand-600" />
+              <span>Admin User Management & RBAC Directory</span>
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
               Configure staff accounts with View, Edit, and Delete permission controls for every module.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-brand-600" />
-              <span>Add New Staff Member</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Staff Member</span>
+          </button>
         </div>
 
         {/* Main DataTable without duplicate headers */}

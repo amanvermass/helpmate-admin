@@ -39,62 +39,38 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
-      {/* Top Executive Glass Hero Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-brand-950 text-white border border-slate-800 shadow-xl space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-brand-300 text-xs font-extrabold uppercase tracking-wider mb-1">
-              <BarChart3 className="w-4 h-4" /> Enterprise Financial & Operational Reports
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">
-              Data Audit & System Reports Engine
-            </h1>
-            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Generate and download official audit logs for Bookings, Gross Revenue, 18% GST filing, HelpMate platform commissions, and Partner Payouts in Varanasi.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-md outline-none cursor-pointer"
-            >
-              <option value="this_month" className="text-slate-900">This Month (July 2026)</option>
-              <option value="last_month" className="text-slate-900">Last Month (June 2026)</option>
-              <option value="quarter" className="text-slate-900">This Quarter (Q3 2026)</option>
-              <option value="year" className="text-slate-900">FY 2026-27 Full Year</option>
-            </select>
-
-            <button
-              type="button"
-              onClick={handleDownloadReport}
-              className="px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-2xl shadow-lg flex items-center gap-2 cursor-pointer transition-all active:scale-95 whitespace-nowrap"
-            >
-              <Download className="w-4 h-4" />
-              <span>{downloadSuccess ? "CSV Report Downloaded!" : "Download CSV Report"}</span>
-            </button>
-          </div>
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <BarChart3 className="w-6 h-6 text-brand-600" />
+            <span>Data Audit & System Reports Engine</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            Generate and download official audit logs for Bookings, Gross Revenue, 18% GST filing, and Partner Payouts.
+          </p>
         </div>
 
-        {/* Integrated Glass Metrics Summary Strip */}
-        <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Bookings Volume</span>
-            <span className="font-extrabold text-white text-sm">1,420 Jobs (+14.2%)</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Gross Revenue</span>
-            <span className="font-extrabold text-emerald-400 text-sm">₹18,45,000</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">GST Collected (18%)</span>
-            <span className="font-extrabold text-purple-300 text-sm">₹2,81,440</span>
-          </div>
-          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-0.5">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">25% HelpMate Comm.</span>
-            <span className="font-extrabold text-amber-300 text-sm">₹4,61,250</span>
-          </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="p-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold border border-slate-200 dark:border-slate-700 outline-none cursor-pointer"
+          >
+            <option value="this_month">This Month (July 2026)</option>
+            <option value="last_month">Last Month (June 2026)</option>
+            <option value="quarter">This Quarter (Q3 2026)</option>
+            <option value="year">FY 2026-27 Full Year</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={handleDownloadReport}
+            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          >
+            <Download className="w-4 h-4" />
+            <span>{downloadSuccess ? "CSV Report Downloaded!" : "Download CSV Report"}</span>
+          </button>
         </div>
       </div>
 

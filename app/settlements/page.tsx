@@ -250,23 +250,16 @@ export default function SettlementsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <DollarSign className="w-4 h-4" /> Bank Payout & Settlement Engine
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Settlement Reconciliation & Payouts</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <DollarSign className="w-6 h-6 text-brand-600" />
+            <span>Settlement Reconciliation & Payouts</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Weekly bank transfer reconciliation, 75% technician earnings disbursement, and UTR payout receipt storage.
           </p>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-center">
-            <span className="text-[10px] text-brand-200 font-bold uppercase block">Comm Model</span>
-            <span className="text-sm font-black text-white">25% Fixed Share</span>
-          </div>
         </div>
       </div>
 

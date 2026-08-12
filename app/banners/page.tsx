@@ -163,37 +163,26 @@ export default function BannersPage() {
   return (
     <div className="space-y-6">
 
-      {/* EXECUTIVE TOP BANNER HEADER */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-purple-700 to-indigo-800 text-white shadow-lux flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-white rounded-full translate-y-1/2" />
-        </div>
-        <div className="relative z-10 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full backdrop-blur-md flex items-center gap-1.5 w-fit">
-              <Megaphone className="w-3 h-3" /> Promotional Banners & Popups CMS
-            </span>
-            <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live System Active
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">Banners & Visitor Popups</h1>
-          <p className="text-xs text-white/85 max-w-xl font-medium">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Megaphone className="w-6 h-6 text-brand-600" />
+            <span>Banners & Visitor Popups</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage website visitor popups (Rich Text + Image OR Pure Image), category 2nd image badges, and hero offer banners.
           </p>
         </div>
 
-        <div className="relative z-10 flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsBannerPreviewOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-purple-900 font-extrabold text-xs shadow-lux transition-all flex items-center gap-2 cursor-pointer shrink-0"
-          >
-            <Eye className="w-4 h-4 text-purple-600" />
-            <span>Test Live Visitor Popup</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsBannerPreviewOpen(true)}
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Eye className="w-4 h-4" />
+          <span>Test Live Visitor Popup</span>
+        </button>
       </div>
 
       {/* MODERN TAB NAVIGATION */}

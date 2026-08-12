@@ -102,6 +102,7 @@ export default function PartnerBookingsPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
         <div className="flex items-center justify-end gap-1.5">
           {row.status !== "Completed" ? (
@@ -125,14 +126,14 @@ export default function PartnerBookingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <CalendarCheck className="w-4 h-4 text-emerald-400" /> Partner Job Assignment Queue
-          </div>
-          <h1 className="text-2xl font-black tracking-tight">New Assigned Jobs</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <CalendarCheck className="w-6 h-6 text-brand-600" />
+            <span>New Assigned Jobs</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             View your active assigned service orders, customer location details, and complete jobs with customer OTP verification.
           </p>
         </div>

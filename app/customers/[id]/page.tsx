@@ -860,58 +860,57 @@ export default function CustomerDetailPage() {
 
   return (
     <div className="w-full space-y-6 pb-16 animate-in fade-in duration-300">
-      {/* ─── PREMIUM HERO HEADER CARD ─── */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-brand-950 text-white border border-slate-800 shadow-xl space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      {/* Simple Clean Customer Header Card */}
+      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
           <Link
             href="/customers"
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl backdrop-blur-md"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl"
           >
-            <ArrowLeft className="w-4 h-4 text-brand-400" />
+            <ArrowLeft className="w-4 h-4 text-brand-600" />
             <span>Back to Customer Directory</span>
           </Link>
 
-          <span className="font-mono text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-white/10 text-brand-300 border border-white/10 backdrop-blur-md">
+          <span className="font-mono text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 border border-slate-200 dark:border-slate-700">
             CUSTOMER ID: {customer.id}
           </span>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-brand-600 text-white font-black text-2xl flex items-center justify-center border-2 border-brand-400 shadow-lg shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-brand-600 text-white font-black text-2xl flex items-center justify-center shadow-sm shrink-0">
               {customer.name.charAt(0)}
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   {customer.name}
                 </h1>
-                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-brand-500/20 text-brand-300 border border-brand-400/30">
+                <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                   {customer.customerType || "Individual Household"}
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300 font-semibold flex items-center gap-3 flex-wrap pt-1">
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-3 flex-wrap pt-1">
                 <span className="flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <Phone className="w-3.5 h-3.5 text-emerald-600" />
                   <strong className="font-mono">{customer.phone}</strong>
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-brand-400" />
+                  <MapPin className="w-3.5 h-3.5 text-brand-600" />
                   <span>{customer.locality}, Varanasi ({customer.pincode || "221002"})</span>
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-purple-400" />
+                  <Mail className="w-3.5 h-3.5 text-purple-600" />
                   <span className="font-mono text-[11px]">{customer.email}</span>
                 </span>
               </p>
             </div>
           </div>
 
-          {/* HEADER ACTIONS: EXPLICIT RICH PADDING */}
-          <div className="flex items-center gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-800 flex-wrap">
+          <div className="flex items-center gap-3 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-200 dark:border-slate-800 flex-wrap">
             <button
               type="button"
               onClick={() => {
@@ -924,7 +923,7 @@ export default function CustomerDetailPage() {
                 setEditAddress(customer.address);
                 setIsEditProfileDrawerOpen(true);
               }}
-              className="px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
             >
               <Edit2 className="w-4 h-4" />
               <span>Edit Profile</span>
@@ -932,7 +931,7 @@ export default function CustomerDetailPage() {
 
             <a
               href={`tel:${customer.phone}`}
-              className="px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
             >
               <Phone className="w-4 h-4" />
               <span>Call Customer</span>
@@ -945,11 +944,11 @@ export default function CustomerDetailPage() {
                   router.push("/customers");
                 }
               }}
-              className="px-4 py-3 rounded-2xl bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/40 cursor-pointer transition-all flex items-center gap-2 shrink-0"
+              className="px-4 py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 cursor-pointer transition-all flex items-center gap-2 shrink-0 font-extrabold text-xs"
               title="Delete Customer Account"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="text-xs font-bold">Delete Account</span>
+              <span>Delete</span>
             </button>
           </div>
         </div>

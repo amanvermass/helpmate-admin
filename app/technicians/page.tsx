@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { initialTechnicians, Technician } from "@/lib/mockData";
 import {
   Star,
@@ -26,12 +27,16 @@ import {
   User,
   Briefcase,
   Building,
+  Wrench,
+  Navigation,
+  XCircle,
+  UserCheck,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 
 export default function TechniciansPage() {
   const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
-  const [activeTab, setActiveTab] = useState<"fleet" | "commission">("fleet");
+  const [activeTab, setActiveTab] = useState<"partner" | "settlement">("partner");
   const [proofTech, setProofTech] = useState<Technician | null>(null);
   const [proofUrl, setProofUrl] = useState("");
   const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
@@ -159,55 +164,75 @@ export default function TechniciansPage() {
     },
     {
       key: "rating",
-      header: "Rating & Jobs",
+      header: "Rating",
       accessor: (row) => (
-        <span className="font-bold text-emerald-700 flex items-center gap-1">
-          <Star className="w-3.5 h-3.5 fill-emerald-600" /> {row.rating} ({row.totalJobs} jobs)
+        <span className="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1 text-xs">
+          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {row.rating}
+        </span>
+      ),
+    },
+    {
+      key: "totalJobs",
+      header: "Jobs",
+      accessor: (row) => (
+        <span className="font-black text-slate-900 dark:text-white text-xs font-mono">
+          {row.totalJobs || 0} Jobs
         </span>
       ),
     },
     {
       key: "status",
-      header: "Approval Status",
-      accessor: (row) => (
-        <span
-          className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit ${
-            row.status === "Approved"
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "bg-amber-50 text-amber-700 border border-amber-200"
-          }`}
-        >
-          <CheckCircle2 className="w-3 h-3" /> {row.status}
-        </span>
-      ),
+      header: "Duty Status",
+      accessor: (row) => {
+        let badgeClass = "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
+        let IconComp = CheckCircle2;
+
+        if (row.status === "Working" || row.status === "On Job") {
+          badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800";
+          IconComp = Wrench;
+        } else if (row.status === "In Transit") {
+          badgeClass = "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950 dark:text-sky-300 dark:border-sky-800";
+          IconComp = Navigation;
+        } else if (row.status === "Absent" || row.status === "Offline") {
+          badgeClass = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800";
+          IconComp = XCircle;
+        } else if (row.status === "Available" || row.status === "Approved") {
+          badgeClass = "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800";
+          IconComp = CheckCircle2;
+        }
+
+        return (
+          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border flex items-center gap-1 w-fit ${badgeClass}`}>
+            <IconComp className="w-3 h-3" /> {row.status}
+          </span>
+        );
+      },
     },
     {
       key: "id",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <Link
-            href={`/technicians/${row.id}`}
-            title="View Full Partner Profile Page"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-all flex items-center justify-center"
-          >
-            <Eye className="w-3.5 h-3.5" />
-          </Link>
-          <button
-            onClick={() => setEditTech(row)}
-            title="Edit Partner Details"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 text-slate-600 hover:text-brand-600 transition-all"
-          >
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setDeleteTech(row)}
-            title="Delete Partner"
-            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-red-50 text-slate-600 hover:text-red-600 transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "View",
+              icon: Eye,
+              href: `/technicians/${row.id}`,
+            },
+            {
+              label: "Edit",
+              icon: Edit,
+              href: `/technicians/new?id=${row.id}`,
+            },
+            {
+              label: "Delete",
+              icon: Trash2,
+              onClick: () => setDeleteTech(row),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -652,143 +677,52 @@ export default function TechniciansPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Banner matching Billing layout */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white shadow-lux flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <Users className="w-4 h-4" /> Partner Fleet Engine
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Partner Fleet Directory & Payouts</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-xl">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Users className="w-6 h-6 text-brand-600" />
+            <span>Partner Fleet Directory & Payouts</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage onboarded technicians, biometric KYC verification, and weekly commission settlements.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsAddPartnerOpen(true)}
-            className="px-4 py-2.5 rounded-2xl bg-white text-brand-900 font-extrabold text-xs shadow-md hover:bg-brand-50 transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <Plus className="w-4 h-4 text-brand-600" />
-            <span>Manual Onboard Partner</span>
-          </button>
-        </div>
+        <Link
+          href="/technicians/new"
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Manual Onboard Partner</span>
+        </Link>
       </div>
 
-      {/* 4 Partner Fleet Executive Quick Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Onboarded Fleet */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Total Fleet Partners
-            </span>
-            <div className="p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 border border-brand-200 dark:border-brand-800 shadow-sm">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 dark:text-white">
-              {totalFleet} Technicians
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-emerald-600 inline" /> Active service partners across Varanasi
-          </p>
-        </div>
-
-        {/* Card 2: Active Duty & Availability */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Active Duty Status
-            </span>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800 shadow-sm">
-              <Activity className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-              {activeFleet} Available
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
-            <Clock className="w-3 h-3 text-amber-500 inline" /> {onJobFleet} currently on active job assignment
-          </p>
-        </div>
-
-        {/* Card 3: Biometric Security Clearance */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Security KYC Cleared
-            </span>
-            <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 border border-purple-200 dark:border-purple-800 shadow-sm">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 dark:text-white">
-              {verifiedKycCount} / {totalFleet}
-            </span>
-            <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
-              {Math.round((verifiedKycCount / (totalFleet || 1)) * 100)}% Cleared
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-semibold">
-            Biometric Aadhaar & Local Police Thana verified
-          </p>
-        </div>
-
-        {/* Card 4: Weekly Payout Pool & Rating */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-              Weekly Payout Pool
-            </span>
-            <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-sm">
-              <Wallet className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-slate-900 dark:text-white">
-              ₹{totalPendingSettlements.toLocaleString("en-IN")}
-            </span>
-            <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
-              <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 inline" /> {avgFleetRating}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 font-semibold">
-            75% technician earnings awaiting payout
-          </p>
-        </div>
-      </div>
-
-      {/* Navigation Tabs (Positioned right at bottom of Quick Cards) */}
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+      {/* Navigation Tabs (Partner and Settlement) */}
+      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-extrabold shadow-xs">
         <button
-          onClick={() => setActiveTab("fleet")}
-          className={`px-4 py-2.5 rounded-xl transition-all ${
-            activeTab === "fleet"
-              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+          onClick={() => setActiveTab("partner")}
+          className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === "partner"
+              ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          Varanasi Technician Fleet & KYC
+          Partner
         </button>
         <button
-          onClick={() => setActiveTab("commission")}
-          className={`px-4 py-2.5 rounded-xl transition-all ${
-            activeTab === "commission"
-              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+          onClick={() => setActiveTab("settlement")}
+          className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === "settlement"
+              ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          25% Commission & Weekly Settlement Ledger
+          Settlement
         </button>
       </div>
 
-      {activeTab === "fleet" ? (
+      {activeTab === "partner" ? (
         <DataTable
           columns={fleetColumns}
           data={techs}

@@ -13,14 +13,17 @@ import {
   MapPin,
   Phone,
   ShieldCheck,
+  UserCheck,
   ArrowRight,
   TrendingUp,
   AlertCircle,
   KeyRound,
   FileSpreadsheet,
+  Eye,
 } from "lucide-react";
 import { initialBookings, Booking } from "@/lib/mockData";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 
 export default function PartnerDashboardPage() {
   const router = useRouter();
@@ -86,43 +89,33 @@ export default function PartnerDashboardPage() {
     {
       key: "actions",
       header: "Actions",
+      sticky: "right",
       accessor: (row) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <Link
-            href="/partner/bookings"
-            className="px-3 py-1 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs"
-          >
-            View Job
-          </Link>
-        </div>
+        <RowActionMenu
+          actions={[
+            {
+              label: "View Job Details",
+              icon: Eye,
+              href: `/partner/bookings`,
+            },
+          ]}
+        />
       ),
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Top Banner for Partner Welcome */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-brand-600 to-purple-800 text-white shadow-lux flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Simple Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-brand-200 text-xs font-bold uppercase tracking-wider mb-1">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" /> Police Verified Service Partner
-          </div>
-          <h1 className="text-2xl font-black tracking-tight">Welcome, Ramesh Yadav!</h1>
-          <p className="text-xs text-brand-100 mt-1 max-w-lg">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <UserCheck className="w-6 h-6 text-brand-600" />
+            <span>Welcome, Ramesh Yadav!</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Master HVAC & AC Power Jet Specialist • Sigra & Varanasi South Fleet
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[110px]">
-            <span className="text-[10px] text-brand-200 block font-semibold">CSAT Rating</span>
-            <span className="text-lg font-black text-amber-300 flex items-center justify-center gap-1">
-              4.92 <Star className="w-4 h-4 fill-amber-300" />
-            </span>
-          </div>
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 text-center min-w-[110px]">
-            <span className="text-[10px] text-brand-200 block font-semibold">Jobs Completed</span>
-            <span className="text-lg font-black text-white">148 Jobs</span>
-          </div>
         </div>
       </div>
 
