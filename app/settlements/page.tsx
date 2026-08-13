@@ -17,14 +17,11 @@ import {
   ShieldCheck,
   CreditCard,
   Building,
-  ArrowUpRight,
   Clock,
   Send,
   X,
-  FileText,
-  Check,
-  ExternalLink,
   Plus,
+  BadgeAlert,
 } from "lucide-react";
 
 export default function SettlementsPage() {
@@ -34,17 +31,18 @@ export default function SettlementsPage() {
   );
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
 
-  // Process Settlement Payout Modal State
+  // Process Manual Settlement Payout Modal State
   const [selectedTechForPayout, setSelectedTechForPayout] = useState<Technician | null>(null);
   const [payoutMethod, setPayoutMethod] = useState<
-    "IMPS Bank Transfer" | "NEFT Direct" | "UPI Payout" | "RazorpayX Automated"
-  >("IMPS Bank Transfer");
+    "Manual Bank Transfer (IMPS / NEFT)" | "Manual UPI Transfer" | "Manual Cash Payout" | "Direct Bank Deposit"
+  >("Manual Bank Transfer (IMPS / NEFT)");
   const [utrNumberInput, setUtrNumberInput] = useState<string>("");
   const [settlementDateInput, setSettlementDateInput] = useState<string>("Today, 08:30 PM");
+  const [proofUploaded, setProofUploaded] = useState<boolean>(true);
   const [proofUrlInput, setProofUrlInput] = useState<string>(
     "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80"
   );
-  const [notesInput, setNotesInput] = useState<string>("Weekly settlement payout processed cleanly via HDFC Direct API");
+  const [notesInput, setNotesInput] = useState<string>("Manual weekly payout processed & UTR reference verified");
 
   // Summary Metrics
   const totalPendingPayout = techs.reduce((sum, t) => sum + (t.pendingPayout || 0), 0);
@@ -53,7 +51,7 @@ export default function SettlementsPage() {
 
   const handleOpenPayoutModal = (tech: Technician) => {
     setSelectedTechForPayout(tech);
-    setUtrNumberInput(`IMPS-VAR-2026-${Math.floor(10000000 + Math.random() * 90000000)}`);
+    setUtrNumberInput(`UTR-VAR-2026-${Math.floor(10000000 + Math.random() * 90000000)}`);
   };
 
   const handleConfirmPayout = (e: React.FormEvent) => {
@@ -64,7 +62,7 @@ export default function SettlementsPage() {
     const grossVal = Math.round(payoutAmount / 0.75);
     const commVal = Math.round(grossVal * 0.25);
 
-    // 1. Create new settlement record
+    // 1. Create new manual settlement record
     const newRecord: SettlementRecord = {
       id: `SETTL-VAR-${Math.floor(950 + Math.random() * 50)}`,
       technicianId: selectedTechForPayout.id,
@@ -80,7 +78,7 @@ export default function SettlementsPage() {
       paymentMethod: payoutMethod,
       utrNumber: utrNumberInput.trim(),
       settlementDate: settlementDateInput || "Today",
-      period: "Current Settlement Cycle",
+      period: "Current Weekly Cycle",
       status: "Completed",
       proofUrl: proofUrlInput,
       notes: notesInput,
@@ -94,7 +92,7 @@ export default function SettlementsPage() {
               ...t,
               commissionPaid: t.commissionPaid + commVal,
               pendingPayout: 0,
-              lastPayoutDate: "Just Now",
+              lastPayoutDate: "Just Now (Manual)",
               payoutProofUrl: proofUrlInput,
             }
           : t
@@ -109,7 +107,7 @@ export default function SettlementsPage() {
   const pendingColumns: Column<Technician>[] = [
     {
       key: "name",
-      header: "Fleet Specialist",
+      header: "Fleet Partner",
       accessor: (row) => (
         <div className="flex items-center gap-2.5">
           <img
@@ -125,7 +123,7 @@ export default function SettlementsPage() {
       ),
       sortable: true,
     },
-    { key: "category", header: "Trade Category", sortable: true },
+    { key: "category", header: "Category", sortable: true },
     {
       key: "totalEarnings",
       header: "Gross Revenue (100%)",
@@ -158,7 +156,7 @@ export default function SettlementsPage() {
     },
     {
       key: "actions",
-      header: "Settlement Action",
+      header: "Manual Settlement Action",
       accessor: (row) => (
         <div>
           {(row?.pendingPayout ?? 0) > 0 ? (
@@ -167,11 +165,11 @@ export default function SettlementsPage() {
               onClick={() => handleOpenPayoutModal(row)}
               className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-extrabold text-xs border border-amber-300 dark:border-amber-800 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <Send className="w-3.5 h-3.5 text-amber-600" /> Process Payout
+              <Send className="w-3.5 h-3.5 text-amber-600" /> Process Manual Settlement
             </button>
           ) : (
             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1 w-fit">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Settled
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Manually Settled
             </span>
           )}
         </div>
@@ -204,7 +202,7 @@ export default function SettlementsPage() {
     },
     {
       key: "paymentMethod",
-      header: "Transfer Method & UTR",
+      header: "Manual Mode & UTR Ref",
       accessor: (row) => (
         <div className="flex flex-col">
           <span className="font-bold text-slate-800 dark:text-slate-200">{row?.paymentMethod}</span>
@@ -228,7 +226,7 @@ export default function SettlementsPage() {
     { key: "settlementDate", header: "Date Settled", sortable: true },
     {
       key: "proofUrl",
-      header: "UTR Receipt",
+      header: "Manual Receipt Proof",
       accessor: (row) => (
         <div>
           {row.proofUrl ? (
@@ -238,7 +236,7 @@ export default function SettlementsPage() {
               rel="noreferrer"
               className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 font-bold text-[11px] hover:underline flex items-center gap-1 w-fit border border-slate-200 dark:border-slate-700"
             >
-              <FileCheck className="w-3.5 h-3.5 text-emerald-600" /> View UTR Proof
+              <FileCheck className="w-3.5 h-3.5 text-emerald-600" /> View UTR Receipt
             </a>
           ) : (
             <span className="text-slate-400 text-[10px] italic">No receipt</span>
@@ -250,24 +248,42 @@ export default function SettlementsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Simple Clean Header */}
+      {/* Header with Manual Settlement Badge & Add Settlement Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <DollarSign className="w-6 h-6 text-brand-600" />
-            <span>Settlement Reconciliation & Payouts</span>
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-brand-600" />
+              <span>Partner Manual Settlement Ledger</span>
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1">
+              <BadgeAlert className="w-3.5 h-3.5 text-amber-600" />
+              <span>Manual Settlement Active</span>
+            </span>
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            Weekly bank transfer reconciliation, 75% technician earnings disbursement, and UTR payout receipt storage.
+            Process manual partner weekly settlements, enter bank UTR numbers, and upload manual payment receipts.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            const firstPending = techs.find((t) => (t.pendingPayout || 0) > 0) || techs[0];
+            handleOpenPayoutModal(firstPending);
+          }}
+          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Process Manual Settlement</span>
+        </button>
       </div>
 
       {/* 4 Executive KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Pending Payout Balance</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">Pending Manual Payouts</span>
             <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-xs">
               <Clock className="w-5 h-5" />
             </div>
@@ -279,7 +295,7 @@ export default function SettlementsPage() {
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Total Settled Disbursed</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">Total Manually Settled</span>
             <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800 shadow-xs">
               <CreditCard className="w-5 h-5" />
             </div>
@@ -303,12 +319,12 @@ export default function SettlementsPage() {
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Settlement Reliability</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">Settlement Mode</span>
             <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-xs">
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-2xl font-black text-slate-900 dark:text-white">100% Verified</span>
+          <span className="text-2xl font-black text-slate-900 dark:text-white">Manual Verification</span>
         </div>
       </div>
 
@@ -323,7 +339,7 @@ export default function SettlementsPage() {
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          Pending Payouts ({pendingTechsCount})
+          Pending Manual Payouts ({pendingTechsCount})
         </button>
 
         <button
@@ -354,7 +370,7 @@ export default function SettlementsPage() {
         />
       )}
 
-      {/* PROCESS PAYOUT POPUP MODAL */}
+      {/* PROCESS MANUAL SETTLEMENT POPUP MODAL */}
       {selectedTechForPayout && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
@@ -371,7 +387,7 @@ export default function SettlementsPage() {
                   />
                   <div>
                     <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                      Process Payout: {selectedTechForPayout.name}
+                      Process Manual Settlement: {selectedTechForPayout.name}
                     </h3>
                     <p className="text-xs text-slate-500">
                       {selectedTechForPayout.role} • {selectedTechForPayout.locality}
@@ -432,21 +448,21 @@ export default function SettlementsPage() {
                 </div>
               </div>
 
-              {/* Form Inputs */}
+              {/* Manual Form Inputs */}
               <div className="space-y-3">
                 <div>
                   <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">
-                    Transfer Method *
+                    Manual Payout Method *
                   </label>
                   <select
                     value={payoutMethod}
                     onChange={(e) => setPayoutMethod(e.target.value as any)}
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold outline-none focus:border-brand-500"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-extrabold outline-none focus:border-brand-500 cursor-pointer"
                   >
-                    <option value="IMPS Bank Transfer">IMPS Bank Transfer (Instant)</option>
-                    <option value="NEFT Direct">NEFT Direct Payout</option>
-                    <option value="UPI Payout">UPI Payout</option>
-                    <option value="RazorpayX Automated">RazorpayX Automated Payout API</option>
+                    <option value="Manual Bank Transfer (IMPS / NEFT)">Manual Bank Transfer (IMPS / NEFT)</option>
+                    <option value="Manual UPI Transfer">Manual UPI Transfer</option>
+                    <option value="Manual Cash Payout">Manual Cash Payout</option>
+                    <option value="Direct Bank Deposit">Direct Bank Deposit (Manual)</option>
                   </select>
                 </div>
 
@@ -458,7 +474,7 @@ export default function SettlementsPage() {
                     type="text"
                     value={utrNumberInput}
                     onChange={(e) => setUtrNumberInput(e.target.value)}
-                    placeholder="e.g. IMPS-VAR-2026-98124018"
+                    placeholder="e.g. UTR-VAR-2026-98124018"
                     className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-extrabold outline-none focus:border-brand-500"
                     required
                   />
@@ -466,15 +482,26 @@ export default function SettlementsPage() {
 
                 <div>
                   <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">
-                    Settlement Receipt Image URL / Document Link
+                    Upload Manual Payment Receipt (PDF / Image) *
                   </label>
-                  <input
-                    type="text"
-                    value={proofUrlInput}
-                    onChange={(e) => setProofUrlInput(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
-                  />
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <Upload className="w-4 h-4 text-brand-600" />
+                      <div>
+                        <span className="font-bold text-slate-900 dark:text-white block">
+                          {proofUploaded ? "Manual_Payout_Receipt_UTR.pdf" : "Choose File"}
+                        </span>
+                        <span className="text-[10px] text-slate-400">Bank Transfer Slip / Payment Screenshot</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProofUploaded(true)}
+                      className="px-3.5 py-1.5 rounded-lg bg-brand-600 text-white font-extrabold text-xs cursor-pointer"
+                    >
+                      {proofUploaded ? "Uploaded" : "Browse"}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -495,16 +522,16 @@ export default function SettlementsPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedTechForPayout(null)}
-                  className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300"
+                  className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-extrabold shadow-lux cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold shadow-lux cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Check className="w-4 h-4" />
-                  Confirm & Submit Payout
+                  <FileCheck className="w-4 h-4" />
+                  Mark Manually Settled
                 </button>
               </div>
             </form>

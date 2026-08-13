@@ -260,7 +260,7 @@ export default function UsersPage() {
             className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
-            <span>Add New Staff Member</span>
+            <span>Add User</span>
           </button>
         </div>
 
@@ -489,7 +489,7 @@ export default function UsersPage() {
                   <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                     <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5 text-brand-600" />
-                      <span>Add New Staff Member</span>
+                      <span>Add User</span>
                     </h3>
                     <button type="button" onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
                   </div>
@@ -630,7 +630,7 @@ export default function UsersPage() {
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
                   <button type="button" onClick={() => setIsAddOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300">Cancel</button>
-                  <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Create Staff Account</button>
+                  <button type="submit" className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold text-xs shadow-lux">Add User</button>
                 </div>
               </form>
             </div>

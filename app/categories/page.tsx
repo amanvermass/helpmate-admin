@@ -407,7 +407,7 @@ export default function CategoriesPage() {
           className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Add New Category</span>
+          <span>Add Category</span>
         </button>
       </div>
 
@@ -568,7 +568,7 @@ export default function CategoriesPage() {
                   </div>
                   <div>
                     <h3 className="text-base font-black text-slate-900 dark:text-white">
-                      {editingCategory ? `Manage Category Icons: ${editingCategory.name}` : "Add New Master Category"}
+                      {editingCategory ? "Edit Category" : "Add Category"}
                     </h3>
                     <p className="text-xs text-slate-500">Configure category titles, custom primary icon, and 2nd image icon</p>
                   </div>
@@ -778,7 +778,7 @@ export default function CategoriesPage() {
                   className="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-extrabold text-xs shadow-lux transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Save Category & Icons</span>
+                  <span>{editingCategory ? "Edit Category" : "Add Category"}</span>
                 </button>
               </div>
             </form>

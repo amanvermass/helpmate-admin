@@ -294,7 +294,7 @@ export default function CouponsPage() {
           className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Create New Offer Code</span>
+          <span>Add Coupon</span>
         </button>
       </div>
 
@@ -373,7 +373,7 @@ export default function CouponsPage() {
                     </div>
                     <div>
                       <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                        {editingCoupon ? "Edit Offer Code" : "Create New Offer Code"}
+                        {editingCoupon ? "Edit Coupon" : "Add Coupon"}
                       </h3>
                       <p className="text-xs text-slate-500">
                         Configure discount rates, min orders, and bank partnerships
@@ -583,7 +583,7 @@ export default function CouponsPage() {
                   className="flex-1 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>{editingCoupon ? "Update Offer" : "Publish Offer"}</span>
+                  <span>{editingCoupon ? "Edit Coupon" : "Add Coupon"}</span>
                 </button>
               </div>
             </form>

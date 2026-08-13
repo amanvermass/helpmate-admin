@@ -269,7 +269,7 @@ export default function CustomersPage() {
           className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
-          <span>Manual Onboard Customer</span>
+          <span>Add Customer</span>
         </button>
       </div>
 
@@ -376,7 +376,7 @@ export default function CustomersPage() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-white text-lg tracking-tight">
-                      {editingCustomer ? `Edit Profile (${editingCustomer.name})` : "Register New Customer"}
+                      {editingCustomer ? "Edit Customer" : "Add Customer"}
                     </h3>
                     <p className="text-xs text-brand-100 font-medium">
                       {editingCustomer ? `Update account specs for ID #${editingCustomer.id}` : "Add new client account & delivery address to Varanasi directory"}
@@ -575,7 +575,7 @@ export default function CustomersPage() {
                     className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-extrabold shadow-lux cursor-pointer transition-colors flex items-center justify-center gap-2 text-xs"
                   >
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>{editingCustomer ? "Save Customer Changes" : "Register Customer Account"}</span>
+                    <span>{editingCustomer ? "Edit Customer" : "Add Customer"}</span>
                   </button>
                 </div>
               </form>

@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Phone,
   Mail,
-  FileText,
   MapPin,
   Building,
   Briefcase,
@@ -21,6 +20,11 @@ import {
   Wallet,
   FileCheck,
   ChevronRight,
+  User,
+  BadgeCheck,
+  Award,
+  Eye,
+  FileText,
 } from "lucide-react";
 
 function TechnicianFormContent() {
@@ -30,48 +34,54 @@ function TechnicianFormContent() {
   const editId = searchParams.get("id") || searchParams.get("edit");
   const isEditing = pathname.includes("/edit") || Boolean(editId);
 
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  // 4-Stage Stepper: 1 = Personal & Bank, 2 = Service & Zone, 3 = KYC & Guarantor, 4 = Review & Submit
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
-  // Step 1 State: Partner Personal KYC Details
+  // ─── STEP 1 STATE: PERSONAL & BANK DETAILS ───
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [phoneOtp, setPhoneOtp] = useState("");
   const [showPhoneOtpInput, setShowPhoneOtpInput] = useState(false);
-
   const [email, setEmail] = useState("");
-  const [emailVerified, setEmailVerified] = useState(false);
+  const [address, setAddress] = useState("");
 
+  // Bank Details
+  const [bankName, setBankName] = useState("HDFC Bank (Sigra Branch)");
+  const [bankAccountNumber, setBankAccountNumber] = useState("50100299182711");
+  const [ifscCode, setIfscCode] = useState("HDFC0001827");
+  const [upiId, setUpiId] = useState("");
+
+  // ─── STEP 2 STATE: SERVICE & ZONE SETUP ───
+  const [category, setCategory] = useState("AC Repair");
+  const [role, setRole] = useState("Master HVAC Specialist");
+  const [experience, setExperience] = useState("5+ Years Senior Specialist");
+  const [locality, setLocality] = useState("Sigra");
+  const [pincode, setPincode] = useState("221002");
+  const [commissionRate, setCommissionRate] = useState("25");
+
+  // ─── STEP 3 STATE: KYC, GUARANTOR & POLICE VERIFICATION ───
+  // Partner KYC Aadhaar
   const [aadhaarNumber, setAadhaarNumber] = useState("");
   const [aadhaarVerified, setAadhaarVerified] = useState(false);
   const [aadhaarDocUploaded, setAadhaarDocUploaded] = useState(false);
 
-  // Step 1 State: Emergency Guarantor Details & Upload
+  // Emergency Guarantor Person Details
   const [guarantorName, setGuarantorName] = useState("");
+  const [guarantorRelation, setGuarantorRelation] = useState("Brother");
   const [guarantorPhone, setGuarantorPhone] = useState("");
   const [guarantorPhoneVerified, setGuarantorPhoneVerified] = useState(false);
   const [guarantorEmail, setGuarantorEmail] = useState("");
-  const [guarantorAddress, setGuarantorAddress] = useState("");
   const [guarantorAadhaar, setGuarantorAadhaar] = useState("");
+  const [guarantorAddress, setGuarantorAddress] = useState("");
   const [guarantorAadhaarDocUploaded, setGuarantorAadhaarDocUploaded] = useState(false);
 
-  // Step 1 State: Police Clearance Verification Details & Upload
+  // Police Clearance Certificate
   const [policeThanaName, setPoliceThanaName] = useState("Sigra Police Station");
   const [policeCertificateNumber, setPoliceCertificateNumber] = useState("");
   const [policeIssueDate, setPoliceIssueDate] = useState("");
   const [policeDocUploaded, setPoliceDocUploaded] = useState(false);
   const [policeVerified, setPoliceVerified] = useState(false);
-
-  // Step 2 State: Category, Zone & Bank Setup
-  const [category, setCategory] = useState("AC Repair");
-  const [role, setRole] = useState("Master Specialist");
-  const [locality, setLocality] = useState("Sigra");
-  const [pincode, setPincode] = useState("221002");
-  const [commissionRate, setCommissionRate] = useState("25");
-  const [bankName, setBankName] = useState("HDFC Bank (Sigra Branch)");
-  const [bankAccountNumber, setBankAccountNumber] = useState("50100299182711");
-  const [ifscCode, setIfscCode] = useState("HDFC0001827");
-  const [upiId, setUpiId] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
@@ -85,17 +95,31 @@ function TechnicianFormContent() {
         setPhone(existingTech.phone ? existingTech.phone.replace(/\D/g, "").slice(0, 10) : "9839122401");
         setPhoneVerified(true);
         setEmail(`${existingTech.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`);
-        setEmailVerified(true);
+        setAddress("House 14/A, Sigra Chauraha, Varanasi, Uttar Pradesh - 221002");
+
+        setBankName("HDFC Bank (Sigra Branch)");
+        setBankAccountNumber("50100299182711");
+        setIfscCode("HDFC0001827");
+        setUpiId(`${existingTech.name.toLowerCase().replace(/\s+/g, ".")}@okhdfcbank`);
+
+        setCategory(existingTech.category || "AC Repair");
+        setRole(existingTech.role || "Master HVAC Specialist");
+        setExperience("5+ Years Senior Specialist");
+        setLocality(existingTech.locality ? existingTech.locality.split(",")[0] : "Sigra");
+        setPincode(existingTech.pincode || "221002");
+        setCommissionRate("25");
+
         setAadhaarNumber("982341029831");
         setAadhaarVerified(true);
         setAadhaarDocUploaded(true);
 
-        setGuarantorName("Suresh Chandra Yadav (Brother)");
+        setGuarantorName("Suresh Chandra Yadav");
+        setGuarantorRelation("Brother");
         setGuarantorPhone("9415000000");
         setGuarantorPhoneVerified(true);
         setGuarantorEmail("suresh.yadav@gmail.com");
-        setGuarantorAddress("House 42/B, Sigra Chauraha, Varanasi, UP");
         setGuarantorAadhaar("819230491823");
+        setGuarantorAddress("House 42/B, Sigra Chauraha, Varanasi, UP");
         setGuarantorAadhaarDocUploaded(true);
 
         setPoliceThanaName("Sigra Police Station");
@@ -103,21 +127,11 @@ function TechnicianFormContent() {
         setPoliceIssueDate("2026-01-15");
         setPoliceDocUploaded(true);
         setPoliceVerified(true);
-
-        setCategory(existingTech.category || "AC Repair");
-        setRole(existingTech.role || "Master HVAC Specialist");
-        setLocality(existingTech.locality ? existingTech.locality.split(",")[0] : "Sigra");
-        setPincode(existingTech.pincode || "221002");
-        setCommissionRate("25");
-        setBankName("HDFC Bank (Sigra Branch)");
-        setBankAccountNumber("50100299182711");
-        setIfscCode("HDFC0001827");
-        setUpiId(`${existingTech.name.toLowerCase().replace(/\s+/g, ".")}@okhdfcbank`);
       }
     }
   }, [editId]);
 
-  // OTP & Document Verification Simulation Handlers
+  // Verification Handlers
   const handleVerifyPhone = () => {
     if (!phone) return alert("Please enter mobile number first.");
     setShowPhoneOtpInput(true);
@@ -137,11 +151,22 @@ function TechnicianFormContent() {
     setGuarantorPhoneVerified(true);
   };
 
+  // Step Navigation Handlers
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return alert("Please enter Partner Name.");
     if (!phone.trim()) return alert("Please enter Mobile Number.");
     setCurrentStep(2);
+  };
+
+  const handleStep2Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentStep(3);
+  };
+
+  const handleStep3Submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentStep(4);
   };
 
   const handleFinalSubmit = (e: React.FormEvent) => {
@@ -158,7 +183,7 @@ function TechnicianFormContent() {
 
   return (
     <div className="w-full space-y-6 pb-16">
-      {/* Top Header & Breadcrumb */}
+      {/* Top Header & Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
@@ -181,17 +206,15 @@ function TechnicianFormContent() {
                 )}
               </>
             ) : (
-              <span className="text-brand-600 dark:text-brand-400 font-extrabold">New Partner Onboarding</span>
+              <span className="text-brand-600 dark:text-brand-400 font-extrabold">Add Partner</span>
             )}
           </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 mt-1">
             <UserCheck className="w-6 h-6 text-brand-600" />
-            <span>{isEditing ? `Edit Partner Profile` : "Manual Partner Onboarding Wizard"}</span>
+            <span>{isEditing ? "Edit Partner" : "Add Partner"}</span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            {isEditing
-              ? "Editing existing partner details. All KYC, Guarantor, Police Verification and Bank payout details are pre-filled below."
-              : "Register new HelpMate service partner with KYC, Guarantor & Police Verification (Step 1) and Category & Zone Setup (Step 2)."}
+            3-Step Registration: Step 1 (Personal & Bank) ➔ Step 2 (Service & Zone) ➔ Step 3 (KYC, Guarantor & Police) ➔ Final Review & Submit.
           </p>
         </div>
       </div>
@@ -209,29 +232,27 @@ function TechnicianFormContent() {
         </div>
       )}
 
-      {/* 2-STEP STEPPER HEADER */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* 4-STAGE STEPPER HEADER */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Step 1 Pill */}
         <div
           onClick={() => setCurrentStep(1)}
-          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
             currentStep === 1
               ? "bg-brand-600 text-white border-brand-600 shadow-md"
               : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-brand-300"
           }`}
         >
           <div
-            className={`w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0 ${
-              currentStep === 1
-                ? "bg-white text-brand-700"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 ${
+              currentStep === 1 ? "bg-white text-brand-700" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             }`}
           >
             1
           </div>
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider block">Step 1</span>
-            <span className="font-bold text-sm">KYC, Guarantor & Police Verification</span>
+          <div className="min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Step 1</span>
+            <span className="font-extrabold text-xs truncate block">Personal & Bank</span>
           </div>
         </div>
 
@@ -240,46 +261,90 @@ function TechnicianFormContent() {
           onClick={() => {
             if (name && phone) setCurrentStep(2);
           }}
-          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
             currentStep === 2
               ? "bg-brand-600 text-white border-brand-600 shadow-md"
               : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-brand-300"
           }`}
         >
           <div
-            className={`w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0 ${
-              currentStep === 2
-                ? "bg-white text-brand-700"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 ${
+              currentStep === 2 ? "bg-white text-brand-700" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             }`}
           >
             2
           </div>
-          <div>
-            <span className="text-xs font-black uppercase tracking-wider block">Step 2</span>
-            <span className="font-bold text-sm">Category & Service Zone</span>
+          <div className="min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Step 2</span>
+            <span className="font-extrabold text-xs truncate block">Service & Zone</span>
+          </div>
+        </div>
+
+        {/* Step 3 Pill */}
+        <div
+          onClick={() => {
+            if (name && phone) setCurrentStep(3);
+          }}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+            currentStep === 3
+              ? "bg-brand-600 text-white border-brand-600 shadow-md"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-brand-300"
+          }`}
+        >
+          <div
+            className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 ${
+              currentStep === 3 ? "bg-white text-brand-700" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            }`}
+          >
+            3
+          </div>
+          <div className="min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Step 3</span>
+            <span className="font-extrabold text-xs truncate block">KYC, Guarantor & Police</span>
+          </div>
+        </div>
+
+        {/* Step 4 Review & Submit Pill */}
+        <div
+          onClick={() => {
+            if (name && phone) setCurrentStep(4);
+          }}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+            currentStep === 4
+              ? "bg-brand-600 text-white border-brand-600 shadow-md"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-brand-300"
+          }`}
+        >
+          <div
+            className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center shrink-0 ${
+              currentStep === 4 ? "bg-white text-brand-700" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            }`}
+          >
+            4
+          </div>
+          <div className="min-w-0">
+            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Final Step</span>
+            <span className="font-extrabold text-xs truncate block">Review & Submit</span>
           </div>
         </div>
       </div>
 
-      {/* STEP 1 FORM: KYC, GUARANTOR DETAILS & POLICE VERIFICATION */}
+      {/* ─── STEP 1 FORM: PERSONAL DETAILS & BANK DETAILS ─── */}
       {currentStep === 1 && (
         <form onSubmit={handleStep1Submit} className="space-y-6">
-          {/* Section 1: Partner Personal & Identity Details */}
+          {/* Personal Information */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <ShieldCheck className="w-5 h-5 text-brand-600" />
-              <span>1. Partner Personal Identity & Biometric KYC</span>
+              <User className="w-5 h-5 text-brand-600" />
+              <span>Step 1A: Partner Personal Contact Information</span>
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Full Name */}
               <div className="space-y-1.5">
-                <div className="h-5 flex items-center">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Full Name <span className="text-rose-500">*</span>
-                  </label>
-                </div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Full Name <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
@@ -290,15 +355,15 @@ function TechnicianFormContent() {
                 />
               </div>
 
-              {/* Mobile Number + OTP */}
+              {/* Mobile Number + Verification */}
               <div className="space-y-1.5">
-                <div className="h-5 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Mobile Number <span className="text-rose-500">*</span>
                   </label>
                   {phoneVerified && (
                     <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> OTP Verified
+                      <CheckCircle2 className="w-3 h-3" /> Verified
                     </span>
                   )}
                 </div>
@@ -350,8 +415,8 @@ function TechnicianFormContent() {
 
               {/* Email Address */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Gmail / Email Address
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -362,19 +427,282 @@ function TechnicianFormContent() {
                 />
               </div>
 
-              {/* Aadhaar Number */}
+              {/* Full Residential Address */}
+              <div className="space-y-1.5 md:col-span-3">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Full Residential Address <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Enter Partner Complete Residential Home Address, House No, Locality & Pincode..."
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Bank Details */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Wallet className="w-5 h-5 text-emerald-600" />
+              <span>Step 1B: Weekly Payout Bank Account Details</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Bank Name */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Aadhaar Card Number (12 Digits)
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Bank Name & Branch
                 </label>
                 <input
                   type="text"
-                  maxLength={12}
-                  placeholder="123456789012"
-                  value={aadhaarNumber}
-                  onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                  placeholder="e.g. HDFC Bank (Sigra Branch)"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
+                />
+              </div>
+
+              {/* Account Number */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Bank Account Number
+                </label>
+                <input
+                  type="text"
+                  placeholder="50100299182711"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
                 />
+              </div>
+
+              {/* IFSC Code */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  IFSC Code
+                </label>
+                <input
+                  type="text"
+                  placeholder="HDFC0001827"
+                  value={ifscCode}
+                  onChange={(e) => setIfscCode(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold uppercase"
+                />
+              </div>
+
+              {/* UPI ID */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  UPI ID (Optional Instant Payout)
+                </label>
+                <input
+                  type="text"
+                  placeholder="ramesh.yadav@okhdfcbank"
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <Link
+              href="/technicians"
+              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <span>Next: Service & Zone Setup →</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ─── STEP 2 FORM: SERVICE & ZONE SETUP ─── */}
+      {currentStep === 2 && (
+        <form onSubmit={handleStep2Submit} className="space-y-6">
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <Briefcase className="w-5 h-5 text-brand-600" />
+              <span>Step 2: Service Category & Zone Assignment</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Service Category */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Primary Service Category <span className="text-rose-500">*</span>
+                </label>
+                <CustomSelect
+                  value={category}
+                  onChange={(val) => setCategory(val)}
+                  options={[
+                    { value: "AC Repair", label: "AC Repair & Power Jet Wash" },
+                    { value: "Electrician", label: "Electrician & Wiring" },
+                    { value: "Plumbing", label: "Plumbing & Sanitary" },
+                    { value: "Cleaning", label: "Full Home Deep Cleaning" },
+                    { value: "Appliance Repair", label: "Appliance Repair (RO / Washing Machine)" },
+                    { value: "Beauty & Spa", label: "Beauty & Wellness Spa" },
+                    { value: "Painting", label: "Home Painting & Waterproofing" },
+                  ]}
+                />
+              </div>
+
+              {/* Designation Role */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Partner Designation / Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Master HVAC Specialist"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
+                />
+              </div>
+
+              {/* Experience Level */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Experience Level
+                </label>
+                <CustomSelect
+                  value={experience}
+                  onChange={(val) => setExperience(val)}
+                  options={[
+                    { value: "1-2 Years Junior", label: "1-2 Years Junior Technician" },
+                    { value: "3-5 Years Experienced", label: "3-5 Years Experienced Technician" },
+                    { value: "5+ Years Senior Specialist", label: "5+ Years Senior Specialist" },
+                    { value: "10+ Years Master Expert", label: "10+ Years Master Expert" },
+                  ]}
+                />
+              </div>
+
+              {/* Working Locality */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Primary Varanasi Working Locality <span className="text-rose-500">*</span>
+                </label>
+                <CustomSelect
+                  value={locality}
+                  onChange={(val) => setLocality(val)}
+                  options={[
+                    { value: "Sigra", label: "Sigra, Varanasi" },
+                    { value: "Lanka / Assi Ghat", label: "Lanka / Assi Ghat, Varanasi" },
+                    { value: "Godowlia", label: "Godowlia, Varanasi" },
+                    { value: "Bhelupur", label: "Bhelupur, Varanasi" },
+                    { value: "Mahmoorganj", label: "Mahmoorganj, Varanasi" },
+                    { value: "Shivpur", label: "Shivpur, Varanasi" },
+                    { value: "Sarnath", label: "Sarnath, Varanasi" },
+                    { value: "Varanasi Cantt", label: "Varanasi Cantt" },
+                  ]}
+                />
+              </div>
+
+              {/* Pincode */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Service Zone Pincode
+                </label>
+                <input
+                  type="text"
+                  placeholder="221002"
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
+                />
+              </div>
+
+              {/* Helpmate Take-Rate % */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  HelpMate Commission Share % (Default 25%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={commissionRate}
+                  onChange={(e) => setCommissionRate(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-black"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setCurrentStep(1)}
+              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all cursor-pointer"
+            >
+              ← Back to Step 1
+            </button>
+
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <span>Next: KYC, Guarantor & Police Verification →</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ─── STEP 3 FORM: KYC, GUARANTOR & POLICE VERIFICATION ─── */}
+      {currentStep === 3 && (
+        <form onSubmit={handleStep3Submit} className="space-y-6">
+          {/* Section 1: Partner Identity & Aadhaar KYC */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <ShieldCheck className="w-5 h-5 text-brand-600" />
+              <span>Step 3A: Partner Identity & Biometric Aadhaar KYC</span>
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Partner Aadhaar Number */}
+              <div className="space-y-1.5 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Partner Aadhaar Card Number (12 Digits) <span className="text-rose-500">*</span>
+                  </label>
+                  {aadhaarVerified && (
+                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> UIDAI Verified
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    maxLength={12}
+                    placeholder="982341029831"
+                    value={aadhaarNumber}
+                    onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAadhaarVerified(true)}
+                    className="h-11 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs whitespace-nowrap shadow-xs cursor-pointer shrink-0 flex items-center justify-center"
+                  >
+                    Verify UIDAI
+                  </button>
+                </div>
               </div>
 
               {/* Partner Aadhaar Document Upload */}
@@ -406,39 +734,55 @@ function TechnicianFormContent() {
             </div>
           </div>
 
-          {/* Section 2: Emergency Guarantor Details & Document Upload */}
+          {/* Section 2: Emergency Guarantor All Details */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <UserCheck className="w-5 h-5 text-purple-600" />
-              <span>2. Emergency Guarantor Details & Aadhaar Upload</span>
+              <span>Step 3B: Emergency Guarantor Person Full Details & Aadhaar</span>
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Guarantor Name */}
               <div className="space-y-1.5">
-                <div className="h-5 flex items-center">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Full Name <span className="text-rose-500">*</span>
-                  </label>
-                </div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Guarantor Full Name <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. Suresh Chandra Yadav (Brother / Relative)"
+                  placeholder="e.g. Suresh Chandra Yadav"
                   value={guarantorName}
                   onChange={(e) => setGuarantorName(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
                 />
               </div>
 
+              {/* Guarantor Relation */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Guarantor Relation
+                </label>
+                <CustomSelect
+                  value={guarantorRelation}
+                  onChange={(val) => setGuarantorRelation(val)}
+                  options={[
+                    { value: "Father", label: "Father" },
+                    { value: "Brother", label: "Brother" },
+                    { value: "Mother", label: "Mother" },
+                    { value: "Spouse", label: "Spouse" },
+                    { value: "Uncle / Relative", label: "Uncle / Relative" },
+                  ]}
+                />
+              </div>
+
               {/* Guarantor Mobile Number */}
               <div className="space-y-1.5">
-                <div className="h-5 flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Mobile Number
+                    Guarantor Mobile Number
                   </label>
                   {guarantorPhoneVerified && (
                     <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> OTP Verified
+                      <CheckCircle2 className="w-3 h-3" /> Verified
                     </span>
                   )}
                 </div>
@@ -455,22 +799,22 @@ function TechnicianFormContent() {
                     <button
                       type="button"
                       onClick={handleVerifyGuarantorPhone}
-                      className="h-11 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs whitespace-nowrap shadow-xs cursor-pointer shrink-0 flex items-center justify-center"
+                      className="h-11 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs whitespace-nowrap shadow-xs cursor-pointer shrink-0 flex items-center justify-center"
                     >
                       Verify OTP
                     </button>
                   ) : (
-                    <span className="h-11 px-3.5 rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200 shrink-0 flex items-center gap-1">
+                    <span className="h-11 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200 shrink-0 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Guarantor Gmail / Email */}
+              {/* Guarantor Email Address */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Guarantor Gmail / Email Address
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Guarantor Email Address
                 </label>
                 <input
                   type="email"
@@ -482,23 +826,23 @@ function TechnicianFormContent() {
               </div>
 
               {/* Guarantor Aadhaar Card Number */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Guarantor Aadhaar Card Number
+              <div className="space-y-1.5 md:col-span-2">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                  Guarantor Aadhaar Card Number (12 Digits)
                 </label>
                 <input
                   type="text"
                   maxLength={12}
-                  placeholder="123456789012"
+                  placeholder="819230491823"
                   value={guarantorAadhaar}
                   onChange={(e) => setGuarantorAadhaar(e.target.value.replace(/\D/g, "").slice(0, 12))}
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
                 />
               </div>
 
-              {/* Guarantor Residential Address */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {/* Guarantor Address */}
+              <div className="space-y-1.5 md:col-span-3">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
                   Guarantor Full Residential Address
                 </label>
                 <textarea
@@ -510,9 +854,9 @@ function TechnicianFormContent() {
                 />
               </div>
 
-              {/* Guarantor Aadhaar Document Upload */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {/* Upload Guarantor Document */}
+              <div className="space-y-1.5 md:col-span-3">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
                   Upload Guarantor Aadhaar Card Document PDF / Image
                 </label>
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-between gap-4">
@@ -539,17 +883,17 @@ function TechnicianFormContent() {
             </div>
           </div>
 
-          {/* Section 3: Police Clearance Verification Details */}
+          {/* Section 3: Local Police Thana Clearance */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
-              <span>3. Local Police Thana Clearance & Document Upload</span>
+              <span>Step 3C: Local Police Thana Clearance NOC</span>
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Police Station Branch Name */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
                   Police Verification Station / Thana Branch Name
                 </label>
                 <CustomSelect
@@ -569,7 +913,7 @@ function TechnicianFormContent() {
 
               {/* Certificate NOC Ref Number */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
                   Police Clearance Certificate NOC Ref Number
                 </label>
                 <input
@@ -581,22 +925,9 @@ function TechnicianFormContent() {
                 />
               </div>
 
-              {/* Issue Date */}
+              {/* Upload Police Document */}
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Certificate Issued Date
-                </label>
-                <input
-                  type="date"
-                  value={policeIssueDate}
-                  onChange={(e) => setPoliceIssueDate(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
-                />
-              </div>
-
-              {/* Police Clearance Document Upload */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
                   Upload Police Verification Certificate PDF / Image <span className="text-rose-500">*</span>
                 </label>
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-between gap-4">
@@ -628,187 +959,161 @@ function TechnicianFormContent() {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between gap-3 pt-2">
-            <Link
-              href="/technicians"
-              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all"
+            <button
+              type="button"
+              onClick={() => setCurrentStep(2)}
+              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all cursor-pointer"
             >
-              Cancel
-            </Link>
+              ← Back to Step 2
+            </button>
+
             <button
               type="submit"
               className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
             >
-              <span>Next: Category & Service Zone Setup →</span>
+              <span>Next: Final Review & Submit →</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </form>
       )}
 
-      {/* STEP 2 FORM: CATEGORY, ZONE & BANK SETUP */}
-      {currentStep === 2 && (
-        <form onSubmit={handleFinalSubmit} className="space-y-6">
-          {/* Section 1: Service Category & Working Zone */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Briefcase className="w-5 h-5 text-brand-600" />
-              <span>Step 2: Service Category & Working Zone Assignment</span>
-            </h3>
+      {/* ─── STEP 4: PREVIEW & SUBMIT OPTION ─── */}
+      {currentStep === 4 && (
+        <form onSubmit={handleFinalSubmit} className="space-y-6 animate-in fade-in">
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-brand-600" />
+                <span>Summary Review & Final Submission</span>
+              </h3>
+              <span className="px-3 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 text-xs font-mono font-bold border border-brand-200">
+                Ready for Activation
+              </span>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Service Category */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Primary Service Category <span className="text-rose-500">*</span>
-                </label>
-                <CustomSelect
-                  value={category}
-                  onChange={(val) => setCategory(val)}
-                  options={[
-                    { value: "AC Repair", label: "AC Repair & Power Jet Wash" },
-                    { value: "Electrician", label: "Electrician & Wiring" },
-                    { value: "Plumbing", label: "Plumbing & Sanitary" },
-                    { value: "Cleaning", label: "Full Home Deep Cleaning" },
-                    { value: "Appliance Repair", label: "Appliance Repair (RO / Washing Machine)" },
-                    { value: "Beauty & Spa", label: "Beauty & Wellness Spa" },
-                    { value: "Painting", label: "Home Painting & Waterproofing" },
-                  ]}
-                />
+            {/* Summary Grid 1: Personal & Bank */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-brand-600" /> Step 1: Personal & Bank Details
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(1)}
+                  className="text-xs font-bold text-brand-600 hover:underline"
+                >
+                  Edit Step 1
+                </button>
               </div>
 
-              {/* Designation Role */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Partner Designation / Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Master HVAC Specialist"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
-                />
-              </div>
-
-              {/* Working Locality */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Primary Varanasi Working Locality <span className="text-rose-500">*</span>
-                </label>
-                <CustomSelect
-                  value={locality}
-                  onChange={(val) => setLocality(val)}
-                  options={[
-                    { value: "Sigra", label: "Sigra, Varanasi" },
-                    { value: "Lanka / Assi Ghat", label: "Lanka / Assi Ghat, Varanasi" },
-                    { value: "Godowlia", label: "Godowlia, Varanasi" },
-                    { value: "Bhelupur", label: "Bhelupur, Varanasi" },
-                    { value: "Mahmoorganj", label: "Mahmoorganj, Varanasi" },
-                    { value: "Shivpur", label: "Shivpur, Varanasi" },
-                    { value: "Sarnath", label: "Sarnath, Varanasi" },
-                    { value: "Varanasi Cantt", label: "Varanasi Cantt" },
-                  ]}
-                />
-              </div>
-
-              {/* Pincode */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Service Zone Pincode
-                </label>
-                <input
-                  type="text"
-                  placeholder="221002"
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
-                />
-              </div>
-
-              {/* Helpmate Take-Rate % */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  HelpMate Commission Share % (Default 25%)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min={0}
-                    max={50}
-                    value={commissionRate}
-                    onChange={(e) => setCommissionRate(e.target.value)}
-                    className="w-36 h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-black"
-                  />
-                  <span className="text-xs text-slate-500 font-semibold">
-                    Partner keeps <strong>{100 - Number(commissionRate || 25)}%</strong> of gross booking revenue.
-                  </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-400 font-bold block">Partner Name</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white">{name || "Ramesh Kumar Yadav"}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Mobile Number</span>
+                  <span className="font-mono font-bold text-emerald-600">+91 {phone || "9839122401"} (Verified)</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Email Address</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{email || "ramesh.yadav@gmail.com"}</span>
+                </div>
+                <div className="sm:col-span-3">
+                  <span className="text-slate-400 font-bold block">Residential Home Address</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{address || "House 14/A, Sigra Chauraha, Varanasi, Uttar Pradesh - 221002"}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Payout Bank</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{bankName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Account Number</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">{bankAccountNumber}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">IFSC Code</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">{ifscCode}</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Section 2: Payout Bank Account Details */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Wallet className="w-5 h-5 text-emerald-600" />
-              <span>Weekly Payout Bank Account Details</span>
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Bank Name */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Bank Name & Branch
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. HDFC Bank (Sigra Branch)"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
-                />
+            {/* Summary Grid 2: Service & Zone */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 text-purple-600" /> Step 2: Service & Zone Setup
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(2)}
+                  className="text-xs font-bold text-brand-600 hover:underline"
+                >
+                  Edit Step 2
+                </button>
               </div>
 
-              {/* Account Number */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Bank Account Number
-                </label>
-                <input
-                  type="text"
-                  placeholder="50100299182711"
-                  value={bankAccountNumber}
-                  onChange={(e) => setBankAccountNumber(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-400 font-bold block">Service Category</span>
+                  <span className="font-extrabold text-brand-600 dark:text-brand-400">{category}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Designation Role</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{role}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Experience Level</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{experience}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Locality Zone</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{locality} ({pincode})</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">HelpMate Take Rate</span>
+                  <span className="font-mono font-bold text-emerald-600">{commissionRate}% (Partner gets {100 - Number(commissionRate)}%)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Grid 3: KYC, Guarantor & Police */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                <span className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" /> Step 3: KYC, Guarantor & Police Clearance
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(3)}
+                  className="text-xs font-bold text-brand-600 hover:underline"
+                >
+                  Edit Step 3
+                </button>
               </div>
 
-              {/* IFSC Code */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  IFSC Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="HDFC0001827"
-                  value={ifscCode}
-                  onChange={(e) => setIfscCode(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold uppercase"
-                />
-              </div>
-
-              {/* UPI ID */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  UPI ID (Optional Instant Payout)
-                </label>
-                <input
-                  type="text"
-                  placeholder="ramesh.yadav@okhdfcbank"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-slate-400 font-bold block">Partner Aadhaar UID</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">{aadhaarNumber || "982341029831"} (Verified)</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Guarantor Person</span>
+                  <span className="font-extrabold text-slate-900 dark:text-white">{guarantorName || "Suresh Chandra Yadav"} ({guarantorRelation})</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Guarantor Mobile & Aadhaar</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">+91 {guarantorPhone || "9415000000"} • UID {guarantorAadhaar || "819230491823"}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">Police Thana NOC</span>
+                  <span className="font-bold text-emerald-600">{policeThanaName} (Pass)</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold block">PCC Ref Token</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">{policeCertificateNumber || "UP-VAR-POL-2026-9812"}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -817,19 +1122,19 @@ function TechnicianFormContent() {
           <div className="flex items-center justify-between gap-3 pt-2">
             <button
               type="button"
-              onClick={() => setCurrentStep(1)}
+              onClick={() => setCurrentStep(3)}
               className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all cursor-pointer"
             >
-              ← Back to Step 1
+              ← Back to Step 3
             </button>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-8 py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isSubmitting ? "Saving Changes..." : isEditing ? "Update Partner & Save Changes" : "Complete Onboarding & Activate Partner"}</span>
+              <CheckCircle2 className="w-5 h-5" />
+              <span>{isSubmitting ? "Saving Changes..." : isEditing ? "Edit Partner" : "Add Partner"}</span>
             </button>
           </div>
         </form>

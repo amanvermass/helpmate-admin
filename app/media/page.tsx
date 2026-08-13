@@ -288,7 +288,7 @@ export default function MediaPage() {
           className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
         >
           <Upload className="w-4 h-4" />
-          <span>Upload New Asset</span>
+          <span>Add Media</span>
         </button>
       </div>
 
@@ -643,7 +643,7 @@ export default function MediaPage() {
               <div className="space-y-4 text-xs">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <div>
-                    <h3 className="font-black text-slate-900 dark:text-white text-base">Upload New Media Asset</h3>
+                    <h3 className="font-black text-slate-900 dark:text-white text-base">Add Media</h3>
                     <p className="text-[11px] text-slate-400">Select local file or enter CDN URL</p>
                   </div>
                   <button type="button" onClick={() => setIsUploadOpen(false)} className="text-slate-400 hover:text-slate-600">

@@ -75,19 +75,33 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
   const notifications = [
     {
       id: "n-1",
-      title: isPartner ? "New Assigned Booking HM-VAR-8821" : "New High Priority Booking",
+      jobStatus: "Assigned",
+      title: isPartner ? "New Assigned Booking #BK-VAR-8821" : "Job #BK-VAR-8821 Assigned",
       desc: isPartner
-        ? "AC Power Jet requested at Sigra, Varanasi (Customer: Rajesh Agrawal)"
-        : "AC Power Jet requested at Sigra, Varanasi by Rajesh Kumar Agrawal",
+        ? "Split AC Power Jet requested at Sigra, Varanasi (Customer: Rajesh Agrawal)"
+        : "Assigned Ramesh Yadav to Split AC Jet Wash at Sigra, Varanasi",
       time: "2 mins ago",
     },
     {
       id: "n-2",
-      title: isPartner ? "Weekly Payout Credited" : "Technician Verified",
-      desc: isPartner
-        ? "₹12,300 transferred to HDFC Bank A/c •••• 4910"
-        : "Police clearance approved for Ramesh Yadav (HVAC Fleet)",
-      time: "15 mins ago",
+      jobStatus: "En Route",
+      title: "Partner En Route to Location",
+      desc: "Partner Ramesh Yadav is traveling to customer site at Sigra, Varanasi (Est. arrival: 12 mins)",
+      time: "8 mins ago",
+    },
+    {
+      id: "n-3",
+      jobStatus: "In Progress",
+      title: "Work Started on Site",
+      desc: "Partner reached site and started Split AC Foam Jet Wash for Alok Verma (#BK-VAR-8819)",
+      time: "20 mins ago",
+    },
+    {
+      id: "n-4",
+      jobStatus: "Completed",
+      title: "Job Completed & OTP Verified",
+      desc: "4-Digit closure OTP 8821 verified for Sunita Devi. Receipt generated.",
+      time: "35 mins ago",
     },
   ];
 
@@ -266,8 +280,20 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
                     className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 text-left space-y-1 hover:border-brand-300 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-black uppercase tracking-wider text-brand-600 bg-brand-50 dark:bg-brand-950 px-2 py-0.2 rounded border border-brand-200 dark:border-brand-800">
-                        {n.title.includes("Priority") ? "HIGH PRIORITY" : n.title.includes("Payout") ? "PAYOUT CREDITED" : "NEW ORDER"}
+                      <span
+                        className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          n.jobStatus === "Assigned"
+                            ? "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+                            : n.jobStatus === "En Route"
+                            ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                            : n.jobStatus === "In Progress"
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                            : n.jobStatus === "Completed"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                            : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                        }`}
+                      >
+                        {n.jobStatus || "ORDER UPDATE"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-medium">{n.time}</span>
                     </div>

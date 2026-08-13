@@ -855,7 +855,7 @@ export default function BannersPage() {
               onClick={() => setIsAddBannerOpen(true)}
               className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md flex items-center gap-1.5 cursor-pointer transition-colors"
             >
-              <Plus className="w-4 h-4" /> Add Offer Banner
+              <Plus className="w-4 h-4" /> Add Banner
             </button>
           </div>
 

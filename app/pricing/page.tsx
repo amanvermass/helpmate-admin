@@ -1284,7 +1284,7 @@ export default function PricingPage() {
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-purple-600" />
-                  {modelModal.item ? "Edit Service Model Tab" : "Add New Service Model Tab"}
+                  {modelModal.item ? "Edit Pricing" : "Add Pricing"}
                 </h3>
                 <button type="button" onClick={() => setModelModal({ isOpen: false, item: null })} className="text-slate-400 hover:text-slate-600">
                   <X className="w-4 h-4" />

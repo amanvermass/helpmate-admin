@@ -245,7 +245,7 @@ export interface SettlementRecord {
   grossAmount: number;
   commissionDeducted: number;
   netPayoutAmount: number;
-  paymentMethod: "IMPS Bank Transfer" | "NEFT Direct" | "UPI Payout" | "RazorpayX Automated";
+  paymentMethod: string;
   utrNumber: string;
   settlementDate: string;
   period: string;

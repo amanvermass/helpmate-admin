@@ -877,7 +877,7 @@ export default function CmsPage() {
               <div className="space-y-4 overflow-y-auto pr-1">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                   <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                    {editingServiceId ? "Edit Service Package" : "Add New Service Package"}
+                    {editingServiceId ? "Edit Service" : "Add Service"}
                   </h3>
                   <button type="button" onClick={() => setIsAddServiceOpen(false)} className="text-slate-400 hover:text-slate-600">
                     <X className="w-5 h-5" />
@@ -1118,7 +1118,7 @@ export default function CmsPage() {
                       className="text-purple-700 dark:text-purple-300 font-bold text-[11px] flex items-center gap-1 hover:underline"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Create New Add-on</span>
+                      <span>Add Service</span>
                     </button>
                   </div>
 
