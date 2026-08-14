@@ -35,6 +35,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
+import { ToastContainer, ToastMessage } from "@/components/Toast";
 
 export default function TechniciansPage() {
   const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
@@ -90,24 +91,38 @@ export default function TechniciansPage() {
   const [editTech, setEditTech] = useState<Technician | null>(null);
   const [deleteTech, setDeleteTech] = useState<Technician | null>(null);
 
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
   const handleUploadProof = (e: React.FormEvent) => {
     e.preventDefault();
     if (!proofTech) return;
 
+    const targetTech = proofTech;
+    const payoutAmt = targetTech.pendingPayout;
+
     const updated = techs.map((t) => {
-      if (t.id === proofTech.id) {
+      if (t.id === targetTech.id) {
         return {
           ...t,
           payoutProofUrl: proofUrl || "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=300&auto=format&fit=crop&q=80",
           pendingPayout: 0,
-          lastPayoutDate: "Just Now",
+          lastPayoutDate: "Just Now (Manual)",
         };
       }
       return t;
     });
     setTechs(updated);
-    alert(`Uploaded weekly payout receipt for ${proofTech.name}. Payout status updated to Settled.`);
     setProofTech(null);
+
+    setToasts((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        type: "success",
+        title: "Manual Settlement Processed Successfully!",
+        message: `₹${payoutAmt.toLocaleString()} transferred to ${targetTech.name} • Receipt Uploaded`,
+      },
+    ]);
   };
 
   const fleetColumns: Column<Technician>[] = [
@@ -244,17 +259,20 @@ export default function TechniciansPage() {
       key: "name",
       header: "Partner & Category",
       accessor: (row) => (
-        <div className="flex items-center gap-2.5">
+        <Link
+          href={`/settlements/${row.id}`}
+          className="flex items-center gap-2.5 group cursor-pointer"
+        >
           <img
             src={row.avatar}
             alt={row.name}
             className="w-8 h-8 shrink-0 rounded-full object-cover border border-slate-200 dark:border-slate-700"
           />
           <div className="flex flex-col">
-            <span className="font-extrabold text-slate-900 dark:text-white">{row.name}</span>
+            <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{row.name}</span>
             <span className="text-[10px] text-slate-400 font-bold">{row.category} ({row.locality})</span>
           </div>
-        </div>
+        </Link>
       ),
       sortable: true,
     },
@@ -311,6 +329,27 @@ export default function TechniciansPage() {
             </a>
           )}
         </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      sticky: "right",
+      accessor: (row) => (
+        <RowActionMenu
+          actions={[
+            {
+              label: "View",
+              icon: Eye,
+              href: `/settlements/${row.id}`,
+            },
+            {
+              label: "Edit Settlement",
+              icon: Edit,
+              onClick: () => setProofTech(row),
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -1603,6 +1642,14 @@ export default function TechniciansPage() {
           </div>
         </Portal>
       )}
+
+
+
+      {/* GLOBAL TOAST NOTIFICATIONS */}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
     </div>
   );
 }

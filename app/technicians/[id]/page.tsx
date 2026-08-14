@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { initialTechnicians, Technician } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
+import { ToastContainer, ToastMessage } from "@/components/Toast";
 import {
   Star,
   CheckCircle2,
@@ -40,6 +41,7 @@ import {
   Wrench,
   DollarSign,
   X,
+  UserCheck,
 } from "lucide-react";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
@@ -55,18 +57,29 @@ export default function TechnicianDetailPage() {
 
   const [activeTab, setActiveTab] = useState<"overview" | "jobs" | "earnings">("overview");
   const [showKycDetails, setShowKycDetails] = useState(false);
+  const [showKycDrawer, setShowKycDrawer] = useState(false);
+  const [showManageBankDrawer, setShowManageBankDrawer] = useState(false);
 
   // Manual Payout Process Modal State
   const [showManualPayoutModal, setShowManualPayoutModal] = useState(false);
   const [payoutMethod, setPayoutMethod] = useState("Manual Bank Transfer (IMPS / NEFT)");
   const [utrNumberInput, setUtrNumberInput] = useState(`UTR-VAR-2026-${Math.floor(10000000 + Math.random() * 90000000)}`);
   const [proofUploaded, setProofUploaded] = useState(true);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Helper to mask customer phone number to show only last 4 digits
+  const maskPhoneNumber = (phone: string) => {
+    if (!phone) return "";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 4) return phone;
+    return `+91 ******${digits.slice(-4)}`;
+  };
 
   // Active Ongoing Job Pipeline Data for Partner (Time Booked, Stage Tracker, Location)
   const activeJob = {
     id: "BK-VAR-9990",
     customerName: "Sanjeev Tripathi",
-    customerPhone: "+91 98390 12345",
+    customerPhone: "+91 ******2345",
     serviceTitle: tech.category + " - Split AC Power Jet Wash & Gas Pressure Check",
     locality: "Sigra, Varanasi (Flat 302, Green Valley Apartments)",
     bookedTime: "Today, 02:30 PM",
@@ -74,14 +87,12 @@ export default function TechnicianDetailPage() {
     totalAmount: 2499,
     commissionFee: 625,
     netShare: 1874,
-    status: "Doing Job",
-    currentStage: 3, // 0: Assigned, 1: Going (En Route), 2: Reached Site, 3: Doing Job, 4: OTP Complete
+    status: "Accepted",
+    currentStage: 1, // 0: Booked / Assigned, 1: Accepted, 2: OTP Completion
     stages: [
-      { id: 0, label: "Booked & Assigned", time: "02:00 PM", icon: CalendarCheck },
-      { id: 1, label: "Going / En Route", time: "02:12 PM", icon: Navigation },
-      { id: 2, label: "Reached Site", time: "02:22 PM", icon: MapPin },
-      { id: 3, label: "Doing Service Job", time: "Started 02:28 PM", icon: Wrench },
-      { id: 4, label: "OTP Completion", time: "Pending", icon: KeyRound },
+      { id: 0, label: "Booked / Assigned", time: "02:00 PM", icon: CalendarCheck },
+      { id: 1, label: "Accepted", time: "02:05 PM", icon: UserCheck },
+      { id: 2, label: "OTP Completion", time: "Pending OTP Verification", icon: KeyRound },
     ],
   };
 
@@ -96,7 +107,7 @@ export default function TechnicianDetailPage() {
       totalAmount: activeJob.totalAmount,
       commissionFee: activeJob.commissionFee,
       netShare: activeJob.netShare,
-      status: "Doing Job (Stage 4/5)",
+      status: "Accepted (Stage 2/3)",
       isLive: true,
     },
     {
@@ -904,93 +915,7 @@ export default function TechnicianDetailPage() {
       {/* TAB 1: OVERVIEW & BIOMETRIC KYC SPECIFICATIONS */}
       {activeTab === "overview" && (
         <div className="space-y-6">
-          {/* Option Banner: Identity, Emergency Guarantor & Police Verification */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
-                    Identity, Guarantor & Police Verification Details
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    View biometric UIDAI Aadhaar, Emergency Guarantor details, and Police Thana clearance certificates.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowKycDetails(!showKycDetails)}
-                className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
-              >
-                <FileCheck className="w-4 h-4" />
-                <span>{showKycDetails ? "Hide Verification Details" : "Open Verification Details"}</span>
-              </button>
-            </div>
-
-            {/* Expanded Identity & Verification Details Box */}
-            {showKycDetails && (
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in fade-in">
-                {/* Aadhaar Card Spec */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-brand-600" /> Aadhaar Biometric
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">Verified</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-mono">UID: XXXX-XXXX-1102</p>
-                  <button
-                    type="button"
-                    onClick={() => alert("Viewing Partner Aadhaar Card PDF Document")}
-                    className="w-full py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-[11px] font-extrabold cursor-pointer"
-                  >
-                    View Aadhaar PDF
-                  </button>
-                </div>
-
-                {/* Guarantor Details Spec */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-purple-600" /> Emergency Guarantor
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 text-[10px] font-extrabold border border-purple-200">Suresh Yadav</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-semibold">Phone: +91 94150 00000 (Father/Brother)</p>
-                  <button
-                    type="button"
-                    onClick={() => alert("Viewing Guarantor Aadhaar & Address Proof")}
-                    className="w-full py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-extrabold cursor-pointer"
-                  >
-                    View Guarantor Specs
-                  </button>
-                </div>
-
-                {/* Police Clearance Spec */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                      <FileCheck className="w-4 h-4 text-emerald-600" /> Police Clearance NOC
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">Sigra Thana</span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-mono">Ref: UP-VAR-POL-2026-9812</p>
-                  <button
-                    type="button"
-                    onClick={() => alert("Viewing Police Thana Clearance Certificate NOC")}
-                    className="w-full py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold cursor-pointer"
-                  >
-                    View Police NOC
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          {/* Inside Tab Metrics Highlights */}
+          {/* 1. QUICK CARDS (FIRST ON VERY TOP) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs">
               <div className="flex items-center justify-between text-xs text-slate-400 font-extrabold uppercase tracking-wider">
@@ -1043,11 +968,10 @@ export default function TechnicianDetailPage() {
             </div>
           </div>
 
-          {/* Specifications Dashboard Grid */}
+          {/* 2. PERSONAL DETAILS (THEN SECOND) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column (7 Cols) */}
+            {/* Left Column (7 Cols) - Partner Personal & Technical Profile */}
             <div className="lg:col-span-7 space-y-6">
-              {/* Partner Personal & Technical Profile */}
               <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
                   <div className="flex items-center gap-2.5">
@@ -1104,100 +1028,200 @@ export default function TechnicianDetailPage() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Police Clearance & Safety Compliance */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-                      <ShieldCheck className="w-5 h-5" />
+            {/* Right Column (5 Cols) - Guarantor Details & Performance Note */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Guarantor Audit Card */}
+              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+                        <ShieldAlert className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Guarantor Person Details</h3>
+                        <p className="text-[11px] text-slate-400">Verified Emergency & Financial Guarantor</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Police Clearance & Safety Audit</h3>
-                      <p className="text-[11px] text-slate-400">Verified Police Thana Clearance Certificate</p>
+                    <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2.5 py-1 rounded-xl border border-purple-200">
+                      Verified
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5 text-xs">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-500 font-semibold">Guarantor Name</span>
+                      <span className="font-extrabold text-slate-900 dark:text-white">Suresh Chandra Yadav</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-500 font-semibold">Relation to Partner</span>
+                      <span className="font-bold text-slate-900 dark:text-white">Father</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-500 font-semibold">Guarantor Mobile Phone</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">+91 94152 88219</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-slate-500 font-semibold">Guarantor Address</span>
+                      <span className="font-bold text-slate-900 dark:text-white">Sigra, Varanasi (221002)</span>
                     </div>
                   </div>
-                  <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                    PCC Passed
+                </div>
+              </div>
+
+              {/* Special Partner Performance Note */}
+             
+            </div>
+          </div>
+
+          {/* 4. POLICE CLEARANCE DETAILS (THEN FOURTH) */}
+          <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Police Clearance & Safety Audit</h3>
+                  <p className="text-[11px] text-slate-400">Verified Police Thana Clearance Certificate</p>
+                </div>
+              </div>
+              <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                PCC Passed
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-slate-400 font-semibold block text-[10px]">Local Police Station</span>
+                <span className="font-bold text-slate-900 dark:text-white text-sm">Sigra Police Station, Varanasi</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-slate-400 font-semibold block text-[10px]">PCC Token Number</span>
+                <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400 text-sm">PCC-VAR-2026-8819</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-slate-400 font-semibold block text-[10px]">Bonded Customer Insurance</span>
+                <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">₹5,00,000 Safety Cover Active</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 5. IDENTITY, GUARANTOR & POLICE NOC AND REGISTERED BANK ACCOUNT (THEN FIFTH AT BOTTOM) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Identity, Guarantor & Police Verification Details Card */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                        Verified Onboarding Specs
+                      </span>
+                      <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                        Identity, Guarantor & Police NOC
+                      </h3>
+                    </div>
+                  </div>
+
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">
+                    KYC Verified
                   </span>
                 </div>
 
-                <div className="space-y-3.5 text-xs">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-500 font-semibold">Local Police Station</span>
-                    <span className="font-bold text-slate-900 dark:text-white">Sigra Police Station, Varanasi</span>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-semibold">Biometric Aadhaar</span>
+                    <span className="font-mono font-extrabold text-slate-900 dark:text-white">UID: XXXX-XXXX-1102</span>
                   </div>
-
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-500 font-semibold">PCC Token Number</span>
-                    <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400">PCC-VAR-2026-8819</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-semibold">Emergency Guarantor</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">Suresh Yadav (+91 94150 00000)</span>
                   </div>
-
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-slate-500 font-semibold">Bonded Customer Insurance</span>
-                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">₹5,00,000 Safety Cover Active</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-semibold">Local Police Clearance</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Sigra Thana NOC Verified</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowKycDrawer(true)}
+                  className="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <FileCheck className="w-3.5 h-3.5" />
+                  <span>Manage Verification Details</span>
+                </button>
               </div>
             </div>
 
-            {/* Right Column (5 Cols) */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Guarantor Audit Card */}
-              <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400">
-                      <ShieldAlert className="w-5 h-5" />
+            {/* Registered Bank Account Summary Card */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                      <Building className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Guarantor Person Details</h3>
-                      <p className="text-[11px] text-slate-400">Verified Emergency & Financial Guarantor</p>
+                      <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                        Verified Payout Details
+                      </span>
+                      <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                        Registered Bank Account
+                      </h3>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded border border-purple-200">
-                    Verified
+
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">
+                    Verified Active
                   </span>
                 </div>
 
-                <div className="space-y-3.5 text-xs">
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-500 font-semibold">Guarantor Name</span>
-                    <span className="font-extrabold text-slate-900 dark:text-white">Suresh Chandra Yadav</span>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-semibold">Registered Bank</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white">HDFC Bank (Sigra Branch)</span>
                   </div>
-
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-500 font-semibold">Relation to Partner</span>
-                    <span className="font-bold text-slate-900 dark:text-white">Father</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-semibold">Account Number</span>
+                    <span className="font-mono font-extrabold text-slate-900 dark:text-white">•••• •••• 8120</span>
                   </div>
-
-                  <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-500 font-semibold">Guarantor Mobile Phone</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white">+91 94152 88219</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-slate-500 font-semibold">Guarantor Address</span>
-                    <span className="font-bold text-slate-900 dark:text-white">Sigra, Varanasi (221002)</span>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-semibold">Weekly Payout Mode</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400">IMPS / NEFT Auto-Credit</span>
                   </div>
                 </div>
               </div>
 
-              {/* Special Partner Notes */}
-              <div className="p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 space-y-3 shadow-md">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400" /> Partner Performance Note
-                  </span>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                    <span className="text-[10px] text-amber-400 font-bold uppercase block">Top Rated Fleet Specialist</span>
-                    <p className="text-slate-200 font-medium leading-relaxed">
-                      "Consistently maintains 4.9 star rating with 99.2% on-time arrival rate. Assigned to premium AC service bookings."
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowManageBankDrawer(true)}
+                  className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>Manage Bank Details</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowManualPayoutModal(true)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Process Settlement</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1260,7 +1284,7 @@ export default function TechnicianDetailPage() {
                   <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-extrabold block">Customer Contact</span>
                   <p className="font-extrabold text-slate-900 dark:text-white text-xs mt-0.5">{activeJob.customerName}</p>
                   <a href={`tel:${activeJob.customerPhone}`} className="text-xs font-mono text-emerald-600 dark:text-emerald-400 hover:underline font-bold flex items-center gap-1 mt-0.5">
-                    <Phone className="w-3 h-3" /> {activeJob.customerPhone}
+                    <Phone className="w-3 h-3" /> {maskPhoneNumber(activeJob.customerPhone)}
                   </a>
                 </div>
 
@@ -1466,43 +1490,7 @@ export default function TechnicianDetailPage() {
             </div>
           </div>
 
-          {/* SIMPLIFIED BANK CARD WITH PROCESS MANUAL SETTLEMENT BUTTON */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-3.5">
-              <div className="p-3.5 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 dark:border-brand-800 shadow-xs">
-                <Building className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
-                  Registered Bank Account
-                </span>
-                <h4 className="font-black text-slate-900 dark:text-white text-base">
-                  HDFC Bank (Sigra Branch)
-                </h4>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <button
-                type="button"
-                onClick={() => alert(`Manage Payout Bank Account Specs for ${tech.name}`)}
-                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit2 className="w-4 h-4" />
-                <span>Manage Bank</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowManualPayoutModal(true)}
-                className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
-              >
-                <DollarSign className="w-4 h-4" />
-                <span>Process Manual Settlement</span>
-              </button>
-            </div>
-          </div>
-
+          
           {/* WEEKLY SETTLEMENT PAYOUT LEDGER TABLE (WITH PAGINATED DATATABLE) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 flex-wrap gap-2">
@@ -1532,17 +1520,25 @@ export default function TechnicianDetailPage() {
         </div>
       )}
 
-      {/* PROCESS MANUAL SETTLEMENT POPUP MODAL */}
+      {/* PROCESS MANUAL SETTLEMENT SLIDING DRAWER */}
       {showManualPayoutModal && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 setShowManualPayoutModal(false);
-                alert(`Manual settlement of ₹${tech.pendingPayout.toLocaleString()} completed for ${tech.name}! UTR: ${utrNumberInput}`);
+                setToasts((prev) => [
+                  ...prev,
+                  {
+                    id: Date.now().toString(),
+                    type: "success",
+                    title: "Manual Settlement Processed Successfully!",
+                    message: `₹${tech.pendingPayout.toLocaleString()} transferred to ${tech.name} • UTR: ${utrNumberInput}`,
+                  },
+                ]);
               }}
-              className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-lg w-full space-y-5 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none text-xs animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-5 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs"
             >
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -1664,6 +1660,208 @@ export default function TechnicianDetailPage() {
           </div>
         </Portal>
       )}
+
+
+      {/* MANAGE & VIEW REGISTERED BANK DETAILS DRAWER */}
+      {showManageBankDrawer && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-5 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs flex flex-col justify-between">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                      <Building className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                        Registered Bank Details
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium">{tech.name} • {tech.role}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowManageBankDrawer(false)}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Status Badge Box */}
+                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-500 text-white">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-900 dark:text-white block text-xs">
+                      Penny-Drop Bank Account Verified
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">Active for IMPS / NEFT Weekly Payouts</span>
+                  </div>
+                </div>
+
+                {/* Full Specs List */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3.5">
+                  <div className="border-b border-slate-200 dark:border-slate-700 pb-2.5">
+                    <span className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider block">Account Holder Name</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white text-sm">{tech.bankAccountName || tech.name}</span>
+                  </div>
+                  <div className="border-b border-slate-200 dark:border-slate-700 pb-2.5">
+                    <span className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider block">Bank Name & Branch</span>
+                    <span className="font-bold text-slate-900 dark:text-white text-xs">HDFC Bank (Sigra Branch, Varanasi)</span>
+                  </div>
+                  <div className="border-b border-slate-200 dark:border-slate-700 pb-2.5">
+                    <span className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider block">Bank Account Number</span>
+                    <span className="font-mono font-black text-slate-900 dark:text-white text-sm tracking-wide">{tech.bankAccountNumber || "9820-1049-8120"}</span>
+                  </div>
+                  <div className="border-b border-slate-200 dark:border-slate-700 pb-2.5">
+                    <span className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider block">IFSC Code</span>
+                    <span className="font-mono font-extrabold text-slate-900 dark:text-white text-xs">{tech.ifscCode || "SBIN0001240"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider block">Registered UPI ID</span>
+                    <span className="font-mono font-bold text-brand-600 dark:text-brand-400 text-xs">{tech.upiId || `${tech.name.toLowerCase().replace(/\s+/g, ".")}@okaxis`}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowManageBankDrawer(false)}
+                  className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md cursor-pointer transition-all"
+                >
+                  Done / Close Bank Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* MANAGE & VIEW IDENTITY, GUARANTOR & POLICE NOC DRAWER */}
+      {showKycDrawer && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
+            <div className="w-full max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-5 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs flex flex-col justify-between">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                        Identity, Guarantor & Police Verification
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium">Partner: {tech.name}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowKycDrawer(false)}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Status Badge Box */}
+                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-500 text-white">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-slate-900 dark:text-white block text-xs">
+                      100% Onboarding Verification Complete
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">UIDAI Aadhaar, Guarantor Contact & Police Thana Clean</span>
+                  </div>
+                </div>
+
+                {/* 3 Detailed Cards */}
+                <div className="space-y-4">
+                  {/* Aadhaar Spec */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-brand-600" /> Biometric Aadhaar Identity
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">Verified</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-mono font-bold">UID Token: XXXX-XXXX-1102</p>
+                    <p className="text-[11px] text-slate-500 font-medium">Full Name on Aadhaar: {tech.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => alert("Viewing Partner Aadhaar Card PDF Document")}
+                      className="w-full py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-extrabold cursor-pointer transition-all"
+                    >
+                      View Aadhaar Document PDF
+                    </button>
+                  </div>
+
+                  {/* Guarantor Details Spec */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-purple-600" /> Emergency Guarantor Person
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 text-[10px] font-extrabold border border-purple-200">Father/Brother</span>
+                    </div>
+                    <p className="text-xs font-extrabold text-slate-900 dark:text-white">Guarantor Name: Suresh Yadav</p>
+                    <p className="text-[11px] text-slate-500 font-semibold">Phone: +91 94150 00000 • Email: suresh.yadav@gmail.com</p>
+                    <p className="text-[11px] text-slate-500 font-medium">Residential Address: Sigra, Varanasi, UP</p>
+                    <button
+                      type="button"
+                      onClick={() => alert("Viewing Guarantor Aadhaar & Address Proof")}
+                      className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold cursor-pointer transition-all"
+                    >
+                      View Guarantor Aadhaar & Address Proof
+                    </button>
+                  </div>
+
+                  {/* Police Clearance Spec */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <FileCheck className="w-4 h-4 text-emerald-600" /> Local Police Thana Clearance
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 text-[10px] font-extrabold border border-emerald-200">Clean Record</span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Police Station: Sigra Police Station, Varanasi</p>
+                    <p className="text-[11px] text-slate-500 font-mono font-bold">NOC Token: UP-VAR-POL-2026-9812</p>
+                    <button
+                      type="button"
+                      onClick={() => alert("Viewing Police Thana Clearance Certificate NOC")}
+                      className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer transition-all"
+                    >
+                      View Police Clearance Certificate NOC
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowKycDrawer(false)}
+                  className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md cursor-pointer transition-all"
+                >
+                  Done / Close Verification Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* GLOBAL TOAST NOTIFICATIONS */}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
     </div>
   );
 }

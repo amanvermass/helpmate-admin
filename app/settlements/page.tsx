@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
+import { RowActionMenu } from "@/components/RowActionMenu";
 import { Portal } from "@/components/Portal";
+import { ToastContainer, ToastMessage } from "@/components/Toast";
 import {
   initialTechnicians,
   Technician,
@@ -22,6 +25,7 @@ import {
   X,
   Plus,
   BadgeAlert,
+  Eye,
 } from "lucide-react";
 
 export default function SettlementsPage() {
@@ -43,6 +47,9 @@ export default function SettlementsPage() {
     "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80"
   );
   const [notesInput, setNotesInput] = useState<string>("Manual weekly payout processed & UTR reference verified");
+
+  // Toast Notifications State
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Summary Metrics
   const totalPendingPayout = techs.reduce((sum, t) => sum + (t.pendingPayout || 0), 0);
@@ -101,6 +108,17 @@ export default function SettlementsPage() {
 
     setSettlementLogs([newRecord, ...settlementLogs]);
     setSelectedTechForPayout(null);
+
+    // 3. Add visual Toast notification!
+    setToasts((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        type: "success",
+        title: "Manual Settlement Processed Successfully!",
+        message: `₹${payoutAmount.toLocaleString()} transferred to ${selectedTechForPayout.name} • UTR: ${utrNumberInput.trim()}`,
+      },
+    ]);
   };
 
   // PENDING PAYOUTS COLUMNS
@@ -109,17 +127,20 @@ export default function SettlementsPage() {
       key: "name",
       header: "Fleet Partner",
       accessor: (row) => (
-        <div className="flex items-center gap-2.5">
+        <Link
+          href={`/settlements/${row.id}`}
+          className="flex items-center gap-2.5 group cursor-pointer"
+        >
           <img
             src={row.avatar}
             alt={row.name}
             className="w-8 h-8 shrink-0 rounded-full object-cover border border-slate-200 dark:border-slate-700"
           />
           <div className="flex flex-col">
-            <span className="font-extrabold text-slate-900 dark:text-white">{row.name}</span>
+            <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{row.name}</span>
             <span className="text-[10px] text-slate-400">{row.role} ({row.locality})</span>
           </div>
-        </div>
+        </Link>
       ),
       sortable: true,
     },
@@ -183,9 +204,12 @@ export default function SettlementsPage() {
       key: "id",
       header: "Settlement ID",
       accessor: (row) => (
-        <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400">
-          {row?.id}
-        </span>
+        <Link
+          href={`/settlements/${row?.id}`}
+          className="font-mono font-extrabold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+        >
+          <span>{row?.id}</span>
+        </Link>
       ),
       sortable: true,
     },
@@ -193,10 +217,13 @@ export default function SettlementsPage() {
       key: "technicianName",
       header: "Partner & Category",
       accessor: (row) => (
-        <div className="flex flex-col">
-          <span className="font-extrabold text-slate-900 dark:text-white">{row?.technicianName}</span>
+        <Link
+          href={`/settlements/${row?.id}`}
+          className="flex flex-col group cursor-pointer"
+        >
+          <span className="font-extrabold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">{row?.technicianName}</span>
           <span className="text-[10px] text-slate-400">{row?.category}</span>
-        </div>
+        </Link>
       ),
       sortable: true,
     },
@@ -242,6 +269,22 @@ export default function SettlementsPage() {
             <span className="text-slate-400 text-[10px] italic">No receipt</span>
           )}
         </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      sticky: "right",
+      accessor: (row) => (
+        <RowActionMenu
+          actions={[
+            {
+              label: "View",
+              icon: Eye,
+              href: `/settlements/${row?.id}`,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -370,13 +413,13 @@ export default function SettlementsPage() {
         />
       )}
 
-      {/* PROCESS MANUAL SETTLEMENT POPUP MODAL */}
+      {/* PROCESS MANUAL SETTLEMENT SLIDING DRAWER */}
       {selectedTechForPayout && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
             <form
               onSubmit={handleConfirmPayout}
-              className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-lg w-full space-y-5 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none text-xs animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full p-6 space-y-5 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 outline-none text-xs"
             >
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -538,6 +581,14 @@ export default function SettlementsPage() {
           </div>
         </Portal>
       )}
+
+
+
+      {/* GLOBAL TOAST NOTIFICATIONS */}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
+      />
     </div>
   );
 }
