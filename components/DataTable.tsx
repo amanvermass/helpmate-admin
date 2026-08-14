@@ -394,12 +394,12 @@ export function DataTable<T extends Record<string, any>>({
         {/* Main Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300 border-collapse">
-            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800">
+            <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-xs">
               <tr>
                 <th
-                  className={`py-3.5 px-3 w-[44px] min-w-[44px] max-w-[44px] align-middle ${
+                  className={`py-3.5 px-3 w-[44px] min-w-[44px] max-w-[44px] align-middle bg-slate-100 dark:bg-slate-800 ${
                     hasLeftSticky
-                      ? "sticky left-0 z-20 bg-slate-100 dark:bg-slate-800"
+                      ? "sticky left-0 z-35"
                       : ""
                   }`}
                 >
@@ -421,9 +421,9 @@ export function DataTable<T extends Record<string, any>>({
                   const isLastLeft = col.key === lastLeftStickyKey;
 
                   const stickyStyle: React.CSSProperties = isLeftSticky
-                    ? { position: "sticky", left: `${calculatedLeftOffsets[col.key] || 0}px`, zIndex: 20 }
+                    ? { position: "sticky", left: `${calculatedLeftOffsets[col.key] || 0}px`, zIndex: 35 }
                     : isRightSticky
-                    ? { position: "sticky", right: 0, zIndex: 20 }
+                    ? { position: "sticky", right: 0, zIndex: 35 }
                     : {};
 
                   const stickyClass = isLeftSticky
@@ -457,7 +457,7 @@ export function DataTable<T extends Record<string, any>>({
                   </>
                 )}
                 {hasDefaultActionsColumn && (
-                  <th className="py-3.5 px-4 text-right align-middle whitespace-nowrap sticky right-0 z-20 bg-slate-100 dark:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.1)]">
+                  <th className="py-3.5 px-4 text-right align-middle whitespace-nowrap sticky right-0 z-35 bg-slate-100 dark:bg-slate-800 shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.1)]">
                     Actions
                   </th>
                 )}
@@ -489,7 +489,7 @@ export function DataTable<T extends Record<string, any>>({
                       <td
                         className={`py-3.5 px-3 w-[44px] min-w-[44px] max-w-[44px] align-middle ${
                           hasLeftSticky
-                            ? "sticky left-0 z-20 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800"
+                            ? "sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800"
                             : ""
                         }`}
                       >
@@ -512,9 +512,9 @@ export function DataTable<T extends Record<string, any>>({
                         const isLastLeft = col.key === lastLeftStickyKey;
 
                         const stickyStyle: React.CSSProperties = isLeftSticky
-                          ? { position: "sticky", left: `${calculatedLeftOffsets[col.key] || 0}px`, zIndex: 20 }
+                          ? { position: "sticky", left: `${calculatedLeftOffsets[col.key] || 0}px`, zIndex: 10 }
                           : isRightSticky
-                          ? { position: "sticky", right: 0, zIndex: 20 }
+                          ? { position: "sticky", right: 0, zIndex: 10 }
                           : {};
 
                         const stickyClass = isLeftSticky

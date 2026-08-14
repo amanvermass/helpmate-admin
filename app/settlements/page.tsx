@@ -6,6 +6,7 @@ import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { Portal } from "@/components/Portal";
 import { ToastContainer, ToastMessage } from "@/components/Toast";
+import { DateRangePicker } from "@/components/DateRangePicker";
 import {
   initialTechnicians,
   Technician,
@@ -26,7 +27,45 @@ import {
   Plus,
   BadgeAlert,
   Eye,
+  Percent,
+  Calendar,
+  CalendarDays,
+  RotateCcw,
+  TrendingUp,
+  Sun,
 } from "lucide-react";
+
+function parseFlexibleDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const lower = dateStr.toLowerCase().trim();
+  if (lower.includes("today")) return new Date();
+  if (lower.includes("yesterday")) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d;
+  }
+  const timestamp = Date.parse(dateStr);
+  if (!isNaN(timestamp)) return new Date(timestamp);
+  return null;
+}
+
+function checkDateInRange(dateStr: string, startDate?: string, endDate?: string): boolean {
+  if (!startDate && !endDate) return true;
+  const d = parseFlexibleDate(dateStr);
+  if (!d) return true;
+
+  if (startDate) {
+    const s = new Date(startDate);
+    s.setHours(0, 0, 0, 0);
+    if (d < s) return false;
+  }
+  if (endDate) {
+    const e = new Date(endDate);
+    e.setHours(23, 59, 59, 999);
+    if (d > e) return false;
+  }
+  return true;
+}
 
 export default function SettlementsPage() {
   const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
@@ -35,8 +74,32 @@ export default function SettlementsPage() {
   );
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
 
+  // Calendar Date Range Filter States
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+
+  // Filtered History & Dynamic Calculations
+  const filteredHistoryLogs = settlementLogs.filter((s) =>
+    checkDateInRange(s.settlementDate, startDate, endDate)
+  );
+
+  const todayStrYMD = new Date().toISOString().split("T")[0];
+  const dailySettledAmount = settlementLogs
+    .filter((s) => {
+      const d = parseFlexibleDate(s.settlementDate);
+      if (!d) return s.settlementDate.toLowerCase().includes("today");
+      return d.toISOString().split("T")[0] === todayStrYMD || s.settlementDate.toLowerCase().includes("today");
+    })
+    .reduce((sum, s) => sum + (s.netPayoutAmount || 0), 0);
+
+  const totalDisbursedFiltered = filteredHistoryLogs.reduce((sum, s) => sum + (s.netPayoutAmount || 0), 0);
+  const totalCommissionFiltered = filteredHistoryLogs.reduce((sum, s) => sum + (s.commissionDeducted || 0), 0);
+  const totalPendingPayout = techs.reduce((sum, t) => sum + (t.pendingPayout || 0), 0);
+  const pendingTechsCount = techs.filter((t) => (t.pendingPayout || 0) > 0).length;
   // Process Manual Settlement Payout Modal State
   const [selectedTechForPayout, setSelectedTechForPayout] = useState<Technician | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number>(25);
+  const [gstRate, setGstRate] = useState<number>(18);
   const [payoutMethod, setPayoutMethod] = useState<
     "Manual Bank Transfer (IMPS / NEFT)" | "Manual UPI Transfer" | "Manual Cash Payout" | "Direct Bank Deposit"
   >("Manual Bank Transfer (IMPS / NEFT)");
@@ -51,14 +114,13 @@ export default function SettlementsPage() {
   // Toast Notifications State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Summary Metrics
-  const totalPendingPayout = techs.reduce((sum, t) => sum + (t.pendingPayout || 0), 0);
-  const totalDisbursed = settlementLogs.reduce((sum, s) => sum + (s.netPayoutAmount || 0), 0);
-  const pendingTechsCount = techs.filter((t) => (t.pendingPayout || 0) > 0).length;
-
   const handleOpenPayoutModal = (tech: Technician) => {
     setSelectedTechForPayout(tech);
+    setCommissionRate(25);
+    setGstRate(18);
     setUtrNumberInput(`UTR-VAR-2026-${Math.floor(10000000 + Math.random() * 90000000)}`);
+    setNotesInput("Manual weekly payout processed & UTR reference verified");
+    setProofUploaded(true);
   };
 
   const handleConfirmPayout = (e: React.FormEvent) => {
@@ -125,7 +187,7 @@ export default function SettlementsPage() {
   const pendingColumns: Column<Technician>[] = [
     {
       key: "name",
-      header: "Fleet Partner",
+      header: "Partner",
       accessor: (row) => (
         <Link
           href={`/settlements/${row.id}`}
@@ -145,6 +207,19 @@ export default function SettlementsPage() {
       sortable: true,
     },
     { key: "category", header: "Category", sortable: true },
+    {
+      key: "lastPayoutDate",
+      header: "Settlement Cycle Date",
+      accessor: (row) => (
+        <div className="flex flex-col">
+          <span className="font-mono font-extrabold text-slate-900 dark:text-white text-xs">
+            {row.lastPayoutDate || "14 Aug 2026"}
+          </span>
+          <span className="text-[10px] text-amber-600 font-bold">Weekly Cycle Payout</span>
+        </div>
+      ),
+      sortable: true,
+    },
     {
       key: "totalEarnings",
       header: "Gross Revenue (100%)",
@@ -322,80 +397,113 @@ export default function SettlementsPage() {
         </button>
       </div>
 
-      {/* 4 Executive KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Pending Manual Payouts</span>
-            <div className="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shadow-xs">
-              <Clock className="w-5 h-5" />
+      {/* 4 EXECUTIVE SUMMARY CARDS IN ONE SINGLE LINE */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Card 1: Total Payout Volume */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs hover:border-emerald-300 transition-all">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+              {startDate || endDate ? "Filtered Total Settled" : "Total Payout Volume"}
+            </span>
+            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+              ₹{totalDisbursedFiltered.toLocaleString("en-IN")}
             </div>
+            <span className="text-[10px] font-bold text-slate-400 block">
+              {filteredHistoryLogs.length} Settlements Processed
+            </span>
           </div>
-          <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
-            ₹{totalPendingPayout.toLocaleString("en-IN")}
-          </span>
+          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800 shrink-0">
+            <CreditCard className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Total Manually Settled</span>
-            <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800 shadow-xs">
-              <CreditCard className="w-5 h-5" />
+        {/* Card 2: Daily Payout Volume */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs hover:border-blue-300 transition-all">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Daily Payout (Today)</span>
+            <div className="text-xl font-black text-blue-600 dark:text-blue-400 font-mono">
+              ₹{dailySettledAmount.toLocaleString("en-IN")}
             </div>
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 block">
+              Today's Disbursed Volume
+            </span>
           </div>
-          <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-            ₹{totalDisbursed.toLocaleString("en-IN")}
-          </span>
+          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 shrink-0">
+            <Sun className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Partners Awaiting Payout</span>
-            <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 border border-purple-200 dark:border-purple-800 shadow-xs">
-              <Building className="w-5 h-5" />
+        {/* Card 3: Total Pending Payouts */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs hover:border-amber-300 transition-all">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Pending Manual Payouts</span>
+            <div className="text-xl font-black text-amber-600 dark:text-amber-400 font-mono">
+              ₹{totalPendingPayout.toLocaleString("en-IN")}
             </div>
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 block">
+              {pendingTechsCount} Partners Pending
+            </span>
           </div>
-          <span className="text-2xl font-black text-slate-900 dark:text-white">
-            {pendingTechsCount} Partners
-          </span>
+          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 border border-amber-200 dark:border-amber-800 shrink-0">
+            <Clock className="w-5 h-5" />
+          </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Settlement Mode</span>
-            <div className="p-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800 shadow-xs">
-              <ShieldCheck className="w-5 h-5" />
+        {/* Card 4: Helpmate Platform Commission */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs hover:border-purple-300 transition-all">
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Platform Take Rate (25%)</span>
+            <div className="text-xl font-black text-purple-600 dark:text-purple-400 font-mono">
+              ₹{totalCommissionFiltered.toLocaleString("en-IN")}
             </div>
+            <span className="text-[10px] font-bold text-purple-600 dark:text-purple-300 block">
+              Helpmate Commission Earned
+            </span>
           </div>
-          <span className="text-2xl font-black text-slate-900 dark:text-white">Manual Verification</span>
+          <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 border border-purple-200 dark:border-purple-800 shrink-0">
+            <Percent className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
-        <button
-          type="button"
-          onClick={() => setActiveTab("pending")}
-          className={`px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeTab === "pending"
-              ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          Pending Manual Payouts ({pendingTechsCount})
-        </button>
+      {/* Navigation Tabs and Single Calendar Popover Filter Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+          <button
+            type="button"
+            onClick={() => setActiveTab("pending")}
+            className={`px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === "pending"
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Pending Manual Payouts ({pendingTechsCount})
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("history")}
-          className={`px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeTab === "history"
-              ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          Completed Settlement Ledger ({settlementLogs.length})
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`px-4 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === "history"
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Completed Settlement Ledger ({filteredHistoryLogs.length})
+          </button>
+        </div>
+
+        {/* Single Calendar Icon Popover Button */}
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onDateChange={(start, end) => {
+            setStartDate(start);
+            setEndDate(end);
+          }}
+          align="right"
+        />
       </div>
 
       {/* Data Table */}
@@ -408,8 +516,8 @@ export default function SettlementsPage() {
       ) : (
         <DataTable
           columns={historyColumns}
-          data={settlementLogs}
-          searchPlaceholder="Search settlement ID or UTR number..."
+          data={filteredHistoryLogs}
+          searchPlaceholder="Search settlement ID, partner name, UTR number..."
         />
       )}
 
@@ -446,23 +554,106 @@ export default function SettlementsPage() {
                 </button>
               </div>
 
-              {/* Earnings Breakdown Box */}
-              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
-                <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300">
-                  <span>Gross Job Volume (100%)</span>
-                  <span>₹{(Math.round(selectedTechForPayout.pendingPayout / 0.75)).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>Helpmate Platform Share (25%)</span>
-                  <span>-₹{(Math.round((selectedTechForPayout.pendingPayout / 0.75) * 0.25)).toLocaleString()}</span>
-                </div>
-                <div className="border-t border-amber-200 dark:border-amber-800 pt-2 flex justify-between font-extrabold text-sm text-slate-900 dark:text-white">
-                  <span>Net Payable Amount (75%)</span>
-                  <span className="text-amber-600 dark:text-amber-400 text-base">
-                    ₹{selectedTechForPayout.pendingPayout.toLocaleString()}
+              {/* Manage Commission & GST Controls */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                    <Percent className="w-4 h-4 text-brand-600" />
+                    <span>Manage Commission & Partner GST</span>
+                  </label>
+                  <span className="text-[10px] font-extrabold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200">
+                    Live Calculation
                   </span>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  {/* Commission Rate (%) */}
+                  <div>
+                    <label className="text-slate-500 font-bold block mb-1">
+                      Helpmate Take Rate (%)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={commissionRate}
+                        onChange={(e) => setCommissionRate(Math.max(0, Math.min(100, Number(e.target.value))))}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  </div>
+
+                  {/* GST Rate (%) Paid by Partner */}
+                  <div>
+                    <label className="text-slate-500 font-bold block mb-1">
+                      Partner GST Rate (%)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={gstRate}
+                        onChange={(e) => setGstRate(Math.max(0, Math.min(100, Number(e.target.value))))}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets for Commission */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-bold text-slate-400">Commission Presets:</span>
+                  {[10, 15, 20, 25, 30].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => setCommissionRate(rate)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                        commissionRate === rate
+                          ? "bg-brand-600 text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-300"
+                      }`}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Earnings & Payment Breakdown Box */}
+              {(() => {
+                const grossVolume = Math.round(selectedTechForPayout.pendingPayout / 0.75);
+                const commissionAmount = Math.round(grossVolume * (commissionRate / 100));
+                const gstAmount = Math.round(commissionAmount * (gstRate / 100));
+                const netPayable = grossVolume - commissionAmount - gstAmount;
+
+                return (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2 text-xs">
+                    <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300">
+                      <span>Gross Job Volume (100%)</span>
+                      <span className="font-mono">₹{grossVolume.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-rose-600 dark:text-rose-400">
+                      <span>Helpmate Platform Share ({commissionRate}%)</span>
+                      <span className="font-mono">-₹{commissionAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-purple-600 dark:text-purple-400">
+                      <span>GST Paid by Partner ({gstRate}% GST on Commission)</span>
+                      <span className="font-mono">-₹{gstAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="border-t border-amber-200 dark:border-amber-800 pt-2 flex justify-between font-black text-sm text-slate-900 dark:text-white">
+                      <span>Net Bank Payable Payout to Partner</span>
+                      <span className="text-amber-600 dark:text-amber-400 text-base font-mono">
+                        ₹{netPayable.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Partner Bank Details Card */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">

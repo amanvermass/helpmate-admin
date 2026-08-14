@@ -67,7 +67,7 @@ export default function ReviewsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Average Fleet Rating</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">Average Partner Rating</span>
             <div className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
               <Star className="w-5 h-5 fill-amber-500" />
             </div>

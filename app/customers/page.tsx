@@ -273,7 +273,7 @@ export default function CustomersPage() {
         </button>
       </div>
 
-      {/* 4 EXECUTIVE QUICK CARDS MATCHING PARTNER FLEET */}
+      {/* 4 EXECUTIVE QUICK CARDS MATCHING PARTNER DIRECTORY */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Registered Clients */}
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-all">

@@ -295,7 +295,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
               </span>
             </div>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-              {isPartner ? "Varanasi Fleet" : "Varanasi HQ"}
+              {isPartner ? "Varanasi Partners" : "Varanasi HQ"}
             </span>
           </div>
         </Link>

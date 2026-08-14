@@ -114,7 +114,7 @@ export default function PartnerDashboardPage() {
             <span>Welcome, Ramesh Yadav!</span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            Master HVAC & AC Power Jet Specialist • Sigra & Varanasi South Fleet
+            Master HVAC & AC Power Jet Specialist • Sigra & Varanasi South Zone
           </p>
         </div>
       </div>

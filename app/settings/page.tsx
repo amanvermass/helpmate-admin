@@ -219,7 +219,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-amber-600" />
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white">Fleet Partner Job Push Alerts</div>
+                    <div className="font-bold text-slate-900 dark:text-white">Partner Job Push Alerts</div>
                     <div className="text-[11px] text-slate-500">Notify technicians when a new order is assigned</div>
                   </div>
                 </div>
@@ -270,11 +270,11 @@ export default function SettingsPage() {
 
               <button
                 type="button"
-                onClick={() => alert("Downloading Fleet Directory CSV...")}
+                onClick={() => alert("Downloading Partner Directory CSV...")}
                 className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-left hover:border-purple-500 transition-all cursor-pointer"
               >
                 <Database className="w-6 h-6 text-purple-600 mb-2" />
-                <div className="font-bold text-slate-900 dark:text-white text-xs">Export Fleet Directory (CSV)</div>
+                <div className="font-bold text-slate-900 dark:text-white text-xs">Export Partner Directory (CSV)</div>
                 <div className="text-[11px] text-slate-500">Download technician partner directory</div>
               </button>
             </div>

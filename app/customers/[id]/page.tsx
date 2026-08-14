@@ -643,7 +643,7 @@ export default function CustomerDetailPage() {
       header: "Assigned Technician",
       accessor: (row) => (
         <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-          {row.technicianName || "Helpmate Expert Fleet"}
+          {row.technicianName || "Helpmate Service Expert"}
         </span>
       ),
     },

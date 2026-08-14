@@ -155,7 +155,7 @@ export default function ExecutiveDashboard() {
             Varanasi Operational Console
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            Real-time executive oversight across 8 active service zones. Track revenue, fleet assignment, and catalog metrics.
+            Real-time executive oversight across 8 active service zones. Track revenue, partner assignment, and catalog metrics.
           </p>
         </div>
 
@@ -214,10 +214,10 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        {/* Verified Fleet */}
+        {/* Verified Service Partners */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Verified Fleet Partners</span>
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Verified Service Partners</span>
             <div className="w-9 h-9 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center border border-slate-200 dark:border-slate-700">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -420,7 +420,7 @@ export default function ExecutiveDashboard() {
             <div className="grid grid-cols-2 gap-3 flex-1 items-center">
               {[
                 { label: "Bookings", href: "/bookings", icon: CalendarCheck, color: "text-brand-600" },
-                { label: "Fleet KYC", href: "/technicians", icon: UserCheck, color: "text-emerald-600" },
+                { label: "Partner KYC", href: "/technicians", icon: UserCheck, color: "text-emerald-600" },
                 { label: "CRM Clients", href: "/customers", icon: Users, color: "text-blue-600" },
                 { label: "Billing & GST", href: "/billing", icon: CreditCard, color: "text-purple-600" },
                 { label: "CMS Services", href: "/cms", icon: Wrench, color: "text-amber-600" },
@@ -541,14 +541,14 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        {/* 3. Certified Fleet Specialists */}
+        {/* 3. Certified Service Specialists */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4 h-full">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Certified Fleet Specialists</h3>
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Certified Service Specialists</h3>
                 </div>
               </div>
               <a
@@ -756,7 +756,7 @@ export default function ExecutiveDashboard() {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Assign Fleet Specialist</h3>
+                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Assign Service Specialist</h3>
                   <p className="text-xs text-slate-500">
                     Order {selectedBookingForAssign.id} · {selectedBookingForAssign.locality}
                   </p>

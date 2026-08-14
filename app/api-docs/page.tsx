@@ -38,7 +38,7 @@ export default function ApiDocsPage() {
     },
     {
       method: "POST",
-      path: "/api/v2/fleet/verify-aadhaar",
+      path: "/api/v2/partners/verify-aadhaar",
       desc: "Submit technician Aadhaar and Police clearance audit record.",
     },
     {

@@ -149,7 +149,7 @@ export function BookingDetailsDrawer({
                 {/* Fleet Specialist Info */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Assigned Fleet Specialist</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Assigned Service Partner</span>
                     {onAssignPartner && (
                       <button
                         type="button"
@@ -179,7 +179,7 @@ export function BookingDetailsDrawer({
                     </div>
                   ) : (
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-amber-600 font-bold italic block">No Fleet Partner Assigned</span>
+                      <span className="text-amber-600 font-bold italic block">No Service Partner Assigned</span>
                       {onAssignPartner && (
                         <button
                           type="button"

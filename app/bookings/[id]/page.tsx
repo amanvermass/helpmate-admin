@@ -223,7 +223,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
               <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>Reassign Fleet Partner</span>
+              <span>Reassign Partner</span>
             </button>
           ) : (
             <button
@@ -232,7 +232,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
               <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span>Assign Fleet Partner</span>
+              <span>Assign Partner</span>
             </button>
           )}
 
@@ -306,7 +306,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           }`}>
             <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>2. Partner Fleet</span>
+              <span>2. Service Partner</span>
             </div>
             <span className="text-[10px] font-medium block">
               {currentBooking.technicianName ? `Assigned to ${currentBooking.technicianName}` : "Awaiting Partner Match"}
@@ -356,7 +356,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       {/* ─── ENHANCED 2-COLUMN RECORD DETAIL LAYOUT ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Column (7 Cols): Primary Specifications, Appliance Technical Data, Multi-Service Line Items, Fleet & Diagnostic Reports */}
+        {/* Left Column (7 Cols): Primary Specifications, Appliance Technical Data, Multi-Service Line Items, Partner & Diagnostic Reports */}
         <div className="lg:col-span-7 space-y-6">
 
           {/* Card 1: Order Specifications & Technical Appliance Metadata */}
@@ -513,11 +513,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* Card 3: Assigned Fleet Partner & Vehicle Details */}
+          {/* Card 3: Assigned Service Partner & Vehicle Details */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Assigned Fleet Specialist & Partner KYC
+                Assigned Service Partner & Partner KYC
               </span>
               {currentBooking.technicianName && (
                 <button
@@ -566,14 +566,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                       href="/technicians"
                       className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 font-bold text-xs flex items-center justify-center gap-1.5"
                     >
-                      <span>Fleet Profile</span>
+                      <span>Partner Profile</span>
                     </Link>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                    <span className="text-[10px] text-slate-400 block font-semibold">Fleet Bike / Vehicle No</span>
+                    <span className="text-[10px] text-slate-400 block font-semibold">Partner Bike / Vehicle No</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-white">UP 65 AB 4920</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
@@ -590,9 +590,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <div className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-center space-y-3">
                 <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
                 <div>
-                  <h4 className="font-bold text-amber-900 dark:text-amber-200 text-sm">No Fleet Specialist Assigned</h4>
+                  <h4 className="font-bold text-amber-900 dark:text-amber-200 text-sm">No Partner Assigned</h4>
                   <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                    Match an available technician from Varanasi Sigra / Lanka fleet.
+                    Match an available technician from Varanasi Sigra / Lanka active partners.
                   </p>
                 </div>
                 <button
@@ -768,7 +768,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             {/* Revenue & Commission Split Box */}
             <div className="p-3.5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs space-y-1.5">
               <span className="font-extrabold text-emerald-900 dark:text-emerald-300 block text-[10px] uppercase">
-                Platform Commission & Fleet Split
+                Platform Commission & Partner Split
               </span>
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-600 dark:text-slate-400">Partner Payout (75%)</span>

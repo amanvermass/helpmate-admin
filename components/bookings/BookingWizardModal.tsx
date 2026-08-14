@@ -1471,7 +1471,7 @@ export function BookingWizardModal({
               <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
                   <Calendar className="w-5 h-5 text-brand-600" />
-                  <span>Step 4: Schedule Slot & Assign Fleet Partner</span>
+                  <span>Step 4: Schedule Slot & Assign Service Partner</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">

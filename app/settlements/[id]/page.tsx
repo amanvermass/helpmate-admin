@@ -7,6 +7,7 @@ import { initialTechnicians, Technician, initialSettlementRecords, SettlementRec
 import { Portal } from "@/components/Portal";
 import { ToastContainer, ToastMessage } from "@/components/Toast";
 import { DataTable, Column } from "@/components/DataTable";
+import { DateRangePicker } from "@/components/DateRangePicker";
 import {
   ArrowLeft,
   DollarSign,
@@ -32,12 +33,50 @@ import {
   CalendarCheck,
   Receipt,
   Wallet,
+  Percent,
+  Calendar,
+  RotateCcw,
 } from "lucide-react";
+
+function parseFlexibleDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const lower = dateStr.toLowerCase().trim();
+  if (lower.includes("today")) return new Date();
+  if (lower.includes("yesterday")) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d;
+  }
+  const timestamp = Date.parse(dateStr);
+  if (!isNaN(timestamp)) return new Date(timestamp);
+  return null;
+}
+
+function checkDateInRange(dateStr: string, startDate?: string, endDate?: string): boolean {
+  if (!startDate && !endDate) return true;
+  const d = parseFlexibleDate(dateStr);
+  if (!d) return true;
+
+  if (startDate) {
+    const s = new Date(startDate);
+    s.setHours(0, 0, 0, 0);
+    if (d < s) return false;
+  }
+  if (endDate) {
+    const e = new Date(endDate);
+    e.setHours(23, 59, 59, 999);
+    if (d > e) return false;
+  }
+  return true;
+}
 
 function SettlementDetailContent() {
   const router = useRouter();
   const params = useParams();
   const rawId = (params?.id as string) || "SETTL-VAR-951";
+
+  const [commissionRate, setCommissionRate] = useState<number>(25);
+  const [gstRate, setGstRate] = useState<number>(18);
 
   // Find matching settlement record or mock fallback
   const existingRecord = initialSettlementRecords.find(
@@ -73,6 +112,37 @@ function SettlementDetailContent() {
   const [showManualPayoutDrawer, setShowManualPayoutDrawer] = useState(false);
   const [proofUploaded, setProofUploaded] = useState(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Calendar Date Range Filter States
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [activePreset, setActivePreset] = useState<"all" | "today" | "week" | "month">("all");
+
+  const handleApplyPreset = (preset: "all" | "today" | "week" | "month") => {
+    setActivePreset(preset);
+    const today = new Date();
+    const formatYMD = (d: Date) => d.toISOString().split("T")[0];
+
+    if (preset === "all") {
+      setStartDate("");
+      setEndDate("");
+    } else if (preset === "today") {
+      const ymd = formatYMD(today);
+      setStartDate(ymd);
+      setEndDate(ymd);
+    } else if (preset === "week") {
+      const d = new Date(today);
+      const day = d.getDay();
+      const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diffToMon));
+      setStartDate(formatYMD(monday));
+      setEndDate(formatYMD(new Date()));
+    } else if (preset === "month") {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      setStartDate(formatYMD(firstDay));
+      setEndDate(formatYMD(new Date()));
+    }
+  };
 
   // Line item jobs included in this weekly settlement
   const settlementJobs = [
@@ -122,9 +192,14 @@ function SettlementDetailContent() {
     },
   ];
 
-  const totalGrossBill = settlementJobs.reduce((acc, job) => acc + job.grossBill, 0);
-  const totalHelpmateFee = settlementJobs.reduce((acc, job) => acc + job.helpmateFee, 0);
-  const totalNetShare = settlementJobs.reduce((acc, job) => acc + job.netShare, 0);
+  // Filtered jobs by date range
+  const filteredJobs = settlementJobs.filter((job) =>
+    checkDateInRange(job.date, startDate, endDate)
+  );
+
+  const totalGrossBill = filteredJobs.reduce((acc, job) => acc + job.grossBill, 0);
+  const totalHelpmateFee = filteredJobs.reduce((acc, job) => acc + job.helpmateFee, 0);
+  const totalNetShare = filteredJobs.reduce((acc, job) => acc + job.netShare, 0);
 
   const jobColumns: Column<any>[] = [
     {
@@ -266,27 +341,31 @@ function SettlementDetailContent() {
           </div>
 
           <div className="text-left sm:text-right">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Total Net Bank Payout (75%)</span>
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Total Net Bank Payout ({100 - commissionRate}%)</span>
             <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">₹{settlement.netPayoutAmount.toLocaleString()}</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
           <div>
-            <span className="text-slate-400 font-semibold block text-[10px]">Settlement Ref ID</span>
-            <span className="font-mono font-extrabold text-brand-600 dark:text-brand-400 text-sm">{settlement.id}</span>
+            <span className="text-slate-400 font-semibold block text-[10px]">Gross Volume (100%)</span>
+            <span className="font-mono font-extrabold text-slate-900 dark:text-white text-sm">₹{settlement.grossAmount.toLocaleString()}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-semibold block text-[10px]">Transfer Date & Time</span>
-            <span className="font-bold text-slate-900 dark:text-white text-sm">{settlement.settlementDate}</span>
+            <span className="text-slate-400 font-semibold block text-[10px]">Commission ({commissionRate}%)</span>
+            <span className="font-mono font-extrabold text-rose-600 dark:text-rose-400 text-sm">-₹{settlement.commissionDeducted.toLocaleString()}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-semibold block text-[10px]">Bank UTR Reference</span>
+            <span className="text-slate-400 font-semibold block text-[10px]">Partner GST ({gstRate}%)</span>
+            <span className="font-mono font-extrabold text-purple-600 dark:text-purple-400 text-sm">-₹{Math.round(settlement.commissionDeducted * (gstRate / 100)).toLocaleString()}</span>
+          </div>
+          <div>
+            <span className="text-slate-400 font-semibold block text-[10px]">Bank UTR Token</span>
             <span className="font-mono font-extrabold text-slate-900 dark:text-white text-sm">{settlement.utrNumber}</span>
           </div>
           <div>
-            <span className="text-slate-400 font-semibold block text-[10px]">Settlement Period</span>
-            <span className="font-bold text-slate-900 dark:text-white text-sm">{settlement.period}</span>
+            <span className="text-slate-400 font-semibold block text-[10px]">Transfer Date</span>
+            <span className="font-bold text-slate-900 dark:text-white text-sm">{settlement.settlementDate}</span>
           </div>
         </div>
       </div>
@@ -300,7 +379,7 @@ function SettlementDetailContent() {
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
                 <User className="w-5 h-5 text-brand-600" />
-                <span>Beneficiary Fleet Partner</span>
+                <span>Beneficiary Partner</span>
               </h3>
               <Link
                 href={`/technicians/${tech.id}`}
@@ -420,26 +499,39 @@ function SettlementDetailContent() {
 
       {/* JOBS INCLUDED IN THIS SETTLEMENT TABLE */}
       <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-brand-600" />
-            <span>Jobs Included in This Weekly Settlement Cycle</span>
-          </h3>
-          <span className="text-xs font-mono font-bold text-slate-500">
-            {settlementJobs.length} Completed Bookings
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div>
+            <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-brand-600" />
+              <span>Jobs Included in This Weekly Settlement Cycle</span>
+            </h3>
+            <span className="text-xs font-mono font-bold text-slate-500">
+              Showing {filteredJobs.length} of {settlementJobs.length} Completed Bookings
+            </span>
+          </div>
+
+          {/* Single Calendar Icon Popover Button */}
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onDateChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+            }}
+            align="right"
+          />
         </div>
 
         <DataTable
           columns={jobColumns}
-          data={settlementJobs}
+          data={filteredJobs}
           searchPlaceholder="Search job booking ID, customer or service..."
         />
 
         {/* Ledger Totals Box */}
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="font-extrabold text-slate-700 dark:text-slate-300">
-            Total Cycle Ledger Summary ({settlementJobs.length} Jobs)
+            Filtered Ledger Summary ({filteredJobs.length} Jobs)
           </div>
           <div className="flex items-center gap-6 font-mono">
             <div>
@@ -497,23 +589,106 @@ function SettlementDetailContent() {
                 </button>
               </div>
 
-              {/* Earnings Breakdown Box */}
-              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
-                <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300">
-                  <span>Gross Job Volume (100%)</span>
-                  <span>₹{settlement.grossAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>Helpmate Platform Share (25%)</span>
-                  <span>-₹{settlement.commissionDeducted.toLocaleString()}</span>
-                </div>
-                <div className="border-t border-amber-200 dark:border-amber-800 pt-2 flex justify-between font-extrabold text-sm text-slate-900 dark:text-white">
-                  <span>Net Payable Amount (75%)</span>
-                  <span className="text-amber-600 dark:text-amber-400 text-base">
-                    ₹{settlement.netPayoutAmount.toLocaleString()}
+              {/* Manage Commission & GST Controls */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                    <Percent className="w-4 h-4 text-brand-600" />
+                    <span>Manage Commission & Partner GST</span>
+                  </label>
+                  <span className="text-[10px] font-extrabold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200">
+                    Live Calculation
                   </span>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  {/* Commission Rate (%) */}
+                  <div>
+                    <label className="text-slate-500 font-bold block mb-1">
+                      Helpmate Take Rate (%)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={commissionRate}
+                        onChange={(e) => setCommissionRate(Math.max(0, Math.min(100, Number(e.target.value))))}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  </div>
+
+                  {/* GST Rate (%) Paid by Partner */}
+                  <div>
+                    <label className="text-slate-500 font-bold block mb-1">
+                      Partner GST Rate (%)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={gstRate}
+                        onChange={(e) => setGstRate(Math.max(0, Math.min(100, Number(e.target.value))))}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets for Commission */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-bold text-slate-400">Commission Presets:</span>
+                  {[10, 15, 20, 25, 30].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => setCommissionRate(rate)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                        commissionRate === rate
+                          ? "bg-brand-600 text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-300"
+                      }`}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Earnings & Payment Breakdown Box */}
+              {(() => {
+                const grossVol = settlement.grossAmount;
+                const commAmt = Math.round(grossVol * (commissionRate / 100));
+                const gstAmt = Math.round(commAmt * (gstRate / 100));
+                const netPayable = grossVol - commAmt - gstAmt;
+
+                return (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2 text-xs">
+                    <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300">
+                      <span>Gross Job Volume (100%)</span>
+                      <span className="font-mono">₹{grossVol.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-rose-600 dark:text-rose-400">
+                      <span>Helpmate Platform Share ({commissionRate}%)</span>
+                      <span className="font-mono">-₹{commAmt.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-purple-600 dark:text-purple-400">
+                      <span>GST Paid by Partner ({gstRate}% GST on Commission)</span>
+                      <span className="font-mono">-₹{gstAmt.toLocaleString()}</span>
+                    </div>
+                    <div className="border-t border-amber-200 dark:border-amber-800 pt-2 flex justify-between font-black text-sm text-slate-900 dark:text-white">
+                      <span>Net Bank Payable Payout to Partner</span>
+                      <span className="text-amber-600 dark:text-amber-400 text-base font-mono">
+                        ₹{netPayable.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Form Inputs */}
               <div className="space-y-3.5">

@@ -181,7 +181,7 @@ export default function ReportsPage() {
               <Database className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Partner Fleet Directory & KYC Audit</h4>
+              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Partner Directory & KYC Audit</h4>
               <p className="text-xs text-slate-400">Technician biometric KYC, police PCC clearance, and payout ledgers</p>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function ReportsPage() {
             className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 hover:text-white text-slate-800 dark:text-slate-200 font-extrabold text-xs transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
           >
             <Download className="w-4 h-4" />
-            <span>Download Fleet Directory CSV</span>
+            <span>Download Partner Directory CSV</span>
           </button>
         </div>
       </div>

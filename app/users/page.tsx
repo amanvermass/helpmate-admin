@@ -46,9 +46,9 @@ const modulesList: { key: ModuleKey; label: string; icon: any; desc: string }[] 
   // Operations
   { key: "bookings",    label: "Bookings & Jobs",          icon: CalendarCheck, desc: "Manage customer requests, live job assignments & schedules" },
   { key: "inspections", label: "Inspections",               icon: Search,        desc: "On-site service inspections and quality verification" },
-  // Fleet & Customers
+  // Partner & Customers
   { key: "customers",   label: "Customers CRM",            icon: Users,         desc: "Access client profiles & Crown Elite memberships" },
-  { key: "technicians", label: "Partner Fleet & KYC",      icon: TechIcon,      desc: "Onboard technicians, verify Aadhaar & police clearance" },
+  { key: "technicians", label: "Partner & KYC",            icon: TechIcon,      desc: "Onboard technicians, verify Aadhaar & police clearance" },
   // Services & Pricing
   { key: "categories",  label: "Category Catalog",         icon: Sliders,       desc: "Manage service categories and sub-categories" },
   { key: "cms",         label: "Services CMS",              icon: Wrench,        desc: "Configure service listings, descriptions & media" },
@@ -321,7 +321,7 @@ export default function UsersPage() {
                       options={[
                         { value: "Super Admin", label: "Super Admin" },
                         { value: "Varanasi Operations Coordinator", label: "Varanasi Operations Coordinator" },
-                        { value: "Fleet Inspector", label: "Fleet Inspector" },
+                        { value: "Quality Inspector", label: "Quality Inspector" },
                         { value: "Support Agent", label: "Support Agent" },
                         { value: "Billing & Finance Manager", label: "Billing & Finance Manager" },
                       ]}
@@ -530,7 +530,7 @@ export default function UsersPage() {
                       >
                         <option value="Super Admin">Super Admin</option>
                         <option value="Varanasi Operations Coordinator">Varanasi Operations Coordinator</option>
-                        <option value="Fleet Inspector">Fleet Inspector</option>
+                        <option value="Quality Inspector">Quality Inspector</option>
                         <option value="Support Agent">Support Agent</option>
                         <option value="Billing & Finance Manager">Billing & Finance Manager</option>
                       </select>

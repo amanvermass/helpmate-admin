@@ -6,7 +6,7 @@ import { UserPermissions, initialUsers, UserManagementItem } from "@/lib/mockDat
 export type RoleType =
   | "Super Admin"
   | "Varanasi Operations Coordinator"
-  | "Fleet Inspector"
+  | "Quality Inspector"
   | "Billing & Finance Manager"
   | "Support Agent"
   | "Service Partner";
@@ -35,7 +35,7 @@ const rolePermissionsMap: Record<RoleType, UserPermissions> = {
     canAssignJobs: true, canEditServices: false, canProcessRefunds: false,
     canManageFleet: true, canExportReports: false, canManageRbac: false, canViewAuditLogs: true,
   },
-  "Fleet Inspector": {
+  "Quality Inspector": {
     bookings: rw, inspections: rw, customers: r, technicians: rw,
     categories: o, cms: o, pricing: o, locations: r,
     payments: o, billing: o, commission: o, coupons: o,

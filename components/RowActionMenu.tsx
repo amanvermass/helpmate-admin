@@ -163,7 +163,7 @@ export function RowActionMenu({ actions }: RowActionMenuProps) {
               right: `${coords.right}px`,
               ...(coords.top !== undefined ? { top: `${coords.top}px` } : {}),
               ...(coords.bottom !== undefined ? { bottom: `${coords.bottom}px` } : {}),
-              zIndex: 99999,
+              zIndex: 40,
             }}
             className="w-40 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 animate-in fade-in zoom-in-95"
           >

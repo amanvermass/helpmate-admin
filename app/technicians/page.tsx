@@ -33,14 +33,52 @@ import {
   UserCheck,
   Send,
   DollarSign,
+  Percent,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { ToastContainer, ToastMessage } from "@/components/Toast";
+import { DateRangePicker } from "@/components/DateRangePicker";
+
+function parseFlexibleDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const lower = dateStr.toLowerCase().trim();
+  if (lower.includes("today")) return new Date();
+  if (lower.includes("yesterday")) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d;
+  }
+  const timestamp = Date.parse(dateStr);
+  if (!isNaN(timestamp)) return new Date(timestamp);
+  return null;
+}
+
+function checkDateInRange(dateStr: string, startDate?: string, endDate?: string): boolean {
+  if (!startDate && !endDate) return true;
+  const d = parseFlexibleDate(dateStr);
+  if (!d) return true;
+
+  if (startDate) {
+    const s = new Date(startDate);
+    s.setHours(0, 0, 0, 0);
+    if (d < s) return false;
+  }
+  if (endDate) {
+    const e = new Date(endDate);
+    e.setHours(23, 59, 59, 999);
+    if (d > e) return false;
+  }
+  return true;
+}
 
 export default function TechniciansPage() {
   const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
   const [activeTab, setActiveTab] = useState<"partner" | "settlement">("partner");
+  const [settlementStartDate, setSettlementStartDate] = useState<string>("");
+  const [settlementEndDate, setSettlementEndDate] = useState<string>("");
   const [proofTech, setProofTech] = useState<Technician | null>(null);
+  const [commissionRate, setCommissionRate] = useState<number>(25);
+  const [gstRate, setGstRate] = useState<number>(18);
   const [proofUrl, setProofUrl] = useState("");
   const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
 
@@ -125,7 +163,7 @@ export default function TechniciansPage() {
     ]);
   };
 
-  const fleetColumns: Column<Technician>[] = [
+  const partnerColumns: Column<Technician>[] = [
     {
       key: "name",
       header: "Partner & Role",
@@ -151,9 +189,16 @@ export default function TechniciansPage() {
           <span className="font-bold text-brand-600 text-xs">
             {row.category}
           </span>
-          <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
-            <MapPin className="w-3 h-3 text-slate-400" /> {row.locality} ({row.pincode})
-          </span>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(row.locality + ", " + row.pincode + ", Varanasi")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 font-semibold flex items-center gap-1 group/map"
+            title="Open Zone in Google Maps"
+          >
+            <MapPin className="w-3 h-3 text-slate-400 group-hover/map:text-blue-500" />
+            <span>{row.locality} ({row.pincode})</span>
+          </a>
         </div>
       ),
     },
@@ -233,9 +278,14 @@ export default function TechniciansPage() {
         <RowActionMenu
           actions={[
             {
-              label: "View",
+              label: "View Profile",
               icon: Eye,
               href: `/technicians/${row.id}`,
+            },
+            {
+              label: "Open in Maps",
+              icon: MapPin,
+              onClick: () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(row.locality + ", " + row.pincode + ", Varanasi")}`, '_blank'),
             },
             {
               label: "Edit",
@@ -273,6 +323,19 @@ export default function TechniciansPage() {
             <span className="text-[10px] text-slate-400 font-bold">{row.category} ({row.locality})</span>
           </div>
         </Link>
+      ),
+      sortable: true,
+    },
+    {
+      key: "lastPayoutDate",
+      header: "Settlement Cycle Date",
+      accessor: (row) => (
+        <div className="flex flex-col">
+          <span className="font-mono font-extrabold text-slate-900 dark:text-white text-xs">
+            {row.lastPayoutDate || "14 Aug 2026"}
+          </span>
+          <span className="text-[10px] text-amber-600 font-bold">Weekly Cycle Payout</span>
+        </div>
       ),
       sortable: true,
     },
@@ -354,7 +417,7 @@ export default function TechniciansPage() {
     },
   ];
 
-  // Quick Fleet Metrics Calculations
+  // Quick Partner Metrics Calculations
   const totalFleet = techs.length;
   const activeFleet = techs.filter((t) => t.status === "Available" || t.status === "Approved").length;
   const onJobFleet = techs.filter((t) => t.status === "On Job").length;
@@ -371,7 +434,7 @@ export default function TechniciansPage() {
             onClick={() => setViewTech(null)}
             className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs"
           >
-            ← Back to Fleet Directory
+            ← Back to Partner Directory
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -523,9 +586,20 @@ export default function TechniciansPage() {
                     <span className="text-slate-400 font-bold">Mobile Phone</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-white">{viewTech.phone}</span>
                   </div>
-                  <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800/60">
                     <span className="text-slate-400 font-bold">Varanasi Base Locality</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">{viewTech.locality} ({viewTech.pincode})</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-900 dark:text-white">{viewTech.locality} ({viewTech.pincode})</span>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(viewTech.locality + ", " + viewTech.pincode + ", Varanasi")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 font-extrabold text-[10px] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <MapPin className="w-3 h-3 text-blue-500" />
+                        <span>Map</span>
+                      </a>
+                    </div>
                   </div>
                   <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800/60">
                     <span className="text-slate-400 font-bold">Service Category</span>
@@ -739,7 +813,7 @@ export default function TechniciansPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <Users className="w-6 h-6 text-brand-600" />
-            <span>Partner Fleet Directory & Payouts</span>
+            <span>Partner & Payouts</span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage onboarded technicians, biometric KYC verification, and weekly commission settlements.
@@ -755,41 +829,57 @@ export default function TechniciansPage() {
         </Link>
       </div>
 
-      {/* Navigation Tabs (Partner and Settlement) */}
-      <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-extrabold shadow-xs">
-        <button
-          onClick={() => setActiveTab("partner")}
-          className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeTab === "partner"
-              ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          Partner
-        </button>
-        <button
-          onClick={() => setActiveTab("settlement")}
-          className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeTab === "settlement"
-              ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
-        >
-          Settlement
-        </button>
+      {/* Tabs and Settlement Date Filter Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 w-fit text-xs font-bold shadow-xs">
+          <button
+            onClick={() => setActiveTab("partner")}
+            className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === "partner"
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Partner Directory ({techs.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("settlement")}
+            className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
+              activeTab === "settlement"
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Settlement Ledger
+          </button>
+        </div>
+
+        {activeTab === "settlement" && (
+          <DateRangePicker
+            startDate={settlementStartDate}
+            endDate={settlementEndDate}
+            onDateChange={(start, end) => {
+              setSettlementStartDate(start);
+              setSettlementEndDate(end);
+            }}
+            align="right"
+          />
+        )}
       </div>
 
       {activeTab === "partner" ? (
         <DataTable
-          columns={fleetColumns}
+          columns={partnerColumns}
           data={techs}
           searchPlaceholder="Search partner name, locality, or phone..."
         />
       ) : (
         <DataTable
           columns={commissionColumns}
-          data={techs}
-          searchPlaceholder="Search partner name..."
+          data={techs.filter((t) =>
+            checkDateInRange(t.lastPayoutDate || "14 Aug 2026", settlementStartDate, settlementEndDate)
+          )}
+          searchPlaceholder="Search partner name or category..."
         />
       )}
 
@@ -820,23 +910,106 @@ export default function TechniciansPage() {
                 </button>
               </div>
 
-              {/* Earnings Breakdown Box */}
-              <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2">
-                <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300">
-                  <span>Gross Job Volume (100%)</span>
-                  <span>₹{(Math.round(proofTech.pendingPayout / 0.75)).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>Helpmate Platform Share (25%)</span>
-                  <span>-₹{(Math.round((proofTech.pendingPayout / 0.75) * 0.25)).toLocaleString()}</span>
-                </div>
-                <div className="border-t border-amber-200 dark:border-amber-800 pt-2 flex justify-between font-extrabold text-sm text-slate-900 dark:text-white">
-                  <span>Net Payable Amount (75%)</span>
-                  <span className="text-amber-600 dark:text-amber-400 text-base">
-                    ₹{proofTech.pendingPayout.toLocaleString()}
+              {/* Manage Commission & GST Controls */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
+                    <Percent className="w-4 h-4 text-brand-600" />
+                    <span>Manage Commission & Partner GST</span>
+                  </label>
+                  <span className="text-[10px] font-extrabold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200">
+                    Live Calculation
                   </span>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  {/* Commission Rate (%) */}
+                  <div>
+                    <label className="text-slate-500 font-bold block mb-1">
+                      Helpmate Take Rate (%)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={commissionRate}
+                        onChange={(e) => setCommissionRate(Math.max(0, Math.min(100, Number(e.target.value))))}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  </div>
+
+                  {/* GST Rate (%) Paid by Partner */}
+                  <div>
+                    <label className="text-slate-500 font-bold block mb-1">
+                      Partner GST Rate (%)
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={gstRate}
+                        onChange={(e) => setGstRate(Math.max(0, Math.min(100, Number(e.target.value))))}
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                      />
+                      <span className="font-extrabold text-slate-500">%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets for Commission */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-bold text-slate-400">Commission Presets:</span>
+                  {[10, 15, 20, 25, 30].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => setCommissionRate(rate)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer ${
+                        commissionRate === rate
+                          ? "bg-brand-600 text-white shadow-2xs"
+                          : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-300"
+                      }`}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Earnings & Payment Breakdown Box */}
+              {(() => {
+                const grossVol = Math.round(proofTech.pendingPayout / 0.75);
+                const commAmt = Math.round(grossVol * (commissionRate / 100));
+                const gstAmt = Math.round(commAmt * (gstRate / 100));
+                const netPayable = grossVol - commAmt - gstAmt;
+
+                return (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-2 text-xs">
+                    <div className="flex justify-between font-bold text-slate-700 dark:text-slate-300">
+                      <span>Gross Job Volume (100%)</span>
+                      <span className="font-mono">₹{grossVol.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-rose-600 dark:text-rose-400">
+                      <span>Helpmate Platform Share ({commissionRate}%)</span>
+                      <span className="font-mono">-₹{commAmt.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-purple-600 dark:text-purple-400">
+                      <span>GST Paid by Partner ({gstRate}% GST on Commission)</span>
+                      <span className="font-mono">-₹{gstAmt.toLocaleString()}</span>
+                    </div>
+                    <div className="border-t border-amber-200 dark:border-amber-800 pt-2 flex justify-between font-black text-sm text-slate-900 dark:text-white">
+                      <span>Net Bank Payable Payout to Partner</span>
+                      <span className="text-amber-600 dark:text-amber-400 text-base font-mono">
+                        ₹{netPayable.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Bank Specs Card */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
@@ -937,7 +1110,7 @@ export default function TechniciansPage() {
         </Portal>
       )}
 
-      {/* FULL PARTNER FLEET ONBOARDING & VERIFICATION DRAWER */}
+      {/* FULL PARTNER ONBOARDING & VERIFICATION DRAWER */}
       {isAddPartnerOpen && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex justify-end outline-none">
@@ -1621,7 +1794,7 @@ export default function TechniciansPage() {
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-md w-full space-y-4 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none">
-              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Delete Fleet Partner</h3>
+              <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Delete Partner</h3>
               <p className="text-xs text-slate-600 dark:text-slate-300">
                 Are you sure you want to delete partner <strong>{deleteTech.name}</strong> ({deleteTech.phone})?
               </p>

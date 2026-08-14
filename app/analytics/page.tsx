@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
         {[
           { id: "revenue", label: "Revenue & Profit Velocity", icon: TrendingUp },
           { id: "customer", label: "Customer Retention Telemetry", icon: Users },
-          { id: "partner", label: "Partner Fleet Productivity", icon: UserCheck },
+          { id: "partner", label: "Partner Productivity", icon: UserCheck },
           { id: "service", label: "Service Demand Distribution", icon: Wrench },
         ].map((tab) => {
           const Icon = tab.icon;

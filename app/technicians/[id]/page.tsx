@@ -6,6 +6,39 @@ import Link from "next/link";
 import { initialTechnicians, Technician } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 import { ToastContainer, ToastMessage } from "@/components/Toast";
+import { DateRangePicker } from "@/components/DateRangePicker";
+
+function parseFlexibleDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const lower = dateStr.toLowerCase().trim();
+  if (lower.includes("today")) return new Date();
+  if (lower.includes("yesterday")) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d;
+  }
+  const timestamp = Date.parse(dateStr);
+  if (!isNaN(timestamp)) return new Date(timestamp);
+  return null;
+}
+
+function checkDateInRange(dateStr: string, startDate?: string, endDate?: string): boolean {
+  if (!startDate && !endDate) return true;
+  const d = parseFlexibleDate(dateStr);
+  if (!d) return true;
+
+  if (startDate) {
+    const s = new Date(startDate);
+    s.setHours(0, 0, 0, 0);
+    if (d < s) return false;
+  }
+  if (endDate) {
+    const e = new Date(endDate);
+    e.setHours(23, 59, 59, 999);
+    if (d > e) return false;
+  }
+  return true;
+}
 import {
   Star,
   CheckCircle2,
@@ -62,6 +95,8 @@ export default function TechnicianDetailPage() {
 
   // Manual Payout Process Modal State
   const [showManualPayoutModal, setShowManualPayoutModal] = useState(false);
+  const [settlementStartDate, setSettlementStartDate] = useState<string>("");
+  const [settlementEndDate, setSettlementEndDate] = useState<string>("");
   const [payoutMethod, setPayoutMethod] = useState("Manual Bank Transfer (IMPS / NEFT)");
   const [utrNumberInput, setUtrNumberInput] = useState(`UTR-VAR-2026-${Math.floor(10000000 + Math.random() * 90000000)}`);
   const [proofUploaded, setProofUploaded] = useState(true);
@@ -692,12 +727,25 @@ export default function TechnicianDetailPage() {
       sortable: true,
     },
     {
+      key: "date",
+      header: "Settlement Date",
+      accessor: (row) => (
+        <div className="flex flex-col">
+          <span className="font-mono font-extrabold text-slate-900 dark:text-white text-xs">
+            {row.date || "14 Aug 2026"}
+          </span>
+          <span className="text-[10px] text-emerald-600 font-bold">Disbursed</span>
+        </div>
+      ),
+      sortable: true,
+    },
+    {
       key: "cycle",
       header: "Weekly Cycle",
       accessor: (row) => (
         <div>
           <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">{row.cycle}</h4>
-          <span className="text-[10px] text-slate-400 font-mono">Date: {row.date}</span>
+          <span className="text-[10px] text-slate-400 font-mono">Cycle Range: {row.date}</span>
         </div>
       ),
       sortable: true,
@@ -777,12 +825,12 @@ export default function TechnicianDetailPage() {
           className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center gap-2 transition-all shadow-xs"
         >
           <ArrowLeft className="w-4 h-4 text-brand-500" />
-          <span>Back to Partner Fleet Directory</span>
+          <span>Back to Partner Directory</span>
         </Link>
 
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 text-xs font-mono font-bold border border-brand-200 dark:border-brand-800">
-            Partner Fleet ID: {tech.id}
+            Partner ID: {tech.id}
           </span>
         </div>
       </div>
@@ -838,6 +886,16 @@ export default function TechnicianDetailPage() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap shrink-0">
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tech.locality + ", " + tech.pincode + ", Varanasi, Uttar Pradesh")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            title="Navigate to partner zone on Google Maps"
+          >
+            <MapPin className="w-4 h-4" />
+            <span>Open in Maps</span>
+          </a>
           <a
             href={`tel:${tech.phone}`}
             className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
@@ -938,7 +996,7 @@ export default function TechnicianDetailPage() {
               <div className="text-2xl sm:text-3xl font-black text-brand-600 dark:text-brand-400 font-mono">
                 {partnerJobs.length} Jobs
               </div>
-              <span className="text-[11px] text-slate-500 font-semibold">Varanasi Active Fleet</span>
+              <span className="text-[11px] text-slate-500 font-semibold">Varanasi Active Partners</span>
             </div>
 
             <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-xs">
@@ -1013,8 +1071,20 @@ export default function TechnicianDetailPage() {
                   </div>
 
                   <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-500 dark:text-slate-400 font-semibold">Varanasi Fleet Zone</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{tech.locality} ({tech.pincode})</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-semibold">Varanasi Coverage Zone</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 dark:text-white">{tech.locality} ({tech.pincode})</span>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tech.locality + ", " + tech.pincode + ", Varanasi")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[10px] font-extrabold hover:underline flex items-center gap-1 cursor-pointer"
+                        title="View on Google Maps"
+                      >
+                        <MapPin className="w-3 h-3 text-blue-500" />
+                        <span>Map</span>
+                      </a>
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800">
@@ -1290,10 +1360,22 @@ export default function TechnicianDetailPage() {
 
                 <div>
                   <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-extrabold block">Job Location</span>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-start gap-1 mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                    <span>{activeJob.locality}</span>
-                  </p>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-start gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                      <span>{activeJob.locality}</span>
+                    </p>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeJob.locality + ", Varanasi")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-extrabold flex items-center gap-1 cursor-pointer shadow-xs"
+                      title="Navigate to Job Location on Google Maps"
+                    >
+                      <Navigation className="w-3 h-3" />
+                      <span>Navigate Map</span>
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -1493,26 +1575,39 @@ export default function TechnicianDetailPage() {
           
           {/* WEEKLY SETTLEMENT PAYOUT LEDGER TABLE (WITH PAGINATED DATATABLE) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 flex-wrap gap-2">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 flex-wrap gap-3">
               <div className="flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-emerald-600" />
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
                   Weekly Settlement Payout Ledger
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowManualPayoutModal(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-extrabold text-xs border border-amber-300 dark:border-amber-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <DollarSign className="w-3.5 h-3.5 text-amber-600" />
-                <span>Process Manual Settlement</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <DateRangePicker
+                  startDate={settlementStartDate}
+                  endDate={settlementEndDate}
+                  onDateChange={(start, end) => {
+                    setSettlementStartDate(start);
+                    setSettlementEndDate(end);
+                  }}
+                  align="right"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowManualPayoutModal(true)}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 font-extrabold text-xs border border-amber-300 dark:border-amber-800 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <DollarSign className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Process Manual Settlement</span>
+                </button>
+              </div>
             </div>
 
             <DataTable
               columns={settlementColumns}
-              data={weeklySettlements}
+              data={weeklySettlements.filter((s) =>
+                checkDateInRange(s.date, settlementStartDate, settlementEndDate)
+              )}
               searchPlaceholder="Search weekly settlements by ID, cycle, bank UTR..."
               statusField="status"
             />

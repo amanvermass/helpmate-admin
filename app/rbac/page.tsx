@@ -33,16 +33,16 @@ export default function RBACPage() {
       id: "role-2",
       name: "Varanasi Operations Lead",
       members: "3 Active Coordinators",
-      description: "Live booking pipeline management and technician fleet re-assignment.",
-      permissions: ["Dashboard Analytics", "Assignment Control", "Technician Fleet View"],
+      description: "Live booking pipeline management and technician partner re-assignment.",
+      permissions: ["Dashboard Analytics", "Assignment Control", "Technician Partner View"],
       color: "border-blue-200 bg-blue-50 text-blue-700",
     },
     {
       id: "role-3",
-      name: "Kashi Fleet Verification Officer",
+      name: "Kashi Partner Verification Officer",
       members: "2 Field Inspectors",
       description: "Biometric Aadhaar check, Police clearance verification, and partner onboarding.",
-      permissions: ["Technician Fleet Control", "Police Audit Approval"],
+      permissions: ["Technician Partner Control", "Police Audit Approval"],
       color: "border-emerald-200 bg-emerald-50 text-emerald-700",
     },
     {
@@ -70,7 +70,7 @@ export default function RBACPage() {
             Role-Based Access Control (RBAC) & Audit Logs
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Configure permission matrices for Varanasi central operations, fleet managers, and view immutable audit streams.
+            Configure permission matrices for Varanasi central operations, partner managers, and view immutable audit streams.
           </p>
         </div>
       </div>

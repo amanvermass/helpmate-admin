@@ -64,7 +64,7 @@ export default function PartnerProfilePage() {
 
         <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
           <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-brand-600" /> Bank Payout Account & Fleet Details
+            <Building2 className="w-5 h-5 text-brand-600" /> Bank Payout Account & Partner Details
           </h3>
 
           <div className="space-y-3 text-xs">

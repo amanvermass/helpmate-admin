@@ -67,7 +67,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
   const adminRoles: RoleType[] = [
     "Super Admin",
     "Varanasi Operations Coordinator",
-    "Fleet Inspector",
+    "Quality Inspector",
     "Billing & Finance Manager",
     "Support Agent",
   ];
@@ -106,7 +106,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
   ];
 
   return (
-    <header ref={headerRef} style={{ minHeight: "4rem", height: "4rem" }} className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-200 shadow-xs">
+    <header ref={headerRef} style={{ minHeight: "4rem", height: "4rem" }} className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-50 transition-colors duration-200 shadow-xs">
       {/* Mobile Hamburger & Header Breadcrumbs Navigation */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
@@ -201,7 +201,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
                 }}
                 className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                All Varanasi (Entire Fleet)
+                All Varanasi (All Partners)
               </button>
               {varanasiLocalities.map((loc) => (
                 <button

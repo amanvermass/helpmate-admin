@@ -219,7 +219,7 @@ export default function CommissionPage() {
   const partnerColumns: Column<Technician>[] = [
     {
       key: "name",
-      header: "Fleet Specialist",
+      header: "Partner Specialist",
       accessor: (row) => (
         <div className="flex items-center gap-2.5">
           <img
