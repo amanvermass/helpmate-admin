@@ -29,6 +29,7 @@ import {
   Megaphone,
   Image as ImageIcon,
   MessageCircleQuestion,
+  Wallet,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
 import { Portal } from "@/components/Portal";
@@ -109,13 +110,19 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           icon: DollarSign,
           href: "/partner/payouts",
         },
+        {
+          title: "Wallet",
+          icon: Wallet,
+          href: "/partner/wallet",
+          badge: "Coming Soon",
+        },
       ],
     },
     {
       sectionTitle: "My Account",
       items: [
         {
-          title: "Partner Profile & KYC",
+          title: "Profile",
           icon: ShieldCheck,
           href: "/partner/profile",
         },
@@ -233,6 +240,12 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           href: "/settlements",
         },
         {
+          title: "Wallets",
+          icon: Wallet,
+          href: "/wallets",
+          badge: "Coming Soon",
+        },
+        {
           title: "Coupons",
           icon: Tag,
           href: "/coupons",
@@ -259,14 +272,56 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
             { label: "General Settings", href: "/settings", icon: Settings },
             { label: "Reports & Exports", href: "/reports", icon: BarChart3 },
             { label: "Executive Analytics", href: "/analytics", icon: TrendingUp },
-            { label: "Customer Reviews", href: "/reviews", icon: Star },
           ],
         },
       ],
     },
   ];
 
-  const currentNavSections = isPartner ? partnerNavSections : adminNavSections;
+  const officeAdminNavSections: NavSection[] = [
+    {
+      sectionTitle: "Overview",
+      items: [
+        {
+          title: "Dashboard",
+          icon: LayoutDashboard,
+          href: "/",
+        },
+      ],
+    },
+    {
+      sectionTitle: "Operations",
+      items: [
+        {
+          title: "Bookings",
+          icon: CalendarCheck,
+          href: "/bookings",
+        },
+      ],
+    },
+    {
+      sectionTitle: "Finance & Billing",
+      items: [
+        {
+          title: "Billing & Invoices",
+          icon: FileText,
+          href: "/billing",
+        },
+        {
+          title: "Finance & Settlements",
+          icon: DollarSign,
+          href: "/settlements",
+        },
+      ],
+    },
+  ];
+
+  const isOfficeAdmin = role === "Office Admin";
+  const currentNavSections = isPartner
+    ? partnerNavSections
+    : isOfficeAdmin
+    ? officeAdminNavSections
+    : adminNavSections;
 
   const renderSidebarContent = () => (
     <div className="flex flex-col h-full select-none">
@@ -286,16 +341,19 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">HelpMate</span>
               <span
-                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${isPartner
+                className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                  isPartner
                     ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                    : isOfficeAdmin
+                    ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800"
                     : "bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border-brand-200 dark:border-brand-800"
-                  }`}
+                }`}
               >
-                {isPartner ? "PARTNER" : "ADMIN"}
+                {isPartner ? "PARTNER" : isOfficeAdmin ? "OFFICE ADMIN" : "ADMIN"}
               </span>
             </div>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-              {isPartner ? "Varanasi Partners" : "Varanasi HQ"}
+              {isPartner ? "Varanasi Partners" : isOfficeAdmin ? "Office Admin Desk" : "Varanasi HQ"}
             </span>
           </div>
         </Link>
@@ -423,7 +481,17 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                     </div>
 
                     {item.badge && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                      <span
+                        className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full transition-all border ${
+                          item.badge.toLowerCase().includes("coming soon")
+                            ? isActive
+                              ? "bg-white/20 text-white border-white/30 font-bold"
+                              : "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 shadow-2xs"
+                            : isActive
+                              ? "bg-white/20 text-white border-white/30 font-bold"
+                              : "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border-brand-200 dark:border-brand-800"
+                        }`}
+                      >
                         {item.badge}
                       </span>
                     )}

@@ -1103,12 +1103,13 @@ const generateMockBookings = (): Booking[] => {
   const statuses: BookingStatus[] = [
     "Completed",
     "In Progress",
-    "Assigned",
-    "Waiting For Assignment",
+    "Completed",
     "Pending",
-    "Customer Approval Pending",
+    "Refunded",
     "Completed",
     "Cancelled",
+    "Waiting For Assignment",
+    "Completed",
   ];
 
   const paymentMethods: Array<Booking["paymentMethod"]> = ["UPI", "Cash on Service", "Card", "Helpmate Wallet", "Online"];

@@ -66,7 +66,7 @@ export function BookingDetailsDrawer({
           onClick={onClose}
         />
         <div className="relative z-10 w-full max-w-xl bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300">
-          
+
           {/* Executive Drawer Header */}
           <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-brand-600 via-brand-700 to-purple-700 text-white relative">
             <div className="flex items-center justify-between">
@@ -95,13 +95,12 @@ export function BookingDetailsDrawer({
 
             <div className="mt-3">
               <span
-                className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                  booking.status === "Completed"
-                    ? "bg-emerald-300 text-slate-950"
-                    : booking.status === "In Progress" || booking.status === "Assigned"
+                className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${booking.status === "Completed"
+                  ? "bg-emerald-300 text-slate-950"
+                  : booking.status === "In Progress" || booking.status === "Assigned"
                     ? "bg-blue-200 text-slate-950"
                     : "bg-amber-200 text-slate-950"
-                }`}
+                  }`}
               >
                 ● {booking.status}
               </span>
@@ -116,11 +115,10 @@ export function BookingDetailsDrawer({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-3.5 py-1.5 rounded-xl font-bold capitalize transition-all cursor-pointer ${
-                  activeTab === tab
-                    ? "bg-brand-500 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-3.5 py-1.5 rounded-xl font-bold capitalize transition-all cursor-pointer ${activeTab === tab
+                  ? "bg-brand-500 text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
               >
                 {tab}
               </button>

@@ -75,9 +75,11 @@ import {
   DollarSign,
   X,
   UserCheck,
+  Compass,
 } from "lucide-react";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
+import { PartnerMapView } from "@/components/PartnerMapView";
 
 export default function TechnicianDetailPage() {
   const params = useParams();
@@ -88,7 +90,7 @@ export default function TechnicianDetailPage() {
   const tech: Technician =
     initialTechnicians.find((t) => t.id === techId) || initialTechnicians[0];
 
-  const [activeTab, setActiveTab] = useState<"overview" | "jobs" | "earnings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "jobs" | "earnings" | "map">("overview");
   const [showKycDetails, setShowKycDetails] = useState(false);
   const [showKycDrawer, setShowKycDrawer] = useState(false);
   const [showManageBankDrawer, setShowManageBankDrawer] = useState(false);
@@ -968,7 +970,36 @@ export default function TechnicianDetailPage() {
             {weeklySettlements.length}
           </span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("map")}
+          className={`px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${activeTab === "map"
+              ? "bg-brand-600 text-white shadow-lux scale-[1.02] font-black"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-700/70"
+            }`}
+        >
+          <MapPin className="w-4 h-4 text-rose-500 animate-bounce" />
+          <span>Live GPS & Coverage Map</span>
+        </button>
       </div>
+
+      {/* TAB: LIVE GPS MAP */}
+      {activeTab === "map" && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 text-xs text-brand-800 dark:text-brand-300 font-bold flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Compass className="w-4 h-4 text-brand-600 animate-spin-slow" />
+              <span>Live Telemetry Pinned to <strong>{tech.name}</strong> ({tech.locality} • {tech.pincode})</span>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-black">
+              ● Live Signal 100%
+            </span>
+          </div>
+
+          <PartnerMapView technicians={initialTechnicians} />
+        </div>
+      )}
 
       {/* TAB 1: OVERVIEW & BIOMETRIC KYC SPECIFICATIONS */}
       {activeTab === "overview" && (

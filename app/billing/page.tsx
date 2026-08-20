@@ -24,6 +24,7 @@ import {
   MapPin,
   Clock,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
@@ -31,6 +32,7 @@ import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
 export default function BillingPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [statusFilter, setStatusFilter] = useState<"All" | "Paid" | "Unpaid" | "Refunded" | "Cancelled">("All");
 
   // Drawer & Modal States
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
@@ -49,6 +51,15 @@ export default function BillingPage() {
   const [invCategory, setInvCategory] = useState("AC Servicing & Repair");
   const [invBasePrice, setInvBasePrice] = useState("1499");
   const [invConvenienceFee, setInvConvenienceFee] = useState("49");
+
+  // Filtered Bookings for Table
+  const filteredBookings = bookings.filter((b) => {
+    if (statusFilter === "Paid") return b.status === "Completed" || b.status === "Confirmed" || b.status === "In Progress" || b.status === "Assigned" || b.status === "Partner Accepted";
+    if (statusFilter === "Unpaid") return b.status === "Pending" || b.status === "Draft" || b.status === "Waiting For Assignment";
+    if (statusFilter === "Refunded") return b.status === "Refunded";
+    if (statusFilter === "Cancelled") return b.status === "Cancelled" || b.status === "Rejected";
+    return true;
+  });
 
   // Handler for selecting customer via CustomerSearchPicker
   const handleSelectCustomerForInvoice = (c: Customer, isNew?: boolean) => {
@@ -169,20 +180,32 @@ export default function BillingPage() {
     {
       key: "status",
       header: "Payment Status",
-      accessor: (row) => (
-        <span
-          className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 w-fit ${
-            row.status === "Cancelled" || row.status === "Refunded"
-              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-              : row.status === "Pending"
-              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-          }`}
-        >
-          <CheckCircle2 className="w-3 h-3" />
-          <span>{row.status === "Pending" ? "Pending Collection" : "Paid Clean"}</span>
-        </span>
-      ),
+      accessor: (row) => {
+        let badgeClass = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200";
+        let statusText = "Paid";
+        let IconComponent = CheckCircle2;
+
+        if (row.status === "Refunded") {
+          badgeClass = "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-200";
+          statusText = "Refunded";
+          IconComponent = RotateCcw;
+        } else if (row.status === "Cancelled" || row.status === "Rejected") {
+          badgeClass = "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-200";
+          statusText = "Not Paid";
+          IconComponent = X;
+        } else if (row.status === "Pending" || row.status === "Draft" || row.status === "Waiting For Assignment") {
+          badgeClass = "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-200";
+          statusText = "Pending";
+          IconComponent = Clock;
+        }
+
+        return (
+          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1 w-fit border ${badgeClass}`}>
+            <IconComponent className="w-3 h-3 shrink-0" />
+            <span>{statusText}</span>
+          </span>
+        );
+      },
     },
     {
       key: "totalAmount",
@@ -345,12 +368,37 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Main Billing Table without duplicate headers */}
-      <DataTable
-        columns={columns}
-        data={bookings}
-        searchPlaceholder="Search invoice ref, customer, or GSTIN..."
-      />
+      {/* Status Filter Tabs & Table Container */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {[
+            { id: "All", label: "All Invoices" },
+            { id: "Paid", label: "Paid" },
+            { id: "Unpaid", label: "Pending" },
+            { id: "Refunded", label: "Refunded" },
+            { id: "Cancelled", label: "Not Paid" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                statusFilter === tab.id
+                  ? "bg-brand-600 text-white shadow-xs"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={filteredBookings}
+          searchPlaceholder="Search invoice ref, customer, or GSTIN..."
+        />
+      </div>
 
       {/* 1. SLIDE-OVER GENERATE NEW GST INVOICE DRAWER */}
       {isAddInvoiceOpen && (

@@ -209,8 +209,22 @@ export default function InvoiceDetailPage() {
             <div className="font-bold text-slate-700 dark:text-slate-200">
               Payment Method: UPI / Digital Prepaid
             </div>
-            <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              ✓ Payment Status: Paid Clean
+            <div className={`font-bold flex items-center gap-1 ${
+              booking.status === "Refunded"
+                ? "text-purple-600 dark:text-purple-400"
+                : booking.status === "Cancelled" || booking.status === "Rejected"
+                ? "text-rose-600 dark:text-rose-400"
+                : booking.status === "Pending" || booking.status === "Draft"
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-emerald-600 dark:text-emerald-400"
+            }`}>
+              {booking.status === "Refunded"
+                ? "↩ Payment Status: Refunded"
+                : booking.status === "Cancelled" || booking.status === "Rejected"
+                ? "✕ Payment Status: Not Paid / Cancelled"
+                : booking.status === "Pending" || booking.status === "Draft"
+                ? "⏱ Payment Status: Unpaid / Pending Collection"
+                : "✓ Payment Status: Paid"}
             </div>
           </div>
         </div>
@@ -407,8 +421,22 @@ export default function InvoiceDetailPage() {
               <div className="font-bold text-slate-900 text-[10px]">
                 Payment Method: UPI / Digital Prepaid
               </div>
-              <div className="font-bold text-emerald-700 flex items-center gap-1 text-[10px]">
-                ✓ Payment Status: Paid Clean
+              <div className={`font-bold flex items-center gap-1 text-[10px] ${
+                booking.status === "Refunded"
+                  ? "text-purple-700"
+                  : booking.status === "Cancelled" || booking.status === "Rejected"
+                  ? "text-rose-700"
+                  : booking.status === "Pending" || booking.status === "Draft"
+                  ? "text-amber-700"
+                  : "text-emerald-700"
+              }`}>
+                {booking.status === "Refunded"
+                  ? "↩ Payment Status: Refunded"
+                  : booking.status === "Cancelled" || booking.status === "Rejected"
+                  ? "✕ Payment Status: Not Paid / Cancelled"
+                  : booking.status === "Pending" || booking.status === "Draft"
+                  ? "⏱ Payment Status: Unpaid / Pending Collection"
+                  : "✓ Payment Status: Paid"}
               </div>
             </div>
           </div>

@@ -38,6 +38,7 @@ import {
 import { Portal } from "@/components/Portal";
 import { ToastContainer, ToastMessage } from "@/components/Toast";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { PartnerMapView } from "@/components/PartnerMapView";
 
 function parseFlexibleDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -73,7 +74,7 @@ function checkDateInRange(dateStr: string, startDate?: string, endDate?: string)
 
 export default function TechniciansPage() {
   const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
-  const [activeTab, setActiveTab] = useState<"partner" | "settlement">("partner");
+  const [activeTab, setActiveTab] = useState<"partner" | "map" | "settlement">("partner");
   const [settlementStartDate, setSettlementStartDate] = useState<string>("");
   const [settlementEndDate, setSettlementEndDate] = useState<string>("");
   const [proofTech, setProofTech] = useState<Technician | null>(null);
@@ -767,7 +768,7 @@ export default function TechniciansPage() {
               <button
                 type="button"
                 onClick={() => alert(`Manage Bank Account for ${viewTech.name}`)}
-                className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs border border-slate-300 dark:border-slate-700 transition-colors"
               >
                 Manage Bank Account
               </button>
@@ -843,6 +844,20 @@ export default function TechniciansPage() {
             Partner Directory ({techs.length})
           </button>
           <button
+            onClick={() => setActiveTab("map")}
+            className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === "map"
+                ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-white shadow-xs font-black"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <MapPin className="w-4 h-4 text-rose-500 animate-bounce" />
+            <span>Live Varanasi Map</span>
+            <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
+              LIVE GPS
+            </span>
+          </button>
+          <button
             onClick={() => setActiveTab("settlement")}
             className={`px-5 py-2.5 rounded-xl transition-all cursor-pointer ${
               activeTab === "settlement"
@@ -873,6 +888,8 @@ export default function TechniciansPage() {
           data={techs}
           searchPlaceholder="Search partner name, locality, or phone..."
         />
+      ) : activeTab === "map" ? (
+        <PartnerMapView technicians={techs} />
       ) : (
         <DataTable
           columns={commissionColumns}

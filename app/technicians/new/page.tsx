@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { initialTechnicians } from "@/lib/mockData";
+import { initialTechnicians, varanasiLocalities } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
+import { Portal } from "@/components/Portal";
 import {
   ArrowLeft,
   ShieldCheck,
@@ -342,31 +343,49 @@ function TechnicianFormContent() {
     },
   ]);
 
-  // Zone Coverage: Pincode Area to Area Range
-  const [fromPincode, setFromPincode] = useState("221001");
-  const [toPincode, setToPincode] = useState("221005");
+  // Pincode Service Areas (Multi-select)
+  const [customPincodeInput, setCustomPincodeInput] = useState("");
+  const [isPincodeModalOpen, setIsPincodeModalOpen] = useState(false);
+  const [modalCustomPincode, setModalCustomPincode] = useState("");
+  const [modalCustomArea, setModalCustomArea] = useState("");
   const [coverageZones, setCoverageZones] = useState<string[]>([
-    "Corridor: 221001 (Sigra) ➔ 221005 (Lanka)",
+    "221001 - Sigra, Luxa & Chetganj",
     "221002 - Varanasi Cantt, Nadesar & Mint House",
+    "221005 - Lanka, BHU & Assi Ghat",
   ]);
 
-  const [role, setRole] = useState("Master HVAC Specialist");
-  const [experience, setExperience] = useState("5+ Years Senior Specialist");
+  const handleAddCustomPincode = () => {
+    if (!customPincodeInput.trim()) return;
+    const pin = customPincodeInput.trim();
+    const pinLabel = pin.length === 6 ? `${pin} - Custom Area` : pin;
+    if (!coverageZones.includes(pinLabel)) {
+      setCoverageZones([...coverageZones, pinLabel]);
+    }
+    setCustomPincodeInput("");
+  };
+
+  const [role, setRole] = useState("AC Technician");
+  const [experience, setExperience] = useState("5+ Years Specialist");
   const [commissionRate, setCommissionRate] = useState("25");
 
   // ─── STEP 3 STATE: KYC, GUARANTOR & POLICE VERIFICATION ───
+  // File Input Refs
+  const aadhaarFileInputRef = useRef<HTMLInputElement>(null);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const docTypeFileInputRef = useRef<HTMLInputElement>(null);
+
   // Partner KYC Aadhaar
   const [aadhaarNumber, setAadhaarNumber] = useState("");
   const [aadhaarVerified, setAadhaarVerified] = useState(false);
   const [aadhaarDocUploaded, setAadhaarDocUploaded] = useState(false);
+  const [aadhaarFileName, setAadhaarFileName] = useState("");
 
   // Additional Required Documents (Current Photo + Dynamic Dropdown Uploads)
   const [photoDocUploaded, setPhotoDocUploaded] = useState(false);
+  const [photoFileName, setPhotoFileName] = useState("");
+  const [passportPhotoPreview, setPassportPhotoPreview] = useState<string | null>(null);
   const [selectedDocType, setSelectedDocType] = useState("PAN Card");
-  const [additionalDocsList, setAdditionalDocsList] = useState<{ id: string; type: string; name: string }[]>([
-    { id: "doc-1", type: "PAN Card", name: "Partner_PAN_Card_Copy.pdf" },
-    { id: "doc-2", type: "Driving License (DL)", name: "Partner_Driving_License_Front_Back.pdf" },
-  ]);
+  const [additionalDocsList, setAdditionalDocsList] = useState<{ id: string; type: string; name: string }[]>([]);
 
   // Emergency Guarantor Person Details (Name & Mobile Number ONLY)
   const [guarantorName, setGuarantorName] = useState("");
@@ -414,9 +433,10 @@ function TechnicianFormContent() {
         setGuarantorPhoneVerified(true);
 
         setPhotoDocUploaded(true);
+        setPassportPhotoPreview("https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=300&auto=format&fit=crop&q=80");
         setAdditionalDocsList([
           { id: "doc-1", type: "PAN Card", name: "Partner_PAN_Card_Copy.pdf" },
-          { id: "doc-2", type: "Driving License (DL)", name: "Partner_Driving_License_Front_Back.pdf" },
+          { id: "doc-2", type: "Driving License", name: "Partner_Driving_License_Front_Back.pdf" },
         ]);
 
         setPoliceThanaName("Sigra Police Station");
@@ -578,7 +598,7 @@ function TechnicianFormContent() {
           </div>
           <div className="min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Step 2</span>
-            <span className="font-extrabold text-xs truncate block">Service & Zone</span>
+            <span className="font-extrabold text-xs truncate block">Services & Pincodes</span>
           </div>
         </div>
 
@@ -602,7 +622,7 @@ function TechnicianFormContent() {
           </div>
           <div className="min-w-0">
             <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Step 3</span>
-            <span className="font-extrabold text-xs truncate block">KYC, Guarantor & Police</span>
+            <span className="font-extrabold text-xs truncate block">Documents & KYC</span>
           </div>
         </div>
 
@@ -625,7 +645,7 @@ function TechnicianFormContent() {
             4
           </div>
           <div className="min-w-0">
-            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Final Step</span>
+            <span className="text-[10px] font-black uppercase tracking-wider block opacity-80">Step 4</span>
             <span className="font-extrabold text-xs truncate block">Review & Submit</span>
           </div>
         </div>
@@ -683,12 +703,12 @@ function TechnicianFormContent() {
                     <button
                       type="button"
                       onClick={handleVerifyPhone}
-                      className="h-11 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs whitespace-nowrap shadow-xs cursor-pointer shrink-0 flex items-center justify-center"
+                      className="h-11 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 font-extrabold text-xs border border-blue-200 dark:border-blue-800 whitespace-nowrap transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-2xs"
                     >
                       Verify OTP
                     </button>
                   ) : (
-                    <span className="h-11 px-3.5 rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200 shrink-0 flex items-center gap-1">
+                    <span className="h-11 px-3.5 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-extrabold text-xs border border-emerald-200 dark:border-emerald-800 shrink-0 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                     </span>
                   )}
@@ -702,12 +722,12 @@ function TechnicianFormContent() {
                       placeholder="Enter 4-digit OTP"
                       value={phoneOtp}
                       onChange={(e) => setPhoneOtp(e.target.value)}
-                      className="w-32 px-3 py-1.5 rounded-lg border border-amber-300 text-xs font-mono font-bold text-slate-900 outline-none"
+                      className="w-32 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleConfirmPhoneOtp}
-                      className="px-3.5 py-1.5 rounded-lg bg-amber-600 text-white font-extrabold text-xs cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-900 dark:hover:bg-amber-800 text-amber-900 dark:text-amber-200 font-extrabold text-xs border border-amber-300 dark:border-amber-700 transition-colors cursor-pointer"
                     >
                       Submit OTP
                     </button>
@@ -936,7 +956,7 @@ function TechnicianFormContent() {
                     2. System Type {selectedCategoryFilter !== "All" ? `(${selectedCategoryFilter.split(" ")[0]})` : "(Select Category First)"}
                   </label>
                   {selectedSubTypeFilters.length > 0 && (
-                    <span className="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                    <span className="text-[10px] font-extrabold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/40 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800">
                       {selectedSubTypeFilters.length} Selected
                     </span>
                   )}
@@ -969,7 +989,7 @@ function TechnicianFormContent() {
                         selectedCategoryFilter === "All"
                           ? "bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-400 cursor-not-allowed opacity-60"
                           : selectedSubTypeFilters.length > 0 && !isSubTypeDropdownOpen
-                          ? "border-amber-500 bg-amber-50/30 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 cursor-pointer font-extrabold"
+                          ? "border-brand-500 bg-brand-50/30 dark:bg-brand-950/20 text-brand-900 dark:text-brand-300 cursor-pointer font-extrabold"
                           : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-brand-500"
                       }`}
                     />
@@ -981,7 +1001,7 @@ function TechnicianFormContent() {
                           setSubTypeSearchQuery("");
                           toggleDropdown("subType");
                         }}
-                        className="absolute right-3.5 text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
+                        className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
                         title="Clear All System Types"
                       >
                         <X className="w-4 h-4" />
@@ -1009,7 +1029,7 @@ function TechnicianFormContent() {
                         onClick={() => setSelectedSubTypeFilters([])}
                         className={`w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-between cursor-pointer ${
                           selectedSubTypeFilters.length === 0
-                            ? "bg-amber-600 text-white"
+                            ? "bg-brand-600 text-white"
                             : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
                       >
@@ -1034,12 +1054,12 @@ function TechnicianFormContent() {
                               }}
                               className={`w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-between cursor-pointer ${
                                 isSelected
-                                  ? "bg-amber-500 text-white"
+                                  ? "bg-brand-600 text-white"
                                   : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${isSelected ? "border-white bg-white text-amber-600" : "border-slate-300 dark:border-slate-600"}`}>
+                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${isSelected ? "border-white bg-white text-brand-600" : "border-slate-300 dark:border-slate-600"}`}>
                                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                                 </div>
                                 <span>{sub}</span>
@@ -1060,7 +1080,7 @@ function TechnicianFormContent() {
                     3. Service Action
                   </label>
                   {selectedTypeFilters.length > 0 && (
-                    <span className="text-[10px] font-extrabold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800">
+                    <span className="text-[10px] font-extrabold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/40 px-2 py-0.5 rounded-full border border-brand-200 dark:border-brand-800">
                       {selectedTypeFilters.length} Selected
                     </span>
                   )}
@@ -1081,7 +1101,7 @@ function TechnicianFormContent() {
                         toggleDropdown("type");
                       }}
                       className={`w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500 ${
-                        selectedTypeFilters.length > 0 && !isTypeDropdownOpen ? "border-purple-500 bg-purple-50/30 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 font-extrabold" : ""
+                        selectedTypeFilters.length > 0 && !isTypeDropdownOpen ? "border-brand-500 bg-brand-50/30 dark:bg-brand-950/20 text-brand-900 dark:text-brand-300 font-extrabold" : ""
                       }`}
                     />
                     {selectedTypeFilters.length > 0 || typeSearchQuery ? (
@@ -1092,7 +1112,7 @@ function TechnicianFormContent() {
                           setTypeSearchQuery("");
                           toggleDropdown("type");
                         }}
-                        className="absolute right-3.5 text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
+                        className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
                         title="Clear All Actions"
                       >
                         <X className="w-4 h-4" />
@@ -1118,7 +1138,7 @@ function TechnicianFormContent() {
                         onClick={() => setSelectedTypeFilters([])}
                         className={`w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-between cursor-pointer ${
                           selectedTypeFilters.length === 0
-                            ? "bg-purple-600 text-white"
+                            ? "bg-brand-600 text-white"
                             : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
                       >
@@ -1143,12 +1163,12 @@ function TechnicianFormContent() {
                               }}
                               className={`w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-between cursor-pointer ${
                                 isSelected
-                                  ? "bg-purple-600 text-white"
+                                  ? "bg-brand-600 text-white"
                                   : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${isSelected ? "border-white bg-white text-purple-600" : "border-slate-300 dark:border-slate-600"}`}>
+                                <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${isSelected ? "border-white bg-white text-brand-600" : "border-slate-300 dark:border-slate-600"}`}>
                                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                                 </div>
                                 <span>{type}</span>
@@ -1164,25 +1184,23 @@ function TechnicianFormContent() {
             </div>
 
             {/* 4. SEARCHABLE MULTI-SELECT SPECIFIC SERVICES DROPDOWN (WITH IMAGES) */}
-            <div ref={serviceRef} className="space-y-3 pt-2">
+            <div ref={serviceRef} className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Search className="w-4 h-4 text-brand-600" />
-                  <span>Select Services (Dropdown with Images) *</span>
+                <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
+                  4. Select Specific Services
                 </label>
-                <span className="text-xs font-mono font-bold text-brand-600">
-                  {selectedServices.length} Selected Services
+                <span className="text-[10px] font-extrabold text-brand-600 dark:text-brand-400">
+                  {selectedServices.length} Services Added
                 </span>
               </div>
 
-              {/* Searchable Services Dropdown Input */}
               <div className="relative">
                 <div className="relative flex items-center">
-                  <Search className="w-4 h-4 text-brand-500 absolute left-3.5 pointer-events-none" />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Search & Select Specific Services (e.g. Power Jet wash, RO Filter, PCB, Motor)..."
-                    value={serviceSearchQuery}
+                    placeholder="Search specific service (e.g. Split AC Power Jet, RO Membrane, Wiring Tripping)..."
+                    value={isServiceDropdownOpen ? serviceSearchQuery : (serviceSearchQuery || (selectedServices.length > 0 ? `${selectedServices.length} Services Selected` : ""))}
                     onChange={(e) => {
                       setServiceSearchQuery(e.target.value);
                       if (!isServiceDropdownOpen) toggleDropdown("service");
@@ -1191,13 +1209,13 @@ function TechnicianFormContent() {
                       setServiceSearchQuery("");
                       toggleDropdown("service");
                     }}
-                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50/30 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500 shadow-2xs"
+                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500 shadow-2xs"
                   />
                   {serviceSearchQuery ? (
                     <button
                       type="button"
                       onClick={() => setServiceSearchQuery("")}
-                      className="absolute right-3.5 text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
+                      className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1269,7 +1287,7 @@ function TechnicianFormContent() {
                                   {item.title}
                                 </h4>
                                 {item.subType && (
-                                  <span className="px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[9px] font-black shrink-0">
+                                  <span className="px-1.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 text-[9px] font-black shrink-0">
                                     {item.subType}
                                   </span>
                                 )}
@@ -1320,7 +1338,7 @@ function TechnicianFormContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedServices([])}
-                    className="text-[11px] font-bold text-rose-600 hover:underline"
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-700 hover:underline"
                   >
                     Clear All
                   </button>
@@ -1351,7 +1369,7 @@ function TechnicianFormContent() {
                       <button
                         type="button"
                         onClick={() => setSelectedServices(selectedServices.filter((s) => s.id !== srv.id))}
-                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 cursor-pointer shrink-0"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0"
                         title="Remove Service"
                       >
                         <X className="w-4 h-4" />
@@ -1363,124 +1381,121 @@ function TechnicianFormContent() {
             )}
           </div>
 
-          {/* SECTION 2B: PINCODE AREA-TO-AREA ZONE COVERAGE */}
+          {/* SECTION 2B: PINCODE SERVICE AREAS (MULTI-SELECT) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <MapPin className="w-5 h-5 text-rose-600" />
-              <span>Step 2B: Operating Zone & Pincode Area to Area Coverage</span>
-            </h3>
+            {/* Header with Add Pincode Button In-Line */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-brand-600" />
+                <span>Step 2B: Service Areas & Pincodes</span>
+              </h3>
 
-            {/* Pincode Range Selector (From Area to To Area) */}
-            <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 space-y-4">
-              <span className="text-xs font-extrabold text-slate-900 dark:text-white block">
-                Define Service Route / Pincode Area to Area Corridor Range:
-              </span>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                <div>
-                  <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 block mb-1">
-                    From Pincode Area *
-                  </label>
-                  <CustomSelect
-                    value={fromPincode}
-                    onChange={(val) => setFromPincode(val)}
-                    options={VARANASI_PINCODE_ZONES.map((z) => ({
-                      value: z.pincode,
-                      label: `${z.pincode} - ${z.area}`,
-                    }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300 block mb-1">
-                    To Pincode Area *
-                  </label>
-                  <CustomSelect
-                    value={toPincode}
-                    onChange={(val) => setToPincode(val)}
-                    options={VARANASI_PINCODE_ZONES.map((z) => ({
-                      value: z.pincode,
-                      label: `${z.pincode} - ${z.area}`,
-                    }))}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const fromObj = VARANASI_PINCODE_ZONES.find((z) => z.pincode === fromPincode);
-                    const toObj = VARANASI_PINCODE_ZONES.find((z) => z.pincode === toPincode);
-                    const corridorLabel = `Corridor: ${fromPincode} (${fromObj?.area.split(",")[0]}) ➔ ${toPincode} (${toObj?.area.split(",")[0]})`;
-                    if (!coverageZones.includes(corridorLabel)) {
-                      setCoverageZones([...coverageZones, corridorLabel]);
-                    }
-                  }}
-                  className="h-11 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Coverage Corridor</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsPincodeModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 font-extrabold text-xs shrink-0 cursor-pointer transition-all flex items-center gap-1.5 shadow-2xs self-start sm:self-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Pincode & Location</span>
+              </button>
             </div>
 
-            {/* Individual Varanasi Pincode Area Multi-Select Checkboxes */}
-            <div className="space-y-2">
-              <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
-                Or Toggle Individual Varanasi Pincode Areas:
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {VARANASI_PINCODE_ZONES.map((zone) => {
-                  const zoneLabel = `${zone.pincode} - ${zone.area}`;
-                  const isChecked = coverageZones.includes(zoneLabel);
-
-                  return (
-                    <button
-                      key={zone.pincode}
-                      type="button"
-                      onClick={() => {
-                        if (isChecked) {
-                          setCoverageZones(coverageZones.filter((z) => z !== zoneLabel));
-                        } else {
-                          setCoverageZones([...coverageZones, zoneLabel]);
-                        }
-                      }}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between text-xs font-semibold ${
-                        isChecked
-                          ? "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-slate-900 dark:text-white"
-                          : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
-                      }`}
-                    >
-                      <div>
-                        <span className="font-mono font-bold text-brand-600 block">{zone.pincode}</span>
-                        <span className="text-[10px] text-slate-500 line-clamp-1">{zone.area}</span>
-                      </div>
-                      <span className={`w-4 h-4 rounded-md flex items-center justify-center text-[10px] ${isChecked ? "bg-rose-600 text-white" : "border border-slate-300"}`}>
-                        {isChecked ? "✓" : ""}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Active Coverage Zones List */}
-            {coverageZones.length > 0 && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
-                <span className="text-xs font-extrabold text-slate-900 dark:text-white block">
-                  Assigned Operating Zones & Corridors ({coverageZones.length}):
+            {/* Multi-Select Pincode Grid (Includes All Added Pincodes) */}
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
+                  Select Pincodes Served (Click to Select / Deselect):
+                </label>
+                <span className="text-xs font-mono font-bold text-brand-600">
+                  {coverageZones.length} Pincodes Selected
                 </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {(() => {
+                  // Combine default VARANASI_PINCODE_ZONES + any custom added pincodes from coverageZones
+                  const customPincodeZones = coverageZones
+                    .filter((z) => {
+                      const pinPart = z.split(" - ")[0];
+                      return !VARANASI_PINCODE_ZONES.some((v) => v.pincode === pinPart);
+                    })
+                    .map((z) => {
+                      const parts = z.split(" - ");
+                      return {
+                        pincode: parts[0],
+                        area: parts[1] || "Varanasi Area",
+                      };
+                    });
+
+                  const combinedZones = [...VARANASI_PINCODE_ZONES, ...customPincodeZones];
+
+                  return combinedZones.map((zone) => {
+                    const zoneLabel = `${zone.pincode} - ${zone.area}`;
+                    const isChecked = coverageZones.some((z) => z.includes(zone.pincode));
+
+                    return (
+                      <button
+                        key={zone.pincode}
+                        type="button"
+                        onClick={() => {
+                          if (isChecked) {
+                            setCoverageZones(coverageZones.filter((z) => !z.includes(zone.pincode)));
+                          } else {
+                            setCoverageZones([...coverageZones, zoneLabel]);
+                          }
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between text-xs font-semibold ${
+                          isChecked
+                            ? "bg-brand-50 dark:bg-brand-950/40 border-brand-300 dark:border-brand-800 text-slate-900 dark:text-white"
+                            : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-mono font-extrabold text-brand-600 block">{zone.pincode}</span>
+                          <span className="text-[10px] text-slate-500 line-clamp-1">{zone.area}</span>
+                        </div>
+                        <span
+                          className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
+                            isChecked ? "bg-brand-600 text-white" : "border border-slate-300 dark:border-slate-600"
+                          }`}
+                        >
+                          {isChecked ? "✓" : ""}
+                        </span>
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            {/* Active Selected Pincodes List */}
+            {coverageZones.length > 0 && (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-slate-900 dark:text-white block">
+                    Selected Pincodes ({coverageZones.length}):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsPincodeModalOpen(true)}
+                    className="text-[11px] font-extrabold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Pincode & Location</span>
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {coverageZones.map((z, idx) => (
                     <span
                       key={idx}
                       className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold flex items-center gap-2 shadow-2xs"
                     >
-                      <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                      <MapPin className="w-3.5 h-3.5 text-brand-600" />
                       <span>{z}</span>
                       <button
                         type="button"
                         onClick={() => setCoverageZones(coverageZones.filter((item) => item !== z))}
-                        className="text-slate-400 hover:text-rose-600 cursor-pointer ml-1"
+                        className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1490,15 +1505,148 @@ function TechnicianFormContent() {
               </div>
             )}
 
-            {/* Additional Parameters */}
+            {/* ─── ADD PINCODE & LOCATION DIALOG ─── */}
+            {isPincodeModalOpen && (
+              <Portal>
+                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+                    {/* Header */}
+                    <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400 border border-brand-200 shrink-0">
+                          <MapPin className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                            Add Location & Pincode
+                          </h3>
+                          <p className="text-xs text-slate-500 font-medium">
+                            Pincode and area location name.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsPincodeModalOpen(false)}
+                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Dialog Body (STRICTLY 2 INPUT FIELDS FOR ADDING LOCATION) */}
+                    <div className="p-6 space-y-4 text-xs">
+                      {/* Input 1: Pincode */}
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                          Pincode *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          placeholder="e.g. 221008"
+                          value={modalCustomPincode}
+                          onChange={(e) => setModalCustomPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!modalCustomPincode.trim()) return;
+                              const pin = modalCustomPincode.trim();
+                              const area = modalCustomArea.trim() || "Varanasi Area";
+                              const entry = `${pin} - ${area}`;
+                              if (!coverageZones.includes(entry)) {
+                                setCoverageZones([...coverageZones, entry]);
+                              }
+                              setModalCustomPincode("");
+                              setModalCustomArea("");
+                              setIsPincodeModalOpen(false);
+                            }
+                          }}
+                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold text-xs outline-none focus:border-brand-500 transition-all"
+                        />
+                      </div>
+
+                      {/* Input 2: Location Name */}
+                      <div>
+                        <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                          Location / Area Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Sarnath Sector 2"
+                          value={modalCustomArea}
+                          onChange={(e) => setModalCustomArea(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (!modalCustomPincode.trim()) return;
+                              const pin = modalCustomPincode.trim();
+                              const area = modalCustomArea.trim() || "Varanasi Area";
+                              const entry = `${pin} - ${area}`;
+                              if (!coverageZones.includes(entry)) {
+                                setCoverageZones([...coverageZones, entry]);
+                              }
+                              setModalCustomPincode("");
+                              setModalCustomArea("");
+                              setIsPincodeModalOpen(false);
+                            }
+                          }}
+                          className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-brand-500 transition-all"
+                        />
+                      </div>
+
+                      {/* Footer Actions */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsPincodeModalOpen(false)}
+                          className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs cursor-pointer hover:bg-slate-200 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!modalCustomPincode.trim() || !modalCustomArea.trim()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!modalCustomPincode.trim()) return;
+                            const pin = modalCustomPincode.trim();
+                            const area = modalCustomArea.trim() || "Varanasi Area";
+                            const entry = `${pin} - ${area}`;
+                            if (!coverageZones.includes(entry)) {
+                              setCoverageZones([...coverageZones, entry]);
+                            }
+                            setModalCustomPincode("");
+                            setModalCustomArea("");
+                            setIsPincodeModalOpen(false);
+                          }}
+                          className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-xs cursor-pointer flex items-center justify-center gap-2 transition-all"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Add Location & Pincode</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Portal>
+            )}
+
+            {/* Role & Commission Rate */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                  Partner Designation / Title
+                  Role / Title
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Master HVAC Specialist"
+                  placeholder="e.g. AC Technician"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-semibold"
@@ -1507,7 +1655,7 @@ function TechnicianFormContent() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                  HelpMate Take-Rate % (Default 25%)
+                  Commission Rate (%)
                 </label>
                 <input
                   type="number"
@@ -1526,7 +1674,7 @@ function TechnicianFormContent() {
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer shadow-2xs"
             >
               ← Back to Step 1
             </button>
@@ -1535,7 +1683,7 @@ function TechnicianFormContent() {
               type="submit"
               className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
             >
-              <span>Next: KYC, Guarantor & Police Verification →</span>
+              <span>Next: Documents & KYC →</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1574,20 +1722,32 @@ function TechnicianFormContent() {
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
                   Upload Aadhaar Card (Both Sides - Front & Back Copy) <span className="text-rose-500">*</span>
                 </label>
+                <input
+                  type="file"
+                  ref={aadhaarFileInputRef}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setAadhaarFileName(e.target.files[0].name);
+                      setAadhaarDocUploaded(true);
+                    }
+                  }}
+                />
                 <div className="h-11 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
-                    {aadhaarDocUploaded ? "✓ Partner_Aadhaar_Both_Sides.pdf" : "Upload Both Sides (Front & Back)"}
+                    {aadhaarDocUploaded ? `✓ ${aadhaarFileName || "Partner_Aadhaar_Both_Sides.pdf"}` : "Upload Both Sides (Front & Back)"}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setAadhaarDocUploaded(!aadhaarDocUploaded)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+                    onClick={() => aadhaarFileInputRef.current?.click()}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap border shadow-2xs ${
                       aadhaarDocUploaded
-                        ? "bg-emerald-600 text-white"
-                        : "bg-brand-600 hover:bg-brand-700 text-white shadow-xs"
+                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                        : "bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800"
                     }`}
                   >
-                    {aadhaarDocUploaded ? "Uploaded" : "Choose File"}
+                    {aadhaarDocUploaded ? "✓ Change File" : "Choose File"}
                   </button>
                 </div>
               </div>
@@ -1597,7 +1757,7 @@ function TechnicianFormContent() {
           {/* Section 3B: Emergency Guarantor Person Details (ONLY NAME & MOBILE NUMBER) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <UserCheck className="w-5 h-5 text-purple-600" />
+              <UserCheck className="w-5 h-5 text-brand-600" />
               <span>Step 3B: Emergency Guarantor Name & Mobile Number</span>
             </h3>
 
@@ -1659,7 +1819,7 @@ function TechnicianFormContent() {
                     <button
                       type="button"
                       onClick={handleVerifyGuarantorPhone}
-                      className="h-11 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs whitespace-nowrap shadow-xs cursor-pointer shrink-0 flex items-center justify-center"
+                      className="h-11 px-4 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-extrabold text-xs border border-brand-200 dark:border-brand-800 whitespace-nowrap transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-2xs"
                     >
                       Verify OTP
                     </button>
@@ -1673,102 +1833,203 @@ function TechnicianFormContent() {
             </div>
           </div>
 
-          {/* Section 3C: Additional Verification Documents (Passport Photo First & Dropdown Document Selector) */}
+          {/* Section 3C: Additional Verification Documents (Passport Photo & Selectable ID Documents) */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <FileCheck className="w-5 h-5 text-amber-600" />
-              <span>Step 3C: Additional Verification Documents (Photo & Selectable ID Documents)</span>
+              <FileCheck className="w-5 h-5 text-brand-600" />
+              <span>Step 3C: Passport Size Photo & Verification Documents</span>
             </h3>
 
+            {/* Hidden Input Elements for Real OS File Picker Selection */}
+            <input
+              type="file"
+              ref={photoFileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  const file = e.target.files[0];
+                  setPhotoFileName(file.name);
+                  setPassportPhotoPreview(URL.createObjectURL(file));
+                  setPhotoDocUploaded(true);
+                }
+              }}
+            />
+
+            <input
+              type="file"
+              ref={docTypeFileInputRef}
+              accept=".pdf,.jpg,.jpeg,.png"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  const file = e.target.files[0];
+                  const newDoc = {
+                    id: `doc-${Date.now()}`,
+                    type: selectedDocType,
+                    name: file.name,
+                  };
+                  setAdditionalDocsList([...additionalDocsList.filter((d) => d.type !== selectedDocType), newDoc]);
+                }
+              }}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* 1. FIRST: CURRENT PASSPORT SIZE PHOTO */}
-              <div className="p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/80 space-y-3">
+              {/* 1. CURRENT PASSPORT SIZE PHOTO DRAG & DROP BOX WITH PREVIEW */}
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-emerald-600" />
-                    <span>1. Current Passport Size Photo *</span>
+                    <User className="w-4 h-4 text-brand-600" />
+                    <span>Current Passport Size Photo *</span>
                   </span>
                   {photoDocUploaded && (
-                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      ✓ Uploaded
+                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      ✓ Uploaded & Verified
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Upload latest clear passport size photograph for technician official ID badge.
-                </p>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPhotoDocUploaded(!photoDocUploaded)}
-                    className={`w-full h-10 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      photoDocUploaded
-                        ? "bg-emerald-600 text-white"
-                        : "bg-brand-600 hover:bg-brand-700 text-white shadow-xs"
-                    }`}
+
+                {/* Drag & Drop Upload / Live Preview Box */}
+                {photoDocUploaded && passportPhotoPreview ? (
+                  <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center gap-4 shadow-2xs">
+                    <img
+                      src={passportPhotoPreview}
+                      alt="Passport Photo Preview"
+                      className="w-16 h-20 rounded-xl object-cover border-2 border-brand-500 shadow-sm shrink-0"
+                    />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <span className="text-xs font-extrabold text-slate-900 dark:text-white block truncate">
+                        {photoFileName || "Passport_Photo.jpg"}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium block">
+                        3.5cm × 4.5cm • Image
+                      </span>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => photoFileInputRef.current?.click()}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-700 underline cursor-pointer"
+                        >
+                          Change Photo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPhotoDocUploaded(false);
+                            setPassportPhotoPreview(null);
+                            setPhotoFileName("");
+                          }}
+                          className="text-[11px] font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => photoFileInputRef.current?.click()}
+                    className="p-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 bg-white dark:bg-slate-900 flex flex-col items-center justify-center text-center space-y-2 cursor-pointer transition-all hover:bg-brand-50/20"
                   >
-                    <Upload className="w-4 h-4" />
-                    <span>{photoDocUploaded ? "Passport Photo Uploaded" : "Upload Passport Photo"}</span>
-                  </button>
-                </div>
+                    <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 border border-brand-200">
+                      <Upload className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-extrabold text-slate-900 dark:text-white block">
+                        Drag & Drop Passport Photo here or <span className="text-brand-600 underline">Browse</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                        Supports JPG, PNG (3.5 × 4.5 cm, Max 3MB)
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* 2. SECOND: SELECTABLE DOCUMENT TYPE DROPDOWN & UPLOAD */}
+              {/* 2. SELECTABLE DOCUMENT TYPE (PAN CARD, DRIVING LICENSE, POLICE CLEARANCE) & DRAG & DROP BOX */}
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
                 <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <FileText className="w-4 h-4 text-brand-600" />
-                  <span>2. Select Document Type to Upload *</span>
+                  <span>Document Type & Upload *</span>
                 </span>
                 
-                <div className="space-y-2">
-                  <CustomSelect
-                    value={selectedDocType}
-                    onChange={(val) => setSelectedDocType(val)}
-                    options={[
-                      { value: "PAN Card", label: "PAN Card Copy" },
-                      { value: "Driving License (DL)", label: "Driving License (DL) Both Sides" },
-                      { value: "Voter ID Card", label: "Voter Identity Card" },
-                      { value: "Bank Passbook / Cheque", label: "Bank Passbook / Cancelled Cheque" },
-                      { value: "Police Verification Certificate", label: "Police Thana NOC Certificate" },
-                      { value: "Other Government ID", label: "Other Government Issued Certificate" },
-                    ]}
-                  />
+                {/* STRICT 3 DOCUMENT TYPES DROPDOWN */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                      Select Document Type:
+                    </label>
+                    <CustomSelect
+                      value={selectedDocType}
+                      onChange={(val) => setSelectedDocType(val)}
+                      options={[
+                        { value: "PAN Card", label: "PAN Card" },
+                        { value: "Driving License", label: "Driving License" },
+                        { value: "Police Clearance Certificate", label: "Police Clearance Certificate" },
+                      ]}
+                    />
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newDoc = {
-                        id: `doc-${Date.now()}`,
-                        type: selectedDocType,
-                        name: `Partner_${selectedDocType.replace(/[^a-zA-Z0-9]/g, "_")}_Doc.pdf`,
-                      };
-                      if (!additionalDocsList.some((d) => d.type === selectedDocType)) {
-                        setAdditionalDocsList([...additionalDocsList, newDoc]);
-                      }
-                    }}
-                    className="w-full h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Upload className="w-4 h-4" />
-                    <span>Upload Selected ({selectedDocType})</span>
-                  </button>
+                  {/* Drag & Drop Upload Box for Selected Document */}
+                  {additionalDocsList.some((d) => d.type === selectedDocType) ? (
+                    <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="p-2 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 shrink-0">
+                          <FileCheck className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-extrabold text-slate-900 dark:text-white block truncate">
+                            {selectedDocType}
+                          </span>
+                          <span className="text-[10px] text-emerald-600 font-bold block truncate">
+                            ✓ {additionalDocsList.find((d) => d.type === selectedDocType)?.name}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => docTypeFileInputRef.current?.click()}
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                      >
+                        Change File
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => docTypeFileInputRef.current?.click()}
+                      className="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 bg-white dark:bg-slate-900 flex flex-col items-center justify-center text-center space-y-2 cursor-pointer transition-all hover:bg-brand-50/20"
+                    >
+                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 border border-slate-200">
+                        <Upload className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-white block">
+                          Drag & Drop <span className="text-brand-600">{selectedDocType}</span> here or <span className="underline">Browse</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                          PDF, JPG, PNG (Max 5MB)
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* List of Uploaded Documents via Dropdown */}
+            {/* List of Uploaded Documents Preview Cards */}
             {additionalDocsList.length > 0 && (
               <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <span className="text-xs font-extrabold text-slate-900 dark:text-white block">
-                  Uploaded Additional Verification Documents ({additionalDocsList.length}):
+                  Uploaded Verification Documents ({additionalDocsList.length}):
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {additionalDocsList.map((doc) => (
                     <div
                       key={doc.id}
                       className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 shadow-2xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 shrink-0">
+                        <div className="p-2 rounded-xl bg-brand-50 text-brand-600 border border-brand-200 shrink-0">
                           <FileCheck className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
@@ -1783,7 +2044,7 @@ function TechnicianFormContent() {
                       <button
                         type="button"
                         onClick={() => setAdditionalDocsList(additionalDocsList.filter((d) => d.id !== doc.id))}
-                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer shrink-0"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
                         title="Remove Document"
                       >
                         <X className="w-4 h-4" />
@@ -1800,7 +2061,7 @@ function TechnicianFormContent() {
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
-              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer shadow-2xs"
             >
               ← Back to Step 2
             </button>
@@ -1881,7 +2142,7 @@ function TechnicianFormContent() {
             <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
                 <span className="font-extrabold text-xs text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <Briefcase className="w-4 h-4 text-purple-600" /> Step 2: Multi-Select Service Capabilities & Zone Coverage
+                  <Briefcase className="w-4 h-4 text-purple-600" /> Step 2: Services & Service Pincodes
                 </span>
                 <button
                   type="button"
@@ -1895,7 +2156,7 @@ function TechnicianFormContent() {
               <div className="space-y-3 text-xs">
                 <div>
                   <span className="text-slate-400 font-bold block mb-1.5">
-                    Selected Service Capabilities ({selectedServices.length} Services):
+                    Selected Services ({selectedServices.length}):
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {selectedServices.map((srv) => (
@@ -1912,7 +2173,7 @@ function TechnicianFormContent() {
 
                 <div className="pt-1">
                   <span className="text-slate-400 font-bold block mb-1.5">
-                    Pincode Area to Area Zone Coverage ({coverageZones.length} Zones/Corridors):
+                    Selected Pincodes Served ({coverageZones.length}):
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {coverageZones.map((z, idx) => (
@@ -1987,7 +2248,7 @@ function TechnicianFormContent() {
             <button
               type="button"
               onClick={() => setCurrentStep(3)}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all cursor-pointer"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 transition-all cursor-pointer shadow-2xs"
             >
               ← Back to Step 3
             </button>
@@ -2001,9 +2262,9 @@ function TechnicianFormContent() {
                   handleFinalSubmit(e as any);
                 }}
                 disabled={isSubmitting}
-                className="px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-200 font-extrabold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-6 py-3.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900 text-amber-800 dark:text-amber-300 font-extrabold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                <FileText className="w-4 h-4 text-amber-600" />
+                <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 <span>Save as Draft</span>
               </button>
 

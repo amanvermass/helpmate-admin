@@ -368,17 +368,17 @@ export default function CustomersPage() {
         <Portal>
           <div className="fixed inset-0 z-[99999] flex justify-end bg-slate-950/60 backdrop-blur-xs transition-opacity">
             <div className="w-full max-w-xl bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-300">
-              {/* Drawer Top Header Banner */}
-              <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-brand-600 via-brand-700 to-purple-800 text-white flex items-center justify-between shadow-xs">
+              {/* Clean Standardized Drawer Header */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-white/10 text-white backdrop-blur-md border border-white/20 shadow-xs">
+                  <div className="p-2.5 rounded-2xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
                     {editingCustomer ? <Edit2 className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-white text-lg tracking-tight">
+                    <h3 className="font-extrabold text-slate-900 dark:text-white text-lg tracking-tight">
                       {editingCustomer ? "Edit Customer" : "Add Customer"}
                     </h3>
-                    <p className="text-xs text-brand-100 font-medium">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       {editingCustomer ? `Update account specs for ID #${editingCustomer.id}` : "Add new client account & delivery address to Varanasi directory"}
                     </p>
                   </div>
@@ -386,7 +386,7 @@ export default function CustomersPage() {
                 <button
                   type="button"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white cursor-pointer transition-colors backdrop-blur-md"
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -395,8 +395,8 @@ export default function CustomersPage() {
               {/* Drawer Scrollable Body */}
               <form onSubmit={handleSaveCustomerForm} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
                 {/* SECTION 1: PERSONAL & CONTACT IDENTITY */}
-                <div className="p-5 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200 dark:border-brand-800 space-y-4">
-                  <div className="flex items-center gap-2 text-brand-900 dark:text-brand-300 font-extrabold text-sm border-b border-brand-200 dark:border-brand-800 pb-2">
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <User className="w-4 h-4 text-brand-600" />
                     <span>1. Customer Personal & Contact Identity</span>
                   </div>
@@ -410,7 +410,7 @@ export default function CustomersPage() {
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                       placeholder="e.g. Rajesh Kumar Agrawal"
-                      className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                       required
                     />
                   </div>
@@ -425,7 +425,7 @@ export default function CustomersPage() {
                         value={formPhone}
                         onChange={(e) => setFormPhone(e.target.value)}
                         placeholder="+91 98390 12345"
-                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                         required
                       />
                     </div>
@@ -439,7 +439,7 @@ export default function CustomersPage() {
                         value={formAlternatePhone}
                         onChange={(e) => setFormAlternatePhone(e.target.value)}
                         placeholder="+91 94501 99000"
-                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500 transition-all"
+                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-brand-500 transition-all"
                       />
                     </div>
                   </div>
@@ -453,15 +453,15 @@ export default function CustomersPage() {
                       value={formEmail}
                       onChange={(e) => setFormEmail(e.target.value)}
                       placeholder="rajesh.agrawal@gmail.com"
-                      className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 transition-all"
+                      className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 transition-all"
                       required
                     />
                   </div>
                 </div>
 
                 {/* SECTION 2: ACCOUNT & PROPERTY TYPE */}
-                <div className="p-5 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-4">
-                  <div className="flex items-center gap-2 text-purple-900 dark:text-purple-300 font-extrabold text-sm border-b border-purple-200 dark:border-purple-800 pb-2">
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <Building className="w-4 h-4 text-purple-600" />
                     <span>2. Account Classification & Property Details</span>
                   </div>
@@ -502,7 +502,7 @@ export default function CustomersPage() {
                         value={formCompanyName}
                         onChange={(e) => setFormCompanyName(e.target.value)}
                         placeholder="e.g. Agrawal Electricals Retail HQ"
-                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-purple-500 transition-all"
+                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 transition-all"
                         required
                       />
                     </div>
@@ -510,8 +510,8 @@ export default function CustomersPage() {
                 </div>
 
                 {/* SECTION 3: DELIVERY ADDRESS & LOCALITY */}
-                <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 space-y-4">
-                  <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300 font-extrabold text-sm border-b border-emerald-200 dark:border-emerald-800 pb-2">
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
+                  <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <MapPin className="w-4 h-4 text-emerald-600" />
                     <span>3. Varanasi Locality & Street Address</span>
                   </div>
@@ -540,7 +540,7 @@ export default function CustomersPage() {
                         type="text"
                         value={formPincode}
                         onChange={(e) => setFormPincode(e.target.value)}
-                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none text-xs focus:border-emerald-500 transition-all"
+                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono font-bold outline-none text-xs focus:border-brand-500 transition-all"
                         required
                       />
                     </div>
@@ -555,7 +555,7 @@ export default function CustomersPage() {
                       value={formAddress}
                       onChange={(e) => setFormAddress(e.target.value)}
                       placeholder="House No., Building Name, Street Road, Landmark, Varanasi"
-                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all text-xs"
+                      className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all text-xs"
                       required
                     />
                   </div>
@@ -566,13 +566,13 @@ export default function CustomersPage() {
                   <button
                     type="button"
                     onClick={() => setIsDrawerOpen(false)}
-                    className="px-5 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold cursor-pointer hover:bg-slate-200 transition-colors"
+                    className="px-5 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-extrabold hover:bg-slate-200 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-extrabold shadow-lux cursor-pointer transition-colors flex items-center justify-center gap-2 text-xs"
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-extrabold shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-2 text-xs"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{editingCustomer ? "Edit Customer" : "Add Customer"}</span>

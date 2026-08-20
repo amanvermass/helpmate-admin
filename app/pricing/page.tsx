@@ -357,7 +357,7 @@ export default function PricingPage() {
   // Handlers for Rate Cards
   const handleSaveRateCard = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rateForm.serviceTitle) return;
+    if (!rateForm.serviceTitle.trim()) return;
 
     if (editingRate) {
       setRateCards(
@@ -365,6 +365,7 @@ export default function PricingPage() {
           rc.id === editingRate.id ? { ...rc, ...rateForm } : rc
         )
       );
+      showToast(`Updated Rate Card '${rateForm.serviceTitle}'`);
       setEditingRate(null);
     } else {
       const newRc: RateCardItem = {
@@ -373,9 +374,10 @@ export default function PricingPage() {
         status: "Active",
       };
       setRateCards([newRc, ...rateCards]);
-      setIsAddRateOpen(false);
+      showToast(`Added New Rate Card '${rateForm.serviceTitle}'`);
     }
 
+    setIsAddRateOpen(false);
     setRateForm({
       serviceTitle: "",
       category: "AC Servicing",
@@ -397,9 +399,12 @@ export default function PricingPage() {
   };
 
   const handleDeleteRateCard = (id: string) => {
-    if (confirm("Are you sure you want to remove this rate card?")) {
-      setRateCards(rateCards.filter((rc) => rc.id !== id));
-    }
+    setDeleteConfirm({
+      isOpen: true,
+      type: "model", // using confirm dialog pattern
+      id: id,
+      name: rateCards.find((rc) => rc.id === id)?.serviceTitle || "Rate Card",
+    });
   };
 
   const catColumns: Column<RateCardItem>[] = [
@@ -488,12 +493,16 @@ export default function PricingPage() {
                   commissionPercentage: row.commissionPercentage,
                   surgeMultiplier: row.surgeMultiplier,
                 });
+                setIsAddRateOpen(true);
               },
             },
             {
               label: "Delete",
               icon: Trash2,
-              onClick: () => handleDeleteRateCard(row.id),
+              onClick: () => {
+                setRateCards(rateCards.filter((rc) => rc.id !== row.id));
+                showToast(`Deleted Rate Card '${row.serviceTitle}'`);
+              },
               danger: true,
             },
           ]}
@@ -533,11 +542,11 @@ export default function PricingPage() {
             type="button"
             onClick={() => setActiveTab("calculatorCms")}
             className={`px-4 py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${activeTab === "calculatorCms"
-                ? "bg-purple-600 text-white shadow-lux font-black"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-black"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
           >
-            <Calculator className="w-4 h-4" />
+            <Calculator className="w-4 h-4 text-purple-600" />
             <span>Interactive Calculator CMS</span>
           </button>
 
@@ -1187,20 +1196,44 @@ export default function PricingPage() {
       {/* ─── TAB 2: FIXED RATE CARDS ─── */}
       {activeTab === "fixed" && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {["All", "AC Servicing", "Deep Cleaning", "Electrician", "Plumbing", "Home Salon", "Car Wash"].map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${selectedCategory === cat
-                    ? "bg-brand-500 text-white shadow-xs"
-                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {["All", "AC Servicing", "Deep Cleaning", "Electrician", "Plumbing", "Home Salon", "Car Wash"].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${selectedCategory === cat
+                      ? "bg-brand-500 text-white shadow-xs"
+                      : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50"
+                    }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEditingRate(null);
+                setRateForm({
+                  serviceTitle: "",
+                  category: "AC Servicing",
+                  basePrice: 599,
+                  memberPrice: 499,
+                  convenienceFee: 49,
+                  gstPercentage: 18,
+                  commissionPercentage: 25,
+                  surgeMultiplier: 1.0,
+                });
+                setIsAddRateOpen(true);
+              }}
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Rate Card</span>
+            </button>
           </div>
 
           <DataTable columns={catColumns} data={filteredRateCards} />
@@ -1248,9 +1281,10 @@ export default function PricingPage() {
             columns={[
               { key: "cityName", header: "City", accessor: (r) => r.cityName },
               { key: "locality", header: "Locality", accessor: (r) => r.locality || "All" },
-              { key: "baseFareMultiplier", header: "Base Fare", accessor: (r) => `${r.baseFareMultiplier}x` },
+              { key: "baseFareMultiplier", header: "Base Multiplier", accessor: (r) => `${r.baseFareMultiplier}x` },
               { key: "peakHourSurge", header: "Peak Surge", accessor: (r) => `${r.peakHourSurge}x` },
-              { key: "status", header: "Status", accessor: (r) => r.status },
+              { key: "nightSurgeMultiplier", header: "Night Surge", accessor: (r) => `${r.nightSurgeMultiplier}x` },
+              { key: "weatherSurge", header: "Weather Surge", accessor: (r) => `${r.weatherSurge}x` },
             ]}
             data={filteredCityPricings}
           />
@@ -1284,7 +1318,7 @@ export default function PricingPage() {
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-purple-600" />
-                  {modelModal.item ? "Edit Pricing" : "Add Pricing"}
+                  {modelModal.item ? "Edit Service Model Tab" : "Add Service Model Tab"}
                 </h3>
                 <button type="button" onClick={() => setModelModal({ isOpen: false, item: null })} className="text-slate-400 hover:text-slate-600">
                   <X className="w-4 h-4" />
@@ -1293,15 +1327,15 @@ export default function PricingPage() {
 
               <div className="space-y-2 text-xs">
                 <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                  Service Model Tab Name *
+                  Service Model Name *
                 </label>
                 <input
                   type="text"
                   required
                   value={modelInputName}
                   onChange={(e) => setModelInputName(e.target.value)}
-                  placeholder="e.g. Commercial Deep Cleaning"
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none text-xs"
+                  placeholder="e.g. Daily Hourly Chores"
+                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none text-xs"
                 />
               </div>
 
@@ -1310,7 +1344,7 @@ export default function PricingPage() {
                   Cancel
                 </button>
                 <button type="submit" className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-lux">
-                  Save Model Tab
+                  Save Model
                 </button>
               </div>
             </form>
@@ -1326,7 +1360,7 @@ export default function PricingPage() {
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-2">
                   <LayoutGrid className="w-4 h-4 text-purple-600" />
-                  {layoutModal.item ? "Edit Layout Tier" : "Add New Layout Tier"}
+                  {layoutModal.item ? "Edit Layout Size Tier" : "Add New Layout Size Tier"}
                 </h3>
                 <button type="button" onClick={() => setLayoutModal({ isOpen: false, item: null })} className="text-slate-400 hover:text-slate-600">
                   <X className="w-4 h-4" />
@@ -1336,7 +1370,7 @@ export default function PricingPage() {
               <div className="space-y-3 text-xs">
                 <div>
                   <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Layout Code / Label (e.g. 5bhk) *
+                    Layout Code / Label (e.g. 1bhk, Villa) *
                   </label>
                   <input
                     type="text"
@@ -1344,7 +1378,7 @@ export default function PricingPage() {
                     value={layoutForm.code}
                     onChange={(e) => setLayoutForm({ ...layoutForm, code: e.target.value })}
                     placeholder="e.g. 5bhk"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-extrabold uppercase outline-none"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold uppercase outline-none"
                   />
                 </div>
 
@@ -1537,59 +1571,158 @@ export default function PricingPage() {
         </Portal>
       )}
 
-      {/* ADD RATE CARD MODAL */}
-      {isAddRateOpen && (
+      {/* ─── ADD / EDIT FIXED RATE CARD MODAL ─── */}
+      {(isAddRateOpen || editingRate !== null) && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <form onSubmit={handleSaveRateCard} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <form onSubmit={handleSaveRateCard} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add New Rate Card</h3>
-                <button type="button" onClick={() => setIsAddRateOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-brand-600" />
+                  <span>{editingRate ? "Edit Fixed Rate Card" : "Add New Fixed Rate Card"}</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddRateOpen(false);
+                    setEditingRate(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-4 text-xs">
+                {/* Service Package Title */}
                 <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Service Title *</label>
+                  <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">
+                    Service Package Title *
+                  </label>
                   <input
                     type="text"
                     required
                     value={rateForm.serviceTitle}
                     onChange={(e) => setRateForm({ ...rateForm, serviceTitle: e.target.value })}
-                    placeholder="e.g. Split AC Foam Wash"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none"
+                    placeholder="e.g. Split AC Foam Wash & Pressure Jet"
+                    className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500"
                   />
                 </div>
 
+                {/* Service Category */}
+                <div>
+                  <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">
+                    Service Category *
+                  </label>
+                  <select
+                    value={rateForm.category}
+                    onChange={(e) => setRateForm({ ...rateForm, category: e.target.value })}
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                  >
+                    {["AC Servicing", "Deep Cleaning", "Electrician", "Plumbing", "Home Salon", "Car Wash"].map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Base Price & Member Price */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Base Price (₹)</label>
+                    <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">Base Price (₹) *</label>
                     <input
                       type="number"
+                      required
+                      min={0}
                       value={rateForm.basePrice}
                       onChange={(e) => setRateForm({ ...rateForm, basePrice: Number(e.target.value) })}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold outline-none"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-extrabold text-slate-900 dark:text-white outline-none focus:border-brand-500"
                     />
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Member Price (₹)</label>
+                    <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">Member Price (₹) *</label>
                     <input
                       type="number"
+                      required
+                      min={0}
                       value={rateForm.memberPrice}
                       onChange={(e) => setRateForm({ ...rateForm, memberPrice: Number(e.target.value) })}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold outline-none"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-extrabold text-brand-600 dark:text-brand-400 outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Tech Fee & GST Percentage */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">Tech / Convenience Fee (₹)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={rateForm.convenienceFee}
+                      onChange={(e) => setRateForm({ ...rateForm, convenienceFee: Number(e.target.value) })}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">GST Tax (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={28}
+                      value={rateForm.gstPercentage}
+                      onChange={(e) => setRateForm({ ...rateForm, gstPercentage: Number(e.target.value) })}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Commission Percentage & Surge Multiplier */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">Partner Commission (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={rateForm.commissionPercentage}
+                      onChange={(e) => setRateForm({ ...rateForm, commissionPercentage: Number(e.target.value) })}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-emerald-600 outline-none focus:border-brand-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-extrabold text-slate-700 dark:text-slate-300 block mb-1">Surge Multiplier</label>
+                    <input
+                      type="number"
+                      step={0.05}
+                      min={1.0}
+                      max={3.0}
+                      value={rateForm.surgeMultiplier}
+                      onChange={(e) => setRateForm({ ...rateForm, surgeMultiplier: Number(e.target.value) })}
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-amber-600 outline-none focus:border-brand-500"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setIsAddRateOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600">
+              {/* Modal Actions */}
+              <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddRateOpen(false);
+                    setEditingRate(null);
+                  }}
+                  className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-extrabold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 py-2.5 rounded-xl bg-brand-500 text-white font-extrabold text-xs shadow-md">
-                  Save Rate Card
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  {editingRate ? "Update Rate Card" : "Save Rate Card"}
                 </button>
               </div>
             </form>

@@ -381,7 +381,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Schedule Slot & Location</span>
                 <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-brand-500" />
-                  {currentBooking.date || "30 July 2026"} • {currentBooking.timeSlot || "10:00 AM - 11:30 AM"}
+                  {currentBooking.date || "30 July 2026"} 
                 </div>
                 <div className="text-slate-500 font-semibold">{currentBooking.locality}, {currentBooking.city || "Varanasi"}</div>
               </div>

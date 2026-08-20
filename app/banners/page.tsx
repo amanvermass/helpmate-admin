@@ -185,39 +185,37 @@ export default function BannersPage() {
         </button>
       </div>
 
-      {/* MODERN TAB NAVIGATION */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold w-fit">
+      {/* Tabs Header */}
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold w-fit">
           <button
             type="button"
             onClick={() => setActiveTab("popupModal")}
             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === "popupModal"
-                ? "bg-brand-600 text-white shadow-md font-black"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <Megaphone className="w-4 h-4" />
+            <Megaphone className="w-4 h-4 text-brand-600" />
             <span>Website Visitor Popup Manager</span>
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "popupModal" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "popupModal" ? "bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
               {isBannerEnabled ? "LIVE" : "OFF"}
             </span>
           </button>
-
-
 
           <button
             type="button"
             onClick={() => setActiveTab("homepageBanners")}
             className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === "homepageBanners"
-                ? "bg-brand-600 text-white shadow-md font-black"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <ImageIcon className="w-4 h-4" />
+            <ImageIcon className="w-4 h-4 text-purple-600" />
             <span>Homepage Offer Banners</span>
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "homepageBanners" ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${activeTab === "homepageBanners" ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
               {promoBanners.length}
             </span>
           </button>

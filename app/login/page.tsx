@@ -20,8 +20,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { setRole } = useRbac();
 
-  // Login Mode State
-  const [loginMode, setLoginMode] = useState<"admin" | "partner">("admin");
+  // Login Mode State: "super_admin" | "office_admin" | "partner"
+  const [loginMode, setLoginMode] = useState<"super_admin" | "office_admin" | "partner">("super_admin");
 
   // Form State
   const [email, setEmail] = useState("admin@helpmate.net.in");
@@ -47,9 +47,12 @@ export default function LoginPage() {
       setIsLoading(false);
       localStorage.setItem("helpmate_admin_session", "true");
 
-      if (loginMode === "partner") {
+      if (loginMode === "partner" || email.toLowerCase().includes("partner") || email.toLowerCase().includes("ramesh")) {
         setRole("Service Partner");
         router.push("/partner");
+      } else if (loginMode === "office_admin" || email.toLowerCase().includes("office")) {
+        setRole("Office Admin");
+        router.push("/");
       } else {
         setRole("Super Admin");
         router.push("/");
@@ -57,12 +60,15 @@ export default function LoginPage() {
     }, 600);
   };
 
-  const switchMode = (mode: "admin" | "partner") => {
+  const switchMode = (mode: "super_admin" | "office_admin" | "partner") => {
     setLoginMode(mode);
     setErrorMessage("");
     if (mode === "partner") {
       setEmail("ramesh.hvac@helpmate.in");
       setPassword("partner2026");
+    } else if (mode === "office_admin") {
+      setEmail("office.admin@helpmate.in");
+      setPassword("office123");
     } else {
       setEmail("admin@helpmate.net.in");
       setPassword("helpmate2026");
@@ -97,36 +103,49 @@ export default function LoginPage() {
           </div>
 
           <p className="text-xs text-slate-500 max-w-xs">
-            Sign in to access Varanasi central management or Service Partner technician portal.
+            Select your account type or sign in with your ID & password.
           </p>
         </div>
 
-        {/* Portal Type Switcher Tabs */}
-        <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-200/80 rounded-2xl text-xs font-bold">
+        {/* Portal Type Switcher Tabs (Super Admin / Office Admin / Partner) */}
+        <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-200/80 rounded-2xl text-xs font-bold">
           <button
             type="button"
-            onClick={() => switchMode("admin")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              loginMode === "admin"
-                ? "bg-white text-slate-900 shadow-sm"
+            onClick={() => switchMode("super_admin")}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+              loginMode === "super_admin"
+                ? "bg-white text-brand-600 shadow-sm font-black"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <ShieldCheck className="w-4 h-4 text-purple-600" />
-            <span>Admin Staff Portal</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-brand-600" />
+            <span>Super Admin</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => switchMode("office_admin")}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
+              loginMode === "office_admin"
+                ? "bg-white text-purple-700 shadow-sm font-black"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5 text-purple-600" />
+            <span>Office Admin</span>
           </button>
 
           <button
             type="button"
             onClick={() => switchMode("partner")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
               loginMode === "partner"
-                ? "bg-white text-emerald-700 shadow-sm"
+                ? "bg-white text-emerald-700 shadow-sm font-black"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Wrench className="w-4 h-4 text-emerald-600" />
-            <span>Service Partner Login</span>
+            <Wrench className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Partner</span>
           </button>
         </div>
 
@@ -137,13 +156,17 @@ export default function LoginPage() {
             className={`p-3 rounded-2xl text-xs font-bold flex items-center justify-between border ${
               loginMode === "partner"
                 ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : "bg-purple-50 text-purple-800 border-purple-200"
+                : loginMode === "office_admin"
+                ? "bg-purple-50 text-purple-800 border-purple-200"
+                : "bg-brand-50 text-brand-800 border-brand-200"
             }`}
           >
             <span>
               {loginMode === "partner"
-                ? "🔑 Logging in as Service Partner (Ramesh Yadav - HVAC Master)"
-                : "🔑 Logging in as Admin HQ Staff (Aman Verma - Super Admin)"}
+                ? "🔑 Service Partner Login (Ramesh Yadav)"
+                : loginMode === "office_admin"
+                ? "🔑 Office Admin Desk (Dashboard, Bookings, Finance & Billing)"
+                : "🔑 Super Admin HQ (Full System Access)"}
             </span>
           </div>
 
@@ -205,7 +228,9 @@ export default function LoginPage() {
               className={`w-full py-3 rounded-xl ${
                 loginMode === "partner"
                   ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-brand-500 hover:bg-brand-600"
+                  : loginMode === "office_admin"
+                  ? "bg-purple-600 hover:bg-purple-700"
+                  : "bg-brand-600 hover:bg-brand-700"
               } text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50`}
             >
               {isLoading ? (
@@ -215,7 +240,9 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  <span>Sign In To {loginMode === "partner" ? "Partner Portal" : "Admin Portal"}</span>
+                  <span>
+                    Sign In To {loginMode === "partner" ? "Partner Portal" : loginMode === "office_admin" ? "Office Admin Desk" : "Super Admin HQ"}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

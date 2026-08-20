@@ -416,26 +416,26 @@ export default function CategoriesPage() {
         <button
           type="button"
           onClick={() => setActiveCategoryTab("masterTable")}
-          className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
             activeCategoryTab === "masterTable"
-              ? "bg-purple-600 text-white shadow-lux"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          <Sliders className="w-4 h-4" />
+          <Sliders className="w-4 h-4 text-brand-600" />
           <span>Master Category Table</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveCategoryTab("serviceIcons")}
-          className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+          className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
             activeCategoryTab === "serviceIcons"
-              ? "bg-purple-600 text-white shadow-lux"
+              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
-          <ImageIcon className="w-4 h-4" />
+          <ImageIcon className="w-4 h-4 text-purple-600" />
           <span>Main Service Icons</span>
         </button>
       </div>
