@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Users,
@@ -81,6 +81,8 @@ export interface OtherAppliance {
 export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromPath = searchParams?.get("from");
   const custId = (params?.id as string) || "cust-1";
 
   // Find target customer or fallback to first customer
@@ -863,13 +865,20 @@ export default function CustomerDetailPage() {
       {/* Simple Clean Customer Header Card */}
       <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-          <Link
-            href="/customers"
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl"
+          <button
+            type="button"
+            onClick={() => {
+              if (fromPath) {
+                router.push(fromPath);
+              } else {
+                router.push("/customers");
+              }
+            }}
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-brand-600" />
-            <span>Back to Customer Directory</span>
-          </Link>
+            <span>{fromPath ? "Back to Previous Page" : "Back to Customer Directory"}</span>
+          </button>
 
           <span className="font-mono text-xs font-extrabold px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 border border-slate-200 dark:border-slate-700">
             CUSTOMER ID: {customer.id}

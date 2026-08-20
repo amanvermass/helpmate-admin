@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   X,
   User,
@@ -23,8 +24,9 @@ import {
   Check,
   Award,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
-import { Booking } from "@/lib/mockData";
+import { Booking, initialCustomers, initialBookings } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 
 interface BookingDetailsDrawerProps {
@@ -40,10 +42,19 @@ export function BookingDetailsDrawer({
   onClose,
   onAssignPartner,
 }: BookingDetailsDrawerProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"general" | "timeline" | "payment" | "invoice">("general");
   const [copied, setCopied] = useState(false);
 
   if (!isOpen || !booking) return null;
+
+  const getCustomerId = (name?: string, phone?: string) => {
+    if (!name && !phone) return "cust-1";
+    const found = initialCustomers.find(
+      (c) => (phone && c.phone === phone) || (name && c.name.toLowerCase() === name.toLowerCase())
+    );
+    return found ? found.id : "cust-1";
+  };
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(booking.id);
@@ -131,18 +142,65 @@ export function BookingDetailsDrawer({
             {activeTab === "general" && (
               <div className="space-y-4">
                 {/* Customer Details */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Customer Information</span>
-                  <div className="font-black text-sm text-slate-900 dark:text-white">{booking.customerName}</div>
-                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                    <Phone className="w-3.5 h-3.5 text-brand-500" />
-                    <span className="font-bold">{booking.customerPhone}</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300 pt-1">
-                    <MapPin className="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5" />
-                    <span>{booking.address}, {booking.locality}, {booking.city || "Varanasi"} - {booking.pincode || "221002"}</span>
-                  </div>
-                </div>
+                {(() => {
+                  const custBookings = initialBookings.filter(
+                    (b) =>
+                      (booking.customerPhone && b.customerPhone === booking.customerPhone) ||
+                      (booking.customerName && b.customerName?.toLowerCase() === booking.customerName?.toLowerCase())
+                  );
+                  const sorted = [...custBookings].sort((a, b) => {
+                    const numA = parseInt(a.id.replace(/\D/g, ""), 10) || 0;
+                    const numB = parseInt(b.id.replace(/\D/g, ""), 10) || 0;
+                    return numA - numB;
+                  });
+                  const totalOrders = Math.max(custBookings.length, 1);
+                  const idx = sorted.findIndex((b) => b.id === booking.id);
+                  const ordNum = idx >= 0 ? idx + 1 : 1;
+                  const isFirst = ordNum === 1;
+                  const isNew = totalOrders === 1 && isFirst;
+                  const s = ["th", "st", "nd", "rd"];
+                  const v = ordNum % 100;
+                  const suffix = ordNum + (s[(v - 20) % 10] || s[v] || s[0]);
+                  const ordText = `${suffix} Order`;
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Customer Information</span>
+                        {isNew ? (
+                          <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                            ✨ 1st Order (New Customer)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-extrabold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded-full border border-purple-300 dark:border-purple-800">
+                            {ordText}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const custId = getCustomerId(booking.customerName, booking.customerPhone);
+                          onClose();
+                          router.push(`/customers/${custId}?from=${encodeURIComponent("/bookings")}`);
+                        }}
+                        className="font-black text-sm text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-left cursor-pointer flex items-center gap-1.5"
+                        title={`View ${booking.customerName} customer details`}
+                      >
+                        <span>{booking.customerName}</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-brand-500" />
+                      </button>
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                        <Phone className="w-3.5 h-3.5 text-brand-500" />
+                        <span className="font-bold">{booking.customerPhone}</span>
+                      </div>
+                      <div className="flex items-start gap-2 text-slate-600 dark:text-slate-300 pt-1">
+                        <MapPin className="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5" />
+                        <span>{booking.address}, {booking.locality}, {booking.city || "Varanasi"} - {booking.pincode || "221002"}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Fleet Specialist Info */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">

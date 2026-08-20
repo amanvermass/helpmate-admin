@@ -292,6 +292,16 @@ export interface SelectedServiceItem {
 
 export type AddressRecipientType = "Self" | "Family Member" | "Friend / Neighbor" | "Office / Work" | "Other";
 
+export interface SelectedAddOnItem {
+  id: string;
+  name: string;
+  price: number;
+  gstRate: number; // e.g. 0.18 for 18% GST or 0 for 0%
+  gstAmount: number;
+  totalPrice: number;
+  isUnlisted?: boolean;
+}
+
 export interface Booking {
   id: string; // Booking / Invoice ID
   jobId?: string; // Unique Job Tracking Code e.g. HM-JOB-8821
@@ -313,6 +323,10 @@ export interface Booking {
   addons?: string[];
   systemType?: string;
   servicesList?: SelectedServiceItem[];
+  completedAddOns?: SelectedAddOnItem[];
+  addOnsBaseTotal?: number;
+  addOnsGstTotal?: number;
+  addOnsFinalTotal?: number;
   addressRecipientType?: AddressRecipientType;
   recipientName?: string;
   recipientPhone?: string;

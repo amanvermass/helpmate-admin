@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { initialBookings, Booking, initialTechnicians, Technician } from "@/lib/mockData";
+import { useRouter, useSearchParams } from "next/navigation";
+import { initialBookings, Booking, initialTechnicians, Technician, initialCustomers, SelectedAddOnItem } from "@/lib/mockData";
 import {
   ArrowLeft,
   CalendarCheck,
@@ -33,11 +33,16 @@ import {
   Star,
   ChevronRight,
   ShieldAlert,
+  ExternalLink,
+  Home,
+  UserCheck,
+  Package,
 } from "lucide-react";
 import { AssignPartnerModal } from "@/components/bookings/AssignPartnerModal";
 import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
 import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal";
 import { EditBookingModal } from "@/components/bookings/EditBookingModal";
+import { RescheduleBookingModal } from "@/components/bookings/RescheduleBookingModal";
 import { Portal } from "@/components/Portal";
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -48,23 +53,79 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const currentBooking = bookings.find((b) => b.id.toLowerCase() === bookingId.toLowerCase()) || bookings[0];
 
+  // Customer Order Sequence Calculation
+  const customerBookings = useMemo(() => {
+    return bookings.filter(
+      (b) =>
+        (currentBooking.customerPhone && b.customerPhone === currentBooking.customerPhone) ||
+        (currentBooking.customerName && b.customerName?.toLowerCase() === currentBooking.customerName?.toLowerCase())
+    );
+  }, [bookings, currentBooking]);
+
+  const sortedCustomerBookings = useMemo(() => {
+    return [...customerBookings].sort((a, b) => {
+      const numA = parseInt(a.id.replace(/\D/g, ""), 10) || 0;
+      const numB = parseInt(b.id.replace(/\D/g, ""), 10) || 0;
+      return numA - numB;
+    });
+  }, [customerBookings]);
+
+  const currentBookingIndex = sortedCustomerBookings.findIndex((b) => b.id === currentBooking.id);
+  const orderNumber = currentBookingIndex >= 0 ? currentBookingIndex + 1 : 1;
+  const totalCustomerOrders = Math.max(customerBookings.length, 1);
+  const isFirstOrder = orderNumber === 1;
+  const isNewCustomer = totalCustomerOrders === 1 && isFirstOrder;
+
+  const getOrdinalSuffix = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  const orderOrdinalText = `${getOrdinalSuffix(orderNumber)} Order`;
+
   // Modals
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [isInspectionOpen, setIsInspectionOpen] = useState(false);
   const [isOtpOpen, setIsOtpOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const handleReschedule = (
+    id: string,
+    newDate: string,
+    newTimeSlot: string,
+    technicianId?: string,
+    technicianName?: string
+  ) => {
+    setBookings((prev) =>
+      prev.map((b) => {
+        if (b.id === id) {
+          return {
+            ...b,
+            date: newDate,
+            timeSlot: newTimeSlot,
+            technicianId: technicianId || b.technicianId,
+            technicianName: technicianName || b.technicianName,
+            status: technicianName ? (b.status === "Pending" || b.status === "Waiting For Assignment" ? "Assigned" : b.status) : b.status,
+          };
+        }
+        return b;
+      })
+    );
+  };
 
   const handlePartnerAssigned = (id: string, tech: Technician | null) => {
     setBookings(
       bookings.map((b) =>
         b.id === id
           ? {
-              ...b,
-              status: tech ? (b.status === "Pending" || b.status === "Waiting For Assignment" ? "Assigned" : b.status) : "Pending",
-              technicianName: tech ? tech.name : undefined,
-              technicianId: tech ? tech.id : undefined,
-            }
+            ...b,
+            status: tech ? (b.status === "Pending" || b.status === "Waiting For Assignment" ? "Assigned" : b.status) : "Pending",
+            technicianName: tech ? tech.name : undefined,
+            technicianId: tech ? tech.id : undefined,
+          }
           : b
       )
     );
@@ -75,21 +136,38 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       bookings.map((b) =>
         b.id === id
           ? {
-              ...b,
-              basePrice: quote,
-              totalAmount: Math.round(quote * 1.18 + 49),
-              inspectionRemarks: remarks,
-              status: "Customer Approval Pending",
-            }
+            ...b,
+            basePrice: quote,
+            totalAmount: Math.round(quote * 1.18 + 49),
+            inspectionRemarks: remarks,
+            status: "Customer Approval Pending",
+          }
           : b
       )
     );
   };
 
-  const handleJobCompleted = (id: string) => {
-    setBookings(
-      bookings.map((b) =>
-        b.id === id ? { ...b, isOtpVerified: true, status: "Completed" } : b
+  const handleJobCompleted = (
+    id: string,
+    addOns?: SelectedAddOnItem[],
+    addOnsBaseTotal?: number,
+    addOnsGstTotal?: number,
+    addOnsFinalTotal?: number
+  ) => {
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === id
+          ? {
+              ...b,
+              isOtpVerified: true,
+              status: "Completed",
+              completedAddOns: addOns || b.completedAddOns,
+              addOnsBaseTotal: addOnsBaseTotal ?? b.addOnsBaseTotal,
+              addOnsGstTotal: addOnsGstTotal ?? b.addOnsGstTotal,
+              addOnsFinalTotal: addOnsFinalTotal ?? b.addOnsFinalTotal,
+              totalAmount: b.totalAmount + (addOnsFinalTotal || 0),
+            }
+          : b
       )
     );
   };
@@ -111,6 +189,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       return `INV-${cleanId.slice(-5)}`;
     }
     return `INV-${cleanId.toUpperCase()}`;
+  };
+
+  const getCustomerId = (name?: string, phone?: string) => {
+    if (!name && !phone) return "cust-1";
+    const found = initialCustomers.find(
+      (c) => (phone && c.phone === phone) || (name && c.name.toLowerCase() === name.toLowerCase())
+    );
+    return found ? found.id : "cust-1";
   };
 
   // Financial Calculations
@@ -172,10 +258,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             <Link
-              href="/bookings"
-              className="text-xs font-bold text-slate-500 hover:text-brand-600 dark:text-slate-400 flex items-center gap-1 transition-colors bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg"
+              href={currentBooking.category ? `/bookings?category=${encodeURIComponent(currentBooking.category)}` : "/bookings"}
+              className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Bookings Directory
+              <ArrowLeft className="w-4 h-4 text-brand-600" />
+              <span>Back to {currentBooking.category || "Bookings"} Directory</span>
             </Link>
             <span className="text-slate-300 dark:text-slate-700 font-bold">•</span>
             <span className="font-mono text-xs font-extrabold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-800">
@@ -191,26 +278,34 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </button>
           </div>
 
-          <div className="flex items-center gap-3 pt-1 flex-wrap">
+          <div className="flex items-center gap-2.5 pt-1 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {currentBooking.serviceTitle}
             </h1>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-xs ${
-                currentBooking.status === "Completed"
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-                  : currentBooking.status === "In Progress" || currentBooking.status === "Assigned"
+              className={`px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-xs ${currentBooking.status === "Completed"
+                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                : currentBooking.status === "In Progress" || currentBooking.status === "Assigned"
                   ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
                   : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800"
-              }`}
+                }`}
             >
               <span className="w-2 h-2 rounded-full bg-current inline-block animate-pulse" />
               <span>{currentBooking.status}</span>
             </span>
 
-            <span className="px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[11px] font-bold">
-              SAC: 998719
-            </span>
+            {/* First Order / Order Number Badge */}
+            {isNewCustomer ? (
+              <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs flex items-center gap-1.5 animate-pulse">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>New Customer • 1st Order</span>
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-800 flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <span>{orderOrdinalText}</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -269,6 +364,15 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
           <button
             type="button"
+            onClick={() => setIsRescheduleOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
+          >
+            <CalendarCheck className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+            <span>Reschedule Job</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setIsEditOpen(true)}
             className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
           >
@@ -299,11 +403,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <span className="text-[10px] text-emerald-700 dark:text-emerald-400 block font-medium">Customer Request Confirmed</span>
           </div>
 
-          <div className={`p-3 rounded-2xl border space-y-1 ${
-            currentBooking.technicianName
-              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
-              : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
-          }`}>
+          <div className={`p-3 rounded-2xl border space-y-1 ${currentBooking.technicianName
+            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+            : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
+            }`}>
             <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>2. Service Partner</span>
@@ -313,11 +416,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </span>
           </div>
 
-          <div className={`p-3 rounded-2xl border space-y-1 ${
-            currentBooking.basePrice > 0
-              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
-              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
-          }`}>
+          <div className={`p-3 rounded-2xl border space-y-1 ${currentBooking.basePrice > 0
+            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+            : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+            }`}>
             <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
               <Wrench className="w-3.5 h-3.5" />
               <span>3. Inspection & Quote</span>
@@ -325,11 +427,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <span className="text-[10px] font-medium block">Rate: ₹{base} Base Verified</span>
           </div>
 
-          <div className={`p-3 rounded-2xl border space-y-1 ${
-            currentBooking.status === "In Progress" || currentBooking.status === "Completed"
-              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
-              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
-          }`}>
+          <div className={`p-3 rounded-2xl border space-y-1 ${currentBooking.status === "In Progress" || currentBooking.status === "Completed"
+            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+            : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+            }`}>
             <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
               <Clock className="w-3.5 h-3.5" />
               <span>4. Service Execution</span>
@@ -337,11 +438,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <span className="text-[10px] font-medium block">On-Site Work in Varanasi</span>
           </div>
 
-          <div className={`p-3 rounded-2xl border space-y-1 col-span-2 sm:col-span-1 ${
-            currentBooking.isOtpVerified || currentBooking.status === "Completed"
-              ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
-              : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
-          }`}>
+          <div className={`p-3 rounded-2xl border space-y-1 col-span-2 sm:col-span-1 ${currentBooking.isOtpVerified || currentBooking.status === "Completed"
+            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+            : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+            }`}>
             <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
               <KeyRound className="w-3.5 h-3.5" />
               <span>5. OTP & Settled</span>
@@ -355,7 +455,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
       {/* ─── ENHANCED 2-COLUMN RECORD DETAIL LAYOUT ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* Left Column (7 Cols): Primary Specifications, Appliance Technical Data, Multi-Service Line Items, Partner & Diagnostic Reports */}
         <div className="lg:col-span-7 space-y-6">
 
@@ -381,42 +481,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Schedule Slot & Location</span>
                 <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-brand-500" />
-                  {currentBooking.date || "30 July 2026"} 
+                  {currentBooking.date || "30 July 2026"}
                 </div>
                 <div className="text-slate-500 font-semibold">{currentBooking.locality}, {currentBooking.city || "Varanasi"}</div>
-              </div>
-            </div>
-
-            {/* Appliance / Equipment Technical Breakdown Grid */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
-              <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider block border-b border-slate-200 dark:border-slate-700 pb-1.5">
-                Appliance & Equipment Technical Specifications
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-semibold">Equipment Type</span>
-                  <span className="font-bold text-slate-900 dark:text-white">Split Inverter AC (1.5 Ton)</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-semibold">Brand / Manufacturer</span>
-                  <span className="font-bold text-slate-900 dark:text-white">Daikin / Voltas Heavy Duty</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-semibold">Service Warranty</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">30 Days HelpMate Shield</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-semibold">Refrigerant Type</span>
-                  <span className="font-mono font-bold text-slate-900 dark:text-white">R32 Eco Gas (Normal)</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-semibold">Installation Location</span>
-                  <span className="font-bold text-slate-900 dark:text-white">Master Bedroom (2nd Floor)</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] font-semibold">Rate SAC Code</span>
-                  <span className="font-mono font-bold text-brand-600 dark:text-brand-400">998719 (GST 18%)</span>
-                </div>
               </div>
             </div>
 
@@ -513,7 +580,49 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* Card 3: Assigned Service Partner & Vehicle Details */}
+          {/* Card: Job Completion Add-On Products & Services (If Any) */}
+          {currentBooking.completedAddOns && currentBooking.completedAddOns.length > 0 && (
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <Package className="w-4 h-4 text-emerald-600" /> Completed Job Add-On Products & Spares ({currentBooking.completedAddOns.length} Items)
+                </span>
+                <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                  GST Verified
+                </span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                {currentBooking.completedAddOns.map((item, idx) => (
+                  <div key={item.id || idx} className="p-3 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                        <span>{item.name}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                          item.isUnlisted
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                            : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                        }`}>
+                          {item.isUnlisted ? "Unlisted Custom Item" : "Listed Catalog"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">Base Price: ₹{item.price} + GST (18%): ₹{item.gstAmount}</p>
+                    </div>
+                    <div className="text-right font-black text-emerald-700 dark:text-emerald-300 text-sm font-mono">
+                      ₹{item.totalPrice}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="p-3 rounded-xl bg-slate-900 text-white flex items-center justify-between font-extrabold text-xs mt-2">
+                  <span>Total Add-On Charges (Base + GST):</span>
+                  <span className="font-mono text-emerald-400 text-sm">
+                    ₹{currentBooking.addOnsFinalTotal || currentBooking.completedAddOns.reduce((acc, i) => acc + i.totalPrice, 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
@@ -650,9 +759,15 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                 Customer CRM & Contact Profile
               </span>
-              <span className="text-[10px] font-extrabold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200 dark:border-brand-800">
-                VIP Household Client
-              </span>
+              {isNewCustomer ? (
+                <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                  ✨ New Customer (1st Order)
+                </span>
+              ) : (
+                <span className="text-[10px] font-extrabold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2.5 py-0.5 rounded-full border border-purple-300 dark:border-purple-800">
+                  {orderOrdinalText}
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-3.5">
@@ -660,9 +775,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 {currentBooking.customerName[0]}
               </div>
               <div>
-                <h4 className="font-extrabold text-slate-900 dark:text-white text-base">{currentBooking.customerName}</h4>
-                <span className="text-[11px] font-bold text-slate-500 block">
-                  Varanasi Resident • 4 Past Bookings (LTV: ₹6,480)
+                <button
+                  type="button"
+                  onClick={() => {
+                    const custId = getCustomerId(currentBooking.customerName, currentBooking.customerPhone);
+                    router.push(`/customers/${custId}?from=${encodeURIComponent(`/bookings/${currentBooking.id}`)}`);
+                  }}
+                  className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-base text-left cursor-pointer flex items-center gap-1.5"
+                  title={`View ${currentBooking.customerName} customer details`}
+                >
+                  <span>{currentBooking.customerName}</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-brand-600" />
+                </button>
+                <span className="text-[11px] font-bold text-slate-500 block mt-0.5">
+                  Varanasi Resident • <strong className="text-slate-900 dark:text-white font-extrabold">{orderOrdinalText}</strong>
                 </span>
               </div>
             </div>
@@ -850,6 +976,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         onBookingUpdated={handleBookingUpdated}
       />
 
+      <RescheduleBookingModal
+        booking={isRescheduleOpen ? currentBooking : null}
+        isOpen={isRescheduleOpen}
+        onClose={() => setIsRescheduleOpen(false)}
+        onReschedule={handleReschedule}
+      />
+
       {/* ─── HIDDEN PRINT CANVAS: EXACT OFFICIAL GST TAX INVOICE MATCHING BILLING INVOICE ─── */}
       <Portal>
         <div
@@ -970,6 +1103,24 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     ₹{base + cgst + sgst}
                   </td>
                 </tr>
+                {currentBooking.completedAddOns?.map((addon, aIdx) => {
+                  const cgstAddon = Math.round(addon.gstAmount / 2);
+                  const sgstAddon = addon.gstAmount - cgstAddon;
+                  return (
+                    <tr key={addon.id || aIdx}>
+                      <td className="py-2">
+                        <div className="font-bold text-xs">{addon.name}</div>
+                        <div className="text-[10px] text-slate-600 font-normal">
+                          {addon.isUnlisted ? "On-Site Unlisted Spare / Service" : "Catalog Add-On Product"} (GST @ 18%)
+                        </div>
+                      </td>
+                      <td className="py-2 text-right font-mono font-bold text-xs">₹{addon.price}</td>
+                      <td className="py-2 text-right font-mono text-slate-700 text-xs">₹{cgstAddon}</td>
+                      <td className="py-2 text-right font-mono text-slate-700 text-xs">₹{sgstAddon}</td>
+                      <td className="py-2 text-right font-mono font-extrabold text-black text-xs">₹{addon.totalPrice}</td>
+                    </tr>
+                  );
+                })}
                 <tr>
                   <td className="py-2">
                     <div className="font-bold text-xs">Platform Convenience & Safety Insurance Fee</div>
@@ -997,19 +1148,19 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <div className="w-60 p-2.5 rounded-xl bg-slate-50 border border-slate-300 space-y-1 text-xs">
               <div className="flex justify-between py-0.5 border-b border-slate-300 text-slate-800 text-[11px]">
                 <span>Base Subtotal</span>
-                <span className="font-mono font-bold">₹{base + convenienceFee}</span>
+                <span className="font-mono font-bold">₹{base + convenienceFee + (currentBooking.addOnsBaseTotal || 0)}</span>
               </div>
               <div className="flex justify-between py-0.5 border-b border-slate-300 text-slate-800 text-[11px]">
                 <span>CGST (9%)</span>
-                <span className="font-mono font-bold">₹{cgst}</span>
+                <span className="font-mono font-bold">₹{cgst + Math.round((currentBooking.addOnsGstTotal || 0) / 2)}</span>
               </div>
               <div className="flex justify-between py-0.5 border-b border-slate-300 text-slate-800 text-[11px]">
                 <span>SGST (9%)</span>
-                <span className="font-mono font-bold">₹{sgst}</span>
+                <span className="font-mono font-bold">₹{sgst + Math.round((currentBooking.addOnsGstTotal || 0) / 2)}</span>
               </div>
               <div className="flex justify-between py-0.5 text-xs font-black text-black">
                 <span>Grand Total</span>
-                <span className="font-mono text-emerald-700 font-bold text-xs">₹{finalTotal}</span>
+                <span className="font-mono text-emerald-700 font-bold text-xs">₹{currentBooking.totalAmount}</span>
               </div>
             </div>
           </div>

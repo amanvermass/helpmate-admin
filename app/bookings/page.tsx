@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { initialBookings, Booking, BookingStatus, Technician } from "@/lib/mockData";
+import { initialBookings, Booking, BookingStatus, Technician, initialCustomers, SelectedAddOnItem } from "@/lib/mockData";
 import {
   Calendar,
   CalendarCheck,
@@ -27,6 +27,13 @@ import {
   Plus,
   X,
   ArrowRight,
+  ArrowLeft,
+  Layers,
+  Zap,
+  Sparkles,
+  Droplets,
+  Grid,
+  ChevronRight,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { BookingWizardModal } from "@/components/bookings/BookingWizardModal";
@@ -35,11 +42,27 @@ import { InspectionFlowModal } from "@/components/bookings/InspectionFlowModal";
 import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal";
 import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
+import { RescheduleBookingModal } from "@/components/bookings/RescheduleBookingModal";
 
-export default function BookingsPage() {
+function BookingsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams?.get("category");
+  const selectedCategory = categoryParam || null;
+
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
+  const [cardFilter, setCardFilter] = useState<"ALL" | "UNASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED">("ALL");
+
+  const handleSelectCategory = (catName: string | null) => {
+    setCardFilter("ALL");
+    setActiveStatusFilter("All");
+    if (catName) {
+      router.push(`/bookings?category=${encodeURIComponent(catName)}`);
+    } else {
+      router.push("/bookings");
+    }
+  };
 
   // Modals & Toasts
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -48,8 +71,35 @@ export default function BookingsPage() {
   const [inspectionBooking, setInspectionBooking] = useState<Booking | null>(null);
   const [otpBooking, setOtpBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [reschedulingBooking, setReschedulingBooking] = useState<Booking | null>(null);
   const [drawerBooking, setDrawerBooking] = useState<Booking | null>(null);
   const [printTargetBooking, setPrintTargetBooking] = useState<Booking | null>(null);
+
+  const handleRescheduleBooking = (
+    bookingId: string,
+    newDate: string,
+    newTimeSlot: string,
+    technicianId?: string,
+    technicianName?: string
+  ) => {
+    setBookings((prev) =>
+      prev.map((b) => {
+        if (b.id === bookingId) {
+          const updated: Booking = {
+            ...b,
+            date: newDate,
+            timeSlot: newTimeSlot,
+            technicianId: technicianId || b.technicianId,
+            technicianName: technicianName || b.technicianName,
+            status: technicianName ? (b.status === "Pending" || b.status === "Waiting For Assignment" ? "Assigned" : b.status) : b.status,
+          };
+          setCreatedBookingToast(updated);
+          return updated;
+        }
+        return b;
+      })
+    );
+  };
 
   const handleDirectPrint = (row: Booking) => {
     setPrintTargetBooking(row);
@@ -67,10 +117,81 @@ export default function BookingsPage() {
     return `INV-${cleanId.toUpperCase()}`;
   };
 
-  const filteredBookings = bookings.filter((b) => {
-    if (activeStatusFilter === "All") return true;
-    return b.status.toLowerCase() === activeStatusFilter.toLowerCase();
-  });
+  const formatWorkingDate = (dateStr?: string) => {
+    if (!dateStr) return "Today";
+    const cleanDate = dateStr.split(",")[0].split("T")[0].trim();
+    return cleanDate || "Today";
+  };
+
+  const getCustomerId = (name?: string, phone?: string) => {
+    if (!name && !phone) return "cust-1";
+    const found = initialCustomers.find(
+      (c) => (phone && c.phone === phone) || (name && c.name.toLowerCase() === name.toLowerCase())
+    );
+    return found ? found.id : "cust-1";
+  };
+
+  // Compute Category Level Statistics
+  const categoryStatsList = useMemo(() => {
+    const catMap: Record<
+      string,
+      { count: number; unassigned: number; inProgress: number; completed: number; cancelled: number }
+    > = {};
+
+    bookings.forEach((b) => {
+      const cat = b.category || "General";
+      if (!catMap[cat]) {
+        catMap[cat] = { count: 0, unassigned: 0, inProgress: 0, completed: 0, cancelled: 0 };
+      }
+      catMap[cat].count++;
+      if (!b.technicianName) catMap[cat].unassigned++;
+      if (b.status === "In Progress" || b.status === "Assigned") catMap[cat].inProgress++;
+      if (b.status === "Completed") catMap[cat].completed++;
+      if (b.status === "Cancelled" || b.status === "Rejected") catMap[cat].cancelled++;
+    });
+
+    return Object.entries(catMap).map(([name, stats]) => ({
+      name,
+      ...stats,
+    }));
+  }, [bookings]);
+
+  // 1. Filter by selected category
+  const categoryBookings = useMemo(() => {
+    if (!selectedCategory || selectedCategory === "All") return bookings;
+    return bookings.filter(
+      (b) => (b.category || "General").toLowerCase().trim() === selectedCategory.toLowerCase().trim()
+    );
+  }, [bookings, selectedCategory]);
+
+  // 2. Filter by card status & dropdown status
+  const filteredBookings = useMemo(() => {
+    const list = categoryBookings.filter((b) => {
+      if (activeStatusFilter !== "All" && b.status.toLowerCase() !== activeStatusFilter.toLowerCase()) {
+        return false;
+      }
+      if (cardFilter === "UNASSIGNED") {
+        return !b.technicianName;
+      }
+      if (cardFilter === "IN_PROGRESS") {
+        return b.status === "In Progress" || b.status === "Assigned";
+      }
+      if (cardFilter === "COMPLETED") {
+        return b.status === "Completed";
+      }
+      if (cardFilter === "CANCELLED") {
+        return b.status === "Cancelled" || b.status === "Rejected";
+      }
+      return true;
+    });
+
+    // Sort list so newest / current booking is on TOP!
+    return [...list].sort((a, b) => {
+      const numA = parseInt(a.id.replace(/\D/g, ""), 10) || 0;
+      const numB = parseInt(b.id.replace(/\D/g, ""), 10) || 0;
+      return numB - numA;
+    });
+  }, [categoryBookings, cardFilter, activeStatusFilter]);
 
   const handleBookingCreated = (newBooking: Booking) => {
     setBookings([newBooking, ...bookings]);
@@ -113,14 +234,25 @@ export default function BookingsPage() {
     );
   };
 
-  const handleJobCompleted = (bookingId: string) => {
-    setBookings(
-      bookings.map((b) =>
+  const handleJobCompleted = (
+    bookingId: string,
+    addOns?: SelectedAddOnItem[],
+    addOnsBaseTotal?: number,
+    addOnsGstTotal?: number,
+    addOnsFinalTotal?: number
+  ) => {
+    setBookings((prev) =>
+      prev.map((b) =>
         b.id === bookingId
           ? {
               ...b,
               isOtpVerified: true,
               status: "Completed",
+              completedAddOns: addOns || b.completedAddOns,
+              addOnsBaseTotal: addOnsBaseTotal ?? b.addOnsBaseTotal,
+              addOnsGstTotal: addOnsGstTotal ?? b.addOnsGstTotal,
+              addOnsFinalTotal: addOnsFinalTotal ?? b.addOnsFinalTotal,
+              totalAmount: b.totalAmount + (addOnsFinalTotal || 0),
             }
           : b
       )
@@ -136,45 +268,64 @@ export default function BookingsPage() {
   const columns: Column<Booking>[] = [
     {
       key: "id",
-      header: "Invoice / Booking ID",
+      header: "Booking ID",
       sticky: "left",
       stickyLeftOffset: 44,
       className: "w-[140px] min-w-[140px] max-w-[140px]",
-      accessor: (row) => (
-        <button
-          type="button"
-          onClick={() => router.push(`/bookings/${row.id}`)}
-          className="font-mono font-extrabold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer text-xs"
-        >
-          {row.id}
-        </button>
-      ),
-      sortable: true,
-    },
-    {
-      key: "customerName",
-      header: "Customer Name",
-      sticky: "left",
-      stickyLeftOffset: 184,
-      className: "w-[170px] min-w-[170px] max-w-[170px]",
-      accessor: (row) => (
-        <span className="font-extrabold text-slate-900 dark:text-white truncate max-w-[150px] block" title={row.customerName}>
-          {row.customerName}
-        </span>
-      ),
+      accessor: (row) => {
+        const catQuery = selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : "";
+        return (
+          <button
+            type="button"
+            onClick={() => router.push(`/bookings/${row.id}${catQuery}`)}
+            className="font-mono font-extrabold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer text-xs"
+          >
+            {row.id}
+          </button>
+        );
+      },
       sortable: true,
     },
     {
       key: "date",
       header: "Working date",
       className: "w-[140px] min-w-[140px] whitespace-nowrap px-4",
-      accessor: (row) => <span className="font-semibold text-slate-700 dark:text-slate-300">{row.date || "Today"}</span>,
+      accessor: (row) => (
+        <span className="font-semibold text-slate-700 dark:text-slate-300">
+          {formatWorkingDate(row.date)}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "timeSlot",
+      header: "Time",
+      accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.timeSlot}</span>,
       sortable: true,
     },
     {
       key: "callingDate",
       header: "Calling date",
       accessor: (row) => <span className="text-slate-500 dark:text-slate-400 font-medium">{row.callingDate || "2026-07-25"}</span>,
+      sortable: true,
+    },
+    {
+      key: "customerName",
+      header: "Customer Name",
+      className: "w-[170px] min-w-[170px] max-w-[170px]",
+      accessor: (row) => {
+        const custId = getCustomerId(row.customerName, row.customerPhone);
+        return (
+          <button
+            type="button"
+            onClick={() => router.push(`/customers/${custId}?from=${encodeURIComponent("/bookings")}`)}
+            className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-left truncate max-w-[150px] block cursor-pointer"
+            title={`View ${row.customerName} details`}
+          >
+            {row.customerName}
+          </button>
+        );
+      },
       sortable: true,
     },
     {
@@ -221,12 +372,6 @@ export default function BookingsPage() {
           )}
         </div>
       ),
-      sortable: true,
-    },
-    {
-      key: "timeSlot",
-      header: "Time",
-      accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.timeSlot}</span>,
       sortable: true,
     },
     {
@@ -315,6 +460,16 @@ export default function BookingsPage() {
         <RowActionMenu
           actions={[
             {
+              label: row.technicianName ? "Reassign Partner" : "Assign Partner",
+              icon: UserPlus,
+              onClick: () => setAssignBooking(row),
+            },
+            {
+              label: "Reschedule",
+              icon: CalendarCheck,
+              onClick: () => setReschedulingBooking(row),
+            },
+            {
               label: "Invoice",
               icon: FileText,
               href: `/billing/${row.id}`,
@@ -322,7 +477,7 @@ export default function BookingsPage() {
             {
               label: "View",
               icon: Eye,
-              href: `/bookings/${row.id}`,
+              href: `/bookings/${row.id}${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ""}`,
             },
             {
               label: "Edit",
@@ -355,53 +510,317 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Simple Clean Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-brand-600" />
-            <span>Bookings & Operations Directory</span>
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            Manage Varanasi customer service bookings, technician partner assignments, live job status, and service quotes.
-          </p>
-        </div>
+      {!selectedCategory ? (
+        /* ─── VIEW 1: CATEGORY SELECTION HUB (ONLY CATEGORIES SHOWN) ─── */
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Simple Clean Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                <Layers className="w-6 h-6 text-brand-600" />
+                <span>Service Category Bookings Hub</span>
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                Select a service category card below to open its operations dashboard, live dispatch table, and partner tracking.
+              </p>
+            </div>
 
-        <button
-          type="button"
-          onClick={() => setIsWizardOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Booking</span>
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={() => setIsWizardOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Booking</span>
+            </button>
+          </div>
 
-      {/* KPI Cards Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-slate-500">Total Bookings</span>
-          <h3 className="text-xl font-black text-slate-900 dark:text-white">{bookings.length} Orders</h3>
-        </div>
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-amber-600">Waiting Partner</span>
-          <h3 className="text-xl font-black text-amber-600">{bookings.filter((b) => !b.technicianName).length} Unassigned</h3>
-        </div>
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-blue-600">In Progress</span>
-          <h3 className="text-xl font-black text-blue-600">{bookings.filter((b) => b.status === "In Progress" || b.status === "Assigned").length} Jobs</h3>
-        </div>
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-emerald-600">Completed Jobs</span>
-          <h3 className="text-xl font-black text-emerald-600">{bookings.filter((b) => b.status === "Completed").length} Closed</h3>
-        </div>
-      </div>
+          {/* Category Cards Dashboard Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Master Card: All Categories */}
+            <div
+              onClick={() => handleSelectCategory("All")}
+              className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col justify-between space-y-6"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black shadow-xs group-hover:scale-105 transition-transform">
+                    <Grid className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    Master View
+                  </span>
+                </div>
 
-      {/* Main DataTable without duplicate headers */}
-      <DataTable
-        columns={columns}
-        data={filteredBookings}
-      />
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
+                    All Service Categories
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                    Complete operational directory across all active service categories in Varanasi.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400 font-bold text-[10px] block uppercase">Total Orders</span>
+                    <span className="text-base font-black text-slate-900 dark:text-white">{bookings.length}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60">
+                    <span className="text-amber-600 dark:text-amber-400 font-bold text-[10px] block uppercase">Unassigned</span>
+                    <span className="text-base font-black text-amber-600 dark:text-amber-400">
+                      {bookings.filter((b) => !b.technicianName).length} Open
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-extrabold text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
+                <span>Open All Bookings Directory</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Dynamic Category Cards */}
+            {categoryStatsList.map((cat) => (
+              <div
+                key={cat.name}
+                onClick={() => handleSelectCategory(cat.name)}
+                className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500 hover:shadow-lg transition-all duration-300 cursor-pointer group flex flex-col justify-between space-y-6"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center font-black shadow-xs group-hover:scale-105 transition-transform">
+                      {cat.name.toLowerCase().includes("ac") ? (
+                        <Wrench className="w-6 h-6" />
+                      ) : cat.name.toLowerCase().includes("electr") ? (
+                        <Zap className="w-6 h-6" />
+                      ) : cat.name.toLowerCase().includes("plumb") ? (
+                        <Droplets className="w-6 h-6" />
+                      ) : cat.name.toLowerCase().includes("clean") ? (
+                        <Sparkles className="w-6 h-6" />
+                      ) : (
+                        <Calendar className="w-6 h-6" />
+                      )}
+                    </div>
+                    <span className="text-[11px] font-black uppercase px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                      {cat.count} Orders
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
+                      {cat.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                      {cat.name.toLowerCase().includes("ac")
+                        ? "Split & window AC power jet wash, gas recharge, and PCB repair."
+                        : cat.name.toLowerCase().includes("electr")
+                        ? "Short circuit testing, MCB box upgrade, wiring, and fan install."
+                        : cat.name.toLowerCase().includes("plumb")
+                        ? "Tap leak repair, motor fitting, overhead tank descaling & drain unclog."
+                        : cat.name.toLowerCase().includes("clean")
+                        ? "Full home deep scrubbing, sofa shampoo, kitchen chimney degrease."
+                        : "On-demand home services & professional maintenance orders."}
+                    </p>
+                  </div>
+
+                  {/* Operational Metrics inside Card */}
+                  <div className="grid grid-cols-4 gap-1.5 pt-1 text-center">
+                    <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+                      <span className="text-[9px] font-bold text-amber-700 dark:text-amber-300 block">Open</span>
+                      <span className="text-sm font-black text-amber-700 dark:text-amber-300">{cat.unassigned}</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+                      <span className="text-[9px] font-bold text-blue-700 dark:text-blue-300 block">Active</span>
+                      <span className="text-sm font-black text-blue-700 dark:text-blue-300">{cat.inProgress}</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+                      <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 block">Closed</span>
+                      <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">{cat.completed}</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800">
+                      <span className="text-[9px] font-bold text-rose-700 dark:text-rose-300 block">Cancelled</span>
+                      <span className="text-sm font-black text-rose-700 dark:text-rose-300">{cat.cancelled}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-extrabold text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
+                  <span>Open {cat.name} Table</span>
+                  <ChevronRight className="w-4 h-4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* ─── VIEW 2: SELECTED CATEGORY OPERATIONS TABLE (NEXT PAGE VIEW) ─── */
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Header with Back to Category Hub button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div className="space-y-2">
+              {/* In-page Breadcrumbs Navigation */}
+             
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleSelectCategory(null)}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl cursor-pointer shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4 text-brand-600" />
+                  <span>Back to Hub</span>
+                </button>
+
+                <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                  <Calendar className="w-6 h-6 text-brand-600" />
+                  <span>
+                    {selectedCategory === "All" ? "All Bookings Directory" : `${selectedCategory} Operations Directory`}
+                  </span>
+                </h1>
+              </div>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Managing live dispatch, partner assignments, and order tracking for {selectedCategory === "All" ? "all categories" : selectedCategory}.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsWizardOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Booking</span>
+            </button>
+          </div>
+
+          {/* 5 KPI Status Summary Cards for the active category */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setCardFilter("ALL");
+                setActiveStatusFilter("All");
+              }}
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
+                cardFilter === "ALL"
+                  ? "bg-indigo-500/10 dark:bg-indigo-950/40 border-2 border-indigo-500 shadow-md scale-[1.01]"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:shadow-sm"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                  Total Bookings
+                </span>
+                {cardFilter === "ALL" && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500 text-white">
+                    Active
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
+                {categoryBookings.length} Orders
+              </h3>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCardFilter(cardFilter === "UNASSIGNED" ? "ALL" : "UNASSIGNED")}
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
+                cardFilter === "UNASSIGNED"
+                  ? "bg-amber-500/10 dark:bg-amber-950/40 border-2 border-amber-500 shadow-md scale-[1.01]"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:shadow-sm"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Waiting Partner</span>
+                {cardFilter === "UNASSIGNED" && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white">
+                    Filtered
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                {categoryBookings.filter((b) => !b.technicianName).length} Unassigned
+              </h3>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCardFilter(cardFilter === "IN_PROGRESS" ? "ALL" : "IN_PROGRESS")}
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
+                cardFilter === "IN_PROGRESS"
+                  ? "bg-blue-500/10 dark:bg-blue-950/40 border-2 border-blue-500 shadow-md scale-[1.01]"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 hover:shadow-sm"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">In Progress</span>
+                {cardFilter === "IN_PROGRESS" && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500 text-white">
+                    Filtered
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                {categoryBookings.filter((b) => b.status === "In Progress" || b.status === "Assigned").length} Jobs
+              </h3>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCardFilter(cardFilter === "COMPLETED" ? "ALL" : "COMPLETED")}
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
+                cardFilter === "COMPLETED"
+                  ? "bg-emerald-500/10 dark:bg-emerald-950/40 border-2 border-emerald-500 shadow-md scale-[1.01]"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:shadow-sm"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Completed Jobs</span>
+                {cardFilter === "COMPLETED" && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500 text-white">
+                    Filtered
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                {categoryBookings.filter((b) => b.status === "Completed").length} Closed
+              </h3>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCardFilter(cardFilter === "CANCELLED" ? "ALL" : "CANCELLED")}
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
+                cardFilter === "CANCELLED"
+                  ? "bg-rose-500/10 dark:bg-rose-950/40 border-2 border-rose-500 shadow-md scale-[1.01]"
+                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-rose-400 hover:shadow-sm"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">Cancelled Jobs</span>
+                {cardFilter === "CANCELLED" && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white">
+                    Filtered
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                {categoryBookings.filter((b) => b.status === "Cancelled" || b.status === "Rejected").length} Cancelled
+              </h3>
+            </button>
+          </div>
+
+          {/* Main DataTable */}
+          <DataTable
+            columns={columns}
+            data={filteredBookings}
+          />
+        </div>
+      )}
 
       {/* MODALS */}
       <BookingWizardModal
@@ -431,11 +850,20 @@ export default function BookingsPage() {
         onJobCompleted={handleJobCompleted}
       />
 
+      {/* Edit Booking Modal */}
       <EditBookingModal
+        isOpen={Boolean(editingBooking)}
         booking={editingBooking}
-        isOpen={!!editingBooking}
         onClose={() => setEditingBooking(null)}
         onBookingUpdated={handleBookingUpdated}
+      />
+
+      {/* Reschedule Booking Modal */}
+      <RescheduleBookingModal
+        isOpen={Boolean(reschedulingBooking)}
+        booking={reschedulingBooking}
+        onClose={() => setReschedulingBooking(null)}
+        onReschedule={handleRescheduleBooking}
       />
 
       <BookingDetailsDrawer
@@ -657,7 +1085,7 @@ export default function BookingsPage() {
                     <td className="py-2">
                       <div className="font-extrabold text-xs">{printTargetBooking.serviceTitle}</div>
                       <div className="text-[10px] text-slate-600 font-normal">
-                        Standard Varanasi Home Service Rate Card (SAC Code: 998719)
+                        Standard Varanasi Home Service Rate Card
                       </div>
                     </td>
                     <td className="py-2 text-right font-mono font-bold text-xs">₹{printTargetBooking.basePrice || 699}</td>
@@ -688,7 +1116,7 @@ export default function BookingsPage() {
               <div className="text-[10px] text-slate-600 space-y-0.5 max-w-sm">
                 <span className="font-extrabold text-black block text-xs">Terms & Conditions</span>
                 <p>1. Invoice generated under GST Act 2017 for Varanasi Jurisdiction.</p>
-                <p>2. SAC Code 998719 applies to Home Maintenance & Repair Services.</p>
+                <p>2. Standard terms apply to Home Maintenance & Repair Services.</p>
               </div>
 
               <div className="w-60 p-2.5 rounded-xl bg-slate-50 border border-slate-300 space-y-1 text-xs">
@@ -714,6 +1142,14 @@ export default function BookingsPage() {
         </Portal>
       )}
     </div>
+  );
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center font-bold text-slate-400">Loading bookings directory...</div>}>
+      <BookingsPageContent />
+    </Suspense>
   );
 }
 
