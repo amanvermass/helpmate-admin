@@ -24,7 +24,8 @@ import {
   Copy,
   Mail,
   Award,
-  Sparkles,
+  UserPlus,
+  Activity,
   Check,
   IndianRupee,
   CreditCard,
@@ -44,11 +45,14 @@ import { OtpVerificationModal } from "@/components/bookings/OtpVerificationModal
 import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 import { RescheduleBookingModal } from "@/components/bookings/RescheduleBookingModal";
 import { Portal } from "@/components/Portal";
+import { useRbac } from "@/context/RbacContext";
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
   const bookingId = resolvedParams.id;
+  const { role } = useRbac();
+  const isOfficeAdmin = role === "Office Admin";
 
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const currentBooking = bookings.find((b) => b.id.toLowerCase() === bookingId.toLowerCase()) || bookings[0];
@@ -252,10 +256,132 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         }
       `}</style>
 
-      {/* ─── CLEAN DETAIL TOP BAR (Enterprise Style) ─── */}
-      {/* Top Header Bar & Action Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5 print:hidden">
-        <div className="space-y-1.5">
+      {isOfficeAdmin ? (
+        <div className="space-y-6 max-w-4xl mx-auto">
+          {/* Clean Back Button */}
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+            <Link
+              href={currentBooking.category ? `/bookings?category=${encodeURIComponent(currentBooking.category)}` : "/bookings"}
+              className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 transition-colors bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4 text-brand-600" />
+              <span>Back to Bookings Directory</span>
+            </Link>
+
+            <span className="font-mono text-xs font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-3 py-1 rounded-xl border border-brand-200 dark:border-brand-800">
+              BOOKING ID: {currentBooking.id}
+            </span>
+          </div>
+
+          {/* Office Admin Minimal Booking Status Card */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">Office Admin Booking Overview</span>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">{currentBooking.serviceTitle}</h2>
+              </div>
+              <span
+                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-xs shrink-0 ${
+                  currentBooking.status === "Completed"
+                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
+                    : currentBooking.status === "In Progress" || currentBooking.status === "Assigned"
+                    ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
+                    : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current inline-block animate-pulse" />
+                <span>Status: {currentBooking.status}</span>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Customer Name</span>
+                <span className="font-extrabold text-slate-900 dark:text-white text-sm block">{currentBooking.customerName}</span>
+                <span className="text-slate-500 font-medium font-mono">{currentBooking.customerPhone}</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Scheduled Working Date & Time</span>
+                <span className="font-extrabold text-slate-900 dark:text-white text-sm block">{currentBooking.date || "30 July 2026"}</span>
+                <span className="text-slate-500 font-medium">{currentBooking.timeSlot || "09:00 AM - 11:00 AM"}</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Assigned Service Partner</span>
+                {currentBooking.technicianName ? (
+                  <div>
+                    <span className="font-extrabold text-emerald-700 dark:text-emerald-300 text-sm block flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      {currentBooking.technicianName}
+                    </span>
+                    <span className="text-slate-500 font-mono font-bold mt-0.5 block">
+                      {currentBooking.technicianPhone || "+91 98390 11200"}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-lg border border-amber-200 inline-block mt-1">
+                    Unassigned
+                  </span>
+                )}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Service Location Address</span>
+                <span className="font-bold text-slate-900 dark:text-white text-xs block leading-relaxed">{currentBooking.address || `${currentBooking.locality}, Varanasi`}</span>
+                <span className="text-slate-500 font-medium block mt-0.5">{currentBooking.locality}, Varanasi</span>
+              </div>
+            </div>
+
+            {/* Visual Booking Lifecycle Progress Tracker */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-3">
+              <span className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
+                <Activity className="w-4 h-4 text-brand-500" />
+                <span>Current Booking Status Tracking</span>
+              </span>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 space-y-1">
+                  <span className="font-extrabold text-emerald-800 dark:text-emerald-300 text-[11px] block">1. Booking Placed</span>
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 block">Created by {currentBooking.createdBy || "Office Admin"}</span>
+                </div>
+
+                <div className={`p-3 rounded-xl border space-y-1 ${
+                  currentBooking.technicianName
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                    : "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300"
+                }`}>
+                  <span className="font-extrabold text-[11px] block">2. Partner Status</span>
+                  <span className="text-[10px] block">{currentBooking.technicianName ? `Assigned (${currentBooking.technicianName})` : "Awaiting Partner Assignment"}</span>
+                </div>
+
+                <div className={`p-3 rounded-xl border space-y-1 ${
+                  currentBooking.status === "In Progress" || currentBooking.status === "Completed"
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                    : "bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500"
+                }`}>
+                  <span className="font-extrabold text-[11px] block">3. Service Execution</span>
+                  <span className="text-[10px] block">{currentBooking.status === "In Progress" ? "In Progress On-Site" : currentBooking.status === "Completed" ? "Service Completed" : "Pending On-Site Visit"}</span>
+                </div>
+
+                <div className={`p-3 rounded-xl border space-y-1 ${
+                  currentBooking.status === "Completed"
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                    : "bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500"
+                }`}>
+                  <span className="font-extrabold text-[11px] block">4. Final Settlement</span>
+                  <span className="text-[10px] block">{currentBooking.status === "Completed" ? "Completed & Closed" : "Pending OTP Verification"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* ─── CLEAN DETAIL TOP BAR (Enterprise Style) ─── */}
+          {/* Top Header Bar & Action Controls */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5 print:hidden">
+            <div className="space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
             <Link
               href={currentBooking.category ? `/bookings?category=${encodeURIComponent(currentBooking.category)}` : "/bookings"}
@@ -297,7 +423,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             {/* First Order / Order Number Badge */}
             {isNewCustomer ? (
               <span className="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs flex items-center gap-1.5 animate-pulse">
-                <Sparkles className="w-3.5 h-3.5" />
+                <UserPlus className="w-3.5 h-3.5" />
                 <span>New Customer • 1st Order</span>
               </span>
             ) : (
@@ -353,32 +479,36 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
-          >
-            <Printer className="w-4 h-4 shrink-0" />
-            <span>Print Tax Invoice</span>
-          </button>
+          {!isOfficeAdmin && (
+            <>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <Printer className="w-4 h-4 shrink-0" />
+                <span>Print Tax Invoice</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setIsRescheduleOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
-          >
-            <CalendarCheck className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
-            <span>Reschedule Job</span>
-          </button>
+              <button
+                type="button"
+                onClick={() => setIsRescheduleOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <CalendarCheck className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+                <span>Reschedule Job</span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setIsEditOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
-          >
-            <Edit2 className="w-4 h-4 shrink-0" />
-            <span>Edit Booking</span>
-          </button>
+              <button
+                type="button"
+                onClick={() => setIsEditOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <Edit2 className="w-4 h-4 shrink-0" />
+                <span>Edit Booking</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -386,7 +516,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
         <div className="flex items-center justify-between text-xs">
           <span className="font-extrabold text-slate-900 dark:text-white uppercase tracking-wider text-[11px] flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-brand-500" />
+            <Activity className="w-4 h-4 text-brand-500" />
             <span>Booking Lifecycle Status Track</span>
           </span>
           <span className="text-slate-500 font-semibold">
@@ -754,74 +884,76 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         <div className="lg:col-span-5 space-y-6">
 
           {/* Card 1: Customer CRM & Contact Intelligence Profile */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Customer CRM & Contact Profile
-              </span>
-              {isNewCustomer ? (
-                <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
-                  ✨ New Customer (1st Order)
+          {!isOfficeAdmin && (
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                  Customer CRM & Contact Profile
                 </span>
-              ) : (
-                <span className="text-[10px] font-extrabold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2.5 py-0.5 rounded-full border border-purple-300 dark:border-purple-800">
-                  {orderOrdinalText}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-brand-600 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
-                {currentBooking.customerName[0]}
+                {isNewCustomer ? (
+                  <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                    New Customer (1st Order)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-extrabold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2.5 py-0.5 rounded-full border border-purple-300 dark:border-purple-800">
+                    {orderOrdinalText}
+                  </span>
+                )}
               </div>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const custId = getCustomerId(currentBooking.customerName, currentBooking.customerPhone);
-                    router.push(`/customers/${custId}?from=${encodeURIComponent(`/bookings/${currentBooking.id}`)}`);
-                  }}
-                  className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-base text-left cursor-pointer flex items-center gap-1.5"
-                  title={`View ${currentBooking.customerName} customer details`}
-                >
-                  <span>{currentBooking.customerName}</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-brand-600" />
-                </button>
-                <span className="text-[11px] font-bold text-slate-500 block mt-0.5">
-                  Varanasi Resident • <strong className="text-slate-900 dark:text-white font-extrabold">{orderOrdinalText}</strong>
-                </span>
-              </div>
-            </div>
 
-            <div className="space-y-2.5 text-xs pt-1">
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <span className="flex items-center gap-2 text-slate-500 font-semibold"><Phone className="w-4 h-4 text-brand-600" /> Mobile Phone</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900 dark:text-white">{currentBooking.customerPhone}</span>
-                  <a
-                    href={`tel:${currentBooking.customerPhone}`}
-                    className="p-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 hover:bg-emerald-100 font-bold"
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-brand-600 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+                  {currentBooking.customerName[0]}
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const custId = getCustomerId(currentBooking.customerName, currentBooking.customerPhone);
+                      router.push(`/customers/${custId}?from=${encodeURIComponent(`/bookings/${currentBooking.id}`)}`);
+                    }}
+                    className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-base text-left cursor-pointer flex items-center gap-1.5"
+                    title={`View ${currentBooking.customerName} customer details`}
                   >
-                    Call
-                  </a>
+                    <span>{currentBooking.customerName}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-brand-600" />
+                  </button>
+                  <span className="text-[11px] font-bold text-slate-500 block mt-0.5">
+                    Varanasi Resident • <strong className="text-slate-900 dark:text-white font-extrabold">{orderOrdinalText}</strong>
+                  </span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2 text-slate-500 font-semibold shrink-0"><Mail className="w-4 h-4 text-brand-600" /> Email Address</span>
-                <span className="font-bold text-slate-900 dark:text-white select-all break-all text-right">
-                  {currentBooking.customerEmail || `${currentBooking.customerName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`}
-                </span>
-              </div>
-
-              {currentBooking.customerGstin && (
-                <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-between">
-                  <span className="text-purple-700 dark:text-purple-300 font-semibold text-[11px]">B2B Customer GSTIN</span>
-                  <span className="font-mono font-bold text-purple-900 dark:text-purple-200">{currentBooking.customerGstin}</span>
+              <div className="space-y-2.5 text-xs pt-1">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-slate-500 font-semibold"><Phone className="w-4 h-4 text-brand-600" /> Mobile Phone</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-white">{currentBooking.customerPhone}</span>
+                    <a
+                      href={`tel:${currentBooking.customerPhone}`}
+                      className="p-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 hover:bg-emerald-100 font-bold"
+                    >
+                      Call
+                    </a>
+                  </div>
                 </div>
-              )}
+
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-slate-500 font-semibold shrink-0"><Mail className="w-4 h-4 text-brand-600" /> Email Address</span>
+                  <span className="font-bold text-slate-900 dark:text-white select-all break-all text-right">
+                    {currentBooking.customerEmail || `${currentBooking.customerName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`}
+                  </span>
+                </div>
+
+                {currentBooking.customerGstin && (
+                  <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-between">
+                    <span className="text-purple-700 dark:text-purple-300 font-semibold text-[11px]">B2B Customer GSTIN</span>
+                    <span className="font-mono font-bold text-purple-900 dark:text-purple-200">{currentBooking.customerGstin}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Card 2: Complete Payment & UPI Gateway Ledger */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
@@ -946,6 +1078,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
         </div>
       </div>
+      </>
+      )}
 
       {/* Modals */}
       <AssignPartnerModal

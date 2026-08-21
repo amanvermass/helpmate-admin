@@ -30,6 +30,7 @@ import {
   Image as ImageIcon,
   MessageCircleQuestion,
   Wallet,
+  Headphones,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
 import { Portal } from "@/components/Portal";
@@ -172,6 +173,22 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       ],
     },
     {
+      sectionTitle: "Customer Reviews & Support",
+      items: [
+        {
+          title: "Reviews & Ratings",
+          icon: Star,
+          href: "/reviews",
+        },
+        {
+          title: "Customer Support",
+          icon: Headphones,
+          href: "/support",
+          badge: "1 Open",
+        },
+      ],
+    },
+    {
       sectionTitle: "Services & Pricing",
       items: [
         {
@@ -296,6 +313,17 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Bookings",
           icon: CalendarCheck,
           href: "/bookings",
+        },
+        {
+          title: "Customer Support",
+          icon: Headphones,
+          href: "/support",
+          badge: "1 Open",
+        },
+        {
+          title: "Reviews & Ratings",
+          icon: Star,
+          href: "/reviews",
         },
       ],
     },

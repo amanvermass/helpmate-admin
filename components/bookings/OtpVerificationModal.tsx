@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, CheckCircle2, ShieldCheck, FileText, Lock, Sparkles, KeyRound } from "lucide-react";
+import { X, CheckCircle2, ShieldCheck, FileText, Lock, KeyRound } from "lucide-react";
 import { Booking, SelectedAddOnItem } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
 import { AddOnManager } from "@/components/bookings/AddOnManager";

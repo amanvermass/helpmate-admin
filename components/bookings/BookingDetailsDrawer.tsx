@@ -23,11 +23,12 @@ import {
   Copy,
   Check,
   Award,
-  Sparkles,
   ExternalLink,
+  Radio,
 } from "lucide-react";
 import { Booking, initialCustomers, initialBookings } from "@/lib/mockData";
 import { Portal } from "@/components/Portal";
+import { useRbac } from "@/context/RbacContext";
 
 interface BookingDetailsDrawerProps {
   booking: Booking | null;
@@ -43,6 +44,8 @@ export function BookingDetailsDrawer({
   onAssignPartner,
 }: BookingDetailsDrawerProps) {
   const router = useRouter();
+  const { role } = useRbac();
+  const isOfficeAdmin = role === "Office Admin";
   const [activeTab, setActiveTab] = useState<"general" | "timeline" | "payment" | "invoice">("general");
   const [copied, setCopied] = useState(false);
 
@@ -169,7 +172,7 @@ export function BookingDetailsDrawer({
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Customer Information</span>
                         {isNew ? (
                           <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
-                            ✨ 1st Order (New Customer)
+                            1st Order (New Customer)
                           </span>
                         ) : (
                           <span className="text-[10px] font-extrabold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded-full border border-purple-300 dark:border-purple-800">
@@ -177,19 +180,25 @@ export function BookingDetailsDrawer({
                           </span>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const custId = getCustomerId(booking.customerName, booking.customerPhone);
-                          onClose();
-                          router.push(`/customers/${custId}?from=${encodeURIComponent("/bookings")}`);
-                        }}
-                        className="font-black text-sm text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-left cursor-pointer flex items-center gap-1.5"
-                        title={`View ${booking.customerName} customer details`}
-                      >
-                        <span>{booking.customerName}</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-brand-500" />
-                      </button>
+                      {isOfficeAdmin ? (
+                        <span className="font-black text-sm text-slate-900 dark:text-white block">
+                          {booking.customerName}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const custId = getCustomerId(booking.customerName, booking.customerPhone);
+                            onClose();
+                            router.push(`/customers/${custId}?from=${encodeURIComponent("/bookings")}`);
+                          }}
+                          className="font-black text-sm text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-left cursor-pointer flex items-center gap-1.5"
+                          title={`View ${booking.customerName} customer details`}
+                        >
+                          <span>{booking.customerName}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-brand-500" />
+                        </button>
+                      )}
                       <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                         <Phone className="w-3.5 h-3.5 text-brand-500" />
                         <span className="font-bold">{booking.customerPhone}</span>
@@ -206,7 +215,7 @@ export function BookingDetailsDrawer({
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Assigned Service Partner</span>
-                    {onAssignPartner && (
+                    {onAssignPartner && !isOfficeAdmin && (
                       <button
                         type="button"
                         onClick={() => onAssignPartner(booking)}
@@ -242,9 +251,42 @@ export function BookingDetailsDrawer({
                           onClick={() => onAssignPartner(booking)}
                           className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[10px] transition-all cursor-pointer"
                         >
-                          Assign Now
+                          Broadcast to Top 5 Partners
                         </button>
                       )}
+                    </div>
+                  )}
+
+                  {/* Broadcast Tracker Card */}
+                  {booking.broadcastOffers && booking.broadcastOffers.length > 0 && (
+                    <div className="p-3 rounded-xl bg-slate-900 text-white space-y-2 mt-2">
+                      <div className="flex items-center justify-between text-[10px] font-extrabold border-b border-slate-800 pb-1">
+                        <span className="text-brand-400 flex items-center gap-1">
+                          <Radio className="w-3 h-3 text-brand-400 animate-pulse" />
+                          Multi-Partner Broadcast ({booking.broadcastOffers.length} Sent)
+                        </span>
+                        <span className="text-slate-400">First-Come First-Served</span>
+                      </div>
+                      <div className="space-y-1 text-[11px]">
+                        {booking.broadcastOffers.map((offer) => (
+                          <div key={offer.technicianId} className="flex items-center justify-between py-0.5">
+                            <span className="font-bold text-slate-200">{offer.technicianName}</span>
+                            {offer.status === "Accepted" ? (
+                              <span className="text-emerald-400 font-extrabold text-[10px] flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Accepted & Assigned
+                              </span>
+                            ) : offer.status === "Offer Closed" ? (
+                              <span className="text-slate-400 font-medium text-[10px]">
+                                🔒 Offer Closed (Accepted by {booking.technicianName})
+                              </span>
+                            ) : (
+                              <span className="text-amber-400 font-bold text-[10px]">
+                                ⏳ Pending Acceptance
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

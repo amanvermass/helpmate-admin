@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Trash2, ShieldCheck, Sparkles, Check, Package, FilePlus, IndianRupee } from "lucide-react";
+import { Plus, Trash2, ShieldCheck, Check, Package, FilePlus, IndianRupee } from "lucide-react";
 import { SelectedAddOnItem } from "@/lib/mockData";
 
 export interface ListedAddOn {

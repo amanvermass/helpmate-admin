@@ -140,6 +140,16 @@ export interface ReviewItem {
   targetName: string;
   date: string;
   status: "Approved" | "Pending" | "Flagged";
+  bookingId?: string;
+  adminResponse?: string;
+  showOnWebsite?: boolean;
+  hasVideo?: boolean;
+  videoUrl?: string;
+  videoThumbnail?: string;
+  videoAspectRatio?: "9:16";
+  videoDuration?: string;
+  locality?: string;
+  category?: string;
 }
 
 export interface TransactionItem {
@@ -302,9 +312,22 @@ export interface SelectedAddOnItem {
   isUnlisted?: boolean;
 }
 
+export interface BroadcastPartnerOffer {
+  technicianId: string;
+  technicianName: string;
+  technicianPhone?: string;
+  rating?: number;
+  locality?: string;
+  status: "Pending" | "Accepted" | "Offer Closed" | "Declined";
+  sentAt?: string;
+  acceptedAt?: string;
+}
+
 export interface Booking {
+  createdBy?: string;
   id: string; // Booking / Invoice ID
   jobId?: string; // Unique Job Tracking Code e.g. HM-JOB-8821
+  broadcastOffers?: BroadcastPartnerOffer[];
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
@@ -622,8 +645,107 @@ export const initialCoupons: CouponItem[] = [
 ];
 
 export const initialReviews: ReviewItem[] = [
-  { id: "rev-1", reviewerName: "Rajesh Kumar Agrawal", reviewerType: "Customer", rating: 5, comment: "Excellent Power Jet AC service in Sigra! Tech Ramesh Yadav arrived in 25 mins.", targetName: "Ramesh Yadav (AC Tech)", date: "Today, 04:30 PM", status: "Approved" },
-  { id: "rev-2", reviewerName: "Dr. Ananya Mukherjee", reviewerType: "Customer", rating: 5, comment: "Very professional therapist Sunita Verma. Highly recommend HelpMate Spa at Assi Ghat.", targetName: "Sunita Verma (Therapist)", date: "Yesterday", status: "Approved" },
+  {
+    id: "rev-101",
+    reviewerName: "Rajesh Kumar Agrawal",
+    reviewerType: "Customer",
+    rating: 5,
+    comment: "Watch my AC cooling test after Power Jet Wash! High pressure foam jet cleaned copper coils completely. Tech Ramesh Yadav arrived within 25 mins in Sigra.",
+    targetName: "Ramesh Yadav (AC Tech)",
+    date: "Today, 04:30 PM",
+    status: "Approved",
+    bookingId: "HM-VAR-8821",
+    showOnWebsite: true,
+    hasVideo: true,
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-technician-checking-air-conditioner-in-an-office-41541-large.mp4",
+    videoThumbnail: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
+    videoAspectRatio: "9:16",
+    videoDuration: "0:24",
+    locality: "Sigra",
+    category: "AC Service & Repair",
+  },
+  {
+    id: "rev-102",
+    reviewerName: "Dr. Ananya Mukherjee",
+    reviewerType: "Customer",
+    rating: 5,
+    comment: "Here is the video review of my living room sofa shampooing and deep villa cleaning! Very professional therapist Sunita Verma. Highly recommend HelpMate Spa at Assi Ghat.",
+    targetName: "Sunita Verma (Deep Cleaning & Spa Specialist)",
+    date: "Yesterday",
+    status: "Approved",
+    bookingId: "HM-VAR-8820",
+    showOnWebsite: true,
+    hasVideo: true,
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-cleaning-a-table-with-a-cloth-42880-large.mp4",
+    videoThumbnail: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80",
+    videoAspectRatio: "9:16",
+    videoDuration: "0:35",
+    locality: "Lanka / Assi Ghat",
+    category: "Elite Deep Cleaning",
+  },
+  {
+    id: "rev-103",
+    reviewerName: "Sanjay Mishra",
+    reviewerType: "Customer",
+    rating: 5,
+    comment: "MCB short circuit & distribution box upgrade video proof. Main trip switch issue resolved in Mahmoorganj. Safe and neat work by Amit Pandey.",
+    targetName: "Amit Pandey (Smart Electrician)",
+    date: "20 Aug 2026",
+    status: "Approved",
+    bookingId: "HM-VAR-8822",
+    showOnWebsite: false,
+    hasVideo: true,
+    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-electrician-checking-an-electrical-panel-41544-large.mp4",
+    videoThumbnail: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=600&auto=format&fit=crop&q=80",
+    videoAspectRatio: "9:16",
+    videoDuration: "0:18",
+    locality: "Mahmoorganj",
+    category: "Smart Home Electrician",
+  },
+  {
+    id: "rev-104",
+    reviewerName: "Priya Sharma",
+    reviewerType: "Customer",
+    rating: 4,
+    comment: "Hydro jet plumbing tap leak fix done properly at Ravindrapuri. Satisfied with the quick service.",
+    targetName: "Vikas Kumar (Plumbing Partner)",
+    date: "19 Aug 2026",
+    status: "Approved",
+    bookingId: "HM-VAR-8823",
+    showOnWebsite: true,
+    hasVideo: false,
+    locality: "Ravindrapuri",
+    category: "Hydro Jet Plumbing",
+  },
+  {
+    id: "rev-105",
+    reviewerName: "Sunil Verma",
+    reviewerType: "Partner",
+    rating: 5,
+    comment: "HelpMate dispatch app assigns Varanasi jobs transparently with instant daily wallet settlement.",
+    targetName: "HelpMate Fleet Operations",
+    date: "18 Aug 2026",
+    status: "Approved",
+    showOnWebsite: true,
+    hasVideo: false,
+    locality: "Bhelupur",
+    category: "Partner Feedback",
+  },
+  {
+    id: "rev-106",
+    reviewerName: "Vikram Singh",
+    reviewerType: "Customer",
+    rating: 2,
+    comment: "Technician arrived 30 mins late during peak heat hours in Bhelupur.",
+    targetName: "Ramesh Yadav (AC Tech)",
+    date: "17 Aug 2026",
+    status: "Flagged",
+    bookingId: "HM-VAR-8819",
+    showOnWebsite: false,
+    hasVideo: false,
+    locality: "Bhelupur",
+    category: "AC Service & Repair",
+  },
 ];
 
 export const initialTransactions: TransactionItem[] = [
@@ -915,6 +1037,8 @@ const generateMockBookings = (): Booking[] => {
       status: "In Progress",
       technicianName: "Ramesh Yadav",
       technicianId: "tech-101",
+      technicianPhone: "+91 98390 11200",
+      createdBy: "Office Admin (Rohan Sharma)",
       date: "Today, 05:30 PM",
       timeSlot: "05:00 PM - 06:30 PM",
       paymentMethod: "UPI",
@@ -957,6 +1081,8 @@ const generateMockBookings = (): Booking[] => {
       status: "Assigned",
       technicianName: "Amit Pandey",
       technicianId: "tech-103",
+      technicianPhone: "+91 94152 88200",
+      createdBy: "Office Admin (Rohan Sharma)",
       date: "Today, 03:15 PM",
       timeSlot: "03:00 PM - 04:30 PM",
       paymentMethod: "Cash on Service",
@@ -1030,6 +1156,8 @@ const generateMockBookings = (): Booking[] => {
       status: "Assigned",
       technicianName: "Sunita Verma",
       technicianId: "tech-102",
+      technicianPhone: "+91 98390 22100",
+      createdBy: "Office Admin (Rohan Sharma)",
       date: "Today, 06:00 PM",
       timeSlot: "06:00 PM - 07:30 PM",
       paymentMethod: "Helpmate Wallet",
@@ -1490,3 +1618,221 @@ export const initialSettlementRecords: SettlementRecord[] = [
     notes: "Batch payout verified by Finance Manager",
   },
 ];
+
+export interface SupportMessage {
+  id: string;
+  sender: "Customer" | "Support Agent" | "System";
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface SupportCallLog {
+  id: string;
+  agentName: string;
+  durationSeconds: number;
+  outcome: "Resolved" | "Follow-up Scheduled" | "Unreachable" | "Customer Call Ended";
+  notes: string;
+  timestamp: string;
+}
+
+export interface SupportTicketItem {
+  id: string;
+  bookingId?: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  partnerName?: string;
+  category: string;
+  issueCategory: "Booking & Scheduling" | "Payments & Billing" | "Service Quality" | "Partner Conduct" | "General Inquiry";
+  subject: string;
+  description: string;
+  priority: "High" | "Medium" | "Low";
+  status: "Open" | "In Progress" | "Resolved" | "Closed";
+  assignedAgent?: string;
+  createdDate: string;
+  lastUpdated: string;
+  messages: SupportMessage[];
+  callLogs: SupportCallLog[];
+  internalNotes?: string[];
+}
+
+export const initialSupportTickets: SupportTicketItem[] = [
+  {
+    id: "TKT-VAR-9910",
+    bookingId: "HM-VAR-8821",
+    customerName: "Rajesh Agrawal",
+    customerPhone: "+91 98390 12345",
+    customerEmail: "rajesh.agrawal@gmail.com",
+    partnerName: "Ramesh Yadav",
+    category: "AC Service & Repair",
+    issueCategory: "Service Quality",
+    subject: "Water leaking from Split AC indoor unit post jet wash service",
+    description: "Technician completed jet cleaning yesterday afternoon. Today morning water started dripping continuously onto the living room wall. Request urgent technician re-visit under 30-day warranty.",
+    priority: "High",
+    status: "Open",
+    assignedAgent: "Priya Sharma (Senior Support Specialist)",
+    createdDate: "2026-08-20T10:15:00Z",
+    lastUpdated: "2026-08-20T10:30:00Z",
+    messages: [
+      {
+        id: "msg-1",
+        sender: "Customer",
+        senderName: "Rajesh Agrawal",
+        text: "Hello support team, water is dripping heavily from the AC indoor unit after yesterday's jet cleaning.",
+        timestamp: "2026-08-20 10:15 AM",
+      },
+      {
+        id: "msg-2",
+        sender: "Support Agent",
+        senderName: "Priya Sharma",
+        text: "Greetings Mr. Rajesh. We apologize for the inconvenience! We have flagged your request under 30-day warranty and are dispatching partner Ramesh Yadav for a free re-inspection.",
+        timestamp: "2026-08-20 10:30 AM",
+      },
+    ],
+    callLogs: [
+      {
+        id: "call-1",
+        agentName: "Priya Sharma",
+        durationSeconds: 180,
+        outcome: "Follow-up Scheduled",
+        notes: "Called customer to confirm location and drain pipe issue details. Partner notified for priority re-visit.",
+        timestamp: "2026-08-20 10:25 AM",
+      },
+    ],
+    internalNotes: [
+      "Drain hose pipe clog suspected post jet wash. Re-visit scheduled free of charge.",
+    ],
+  },
+  {
+    id: "TKT-VAR-9911",
+    bookingId: "HM-VAR-8820",
+    customerName: "Alok Verma",
+    customerPhone: "+91 94152 67890",
+    customerEmail: "alok.verma@yahoo.com",
+    partnerName: "Amit Sharma",
+    category: "Electrical & Wiring",
+    issueCategory: "Partner Conduct",
+    subject: "Technician arrived 45 mins late without prior status update",
+    description: "Scheduled slot was 10:00 AM - 12:00 PM. Technician arrived at 12:45 PM without calling in advance to notify about traffic delay.",
+    priority: "Medium",
+    status: "In Progress",
+    assignedAgent: "Rohan V. (HelpMate Support)",
+    createdDate: "2026-08-19T14:20:00Z",
+    lastUpdated: "2026-08-19T15:10:00Z",
+    messages: [
+      {
+        id: "msg-101",
+        sender: "Customer",
+        senderName: "Alok Verma",
+        text: "The technician arrived almost an hour late and did not call beforehand.",
+        timestamp: "2026-08-19 02:20 PM",
+      },
+      {
+        id: "msg-102",
+        sender: "Support Agent",
+        senderName: "Rohan V.",
+        text: "We sincerely apologize Mr. Alok. Partner penalty advisory issued and ₹100 courtesy wallet credit applied.",
+        timestamp: "2026-08-19 03:00 PM",
+      },
+    ],
+    callLogs: [
+      {
+        id: "call-101",
+        agentName: "Rohan V.",
+        durationSeconds: 240,
+        outcome: "Resolved",
+        notes: "Customer accepted courtesy credit of ₹100 for delay.",
+        timestamp: "2026-08-19 03:10 PM",
+      },
+    ],
+    internalNotes: ["Partner cautioned regarding ETA updates."],
+  },
+  {
+    id: "TKT-VAR-9912",
+    bookingId: "HM-VAR-8818",
+    customerName: "Priya Sharma",
+    customerPhone: "+91 91234 56789",
+    category: "Plumbing Services",
+    issueCategory: "Payments & Billing",
+    subject: "Double UPI transaction deduction for faucet installation",
+    description: "Payment failed on first attempt via PhonePe but amount ₹599 was debited from bank account. Second payment of ₹599 succeeded.",
+    priority: "High",
+    status: "In Progress",
+    assignedAgent: "Anand Verma (Finance Desk)",
+    createdDate: "2026-08-18T11:00:00Z",
+    lastUpdated: "2026-08-18T12:00:00Z",
+    messages: [
+      {
+        id: "msg-201",
+        sender: "Customer",
+        senderName: "Priya Sharma",
+        text: "I was debited twice (₹599 x 2) for UTR #99102910.",
+        timestamp: "2026-08-18 11:00 AM",
+      },
+    ],
+    callLogs: [],
+    internalNotes: ["Finance team initiated reversal for failed UPI transaction UTR #99102910."],
+  },
+  {
+    id: "TKT-VAR-9913",
+    bookingId: "HM-VAR-8819",
+    customerName: "Sunita Devi",
+    customerPhone: "+91 98381 44920",
+    category: "Home Cleaning",
+    issueCategory: "Booking & Scheduling",
+    subject: "Reschedule slot change request for Sunday morning",
+    description: "Requested time slot shift from 2:00 PM to 9:00 AM for deep kitchen cleaning.",
+    priority: "Low",
+    status: "Resolved",
+    assignedAgent: "Priya Sharma",
+    createdDate: "2026-08-17T09:00:00Z",
+    lastUpdated: "2026-08-17T09:45:00Z",
+    messages: [
+      {
+        id: "msg-301",
+        sender: "Support Agent",
+        senderName: "Priya Sharma",
+        text: "Slot updated to Sunday 09:00 AM - 11:00 AM. Confirmation SMS sent.",
+        timestamp: "2026-08-17 09:45 AM",
+      },
+    ],
+    callLogs: [
+      {
+        id: "call-301",
+        agentName: "Priya Sharma",
+        durationSeconds: 120,
+        outcome: "Resolved",
+        notes: "Customer confirmed new morning slot.",
+        timestamp: "2026-08-17 09:40 AM",
+      },
+    ],
+    internalNotes: ["Schedule updated on partner calendar."],
+  },
+  {
+    id: "TKT-VAR-9914",
+    customerName: "Vikas Malhotra",
+    customerPhone: "+91 99350 11200",
+    category: "Appliance Repair",
+    issueCategory: "General Inquiry",
+    subject: "Inquiry regarding 30-Day HelpMate Repair Protection Warranty",
+    description: "Customer inquired if spare parts replaced during washing machine repair carry a separate manufacturer warranty.",
+    priority: "Low",
+    status: "Closed",
+    assignedAgent: "Rohan V.",
+    createdDate: "2026-08-15T16:00:00Z",
+    lastUpdated: "2026-08-15T16:20:00Z",
+    messages: [
+      {
+        id: "msg-401",
+        sender: "Support Agent",
+        senderName: "Rohan V.",
+        text: "All genuine spare parts replaced by HelpMate specialists carry a 90-day manufacturer warranty in addition to our 30-day labor warranty.",
+        timestamp: "2026-08-15 04:20 PM",
+      },
+    ],
+    callLogs: [],
+    internalNotes: ["Warranty terms explained to customer."],
+  },
+];
+
