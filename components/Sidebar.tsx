@@ -31,6 +31,7 @@ import {
   MessageCircleQuestion,
   Wallet,
   Headphones,
+  Crown,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
 import { Portal } from "@/components/Portal";
@@ -205,6 +206,12 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Pricing Engine",
           icon: Tag,
           href: "/pricing",
+        },
+        {
+          title: "Crown Membership & VIP",
+          icon: Crown,
+          href: "/membership",
+          badge: "VIP Club",
         },
       ],
     },

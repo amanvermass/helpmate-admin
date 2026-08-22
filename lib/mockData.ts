@@ -1836,3 +1836,245 @@ export const initialSupportTickets: SupportTicketItem[] = [
   },
 ];
 
+// Membership & VIP Club Interfaces
+export interface MembershipPlan {
+  id: string;
+  name: string; // e.g. HelpMate Silver Pass, HelpMate Gold Club, Crown Elite VIP
+  slug: string;
+  tagline: string;
+  price: number; // e.g. 499, 999, 1999
+  originalPrice: number; // e.g. 999, 1999, 3999
+  billingCycle: "Annual" | "Quarterly" | "Monthly";
+  badge: string; // e.g. "Most Popular", "Best Value", "Elite VIP"
+  discountPercent: number; // e.g. 10, 15, 20
+  freeServicesCount: number; // total free services included
+  convenienceFeeWaiver: boolean;
+  priorityDispatchMinutes: number; // e.g. 15 mins priority
+  freeCancellation: boolean;
+  dedicatedManager: boolean;
+  activeSubscribersCount: number;
+  status: "Active" | "Draft" | "Archived";
+  colorTheme: string; // gradient CSS or color hex
+  perks: string[];
+}
+
+export interface FreeServiceOffer {
+  id: string;
+  serviceTitle: string;
+  category: string;
+  eligiblePlans: string[]; // plan IDs
+  annualQuota: number; // max per member per year
+  unitValue: number; // retail value ₹
+  totalClaimedCount: number;
+  status: "Active" | "Paused";
+}
+
+export interface MemberSubscriber {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  locality: string;
+  planId: string;
+  planName: string;
+  subscribedDate: string;
+  expiryDate: string;
+  daysRemaining: number;
+  freeServicesUsed: number;
+  freeServicesTotal: number;
+  totalSavingsAmount: number;
+  status: "Active" | "Expired" | "Cancelled";
+}
+
+export const initialMembershipPlans: MembershipPlan[] = [
+  {
+    id: "plan-silver",
+    name: "HelpMate Silver Pass",
+    slug: "silver-pass",
+    tagline: "Essential savings for regular home maintenance",
+    price: 499,
+    originalPrice: 999,
+    billingCycle: "Annual",
+    badge: "Starter",
+    discountPercent: 10,
+    freeServicesCount: 1,
+    convenienceFeeWaiver: true,
+    priorityDispatchMinutes: 30,
+    freeCancellation: false,
+    dedicatedManager: false,
+    activeSubscribersCount: 420,
+    status: "Active",
+    colorTheme: "from-slate-700 to-slate-900",
+    perks: [
+      "10% Flat Discount on all Services",
+      "1x FREE Electrical Inspection per year",
+      "₹0 Convenience Fee on all bookings",
+      "Priority Technician Slot Booking",
+    ],
+  },
+  {
+    id: "plan-gold",
+    name: "HelpMate Gold Club",
+    slug: "gold-club",
+    tagline: "Our most popular VIP plan with free AC servicing",
+    price: 999,
+    originalPrice: 1999,
+    billingCycle: "Annual",
+    badge: "🔥 Most Popular",
+    discountPercent: 15,
+    freeServicesCount: 3,
+    convenienceFeeWaiver: true,
+    priorityDispatchMinutes: 15,
+    freeCancellation: true,
+    dedicatedManager: false,
+    activeSubscribersCount: 840,
+    status: "Active",
+    colorTheme: "from-amber-600 via-amber-500 to-yellow-600",
+    perks: [
+      "15% Unlimited Discount across all categories",
+      "2x FREE AC Jet Cleaning Services (₹1,198 Value)",
+      "1x FREE Plumbing Safety Health Check",
+      "Zero Convenience Fee & Free Rescheduling",
+      "15-Minute Express Priority Dispatch",
+    ],
+  },
+  {
+    id: "plan-crown-elite",
+    name: "Crown Elite VIP",
+    slug: "crown-elite",
+    tagline: "Ultimate luxury home care with unlimited VIP perks",
+    price: 1999,
+    originalPrice: 3999,
+    billingCycle: "Annual",
+    badge: "👑 VIP Elite",
+    discountPercent: 20,
+    freeServicesCount: 5,
+    convenienceFeeWaiver: true,
+    priorityDispatchMinutes: 10,
+    freeCancellation: true,
+    dedicatedManager: true,
+    activeSubscribersCount: 168,
+    status: "Active",
+    colorTheme: "from-purple-900 via-purple-700 to-brand-600",
+    perks: [
+      "20% Maximum Discount on all repairs & maintenance",
+      "2x FREE AC Foam Jet Servicing (₹1,598 Value)",
+      "1x FREE Bathroom Hydro Deep Cleaning (₹699 Value)",
+      "1x FREE Full Home Electrical Audit (₹499 Value)",
+      "1x FREE Plumbing Tap Leak Repair (₹299 Value)",
+      "Dedicated Personal Account Manager on Call",
+      "10-Minute Superfast Priority Dispatch Guarantee",
+    ],
+  },
+];
+
+export const initialFreeServiceOffers: FreeServiceOffer[] = [
+  {
+    id: "free-srv-1",
+    serviceTitle: "AC Foam Jet Deep Cleaning (Split/Window)",
+    category: "AC Servicing & Repair",
+    eligiblePlans: ["plan-gold", "plan-crown-elite"],
+    annualQuota: 2,
+    unitValue: 699,
+    totalClaimedCount: 1890,
+    status: "Active",
+  },
+  {
+    id: "free-srv-2",
+    serviceTitle: "Full Home Electrical Safety & MCB Inspection",
+    category: "Smart Home Electrician",
+    eligiblePlans: ["plan-silver", "plan-gold", "plan-crown-elite"],
+    annualQuota: 1,
+    unitValue: 399,
+    totalClaimedCount: 1240,
+    status: "Active",
+  },
+  {
+    id: "free-srv-3",
+    serviceTitle: "Bathroom Hydro Cleaning & Descaling",
+    category: "Deep Cleaning",
+    eligiblePlans: ["plan-crown-elite"],
+    annualQuota: 1,
+    unitValue: 699,
+    totalClaimedCount: 310,
+    status: "Active",
+  },
+  {
+    id: "free-srv-4",
+    serviceTitle: "Tap & Pipe Leak Health Checkup",
+    category: "Hydro Jet Plumbing",
+    eligiblePlans: ["plan-gold", "plan-crown-elite"],
+    annualQuota: 1,
+    unitValue: 299,
+    totalClaimedCount: 400,
+    status: "Active",
+  },
+];
+
+export const initialMemberSubscribers: MemberSubscriber[] = [
+  {
+    id: "sub-101",
+    customerName: "Rohan Sharma",
+    customerPhone: "+91 98765 43210",
+    customerEmail: "rohan.sharma@example.com",
+    locality: "Lanka, Varanasi",
+    planId: "plan-gold",
+    planName: "HelpMate Gold Club",
+    subscribedDate: "2026-01-15",
+    expiryDate: "2027-01-15",
+    daysRemaining: 146,
+    freeServicesUsed: 2,
+    freeServicesTotal: 3,
+    totalSavingsAmount: 3250,
+    status: "Active",
+  },
+  {
+    id: "sub-102",
+    customerName: "Ananya Roy",
+    customerPhone: "+91 91234 56789",
+    customerEmail: "ananya.roy@example.com",
+    locality: "Sigra, Varanasi",
+    planId: "plan-crown-elite",
+    planName: "Crown Elite VIP",
+    subscribedDate: "2025-11-20",
+    expiryDate: "2026-11-20",
+    daysRemaining: 90,
+    freeServicesUsed: 4,
+    freeServicesTotal: 5,
+    totalSavingsAmount: 6490,
+    status: "Active",
+  },
+  {
+    id: "sub-103",
+    customerName: "Vikas Malhotra",
+    customerPhone: "+91 99350 11200",
+    customerEmail: "vikas.m@example.com",
+    locality: "Bhelupur, Varanasi",
+    planId: "plan-silver",
+    planName: "HelpMate Silver Pass",
+    subscribedDate: "2026-03-10",
+    expiryDate: "2027-03-10",
+    daysRemaining: 200,
+    freeServicesUsed: 1,
+    freeServicesTotal: 1,
+    totalSavingsAmount: 1120,
+    status: "Active",
+  },
+  {
+    id: "sub-104",
+    customerName: "Sunita Verma",
+    customerPhone: "+91 98390 44321",
+    customerEmail: "sunita.verma@example.com",
+    locality: "Cantonment, Varanasi",
+    planId: "plan-gold",
+    planName: "HelpMate Gold Club",
+    subscribedDate: "2025-08-01",
+    expiryDate: "2026-08-01",
+    daysRemaining: 0,
+    freeServicesUsed: 3,
+    freeServicesTotal: 3,
+    totalSavingsAmount: 2890,
+    status: "Expired",
+  },
+];
+
