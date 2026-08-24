@@ -32,6 +32,8 @@ import {
   Wallet,
   Headphones,
   Crown,
+  Target,
+  UserPlus,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
 import { Portal } from "@/components/Portal";
@@ -155,6 +157,12 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Inspections",
           icon: Wrench,
           href: "/inspections",
+        },
+        {
+          title: "Lead CRM",
+          icon: Target,
+          href: "/leads",
+          badge: "Live",
         },
       ],
     },
@@ -320,6 +328,12 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Bookings",
           icon: CalendarCheck,
           href: "/bookings",
+        },
+        {
+          title: "Lead CRM",
+          icon: Target,
+          href: "/leads",
+          badge: "Live",
         },
         {
           title: "Customer Support",

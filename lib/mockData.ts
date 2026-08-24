@@ -2078,3 +2078,353 @@ export const initialMemberSubscribers: MemberSubscriber[] = [
   },
 ];
 
+export type LeadStatus =
+  | "New Inquiry"
+  | "Contacted & Qualified"
+  | "Inspection Scheduled"
+  | "Quotation Sent"
+  | "Converted"
+  | "Lost";
+
+export type LeadSource =
+  | "WhatsApp Inquiry"
+  | "Website Form"
+  | "Google Ads"
+  | "Missed Call Desk"
+  | "Customer Referral"
+  | "Mobile App Sign-up"
+  | "Support Desk";
+
+export type LeadPriority = "Urgent" | "High" | "Medium" | "Low";
+
+export interface LeadInteraction {
+  id: string;
+  type: "Call" | "WhatsApp" | "Note" | "StatusChange" | "Quotation";
+  author: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface LeadCRMItem {
+  id: string;
+  customerName: string;
+  phone: string;
+  email: string;
+  locality: string;
+  address: string;
+  serviceCategory: string;
+  serviceRequested: string;
+  leadSource: LeadSource;
+  leadScore: number;
+  estimatedValue: number;
+  status: LeadStatus;
+  priority: LeadPriority;
+  assignedTo: string;
+  followUpDate: string;
+  createdDate: string;
+  lastContacted: string;
+  notesHistory: LeadInteraction[];
+  convertedBookingId?: string;
+  lostReason?: string;
+}
+
+export const initialLeadItems: LeadCRMItem[] = [
+  {
+    id: "LEAD-2026-901",
+    customerName: "Rajesh Tripathi",
+    phone: "+91 98391 12345",
+    email: "rajesh.tripathi@gmail.com",
+    locality: "Lanka, Varanasi",
+    address: "B-12/44 Near BHU Gate, Lanka",
+    serviceCategory: "AC & Appliance Repair",
+    serviceRequested: "AC Master Deep Clean & Gas Refill",
+    leadSource: "WhatsApp Inquiry",
+    leadScore: 88,
+    estimatedValue: 3499,
+    status: "New Inquiry",
+    priority: "Urgent",
+    assignedTo: "Aman Verma (HQ)",
+    followUpDate: "2026-08-24 14:00",
+    createdDate: "2026-08-24 09:15",
+    lastContacted: "2026-08-24 09:30",
+    notesHistory: [
+      {
+        id: "nt-1",
+        type: "WhatsApp",
+        author: "System Bot",
+        text: "Inquiry received via WhatsApp for AC Cooling issue & Deep Servicing.",
+        timestamp: "2026-08-24 09:15",
+      },
+      {
+        id: "nt-2",
+        type: "Note",
+        author: "Aman Verma (HQ)",
+        text: "Customer requested urgent service slot before 3 PM today due to guest arrival.",
+        timestamp: "2026-08-24 09:30",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-902",
+    customerName: "Priyanka Singh",
+    phone: "+91 94502 67890",
+    email: "priyanka.singh@yahoo.com",
+    locality: "Sigra, Varanasi",
+    address: "Flat 302, Royal Residency, Sigra",
+    serviceCategory: "Water Purifier (RO)",
+    serviceRequested: "RO Water Purifier Repair & Membrane Filter Change",
+    leadSource: "Website Form",
+    leadScore: 92,
+    estimatedValue: 2450,
+    status: "Contacted & Qualified",
+    priority: "High",
+    assignedTo: "Rahul Singh (VNS Lead)",
+    followUpDate: "2026-08-24 16:30",
+    createdDate: "2026-08-23 18:40",
+    lastContacted: "2026-08-24 10:15",
+    notesHistory: [
+      {
+        id: "nt-3",
+        type: "Call",
+        author: "Rahul Singh (VNS Lead)",
+        text: "Called customer. High TDS water taste issue reported. Scheduled technician visit confirmation.",
+        timestamp: "2026-08-24 10:15",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-903",
+    customerName: "Alok Nath Gupta",
+    phone: "+91 99350 45678",
+    email: "alok.gupta@guptatraders.in",
+    locality: "Ravindrapuri, Varanasi",
+    address: "C-14/89 Ravindrapuri Main Rd",
+    serviceCategory: "Painting & Renovation",
+    serviceRequested: "Full Home Waterproofing & Interior Painting Consultation",
+    leadSource: "Google Ads",
+    leadScore: 78,
+    estimatedValue: 38000,
+    status: "Inspection Scheduled",
+    priority: "High",
+    assignedTo: "Priya Sharma (Ops)",
+    followUpDate: "2026-08-25 11:00",
+    createdDate: "2026-08-22 11:20",
+    lastContacted: "2026-08-23 15:45",
+    notesHistory: [
+      {
+        id: "nt-4",
+        type: "Call",
+        author: "Priya Sharma (Ops)",
+        text: "Customer wants dampness inspection for 3BHK bungalow before festival season.",
+        timestamp: "2026-08-22 14:10",
+      },
+      {
+        id: "nt-5",
+        type: "StatusChange",
+        author: "Priya Sharma (Ops)",
+        text: "Assigned senior inspector Manoj Kumar for laser dampness check on Aug 25.",
+        timestamp: "2026-08-23 15:45",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-904",
+    customerName: "Manish Upadhyay",
+    phone: "+91 98388 99112",
+    email: "m.upadhyay@gmail.com",
+    locality: "Mahmoorganj, Varanasi",
+    address: "Lane 4, Vivekanand Nagar, Mahmoorganj",
+    serviceCategory: "Electrical Works",
+    serviceRequested: "3-Phase Electric DB Box Installation & Rewiring",
+    leadSource: "Missed Call Desk",
+    leadScore: 82,
+    estimatedValue: 8900,
+    status: "Quotation Sent",
+    priority: "Urgent",
+    assignedTo: "Rajeev Verma (Lead)",
+    followUpDate: "2026-08-24 18:00",
+    createdDate: "2026-08-23 09:00",
+    lastContacted: "2026-08-24 11:00",
+    notesHistory: [
+      {
+        id: "nt-6",
+        type: "Quotation",
+        author: "Rajeev Verma (Lead)",
+        text: "Sent official quotation ₹8,900 via PDF & WhatsApp (includes Havells MCB & heavy gauge copper wire).",
+        timestamp: "2026-08-24 11:00",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-905",
+    customerName: "Smita Chaurasia",
+    phone: "+91 91612 33445",
+    email: "smita.chaurasia@gmail.com",
+    locality: "Sarnath, Varanasi",
+    address: "H.No 88, Near Archaeological Museum, Sarnath",
+    serviceCategory: "Deep Cleaning",
+    serviceRequested: "Kitchen Deep Cleaning & Chimney Degreasing",
+    leadSource: "Customer Referral",
+    leadScore: 95,
+    estimatedValue: 4200,
+    status: "Converted",
+    priority: "Medium",
+    assignedTo: "Aman Verma (HQ)",
+    followUpDate: "Completed",
+    createdDate: "2026-08-21 14:15",
+    lastContacted: "2026-08-22 17:00",
+    convertedBookingId: "BK-VNS-8841",
+    notesHistory: [
+      {
+        id: "nt-7",
+        type: "StatusChange",
+        author: "Aman Verma (HQ)",
+        text: "Customer accepted quote ₹4,200. Converted lead to booking BK-VNS-8841.",
+        timestamp: "2026-08-22 17:00",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-906",
+    customerName: "Devendra Pandey",
+    phone: "+91 97920 88776",
+    email: "devendra.p@rediffmail.com",
+    locality: "Cantonment, Varanasi",
+    address: "C-45 Officers Colony, Cantt",
+    serviceCategory: "Plumbing",
+    serviceRequested: "Bathroom Hydro-jet Drainage Unclogging",
+    leadSource: "Mobile App Sign-up",
+    leadScore: 65,
+    estimatedValue: 1850,
+    status: "Contacted & Qualified",
+    priority: "Medium",
+    assignedTo: "Varanasi Ops Admin",
+    followUpDate: "2026-08-26 10:00",
+    createdDate: "2026-08-24 08:30",
+    lastContacted: "2026-08-24 10:45",
+    notesHistory: [
+      {
+        id: "nt-8",
+        type: "Call",
+        author: "Varanasi Ops Admin",
+        text: "Contacted customer. Customer requested callback on Wednesday post office hours.",
+        timestamp: "2026-08-24 10:45",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-907",
+    customerName: "Sunita Jaiswal",
+    phone: "+91 93351 66778",
+    email: "sunita.j@gmail.com",
+    locality: "Assi Ghat, Varanasi",
+    address: "D-34/12 Assi Ghat Road",
+    serviceCategory: "Deep Cleaning",
+    serviceRequested: "Sofa & Carpet Deep Shampooing (5-Seater)",
+    leadSource: "Support Desk",
+    leadScore: 74,
+    estimatedValue: 2900,
+    status: "Quotation Sent",
+    priority: "Medium",
+    assignedTo: "Rahul Singh (VNS Lead)",
+    followUpDate: "2026-08-25 15:00",
+    createdDate: "2026-08-23 16:00",
+    lastContacted: "2026-08-24 11:30",
+    notesHistory: [
+      {
+        id: "nt-9",
+        type: "Quotation",
+        author: "Rahul Singh (VNS Lead)",
+        text: "Shared quotation ₹2,900 with 10% Gold discount promo details.",
+        timestamp: "2026-08-24 11:30",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-908",
+    customerName: "Harish Chandra Yadav",
+    phone: "+91 98390 22334",
+    email: "harish.yadav@gmail.com",
+    locality: "Shivpur, Varanasi",
+    address: "GT Road Near Bypass, Shivpur",
+    serviceCategory: "Electrical Works",
+    serviceRequested: "Commercial Inverter & High Output Battery Wiring",
+    leadSource: "Google Ads",
+    leadScore: 40,
+    estimatedValue: 12500,
+    status: "Lost",
+    priority: "Low",
+    assignedTo: "Priya Sharma (Ops)",
+    followUpDate: "N/A",
+    createdDate: "2026-08-20 10:00",
+    lastContacted: "2026-08-21 16:00",
+    lostReason: "Out of budget; opted for local unverified mechanic.",
+    notesHistory: [
+      {
+        id: "nt-10",
+        type: "Note",
+        author: "Priya Sharma (Ops)",
+        text: "Customer marked lead lost. Budget constraint.",
+        timestamp: "2026-08-21 16:00",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-909",
+    customerName: "Ritu Agarwal",
+    phone: "+91 94152 77889",
+    email: "ritu.agarwal@outlook.com",
+    locality: "Bhelupur, Varanasi",
+    address: "B-22/105 Bhelupur Crossing",
+    serviceCategory: "Water Purifier (RO)",
+    serviceRequested: "Solar Water Heater Panel Cleaning & Pressure Check",
+    leadSource: "WhatsApp Inquiry",
+    leadScore: 85,
+    estimatedValue: 5600,
+    status: "Inspection Scheduled",
+    priority: "High",
+    assignedTo: "Aman Verma (HQ)",
+    followUpDate: "2026-08-25 12:30",
+    createdDate: "2026-08-23 11:45",
+    lastContacted: "2026-08-24 09:00",
+    notesHistory: [
+      {
+        id: "nt-11",
+        type: "Call",
+        author: "Aman Verma (HQ)",
+        text: "Scheduled rooftop inspection slot for Aug 25 12:30 PM.",
+        timestamp: "2026-08-24 09:00",
+      },
+    ],
+  },
+  {
+    id: "LEAD-2026-910",
+    customerName: "Vikramaditya Roy",
+    phone: "+91 98899 11223",
+    email: "v.roy@gmail.com",
+    locality: "Kuber Nagar, Varanasi",
+    address: "Plot 12, Kuber Nagar Extension",
+    serviceCategory: "Plumbing",
+    serviceRequested: "Modular Kitchen Plumbing & Dual Sink Leakage Fix",
+    leadSource: "Website Form",
+    leadScore: 90,
+    estimatedValue: 3200,
+    status: "New Inquiry",
+    priority: "Urgent",
+    assignedTo: "Unassigned",
+    followUpDate: "2026-08-24 15:00",
+    createdDate: "2026-08-24 11:10",
+    lastContacted: "Never",
+    notesHistory: [
+      {
+        id: "nt-12",
+        type: "Note",
+        author: "System Bot",
+        text: "New inquiry captured via website widget. Unassigned.",
+        timestamp: "2026-08-24 11:10",
+      },
+    ],
+  },
+];
+
+

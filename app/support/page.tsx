@@ -380,62 +380,7 @@ export default function SupportPage() {
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search ticket ID, customer name, phone, booking ID..."
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 font-medium"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Ticket Statuses</option>
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Closed">Closed</option>
-            </select>
-
-            {/* Priority Filter */}
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Priorities</option>
-              <option value="High">High Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="Low">Low Priority</option>
-            </select>
-
-            {/* Issue Category Filter */}
-            <select
-              value={issueFilter}
-              onChange={(e) => setIssueFilter(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Issue Categories</option>
-              <option value="Booking & Scheduling">Booking & Scheduling</option>
-              <option value="Payments & Billing">Payments & Billing</option>
-              <option value="Service Quality">Service Quality</option>
-              <option value="Partner Conduct">Partner Conduct</option>
-              <option value="General Inquiry">General Inquiry</option>
-            </select>
-          </div>
-        </div>
-      </div>
+    
 
       {/* Main Support DataTable */}
       <DataTable columns={columns} data={filteredTickets} />
