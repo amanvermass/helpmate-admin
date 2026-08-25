@@ -35,16 +35,10 @@ export default function SupportPage() {
   const [issueFilter, setIssueFilter] = useState<string>("All");
 
   const [selectedTicket, setSelectedTicket] = useState<SupportTicketItem | null>(null);
-  const [activeTab, setActiveTab] = useState<"chat" | "call" | "notes">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "notes">("chat");
 
   // Chat message state
   const [newMessageText, setNewMessageText] = useState("");
-
-  // Call log modal state
-  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [callDurationMins, setCallDurationMins] = useState("3");
-  const [callOutcome, setCallOutcome] = useState<"Resolved" | "Follow-up Scheduled" | "Unreachable">("Resolved");
-  const [callNotes, setCallNotes] = useState("");
 
   // Internal notes state
   const [newInternalNote, setNewInternalNote] = useState("");
@@ -116,48 +110,6 @@ export default function SupportPage() {
     );
 
     setNewMessageText("");
-  };
-
-  const handleLogCall = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTicket || !callNotes.trim()) return;
-
-    const newCall: SupportCallLog = {
-      id: `call-${Date.now()}`,
-      agentName: "HelpMate Support Representative",
-      durationSeconds: (parseInt(callDurationMins, 10) || 3) * 60,
-      outcome: callOutcome,
-      notes: callNotes.trim(),
-      timestamp: new Date().toLocaleString([], { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
-    };
-
-    const nextStatus = callOutcome === "Resolved" ? "Resolved" : "In Progress";
-
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === selectedTicket.id
-          ? {
-              ...t,
-              status: nextStatus,
-              callLogs: [newCall, ...t.callLogs],
-              lastUpdated: new Date().toISOString(),
-            }
-          : t
-      )
-    );
-
-    setSelectedTicket((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: nextStatus,
-            callLogs: [newCall, ...prev.callLogs],
-          }
-        : null
-    );
-
-    setIsCallModalOpen(false);
-    setCallNotes("");
   };
 
   const handleAddInternalNote = (e: React.FormEvent) => {
@@ -301,21 +253,6 @@ export default function SupportPage() {
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>Message</span>
-          </button>
-
-          {/* Resolve via Call Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedTicket(row);
-              setActiveTab("call");
-              setIsCallModalOpen(true);
-            }}
-            className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900 rounded-xl text-xs font-extrabold flex items-center gap-1 border border-emerald-200 dark:border-emerald-800 transition-colors cursor-pointer"
-            title="Resolve via Phone Call"
-          >
-            <PhoneCall className="w-3.5 h-3.5" />
-            <span>Call</span>
           </button>
         </div>
       ),
@@ -494,20 +431,7 @@ export default function SupportPage() {
                   }`}
                 >
                   <MessageSquare className="w-4 h-4 text-brand-600" />
-                  <span>Option 1: Resolve via Message ({selectedTicket.messages.length})</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("call")}
-                  className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-                    activeTab === "call"
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  <PhoneCall className="w-4 h-4 text-emerald-600" />
-                  <span>Option 2: Resolve via Call ({selectedTicket.callLogs.length})</span>
+                  <span>Resolve via Message ({selectedTicket.messages.length})</span>
                 </button>
 
                 <button
@@ -569,74 +493,7 @@ export default function SupportPage() {
                 </div>
               )}
 
-              {/* TAB 2: RESOLVE VIA CALL (DIRECT PHONE CONTACT & CALL LOG) */}
-              {activeTab === "call" && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <h4 className="font-extrabold text-emerald-900 dark:text-emerald-200 text-sm flex items-center gap-2">
-                        <PhoneCall className="w-4 h-4 text-emerald-600" />
-                        <span>Direct Customer Phone Call Gateway</span>
-                      </h4>
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                        Customer Contact: <strong>{selectedTicket.customerPhone}</strong> ({selectedTicket.customerName})
-                      </p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <a
-                        href={`tel:${selectedTicket.customerPhone}`}
-                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lux flex items-center gap-2 cursor-pointer"
-                      >
-                        <Phone className="w-4 h-4" />
-                        <span>Dial Customer Now</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Call Logs History Timeline */}
-                  <div className="space-y-2 text-xs">
-                    <span className="font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] block">
-                      Support Call History ({selectedTicket.callLogs.length} Calls)
-                    </span>
-
-                    {selectedTicket.callLogs.length === 0 ? (
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 text-center text-slate-400">
-                        No phone call logs recorded yet. Use button below to log support call outcome.
-                      </div>
-                    ) : (
-                      selectedTicket.callLogs.map((call) => (
-                        <div
-                          key={call.id}
-                          className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
-                              <Phone className="w-3.5 h-3.5 text-emerald-600" /> {call.agentName}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-mono">{call.timestamp}</span>
-                          </div>
-                          <p className="text-slate-700 dark:text-slate-300 font-medium">"{call.notes}"</p>
-                          <div className="flex items-center gap-3 pt-1 text-[10px] text-slate-500 font-semibold">
-                            <span>Duration: {Math.floor(call.durationSeconds / 60)} mins</span>
-                            <span>Outcome: <strong className="text-emerald-600">{call.outcome}</strong></span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => setIsCallModalOpen(true)}
-                      className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs hover:bg-slate-200 transition-colors cursor-pointer"
-                    >
-                      + Log Completed Support Call Details
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: INTERNAL AGENT NOTES */}
+              {/* TAB 2: INTERNAL AGENT NOTES */}
               {activeTab === "notes" && (
                 <div className="space-y-4 text-xs">
                   <div className="space-y-2">
@@ -676,79 +533,6 @@ export default function SupportPage() {
         </Portal>
       )}
 
-      {/* LOG SUPPORT CALL MODAL */}
-      {isCallModalOpen && selectedTicket && (
-        <Portal>
-          <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 outline-none">
-            <form
-              onSubmit={handleLogCall}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150"
-            >
-              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 shrink-0">
-                  <PhoneCall className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Record Customer Support Call</h3>
-                  <p className="text-xs text-slate-500 font-medium">{selectedTicket.customerName} ({selectedTicket.customerPhone})</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Call Duration (Minutes)</label>
-                <input
-                  type="number"
-                  value={callDurationMins}
-                  onChange={(e) => setCallDurationMins(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Call Outcome</label>
-                <select
-                  value={callOutcome}
-                  onChange={(e) => setCallOutcome(e.target.value as any)}
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none cursor-pointer"
-                >
-                  <option value="Resolved">Resolved Complaint (Close Ticket)</option>
-                  <option value="Follow-up Scheduled">Follow-up Scheduled</option>
-                  <option value="Unreachable">Customer Unreachable</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Call Resolution Summary Notes *</label>
-                <textarea
-                  rows={3}
-                  value={callNotes}
-                  onChange={(e) => setCallNotes(e.target.value)}
-                  placeholder="Record summary of conversation with customer and resolution agreed upon..."
-                  className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none"
-                  required
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCallModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-lux cursor-pointer"
-                >
-                  Save Call Log
-                </button>
-              </div>
-            </form>
-          </div>
-        </Portal>
-      )}
     </div>
   );
 }

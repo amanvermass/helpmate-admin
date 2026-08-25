@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
 import {
@@ -177,9 +177,11 @@ export default function LeadCRMPage() {
   const [leads, setLeads] = useState<LeadCRMItem[]>(initialLeadItems);
   const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
 
-  // Drag & Drop State
+  // Drag & Drop State & Persistent Refs
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<LeadStatus | null>(null);
+  const draggedLeadRef = useRef<string | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -289,6 +291,19 @@ export default function LeadCRMPage() {
 
     setToastMessage(`Updated ${leadId} stage to "${newStatus}"!`);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleDropLead = (e: React.DragEvent, targetStage: LeadStatus) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const dataId = e.dataTransfer.getData("text/plain");
+    const leadId = dataId || draggedLeadRef.current || draggedLeadId;
+    if (leadId) {
+      handleUpdateStatus(leadId, targetStage);
+    }
+    draggedLeadRef.current = null;
+    setDragOverStage(null);
+    setDraggedLeadId(null);
   };
 
   // Reassign Agent
@@ -838,13 +853,7 @@ export default function LeadCRMPage() {
                   e.preventDefault();
                   if (dragOverStage === stage.label) setDragOverStage(null);
                 }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const leadId = e.dataTransfer.getData("text/plain") || draggedLeadId;
-                  if (leadId) handleUpdateStatus(leadId, stage.label);
-                  setDragOverStage(null);
-                  setDraggedLeadId(null);
-                }}
+                onDrop={(e) => handleDropLead(e, stage.label)}
                 className={`flex flex-col rounded-3xl border p-3.5 transition-all duration-200 min-w-[270px] min-h-[500px] ${
                   isTargetDrop
                     ? "bg-brand-50/80 dark:bg-brand-950/40 border-brand-500 ring-2 ring-brand-500/40 scale-[1.01]"
@@ -888,13 +897,7 @@ export default function LeadCRMPage() {
                     e.preventDefault();
                     if (dragOverStage !== stage.label) setDragOverStage(stage.label);
                   }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const leadId = e.dataTransfer.getData("text/plain") || draggedLeadId;
-                    if (leadId) handleUpdateStatus(leadId, stage.label);
-                    setDragOverStage(null);
-                    setDraggedLeadId(null);
-                  }}
+                  onDrop={(e) => handleDropLead(e, stage.label)}
                   className="space-y-3 flex-1 overflow-y-auto pr-0.5"
                 >
                   {stageLeads.length === 0 ? (
@@ -912,6 +915,9 @@ export default function LeadCRMPage() {
                           draggable={true}
                           onDragStart={(e) => {
                             e.dataTransfer.setData("text/plain", lead.id);
+                            e.dataTransfer.effectAllowed = "move";
+                            draggedLeadRef.current = lead.id;
+                            isDraggingRef.current = true;
                             setDraggedLeadId(lead.id);
                           }}
                           onDragOver={(e) => {
@@ -919,19 +925,19 @@ export default function LeadCRMPage() {
                             e.stopPropagation();
                             if (dragOverStage !== stage.label) setDragOverStage(stage.label);
                           }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const leadId = e.dataTransfer.getData("text/plain") || draggedLeadId;
-                            if (leadId) handleUpdateStatus(leadId, stage.label);
-                            setDragOverStage(null);
-                            setDraggedLeadId(null);
-                          }}
+                          onDrop={(e) => handleDropLead(e, stage.label)}
                           onDragEnd={() => {
-                            setDraggedLeadId(null);
-                            setDragOverStage(null);
+                            setTimeout(() => {
+                              draggedLeadRef.current = null;
+                              isDraggingRef.current = false;
+                              setDraggedLeadId(null);
+                              setDragOverStage(null);
+                            }, 150);
                           }}
-                          onClick={() => setSelectedLead(lead)}
+                          onClick={() => {
+                            if (isDraggingRef.current) return;
+                            setSelectedLead(lead);
+                          }}
                           className={`group p-3.5 bg-white dark:bg-slate-900 border rounded-2xl shadow-xs hover:shadow-lg transition-all cursor-grab active:cursor-grabbing space-y-2.5 relative ${
                             isBeingDragged
                               ? "opacity-40 border-brand-500 border-dashed scale-95"
@@ -1008,11 +1014,26 @@ export default function LeadCRMPage() {
                             </div>
                           )}
 
-                          {/* Footer: Assigned Rep & Quick Actions */}
+                          {/* Footer: Quick Stage Shift Dropdown & Quick Actions */}
                           <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-400">
-                            <span className="font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
-                              {lead.assignedTo.split(" ")[0]}
-                            </span>
+                            {/* Quick Stage Change Dropdown */}
+                            <select
+                              value={lead.status}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleUpdateStatus(lead.id, e.target.value as LeadStatus);
+                              }}
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 outline-none cursor-pointer hover:border-brand-500"
+                              title="Quickly shift lead stage"
+                            >
+                              {STAGES.map((s) => (
+                                <option key={s.label} value={s.label}>
+                                  Stage {s.stepNum}: {s.label}
+                                </option>
+                              ))}
+                              <option value="Lost">Mark Lost</option>
+                            </select>
 
                             {/* Quick Call & WhatsApp Shortcuts */}
                             <div className="flex items-center gap-1">

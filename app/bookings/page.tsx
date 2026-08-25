@@ -34,6 +34,8 @@ import {
   Droplets,
   Grid,
   ChevronRight,
+  Globe,
+  Building2,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { BookingWizardModal } from "@/components/bookings/BookingWizardModal";
@@ -56,9 +58,27 @@ function BookingsPageContent() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
   const [cardFilter, setCardFilter] = useState<"ALL" | "UNASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED">("ALL");
+  const [channelFilter, setChannelFilter] = useState<"ALL" | "ONLINE" | "MANUAL">("ALL");
+
+  // Helper to identify Online Customer Bookings vs Desk Manual Bookings
+  const isOnlineBooking = (b: Booking) => {
+    const isOnlinePayment =
+      b.paymentMethod === "Online" ||
+      b.paymentMethod === "UPI" ||
+      b.paymentMethod === "Card" ||
+      b.paymentMethod === "Helpmate Wallet";
+    const isOnlineSource =
+      !b.createdBy ||
+      b.createdBy.toLowerCase().includes("online") ||
+      b.createdBy.toLowerCase().includes("app") ||
+      b.createdBy.toLowerCase().includes("website") ||
+      !b.createdBy.toLowerCase().includes("office");
+    return isOnlinePayment || isOnlineSource;
+  };
 
   const handleSelectCategory = (catName: string | null) => {
     setCardFilter("ALL");
+    setChannelFilter("ALL");
     setActiveStatusFilter("All");
     if (catName) {
       router.push(`/bookings?category=${encodeURIComponent(catName)}`);
@@ -194,6 +214,14 @@ function BookingsPageContent() {
         if (b.status !== "Cancelled" && b.status !== "Rejected") return false;
       }
 
+      // Origin Channel Filter (Table Level)
+      if (channelFilter === "ONLINE") {
+        return isOnlineBooking(b);
+      }
+      if (channelFilter === "MANUAL") {
+        return !isOnlineBooking(b);
+      }
+
       return true;
     });
 
@@ -203,7 +231,7 @@ function BookingsPageContent() {
       const numB = parseInt(b.id.replace(/\D/g, ""), 10) || 0;
       return numB - numA;
     });
-  }, [categoryBookings, cardFilter, activeStatusFilter]);
+  }, [categoryBookings, cardFilter, activeStatusFilter, channelFilter]);
 
   const handleBookingCreated = (newBooking: Booking) => {
     setBookings([newBooking, ...bookings]);
@@ -332,6 +360,26 @@ function BookingsPageContent() {
             >
               {row.id}
             </button>
+          );
+        },
+        sortable: true,
+      },
+      {
+        key: "originChannel",
+        header: "Origin",
+        accessor: (row: Booking) => {
+          const isOnline = isOnlineBooking(row);
+          return (
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                isOnline
+                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300"
+                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
+              }`}
+            >
+              {isOnline ? <Globe className="w-3 h-3 text-purple-600" /> : <Building2 className="w-3 h-3 text-slate-500" />}
+              <span>{isOnline ? "Online" : "Manual"}</span>
+            </span>
           );
         },
         sortable: true,
@@ -888,10 +936,51 @@ function BookingsPageContent() {
             </button>
           </div>
 
-          {/* Main DataTable */}
+          {/* Main DataTable with Table-Level Origin Filter */}
           <DataTable
             columns={columns}
             data={filteredBookings}
+            extraFilters={
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setChannelFilter("ALL")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    channelFilter === "ALL"
+                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  All Origins
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setChannelFilter("ONLINE")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    channelFilter === "ONLINE"
+                      ? "bg-purple-600 text-white shadow-xs font-extrabold"
+                      : "text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/60"
+                  }`}
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Online Booking ({categoryBookings.filter(isOnlineBooking).length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setChannelFilter("MANUAL")}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    channelFilter === "MANUAL"
+                      ? "bg-slate-800 text-white shadow-xs font-extrabold"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Manual Booking ({categoryBookings.filter((b) => !isOnlineBooking(b)).length})</span>
+                </button>
+              </div>
+            }
           />
         </div>
       )}
