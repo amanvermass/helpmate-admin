@@ -162,7 +162,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Lead CRM",
           icon: Target,
           href: "/leads",
-          badge: "Live",
+          badge: "Coming Soon",
         },
       ],
     },
@@ -189,12 +189,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           icon: Star,
           href: "/reviews",
         },
-        {
-          title: "Customer Support",
-          icon: Headphones,
-          href: "/support",
-          badge: "1 Open",
-        },
+        { title: "Customer Support", icon: Headphones, href: "/support", badge: "Coming Soon" },
       ],
     },
     {
@@ -219,6 +214,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Membership",
           icon: Crown,
           href: "/membership",
+          badge: "Coming Soon",
         },
       ],
     },
@@ -332,23 +328,18 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Lead CRM",
           icon: Target,
           href: "/leads",
-          badge: "Live",
+          badge: "Coming Soon",
         },
         {
           title: "Customer Support",
           icon: Headphones,
           href: "/support",
-          badge: "1 Open",
+          badge: "Coming Soon",
         },
         {
           title: "Reviews & Ratings",
           icon: Star,
           href: "/reviews",
-        },
-        {
-          title: "Membership",
-          icon: Crown,
-          href: "/membership",
         },
       ],
     },
@@ -520,22 +511,22 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                     key={item.href || item.title}
                     href={item.href || "#"}
                     onClick={onCloseMobile}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all group ${isActive
+                    className={`flex items-center justify-between gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all group ${isActive
                         ? "bg-brand-500 text-white shadow-lux"
                         : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Icon
-                        className={`w-4 h-4 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-600 dark:group-hover:text-brand-400"
+                        className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-brand-600 dark:group-hover:text-brand-400"
                           }`}
                       />
-                      <span>{item.title}</span>
+                      <span className="truncate whitespace-nowrap">{item.title}</span>
                     </div>
 
                     {item.badge && (
                       <span
-                        className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full transition-all border ${
+                        className={`text-[8.5px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-full transition-all border shrink-0 whitespace-nowrap ${
                           item.badge.toLowerCase().includes("coming soon")
                             ? isActive
                               ? "bg-white/20 text-white border-white/30 font-bold"

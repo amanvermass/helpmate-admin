@@ -47,7 +47,7 @@ const modulesList: { key: ModuleKey; label: string; icon: any; desc: string }[] 
   { key: "bookings",    label: "Bookings & Jobs",          icon: CalendarCheck, desc: "Manage customer requests, live job assignments & schedules" },
   { key: "inspections", label: "Inspections",               icon: Search,        desc: "On-site service inspections and quality verification" },
   // Partner & Customers
-  { key: "customers",   label: "Customers CRM",            icon: Users,         desc: "Access client profiles & Crown Elite memberships" },
+  { key: "customers",   label: "Customers CRM",            icon: Users,         desc: "Access client profiles & customer CRM directory" },
   { key: "technicians", label: "Partner & KYC",            icon: TechIcon,      desc: "Onboard technicians, verify Aadhaar & police clearance" },
   // Services & Pricing
   { key: "categories",  label: "Category Catalog",         icon: Sliders,       desc: "Manage service categories and sub-categories" },

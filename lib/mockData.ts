@@ -2041,6 +2041,17 @@ export const initialSupportTickets: SupportTicketItem[] = [
 ];
 
 // Membership & VIP Club Interfaces
+export interface IncludedServiceRule {
+  id?: string;
+  serviceTitle: string;
+  category?: string;
+  serviceType?: string;
+  benefitType: "Free" | "PercentDiscount" | "FixedDiscount";
+  discountPercent: number; // e.g. 100 for 100% Free, 20 for 20% OFF
+  discountAmount?: number; // e.g. ₹200 OFF
+  usageLimit: string; // e.g. "Unlimited", "1 / year", "2 / year", "4 / year"
+}
+
 export interface MembershipPlan {
   id: string;
   name: string; // e.g. HelpMate Silver Pass, HelpMate Gold Club, Crown Elite VIP
@@ -2062,7 +2073,7 @@ export interface MembershipPlan {
   customPrimaryColor?: string;
   customSecondaryColor?: string;
   perks: string[];
-  includedServices?: string[]; // Covered service categories
+  includedServices?: (string | IncludedServiceRule)[]; // Covered service categories and per-service discount rules
 }
 
 export interface FreeServiceOffer {

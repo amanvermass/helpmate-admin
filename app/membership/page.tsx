@@ -32,6 +32,10 @@ import {
   UserPlus,
   Sliders,
   Palette,
+  Upload,
+  Eye,
+  MousePointer,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   initialMembershipPlans,
@@ -41,6 +45,7 @@ import {
   MembershipPlan,
   FreeServiceOffer,
   MemberSubscriber,
+  IncludedServiceRule,
 } from "@/lib/mockData";
 import { DataTable, Column } from "@/components/DataTable";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -76,10 +81,79 @@ const THEME_COLOR_OPTIONS = [
   { name: "Ruby / Rose", theme: "from-rose-700 via-pink-800 to-slate-900", preview: "bg-gradient-to-r from-rose-700 to-pink-800" },
 ];
 
+const PRESET_MEMBERSHIP_BANNERS = [
+  { label: "16:9 Hero Banner", dimensions: "1200 x 675 px", format: "16:9 Hero (1200x675)", url: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80" },
+  { label: "4:1 Wide Leaderboard", dimensions: "1200 x 300 px", format: "4:1 Wide Leaderboard (1200x300)", url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=300&auto=format&fit=crop&q=80" },
+  { label: "1:1 Square Mobile", dimensions: "800 x 800 px", format: "1:1 Square Mobile (800x800)", url: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=800&auto=format&fit=crop&q=80" },
+  { label: "3:1 Category Strip", dimensions: "900 x 300 px", format: "3:1 Category Strip (900x300)", url: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=900&h=300&auto=format&fit=crop&q=80" },
+  { label: "9:16 Vertical Story", dimensions: "720 x 1280 px", format: "9:16 Vertical Story (720x1280)", url: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=720&h=1280&auto=format&fit=crop&q=80" },
+];
+
 export default function MembershipManagementPage() {
   const [plans, setPlans] = useState<MembershipPlan[]>(initialMembershipPlans);
   const [freeOffers, setFreeOffers] = useState<FreeServiceOffer[]>(initialFreeServiceOffers);
   const [subscribers, setSubscribers] = useState<MemberSubscriber[]>(initialMemberSubscribers);
+
+  // MEMBERSHIP MARKETING BANNERS STATE (16:9, 4:1, 1:1, 3:1, 9:16)
+  const [membershipBanners, setMembershipBanners] = useState([
+    {
+      id: "mb-1",
+      title: "Join HelpMate Gold Club - Get 15% OFF + 2 Free AC Servicing",
+      bannerFormat: "16:9 Hero (1200x675)",
+      dimensions: "1200 x 675 px",
+      imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80",
+      targetUrl: "https://helpmate-theta.vercel.app/membership",
+      status: "Active",
+      clicksCount: 3420,
+    },
+    {
+      id: "mb-2",
+      title: "Crown VIP Pass Special Deal - Instant ₹150 OFF All Bookings",
+      bannerFormat: "4:1 Wide Leaderboard (1200x300)",
+      dimensions: "1200 x 300 px",
+      imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=300&auto=format&fit=crop&q=80",
+      targetUrl: "https://helpmate-theta.vercel.app/membership",
+      status: "Active",
+      clicksCount: 1890,
+    },
+    {
+      id: "mb-3",
+      title: "Checkout VIP Banner: Unlock ₹0 Booking Convenience Fee",
+      bannerFormat: "1:1 Square Mobile (800x800)",
+      dimensions: "800 x 800 px",
+      imageUrl: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=800&auto=format&fit=crop&q=80",
+      targetUrl: "https://helpmate-theta.vercel.app/membership",
+      status: "Active",
+      clicksCount: 950,
+    },
+  ]);
+
+  const [isAddMbBannerOpen, setIsAddMbBannerOpen] = useState(false);
+  const [newMbTitle, setNewMbTitle] = useState("");
+  const [newMbFormat, setNewMbFormat] = useState("16:9 Hero (1200x675)");
+  const [newMbDimensions, setNewMbDimensions] = useState("1200 x 675 px");
+  const [newMbImageUrl, setNewMbImageUrl] = useState("https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80");
+  const [newMbTargetUrl, setNewMbTargetUrl] = useState("https://helpmate-theta.vercel.app/membership");
+
+  const handleCreateMembershipBanner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMbTitle.trim()) return;
+
+    const newMb = {
+      id: `mb-${Date.now()}`,
+      title: newMbTitle.trim(),
+      bannerFormat: newMbFormat,
+      dimensions: newMbDimensions,
+      imageUrl: newMbImageUrl,
+      targetUrl: newMbTargetUrl,
+      status: "Active",
+      clicksCount: 0,
+    };
+
+    setMembershipBanners([newMb, ...membershipBanners]);
+    setNewMbTitle("");
+    setIsAddMbBannerOpen(false);
+  };
 
   const [activeTab, setActiveTab] = useState<"plans" | "free_services" | "subscribers" | "marketing">("plans");
 
@@ -95,8 +169,6 @@ export default function MembershipManagementPage() {
   const [isFreeServiceDrawerOpen, setIsFreeServiceDrawerOpen] = useState(false);
   const [editingFreeOffer, setEditingFreeOffer] = useState<FreeServiceOffer | null>(null);
 
-  const [isGrantVIPDrawerOpen, setIsGrantVIPDrawerOpen] = useState(false);
-
   // Edit/Create Plan Form State
   const [planFormName, setPlanFormName] = useState("");
   const [planFormPrice, setPlanFormPrice] = useState(999);
@@ -107,10 +179,34 @@ export default function MembershipManagementPage() {
   const [planFormTagline, setPlanFormTagline] = useState("");
   const [planFormBillingCycle, setPlanFormBillingCycle] = useState<"Annual" | "Quarterly" | "Monthly">("Annual");
   const [planFormColorTheme, setPlanFormColorTheme] = useState("from-amber-600 via-amber-500 to-yellow-600");
-  const [planFormIncludedServices, setPlanFormIncludedServices] = useState<string[]>([
-    "AC & Appliance Servicing",
-    "Electrical & Power Maintenance",
-    "Plumbing & Water Flow",
+  const [planFormIncludedServices, setPlanFormIncludedServices] = useState<IncludedServiceRule[]>([
+    {
+      id: "s1",
+      serviceTitle: "AC & Appliance Servicing",
+      category: "AC Servicing & Repair",
+      serviceType: "Split AC",
+      benefitType: "Free",
+      discountPercent: 100,
+      usageLimit: "2 / year",
+    },
+    {
+      id: "s2",
+      serviceTitle: "Electrical & Power Maintenance",
+      category: "Electrical & Wiring",
+      serviceType: "Electrical Circuit",
+      benefitType: "PercentDiscount",
+      discountPercent: 15,
+      usageLimit: "Unlimited",
+    },
+    {
+      id: "s3",
+      serviceTitle: "Plumbing & Water Flow",
+      category: "Plumbing Services",
+      serviceType: "Plumbing",
+      benefitType: "PercentDiscount",
+      discountPercent: 15,
+      usageLimit: "Unlimited",
+    },
   ]);
   const [planFormPerks, setPlanFormPerks] = useState<string[]>([
     "15-Minute Express Priority Partner Allocation",
@@ -121,11 +217,17 @@ export default function MembershipManagementPage() {
   // Wizard Step for creating/editing membership tier: 1 | 2 | 3 | 4
   const [planWizardStep, setPlanWizardStep] = useState<1 | 2 | 3 | 4>(1);
 
-  // Step 2 Form States matching exact 4-field user selection component
+  // Step 2 Form States matching exact 4-field user selection component + Per-Service Benefit Options
   const [step2Category, setStep2Category] = useState("AC Servicing & Repair");
   const [step2ServiceType, setStep2ServiceType] = useState("Split AC");
   const [step2ServiceAction, setStep2ServiceAction] = useState("All Actions (Servicing, Repair, Install)");
   const [step2SelectedPackageTitle, setStep2SelectedPackageTitle] = useState("");
+
+  // Per-Service Discount / Free Service Benefit Selector states
+  const [step2BenefitType, setStep2BenefitType] = useState<"Free" | "PercentDiscount" | "FixedDiscount">("Free");
+  const [step2DiscountPercent, setStep2DiscountPercent] = useState<number>(20);
+  const [step2DiscountAmount, setStep2DiscountAmount] = useState<number>(150);
+  const [step2UsageLimit, setStep2UsageLimit] = useState<string>("Unlimited");
 
   // All sub-services extracted from categories
   const allSubServices = useMemo(() => {
@@ -173,12 +275,45 @@ export default function MembershipManagementPage() {
     }
   }, [filteredPackages]);
 
-  // Add package to service list
+  // Add package with configured benefit rule to service list
   const handleAddServiceFromStep2 = () => {
     const targetTitle = step2SelectedPackageTitle || (filteredPackages[0] ? filteredPackages[0].title : "");
-    if (targetTitle && !planFormIncludedServices.includes(targetTitle)) {
-      setPlanFormIncludedServices([...planFormIncludedServices, targetTitle]);
-    }
+    if (!targetTitle) return;
+
+    const matchedPkg = allSubServices.find((s) => s.title === targetTitle);
+
+    const newRule: IncludedServiceRule = {
+      id: `${targetTitle}-${Date.now()}`,
+      serviceTitle: targetTitle,
+      category: matchedPkg?.category || step2Category,
+      serviceType: matchedPkg?.type || step2ServiceType,
+      benefitType: step2BenefitType,
+      discountPercent: step2BenefitType === "Free" ? 100 : step2DiscountPercent,
+      discountAmount: step2DiscountAmount,
+      usageLimit: step2UsageLimit,
+    };
+
+    setPlanFormIncludedServices((prev) => {
+      const existsIndex = prev.findIndex((s) => s.serviceTitle === targetTitle);
+      if (existsIndex >= 0) {
+        const updated = [...prev];
+        updated[existsIndex] = newRule;
+        return updated;
+      }
+      return [...prev, newRule];
+    });
+  };
+
+  // Helper to update specific fields for an added service rule directly in the included services list
+  const updateIncludedServiceRule = (
+    serviceTitle: string,
+    updatedFields: Partial<IncludedServiceRule>
+  ) => {
+    setPlanFormIncludedServices((prev) =>
+      prev.map((item) =>
+        item.serviceTitle === serviceTitle ? { ...item, ...updatedFields } : item
+      )
+    );
   };
 
   // Custom Perk Input state in Step 3:
@@ -195,17 +330,22 @@ export default function MembershipManagementPage() {
   const [freeValue, setFreeValue] = useState(699);
   const [freeQuota, setFreeQuota] = useState(2);
 
-  // Grant VIP Form State
-  const [grantCustomerName, setGrantCustomerName] = useState("");
-  const [grantCustomerPhone, setGrantCustomerPhone] = useState("");
-  const [grantPlanId, setGrantPlanId] = useState("plan-gold");
-
   // Toggle included service
   const toggleIncludedService = (category: string) => {
-    if (planFormIncludedServices.includes(category)) {
-      setPlanFormIncludedServices(planFormIncludedServices.filter((s) => s !== category));
+    const exists = planFormIncludedServices.some((s) => s.serviceTitle === category);
+    if (exists) {
+      setPlanFormIncludedServices(planFormIncludedServices.filter((s) => s.serviceTitle !== category));
     } else {
-      setPlanFormIncludedServices([...planFormIncludedServices, category]);
+      setPlanFormIncludedServices([
+        ...planFormIncludedServices,
+        {
+          id: `${category}-${Date.now()}`,
+          serviceTitle: category,
+          benefitType: "PercentDiscount",
+          discountPercent: 15,
+          usageLimit: "Unlimited",
+        },
+      ]);
     }
   };
 
@@ -274,11 +414,26 @@ export default function MembershipManagementPage() {
         setIsUsingCustomColors(false);
       }
       setPlanFormIncludedServices(
-        plan.includedServices || [
-          "Power Jet Deep Foam Servicing",
-          "Anti-Bacterial Hydro Coil Cleaning",
-          "Bathroom Hydro Cleaning & Descaling",
-        ]
+        (
+          plan.includedServices || [
+            "Power Jet Deep Foam Servicing",
+            "Anti-Bacterial Hydro Coil Cleaning",
+            "Bathroom Hydro Cleaning & Descaling",
+          ]
+        ).map((item) => {
+          if (typeof item === "string") {
+            const isFree = item.toLowerCase().includes("free");
+            return {
+              id: item,
+              serviceTitle: item,
+              benefitType: isFree ? "Free" : "PercentDiscount",
+              discountPercent: isFree ? 100 : plan.discountPercent || 15,
+              discountAmount: 0,
+              usageLimit: isFree ? "2 / year" : "Unlimited",
+            };
+          }
+          return item;
+        })
       );
       setPlanFormPerks(
         plan.perks && plan.perks.length > 0
@@ -302,10 +457,43 @@ export default function MembershipManagementPage() {
       setPlanFormColorTheme("from-purple-900 via-purple-700 to-brand-600");
       setIsUsingCustomColors(false);
       setPlanFormIncludedServices([
-        "Power Jet Deep Foam Servicing",
-        "Split AC Complete Installation",
-        "Full Home Deep Cleaning (3BHK)",
-        "Smart MCB Box & Circuit Fitting",
+        {
+          id: "s1",
+          serviceTitle: "Power Jet Deep Foam Servicing",
+          category: "AC Servicing & Repair",
+          serviceType: "Split AC",
+          benefitType: "Free",
+          discountPercent: 100,
+          usageLimit: "2 / year",
+        },
+        {
+          id: "s2",
+          serviceTitle: "Split AC Complete Installation",
+          category: "AC Servicing & Repair",
+          serviceType: "Split AC",
+          benefitType: "PercentDiscount",
+          discountPercent: 20,
+          usageLimit: "1 / year",
+        },
+        {
+          id: "s3",
+          serviceTitle: "Full Home Deep Cleaning (3BHK)",
+          category: "Home Cleaning",
+          serviceType: "Full Home",
+          benefitType: "PercentDiscount",
+          discountPercent: 15,
+          usageLimit: "Unlimited",
+        },
+        {
+          id: "s4",
+          serviceTitle: "Smart MCB Box & Circuit Fitting",
+          category: "Electrical & Wiring",
+          serviceType: "Electrical Circuit",
+          benefitType: "FixedDiscount",
+          discountPercent: 0,
+          discountAmount: 200,
+          usageLimit: "Unlimited",
+        },
       ]);
       setPlanFormPerks([
         "15-Minute Express Priority Partner Allocation",
@@ -413,34 +601,6 @@ export default function MembershipManagementPage() {
     });
   }, [subscribers, searchSubscriber, filterPlanId, filterSubscriberStatus]);
 
-  // Handle Grant VIP Form Submit
-  const handleGrantVIPSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!grantCustomerName || !grantCustomerPhone) return;
-
-    const selectedPlan = plans.find((p) => p.id === grantPlanId);
-    const newSub: MemberSubscriber = {
-      id: `sub-${Date.now().toString().slice(-4)}`,
-      customerName: grantCustomerName,
-      customerPhone: grantCustomerPhone,
-      locality: "Varanasi Central",
-      planId: grantPlanId,
-      planName: selectedPlan?.name || "VIP Gold",
-      subscribedDate: new Date().toISOString().split("T")[0],
-      expiryDate: new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0],
-      daysRemaining: 365,
-      freeServicesUsed: 0,
-      freeServicesTotal: selectedPlan?.freeServicesCount || 3,
-      totalSavingsAmount: 0,
-      status: "Active",
-    };
-
-    setSubscribers([newSub, ...subscribers]);
-    setGrantCustomerName("");
-    setGrantCustomerPhone("");
-    setIsGrantVIPDrawerOpen(false);
-  };
-
   // Subscribers Table Columns
   const subscriberColumns: Column<MemberSubscriber>[] = [
     {
@@ -530,12 +690,6 @@ export default function MembershipManagementPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800 flex items-center gap-1">
-              <Crown className="w-3 h-3 text-purple-600" />
-              <span>VIP Loyalty & Subscription Engine</span>
-            </span>
-          </div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white mt-1 flex items-center gap-2">
             HelpMate Membership & Free Services Manager
           </h1>
@@ -545,15 +699,6 @@ export default function MembershipManagementPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsGrantVIPDrawerOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-extrabold text-xs cursor-pointer transition-colors flex items-center gap-1.5"
-          >
-            <UserPlus className="w-4 h-4 text-purple-500" />
-            <span>Grant VIP Plan to Client</span>
-          </button>
-
           {/* RULE: Strictly ONLY ONE Primary Button per page/view */}
           <button
             type="button"
@@ -748,17 +893,34 @@ export default function MembershipManagementPage() {
                       {plan.includedServices && plan.includedServices.length > 0 && (
                         <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
                           <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-                            Included Service Categories
+                            Included Service Offers & Discounts
                           </span>
                           <div className="flex flex-wrap gap-1">
-                            {plan.includedServices.map((cat, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200 dark:border-slate-700"
-                              >
-                                {cat}
-                              </span>
-                            ))}
+                            {plan.includedServices.map((item, idx) => {
+                              const title = typeof item === "string" ? item : item.serviceTitle;
+                              const bType = typeof item === "string" ? (item.toLowerCase().includes("free") ? "Free" : "PercentDiscount") : item.benefitType;
+                              const label = typeof item === "string" ? (item.toLowerCase().includes("free") ? "100% FREE" : `${plan.discountPercent || 15}% OFF`) : bType === "Free" ? "100% FREE" : bType === "PercentDiscount" ? `${item.discountPercent}% OFF` : `₹${item.discountAmount} OFF`;
+
+                              return (
+                                <span
+                                  key={idx}
+                                  className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1.5"
+                                >
+                                  <span>{title}</span>
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-black ${
+                                      bType === "Free"
+                                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                        : bType === "PercentDiscount"
+                                        ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                                        : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                                    }`}
+                                  >
+                                    {label}
+                                  </span>
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -949,35 +1111,290 @@ export default function MembershipManagementPage() {
       {/* TAB 4: MARKETING BANNERS & CHECKOUT PROMOTION */}
       {activeTab === "marketing" && (
         <div className="space-y-6">
+          {/* Header Banner & Format Badge Bar */}
           <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-900 via-slate-900 to-purple-950 text-white space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <span className="px-3 py-1 rounded-full bg-purple-500/30 border border-purple-400/30 text-purple-300 text-xs font-black uppercase">
-                Customer App Promotion Controls
-              </span>
-              <span className="text-xs text-emerald-400 font-extrabold flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4" /> Live on App Checkout
-              </span>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-black">Checkout Membership Upsell Card</h3>
-              <p className="text-xs text-slate-300 mt-1 max-w-xl">
-                Automatically displays a VIP membership savings calculator on the booking checkout page showing customers how much they save instantly.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Crown className="w-6 h-6 text-amber-400" />
-                <div className="text-xs">
-                  <div className="font-extrabold text-white">Promotional Banner Message</div>
-                  <div className="text-slate-300">"Join HelpMate Gold Today for ₹999 & Save ₹150 Instantly + 2 Free AC Cleaning Services!"</div>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="px-3 py-1 rounded-full bg-purple-500/30 border border-purple-400/30 text-purple-300 text-xs font-black uppercase">
+                  Multi-Format Membership Banners Engine
+                </span>
+                <h3 className="text-xl font-black mt-2">App & Web VIP Marketing Banners</h3>
+                <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                  Manage promotional membership banners with multi-size aspect ratios (16:9, 4:1, 1:1, 3:1, 9:16) and direct image uploads.
+                </p>
               </div>
 
+              <button
+                type="button"
+                onClick={() => setIsAddMbBannerOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" /> Add Membership Banner
+              </button>
+            </div>
+
+            {/* Supported Formats Pills */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
+              <span className="text-[10px] uppercase font-bold text-slate-400 self-center mr-1">Supported Formats:</span>
+              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-purple-200 text-[10px] font-mono font-bold">16:9 Hero (1200x675)</span>
+              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-amber-200 text-[10px] font-mono font-bold">4:1 Leaderboard (1200x300)</span>
+              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-emerald-200 text-[10px] font-mono font-bold">1:1 Square Mobile (800x800)</span>
+              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-cyan-200 text-[10px] font-mono font-bold">3:1 Strip (900x300)</span>
+              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-pink-200 text-[10px] font-mono font-bold">9:16 Vertical Story (720x1280)</span>
             </div>
           </div>
+
+          {/* Membership Promotional Banners Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {membershipBanners.map((banner) => (
+              <div
+                key={banner.id}
+                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
+              >
+                <div>
+                  <div className="relative aspect-[16/9] bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <img
+                      src={banner.imageUrl}
+                      alt={banner.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+
+                    <div className="absolute top-3 left-3 z-10 flex gap-1.5 flex-wrap">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1 ${
+                        banner.status === "Active"
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-900/80 text-white backdrop-blur-md"
+                      }`}>
+                        <CheckCircle2 className="w-3 h-3" /> {banner.status}
+                      </span>
+                    </div>
+
+                    <div className="absolute bottom-3 left-3 z-10">
+                      <span className="px-2.5 py-1 rounded-lg bg-black/75 text-white backdrop-blur-md text-[10px] font-mono font-bold shadow-md">
+                        📐 {banner.dimensions}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800">
+                        {banner.bannerFormat}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                        <MousePointer className="w-3 h-3 text-purple-500" /> {banner.clicksCount} Clicks
+                      </span>
+                    </div>
+
+                    <h4 className="font-extrabold text-slate-900 dark:text-white text-xs leading-snug line-clamp-2">
+                      {banner.title}
+                    </h4>
+
+                    <p className="text-[10px] text-slate-400 font-mono truncate">
+                      {banner.targetUrl}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMembershipBanners((prev) =>
+                        prev.map((b) => (b.id === banner.id ? { ...b, status: b.status === "Active" ? "Inactive" : "Active" } : b))
+                      )
+                    }
+                    className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-colors cursor-pointer ${
+                      banner.status === "Active"
+                        ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    }`}
+                  >
+                    {banner.status === "Active" ? "Pause Banner" : "Activate Banner"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMembershipBanners(membershipBanners.filter((b) => b.id !== banner.id))}
+                    className="p-1.5 rounded-xl bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors cursor-pointer"
+                    title="Delete Banner"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Checkout Membership Upsell Promotional Message Preview */}
+          <div className="p-5 rounded-3xl bg-slate-900 text-white space-y-3 border border-slate-800 shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
+                <Crown className="w-4 h-4 text-amber-400" />
+                Checkout Membership Upsell Card Preview
+              </span>
+              <span className="text-[10px] text-emerald-400 font-bold">Auto-Triggered on Booking Checkout</span>
+            </div>
+            <p className="text-xs text-slate-300">
+              "Join HelpMate Gold Today for ₹999 & Save ₹150 Instantly + 2 Free AC Cleaning Services!"
+            </p>
+          </div>
         </div>
+      )}
+
+      {/* ADD MEMBERSHIP PROMOTIONAL BANNER MODAL */}
+      {isAddMbBannerOpen && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Megaphone className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Membership Banner</h3>
+                </div>
+                <button type="button" onClick={() => setIsAddMbBannerOpen(false)} className="text-slate-400 hover:text-slate-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateMembershipBanner} className="space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Banner Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newMbTitle}
+                    onChange={(e) => setNewMbTitle(e.target.value)}
+                    placeholder="e.g. HelpMate Gold Club - 15% OFF + Free AC Service"
+                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Banner Format & Size</label>
+                    <select
+                      value={newMbFormat}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewMbFormat(val);
+                        if (val.includes("16:9")) setNewMbDimensions("1200 x 675 px");
+                        else if (val.includes("4:1")) setNewMbDimensions("1200 x 300 px");
+                        else if (val.includes("1:1")) setNewMbDimensions("800 x 800 px");
+                        else if (val.includes("3:1")) setNewMbDimensions("900 x 300 px");
+                        else if (val.includes("9:16")) setNewMbDimensions("720 x 1280 px");
+                      }}
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none cursor-pointer"
+                    >
+                      <option value="16:9 Hero (1200x675)">16:9 Hero Banner (1200 x 675 px)</option>
+                      <option value="4:1 Wide Leaderboard (1200x300)">4:1 Wide Leaderboard (1200 x 300 px)</option>
+                      <option value="1:1 Square Mobile (800x800)">1:1 Square Mobile (800 x 800 px)</option>
+                      <option value="3:1 Category Strip (900x300)">3:1 Category Strip (900 x 300 px)</option>
+                      <option value="9:16 Vertical Story (720x1280)">9:16 Vertical Story (720 x 1280 px)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Target Redirection URL</label>
+                    <input
+                      type="url"
+                      value={newMbTargetUrl}
+                      onChange={(e) => setNewMbTargetUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-[10px] outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Upload Dropzone & Quick Image Presets */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="font-extrabold text-slate-900 dark:text-white block">
+                      Banner Image Upload & Format Presets
+                    </label>
+                    <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-bold">
+                      {newMbDimensions}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
+                    <label className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs transition-colors">
+                      <Upload className="w-4 h-4" /> Upload Image File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (re) => setNewMbImageUrl(re.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+
+                    <input
+                      type="url"
+                      value={newMbImageUrl}
+                      onChange={(e) => setNewMbImageUrl(e.target.value)}
+                      placeholder="Or paste image URL..."
+                      className="w-full flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-[10px] bg-white dark:bg-slate-900"
+                    />
+                  </div>
+
+                  {/* Preset Size Options */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">
+                      Preset Format Options:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {PRESET_MEMBERSHIP_BANNERS.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setNewMbImageUrl(preset.url);
+                            setNewMbFormat(preset.format);
+                            setNewMbDimensions(preset.dimensions);
+                          }}
+                          className={`p-1.5 rounded-xl border text-left text-[10px] transition-all cursor-pointer flex items-center gap-2 ${
+                            newMbImageUrl === preset.url
+                              ? "bg-purple-50 dark:bg-purple-950/60 border-purple-500 font-bold text-purple-700 dark:text-purple-300"
+                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-100"
+                          }`}
+                        >
+                          <img src={preset.url} alt={preset.label} className="w-7 h-7 rounded object-cover shrink-0" />
+                          <div className="min-w-0">
+                            <div className="font-bold truncate">{preset.label}</div>
+                            <div className="opacity-75 text-[9px] font-mono">{preset.dimensions}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddMbBannerOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-600 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-purple-600 text-white font-extrabold shadow-md cursor-pointer"
+                  >
+                    Save Banner
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Portal>
       )}
 
       {/* EXTRA WIDE SLIDE-OVER DRAWER: CREATE / EDIT MEMBERSHIP TIER */}
@@ -991,7 +1408,7 @@ export default function MembershipManagementPage() {
                 <div>
                   <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600 bg-purple-50 dark:bg-purple-950 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800 flex items-center gap-1.5 w-fit">
                     <Crown className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Step {planWizardStep} of 4 • Tier Configuration Wizard</span>
+                    <span>Step {planWizardStep} of 4 </span>
                   </span>
                   <h3 className="text-lg font-black text-slate-900 dark:text-white mt-1">
                     {editingPlan ? `Edit ${editingPlan.name}` : "Create New Membership Tier"}
@@ -1228,11 +1645,11 @@ export default function MembershipManagementPage() {
                           Service Selection & Package Configuration
                         </h4>
                         <p className="text-xs text-slate-500">
-                          Filter by category, type, and action to select specific included packages for this membership tier.
+                          Filter by category, type, and action to select specific included packages for this membership tier, with custom percent discount or free service offer for each.
                         </p>
                       </div>
 
-                      {/* 4-Field Selection Panel Matching User Screenshot */}
+                      {/* 4-Field Selection Panel + Per-Service Benefit Configurator */}
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4 shadow-xs">
                         {/* Top Row: 3 Custom Dropdowns */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1296,46 +1713,190 @@ export default function MembershipManagementPage() {
 
                         <div className="border-b border-slate-200 dark:border-slate-700 my-1" />
 
-                        {/* Row 2: Select Package + Add Button */}
+                        {/* Row 2: Select Package */}
                         <div>
                           <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                             4. Select Package (Type to Search) *
                           </label>
-                          <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <CustomSelect
-                              value={step2SelectedPackageTitle}
-                              onChange={setStep2SelectedPackageTitle}
-                              options={
-                                filteredPackages.length > 0
-                                  ? filteredPackages.map((pkg) => ({
-                                      value: pkg.title,
-                                      label: `${pkg.title} — ₹${pkg.price} (${pkg.duration}) [${pkg.type}]`,
-                                    }))
-                                  : [{ value: "", label: "No matching packages found" }]
-                              }
-                              searchable
-                              placeholder="Search or Select Package..."
-                              className="flex-1 w-full text-xs font-bold"
-                            />
+                          <CustomSelect
+                            value={step2SelectedPackageTitle}
+                            onChange={setStep2SelectedPackageTitle}
+                            options={
+                              filteredPackages.length > 0
+                                ? filteredPackages.map((pkg) => ({
+                                    value: pkg.title,
+                                    label: `${pkg.title} — ₹${pkg.price} (${pkg.duration}) [${pkg.type}]`,
+                                  }))
+                                : [{ value: "", label: "No matching packages found" }]
+                            }
+                            searchable
+                            placeholder="Search or Select Package..."
+                            className="w-full text-xs font-bold"
+                          />
+                        </div>
 
-                            {/* SECONDARY BUTTON STYLED VIBRANT PURPLE */}
+                        <div className="border-b border-slate-200 dark:border-slate-700 my-1" />
+
+                        {/* Per-Service Benefit & Discount Options Selector */}
+                        <div className="p-3.5 rounded-xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 space-y-3">
+                          <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center justify-between">
+                            <span className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300">
+                              <Sparkles className="w-4 h-4 text-purple-600" />
+                              <span>5. Service Benefit Option (Free Service or Discount for Each) *</span>
+                            </span>
+                            <span className="text-[10px] text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded-full font-bold">
+                              Per-Service Member Offer
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {/* 1. Benefit Type */}
+                            <div>
+                              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                                Benefit Type *
+                              </label>
+                              <div className="grid grid-cols-3 gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStep2BenefitType("Free");
+                                    setStep2DiscountPercent(100);
+                                  }}
+                                  className={`py-1.5 text-[10px] font-black rounded-lg transition-all ${
+                                    step2BenefitType === "Free"
+                                      ? "bg-emerald-600 text-white shadow-xs"
+                                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  }`}
+                                >
+                                  🎁 100% Free
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStep2BenefitType("PercentDiscount");
+                                    if (step2DiscountPercent === 100) setStep2DiscountPercent(20);
+                                  }}
+                                  className={`py-1.5 text-[10px] font-black rounded-lg transition-all ${
+                                    step2BenefitType === "PercentDiscount"
+                                      ? "bg-purple-600 text-white shadow-xs"
+                                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  }`}
+                                >
+                                  % Discount
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStep2BenefitType("FixedDiscount");
+                                  }}
+                                  className={`py-1.5 text-[10px] font-black rounded-lg transition-all ${
+                                    step2BenefitType === "FixedDiscount"
+                                      ? "bg-blue-600 text-white shadow-xs"
+                                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                  }`}
+                                >
+                                  ₹ Flat Off
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 2. Value Configuration */}
+                            <div>
+                              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                                {step2BenefitType === "Free"
+                                  ? "Benefit Value"
+                                  : step2BenefitType === "PercentDiscount"
+                                  ? "Discount Percentage (%)"
+                                  : "Flat Savings Amount (₹)"}
+                              </label>
+                              {step2BenefitType === "Free" ? (
+                                <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px] flex items-center gap-1.5 h-[38px]">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span>100% Free Job (₹0 Member Cost)</span>
+                                </div>
+                              ) : step2BenefitType === "PercentDiscount" ? (
+                                <div className="flex items-center gap-1.5 h-[38px]">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    value={step2DiscountPercent}
+                                    onChange={(e) => setStep2DiscountPercent(Number(e.target.value))}
+                                    className="w-16 px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-black text-xs text-purple-600 dark:text-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                  />
+                                  <span className="font-black text-slate-700 dark:text-slate-300 text-xs">% OFF</span>
+                                  <div className="flex items-center gap-1">
+                                    {[10, 15, 20, 25, 50].map((p) => (
+                                      <button
+                                        key={p}
+                                        type="button"
+                                        onClick={() => setStep2DiscountPercent(p)}
+                                        className={`px-1.5 py-1 text-[10px] font-extrabold rounded-md border ${
+                                          step2DiscountPercent === p
+                                            ? "bg-purple-600 text-white border-purple-600"
+                                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                                        }`}
+                                      >
+                                        {p}%
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 h-[38px]">
+                                  <span className="font-black text-slate-700 dark:text-slate-300 text-xs">₹</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={step2DiscountAmount}
+                                    onChange={(e) => setStep2DiscountAmount(Number(e.target.value))}
+                                    className="w-24 px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl font-black text-xs text-blue-600 dark:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  />
+                                  <span className="font-black text-slate-700 dark:text-slate-300 text-xs">OFF</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 3. Usage Quota / Limit */}
+                            <div>
+                              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                                Usage Limit / Quota *
+                              </label>
+                              <CustomSelect
+                                value={step2UsageLimit}
+                                onChange={setStep2UsageLimit}
+                                options={[
+                                  { value: "Unlimited", label: "Unlimited Usage / Year" },
+                                  { value: "1 / year", label: "1 Job / Member / Year" },
+                                  { value: "2 / year", label: "2 Jobs / Member / Year" },
+                                  { value: "3 / year", label: "3 Jobs / Member / Year" },
+                                  { value: "4 / year", label: "4 Jobs / Member / Year" },
+                                  { value: "6 / year", label: "6 Jobs / Member / Year" },
+                                  { value: "12 / year", label: "12 Jobs / Member / Year" },
+                                ]}
+                                className="w-full text-xs font-bold"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
                             <button
                               type="button"
                               onClick={handleAddServiceFromStep2}
-                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0"
+                              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0"
                             >
                               <Plus className="w-4 h-4 stroke-[3]" />
-                              <span>+ Add to Service List</span>
+                              <span>+ Add Service Offer to Tier List</span>
                             </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Table / List of Included Services */}
+                      {/* Included Services List with Enhanced Interactive Row Controls */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-extrabold text-slate-900 dark:text-white text-xs">
-                            Included Services List ({planFormIncludedServices.length})
+                            Configured Service Offers & Discounts List ({planFormIncludedServices.length})
                           </span>
 
                           {planFormIncludedServices.length > 0 && (
@@ -1351,42 +1912,160 @@ export default function MembershipManagementPage() {
 
                         {planFormIncludedServices.length === 0 ? (
                           <div className="p-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-slate-400 text-xs">
-                            No services added yet. Use the 4-step selector above to add packages to this VIP membership tier.
+                            No services added yet. Select a service category/package and configure percent discount or free service benefit above.
                           </div>
                         ) : (
-                          <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
+                          <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
                             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                              {planFormIncludedServices.map((srvTitle, idx) => {
-                                const matchedPkg = allSubServices.find((s) => s.title === srvTitle);
+                              {planFormIncludedServices.map((rule, idx) => {
+                                const matchedPkg = allSubServices.find((s) => s.title === rule.serviceTitle);
 
                                 return (
-                                  <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-300 font-extrabold text-xs flex items-center justify-center">
-                                        {idx + 1}
-                                      </div>
-                                      <div>
-                                        <div className="font-extrabold text-slate-900 dark:text-white text-xs">{srvTitle}</div>
-                                        <div className="text-[10px] text-slate-400">
-                                          {matchedPkg ? `${matchedPkg.category} • ${matchedPkg.type} • ${matchedPkg.duration}` : "Covered Category Service"}
+                                  <div
+                                    key={idx}
+                                    className="p-3.5 space-y-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                                  >
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                      {/* Left Info */}
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-300 font-extrabold text-xs flex items-center justify-center shrink-0">
+                                          {idx + 1}
                                         </div>
+                                        <div>
+                                          <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2 flex-wrap">
+                                            <span>{rule.serviceTitle}</span>
+                                            {/* Benefit Badge */}
+                                            <span
+                                              className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                rule.benefitType === "Free"
+                                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                                                  : rule.benefitType === "PercentDiscount"
+                                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800"
+                                                  : "bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800"
+                                              }`}
+                                            >
+                                              {rule.benefitType === "Free"
+                                                ? "🎁 100% FREE"
+                                                : rule.benefitType === "PercentDiscount"
+                                                ? `⚡ ${rule.discountPercent}% OFF`
+                                                : `🏷️ ₹${rule.discountAmount} OFF`}
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                              Quota: {rule.usageLimit}
+                                            </span>
+                                          </div>
+                                          <div className="text-[10px] text-slate-400 mt-0.5">
+                                            {matchedPkg
+                                              ? `${matchedPkg.category} • ${matchedPkg.type} • ${matchedPkg.duration}`
+                                              : `${rule.category || "General"} Service`}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Right Action: Delete */}
+                                      <div className="flex items-center gap-2 self-end sm:self-center">
+                                        {matchedPkg && (
+                                          <span className="font-extrabold text-slate-500 dark:text-slate-400 text-xs">
+                                            Retail: ₹{matchedPkg.price}
+                                          </span>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setPlanFormIncludedServices(
+                                              planFormIncludedServices.filter((s) => s.serviceTitle !== rule.serviceTitle)
+                                            )
+                                          }
+                                          className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 cursor-pointer transition-colors"
+                                          title="Remove from included list"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
                                       </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                      {matchedPkg && (
-                                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
-                                          ₹{matchedPkg.price}
-                                        </span>
-                                      )}
+                                    {/* Inline Interactive Row Controls */}
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50/80 dark:bg-slate-800/30 p-2 rounded-xl">
+                                      {/* Mode Switcher */}
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-[10px] font-bold text-slate-500 shrink-0">Offer:</span>
+                                        <select
+                                          value={rule.benefitType}
+                                          onChange={(e) =>
+                                            updateIncludedServiceRule(rule.serviceTitle, {
+                                              benefitType: e.target.value as any,
+                                              discountPercent: e.target.value === "Free" ? 100 : rule.discountPercent || 20,
+                                            })
+                                          }
+                                          className="text-[10px] font-black bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-1.5 py-1 text-slate-800 dark:text-slate-200"
+                                        >
+                                          <option value="Free">🎁 100% Free Service</option>
+                                          <option value="PercentDiscount">⚡ Percent Discount (%)</option>
+                                          <option value="FixedDiscount">🏷️ Fixed Amount Off (₹)</option>
+                                        </select>
+                                      </div>
 
-                                      <button
-                                        type="button"
-                                        onClick={() => setPlanFormIncludedServices(planFormIncludedServices.filter((s) => s !== srvTitle))}
-                                        className="p-1 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 cursor-pointer"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </button>
+                                      {/* Value Input */}
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-[10px] font-bold text-slate-500 shrink-0">Value:</span>
+                                        {rule.benefitType === "Free" ? (
+                                          <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">100% Complimentary</span>
+                                        ) : rule.benefitType === "PercentDiscount" ? (
+                                          <div className="flex items-center gap-1">
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              max="100"
+                                              value={rule.discountPercent}
+                                              onChange={(e) =>
+                                                updateIncludedServiceRule(rule.serviceTitle, {
+                                                  discountPercent: Number(e.target.value),
+                                                })
+                                              }
+                                              className="w-14 px-1.5 py-0.5 text-[10px] font-black bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-purple-600 dark:text-purple-400"
+                                            />
+                                            <span className="text-[10px] font-black text-slate-600 dark:text-slate-400">% OFF</span>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-[10px] font-black text-slate-600 dark:text-slate-400">₹</span>
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              value={rule.discountAmount || 150}
+                                              onChange={(e) =>
+                                                updateIncludedServiceRule(rule.serviceTitle, {
+                                                  discountAmount: Number(e.target.value),
+                                                })
+                                              }
+                                              className="w-16 px-1.5 py-0.5 text-[10px] font-black bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-blue-600 dark:text-blue-400"
+                                            />
+                                            <span className="text-[10px] font-black text-slate-600 dark:text-slate-400">OFF</span>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Quota Limit */}
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-[10px] font-bold text-slate-500 shrink-0">Quota:</span>
+                                        <select
+                                          value={rule.usageLimit}
+                                          onChange={(e) =>
+                                            updateIncludedServiceRule(rule.serviceTitle, {
+                                              usageLimit: e.target.value,
+                                            })
+                                          }
+                                          className="text-[10px] font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-1.5 py-1 text-slate-800 dark:text-slate-200"
+                                        >
+                                          <option value="Unlimited">Unlimited Usage</option>
+                                          <option value="1 / year">1 Job / Year</option>
+                                          <option value="2 / year">2 Jobs / Year</option>
+                                          <option value="3 / year">3 Jobs / Year</option>
+                                          <option value="4 / year">4 Jobs / Year</option>
+                                          <option value="6 / year">6 Jobs / Year</option>
+                                          <option value="12 / year">12 Jobs / Year</option>
+                                        </select>
+                                      </div>
                                     </div>
                                   </div>
                                 );
@@ -1675,9 +2354,16 @@ export default function MembershipManagementPage() {
                             <div className="space-y-1">
                               <span className="text-[10px] font-bold text-slate-400 uppercase">Covered Services ({planFormIncludedServices.length})</span>
                               <div className="flex flex-wrap gap-1">
-                                {planFormIncludedServices.slice(0, 4).map((s, idx) => (
-                                  <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold">
-                                    {s}
+                                {planFormIncludedServices.slice(0, 4).map((rule, idx) => (
+                                  <span key={idx} className="px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-[10px] font-extrabold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                                    <span>{rule.serviceTitle}</span>
+                                    <span className="px-1 py-0.2 bg-purple-200 dark:bg-purple-900 rounded text-[9px] font-black">
+                                      {rule.benefitType === "Free"
+                                        ? "FREE"
+                                        : rule.benefitType === "PercentDiscount"
+                                        ? `${rule.discountPercent}% OFF`
+                                        : `₹${rule.discountAmount} OFF`}
+                                    </span>
                                   </span>
                                 ))}
                                 {planFormIncludedServices.length > 4 && (
@@ -1848,102 +2534,6 @@ export default function MembershipManagementPage() {
                   className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux cursor-pointer"
                 >
                   Save Free Service Rule
-                </button>
-              </div>
-            </div>
-          </div>
-        </Portal>
-      )}
-
-      {/* SLIDE-OVER DRAWER 3: GRANT VIP MEMBERSHIP TO CLIENT */}
-      {isGrantVIPDrawerOpen && (
-        <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/70 backdrop-blur-sm flex justify-end">
-            <div className="absolute inset-0" onClick={() => setIsGrantVIPDrawerOpen(false)} />
-            <div className="relative max-w-lg w-full h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 space-y-6 shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-300 z-10 flex flex-col justify-between">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-purple-600 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800">
-                      Client Loyalty Gift
-                    </span>
-                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-1">
-                      Grant VIP Membership to Customer
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsGrantVIPDrawerOpen(false)}
-                    className="p-2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <form id="grant-drawer-form" onSubmit={handleGrantVIPSubmit} className="space-y-4 text-xs">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Customer Full Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Ramesh Kumar"
-                      value={grantCustomerName}
-                      onChange={(e) => setGrantCustomerName(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Customer Phone Number
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. +91 98765 12345"
-                      value={grantCustomerPhone}
-                      onChange={(e) => setGrantCustomerPhone(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white font-bold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Select Membership Plan Tier
-                    </label>
-                    <CustomSelect
-                      value={grantPlanId}
-                      onChange={setGrantPlanId}
-                      options={[
-                        { value: "plan-silver", label: "HelpMate Silver Pass (10% OFF, 1 Free Service)" },
-                        { value: "plan-gold", label: "HelpMate Gold Club (15% OFF, 3 Free Services)" },
-                        { value: "plan-crown-elite", label: "Crown Elite VIP (20% OFF, 5 Free Services)" },
-                      ]}
-                      placeholder="Select Membership Plan Tier..."
-                      className="w-full text-xs font-bold"
-                    />
-                  </div>
-                </form>
-              </div>
-
-              <div className="flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsGrantVIPDrawerOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
-                >
-                  Cancel
-                </button>
-
-                {/* SINGLE PRIMARY BUTTON IN DRAWER ACCORDING TO RULE */}
-                <button
-                  type="submit"
-                  form="grant-drawer-form"
-                  className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux cursor-pointer"
-                >
-                  Grant VIP Membership
                 </button>
               </div>
             </div>

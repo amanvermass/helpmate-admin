@@ -123,6 +123,28 @@ export default function SupportTicketDetailPage({ params }: { params: Promise<{ 
     setNewInternalNote("");
   };
 
+  // Office Admin can view unassigned tickets or tickets assigned to themselves, but restricted if assigned to another Office Admin
+  const isAssignedToOther = ticket.assignedAdmin && ticket.assignedAdmin !== currentUser.name;
+  if (role === "Office Admin" && isAssignedToOther) {
+    return (
+      <div className="p-8 text-center space-y-4 max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl">
+        <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto border border-amber-300 dark:border-amber-800">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Ticket Assigned to Another Admin</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          This support ticket is currently assigned to <strong>{ticket.assignedAdmin}</strong>. You can only access tickets assigned to yourself or unassigned tickets.
+        </p>
+        <Link
+          href="/support"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Support Desk
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-auto mx-auto pb-12">
       {/* Top Header & Breadcrumb */}

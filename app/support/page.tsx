@@ -74,10 +74,10 @@ export default function SupportPage() {
       prev.map((t) =>
         t.id === ticketId
           ? {
-              ...t,
-              assignedAdmin: adminName || undefined,
-              status: !adminName ? "In Review" : t.status,
-            }
+            ...t,
+            assignedAdmin: adminName || undefined,
+            status: !adminName ? "In Review" : t.status,
+          }
           : t
       )
     );
@@ -86,7 +86,7 @@ export default function SupportPage() {
 
   // RBAC Ticket Visibility Filter
   // Super Admin: sees ALL tickets across all Office Admins
-  // Office Admin: sees ONLY tickets assigned specifically to them + unassigned tickets
+  // Office Admin: sees tickets assigned to self (assignedAdmin === currentUser.name) + unassigned tickets
   const visibleTickets = useMemo(() => {
     return tickets.filter((t) => {
       if (isSuperAdmin) return true;
@@ -138,177 +138,182 @@ export default function SupportPage() {
     });
   }, [visibleTickets, statusFilter, priorityFilter, issueFilter, searchQuery]);
 
-  const columns: Column<SupportTicketItem>[] = [
-    {
-      key: "id",
-      header: "Ticket ID",
-      accessor: (row) => (
-        <Link
-          href={`/support/${row.id}`}
-          className="font-mono font-black text-brand-600 dark:text-brand-400 hover:underline text-xs cursor-pointer"
-        >
-          {row.id}
-        </Link>
-      ),
-      sortable: true,
-    },
-    {
-      key: "customerName",
-      header: "Customer & Phone",
-      accessor: (row) => (
-        <div>
-          <div className="font-extrabold text-slate-900 dark:text-white text-xs">{row.customerName}</div>
-          <div className="font-mono text-[11px] text-slate-500">{row.customerPhone}</div>
-        </div>
-      ),
-      sortable: true,
-    },
-    {
-      key: "bookingId",
-      header: "Related Booking",
-      accessor: (row) =>
-        row.bookingId ? (
+  const columns = useMemo<Column<SupportTicketItem>[]>(() => {
+    const cols: Column<SupportTicketItem>[] = [
+      {
+        key: "id",
+        header: "Ticket ID",
+        accessor: (row) => (
           <Link
-            href={`/bookings/${row.bookingId}`}
-            className="font-mono text-xs font-extrabold text-purple-700 dark:text-purple-300 hover:underline"
+            href={`/support/${row.id}`}
+            className="font-mono font-black text-brand-600 dark:text-brand-400 hover:underline text-xs cursor-pointer"
           >
-            {row.bookingId}
+            {row.id}
           </Link>
-        ) : (
-          <span className="text-[11px] text-slate-400">General Inquiry</span>
         ),
-      sortable: true,
-    },
-    {
-      key: "issueCategory",
-      header: "Issue Category",
-      accessor: (row) => (
-        <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-          {row.issueCategory}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
-      key: "subject",
-      header: "Subject & Complaint Summary",
-      accessor: (row) => (
-        <div className="max-w-xs space-y-0.5">
-          <div className="font-bold text-slate-900 dark:text-white text-xs truncate" title={row.subject}>
-            {row.subject}
-          </div>
-          <p className="text-[11px] text-slate-500 line-clamp-1">{row.description}</p>
-        </div>
-      ),
-    },
-    {
-      key: "priority",
-      header: "Priority",
-      accessor: (row) => (
-        <span
-          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-            row.priority === "High"
-              ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
-              : row.priority === "Medium"
-              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
-              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
-          }`}
-        >
-          {row.priority}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
-      key: "status",
-      header: "Ticket Status",
-      accessor: (row) => {
-        return (
-          <span
-            className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 border ${
-              row.status === "Replied"
-                ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800"
-                : row.status === "Customer Replied"
-                ? "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800 shadow-xs"
-                : row.status === "In Progress"
-                ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/80 dark:text-blue-300 dark:border-blue-800"
-                : row.status === "In Review"
-                ? "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950/80 dark:text-orange-300 dark:border-orange-800"
-                : row.status === "Answered"
-                ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800"
-                : "bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-            }`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                row.status === "Customer Replied" ? "bg-purple-600 animate-pulse" : "bg-current"
-              }`}
-            />
-            <span>{row.status}</span>
-          </span>
-        );
+        sortable: true,
       },
-      sortable: true,
-    },
-    {
-      key: "assignedAdmin",
-      header: "Assigned Office Admin",
-      accessor: (row) => {
-        const assignedAdminName = row.assignedAdmin;
-        if (!assignedAdminName) {
+      {
+        key: "customerName",
+        header: "Customer & Phone",
+        accessor: (row) => (
+          <div>
+            <div className="font-extrabold text-slate-900 dark:text-white text-xs">{row.customerName}</div>
+            <div className="font-mono text-[11px] text-slate-500">{row.customerPhone}</div>
+          </div>
+        ),
+        sortable: true,
+      },
+      {
+        key: "bookingId",
+        header: "Related Booking",
+        accessor: (row) =>
+          row.bookingId ? (
+            <Link
+              href={`/bookings/${row.bookingId}`}
+              className="font-mono text-xs font-extrabold text-purple-700 dark:text-purple-300 hover:underline"
+            >
+              {row.bookingId}
+            </Link>
+          ) : (
+            <span className="text-[11px] text-slate-400">General Inquiry</span>
+          ),
+        sortable: true,
+      },
+      {
+        key: "issueCategory",
+        header: "Issue Category",
+        accessor: (row) => (
+          <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
+            {row.issueCategory}
+          </span>
+        ),
+        sortable: true,
+      },
+      {
+        key: "subject",
+        header: "Subject & Complaint Summary",
+        accessor: (row) => (
+          <div className="max-w-xs space-y-0.5">
+            <div className="font-bold text-slate-900 dark:text-white text-xs truncate" title={row.subject}>
+              {row.subject}
+            </div>
+            <p className="text-[11px] text-slate-500 line-clamp-1">{row.description}</p>
+          </div>
+        ),
+      },
+      {
+        key: "priority",
+        header: "Priority",
+        accessor: (row) => (
+          <span
+            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${row.priority === "High"
+                ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
+                : row.priority === "Medium"
+                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
+                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
+              }`}
+          >
+            {row.priority}
+          </span>
+        ),
+        sortable: true,
+      },
+      {
+        key: "status",
+        header: "Ticket Status",
+        accessor: (row) => {
+          return (
+            <span
+              className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 border ${row.status === "Replied"
+                  ? "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/80 dark:text-amber-300 dark:border-amber-800"
+                  : row.status === "Customer Replied"
+                    ? "bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/80 dark:text-purple-300 dark:border-purple-800 shadow-xs"
+                    : row.status === "In Progress"
+                      ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/80 dark:text-blue-300 dark:border-blue-800"
+                      : row.status === "In Review"
+                        ? "bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-950/80 dark:text-orange-300 dark:border-orange-800"
+                        : row.status === "Answered"
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-300 dark:border-emerald-800"
+                          : "bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${row.status === "Customer Replied" ? "bg-purple-600 animate-pulse" : "bg-current"
+                  }`}
+              />
+              <span>{row.status}</span>
+            </span>
+          );
+        },
+        sortable: true,
+      },
+    ];
+
+    // Only Super Admin sees the "Assigned Office Admin" column
+    if (isSuperAdmin) {
+      cols.push({
+        key: "assignedAdmin",
+        header: "Assigned Office Admin",
+        accessor: (row) => {
+          const assignedAdminName = row.assignedAdmin;
+          if (!assignedAdminName) {
+            return (
+              <button
+                type="button"
+                onClick={() => setTicketToReassign(row)}
+                className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Click to assign Office Admin"
+              >
+                <UserX className="w-3.5 h-3.5 text-slate-400" />
+                <span>Not Assigned</span>
+              </button>
+            );
+          }
+
+          const adminProfile = officeAdminProfiles[assignedAdminName];
+
           return (
             <button
               type="button"
-              onClick={() => setTicketToReassign(row)}
-              className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Click to assign Office Admin"
+              onClick={() =>
+                setSelectedAdminForProfile(
+                  adminProfile || {
+                    id: `adm-${assignedAdminName}`,
+                    name: assignedAdminName,
+                    role: "Office Admin",
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(assignedAdminName)}&background=6366f1&color=fff`,
+                    email: `${assignedAdminName.toLowerCase().replace(" ", ".")}@helpmate.com`,
+                    phone: "+91 98390 00000",
+                    department: "Operations & Support Desk",
+                    location: "Varanasi HQ",
+                    assignedTicketsCount: tickets.filter((t) => t.assignedAdmin === assignedAdminName).length,
+                  }
+                )
+              }
+              className="inline-flex items-center gap-2 p-1 pr-3 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer group"
+              title={`Click to view profile of ${assignedAdminName}`}
             >
-              <UserX className="w-3.5 h-3.5 text-slate-400" />
-              <span>Not Assigned</span>
+              <img
+                src={
+                  adminProfile?.avatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(assignedAdminName)}&background=6366f1&color=fff`
+                }
+                alt={assignedAdminName}
+                className="w-6 h-6 rounded-full object-cover ring-2 ring-brand-500/40"
+              />
+              <span className="text-xs font-black text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                {assignedAdminName}
+              </span>
             </button>
           );
-        }
+        },
+        sortable: true,
+      });
+    }
 
-        const adminProfile = officeAdminProfiles[assignedAdminName];
-
-        return (
-          <button
-            type="button"
-            onClick={() =>
-              setSelectedAdminForProfile(
-                adminProfile || {
-                  id: `adm-${assignedAdminName}`,
-                  name: assignedAdminName,
-                  role: "Office Admin",
-                  avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(assignedAdminName)}&background=6366f1&color=fff`,
-                  email: `${assignedAdminName.toLowerCase().replace(" ", ".")}@helpmate.com`,
-                  phone: "+91 98390 00000",
-                  department: "Operations & Support Desk",
-                  location: "Varanasi HQ",
-                  assignedTicketsCount: tickets.filter((t) => t.assignedAdmin === assignedAdminName).length,
-                }
-              )
-            }
-            className="inline-flex items-center gap-2 p-1 pr-3 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer group"
-            title={`Click to view profile of ${assignedAdminName}`}
-          >
-            <img
-              src={
-                adminProfile?.avatar ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(assignedAdminName)}&background=6366f1&color=fff`
-              }
-              alt={assignedAdminName}
-              className="w-6 h-6 rounded-full object-cover ring-2 ring-brand-500/40"
-            />
-            <span className="text-xs font-black text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
-              {assignedAdminName}
-            </span>
-          </button>
-        );
-      },
-      sortable: true,
-    },
-    {
+    // Actions Column
+    cols.push({
       key: "actions",
       header: "Actions",
       accessor: (row) => (
@@ -321,15 +326,17 @@ export default function SupportPage() {
               href: `/support/${row.id}`,
             },
             {
-              label: row.assignedAdmin ? "Reassign Admin" : "Assign Admin",
+              label: "Assign",
               icon: UserPlus,
               onClick: () => setTicketToReassign(row),
             },
           ]}
         />
       ),
-    },
-  ];
+    });
+
+    return cols;
+  }, [isSuperAdmin, tickets]);
 
   return (
     <div className="space-y-6">
@@ -352,11 +359,10 @@ export default function SupportPage() {
         <button
           type="button"
           onClick={() => setStatusFilter("All")}
-          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${
-            statusFilter === "All"
+          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${statusFilter === "All"
               ? "bg-brand-50/40 dark:bg-brand-950/40 border-brand-500 ring-2 ring-brand-500/30"
               : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-800"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Tickets</span>
@@ -380,11 +386,10 @@ export default function SupportPage() {
         <button
           type="button"
           onClick={() => setStatusFilter(statusFilter === "Replied" ? "All" : "Replied")}
-          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${
-            statusFilter === "Replied"
+          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${statusFilter === "Replied"
               ? "bg-amber-50/40 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/30"
               : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-800"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Agent Replied</span>
@@ -405,11 +410,10 @@ export default function SupportPage() {
         <button
           type="button"
           onClick={() => setStatusFilter(statusFilter === "Customer Replied" ? "All" : "Customer Replied")}
-          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${
-            statusFilter === "Customer Replied"
+          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${statusFilter === "Customer Replied"
               ? "bg-purple-50/40 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30"
               : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-800"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Customer Replied</span>
@@ -430,11 +434,10 @@ export default function SupportPage() {
         <button
           type="button"
           onClick={() => setStatusFilter(statusFilter === "Answered" ? "All" : "Answered")}
-          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${
-            statusFilter === "Answered"
+          className={`p-4 rounded-2xl border space-y-2 shadow-xs flex flex-col justify-between text-left transition-all cursor-pointer ${statusFilter === "Answered"
               ? "bg-emerald-50/40 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/30"
               : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Answered</span>
@@ -452,7 +455,7 @@ export default function SupportPage() {
         </button>
       </div>
 
-    
+
 
       {/* Main Support DataTable */}
       <DataTable columns={columns} data={filteredTickets} />
@@ -536,7 +539,7 @@ export default function SupportPage() {
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Reassign Office Admin</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Assign Office Admin</h3>
                 </div>
                 <button
                   type="button"

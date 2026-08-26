@@ -45,7 +45,16 @@ interface PromoBannerItem {
   targetUrl: string;
   status: "Active" | "Inactive";
   clicksCount?: number;
+  bannerSize?: string;
 }
+
+const PRESET_BANNER_IMAGES = [
+  { label: "16:9 Hero Banner", dimensions: "1200 x 675 px", aspect: "16/9", url: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80" },
+  { label: "4:1 Wide Leaderboard", dimensions: "1200 x 300 px", aspect: "4/1", url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=300&auto=format&fit=crop&q=80" },
+  { label: "1:1 Square Mobile", dimensions: "800 x 800 px", aspect: "1/1", url: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=800&auto=format&fit=crop&q=80" },
+  { label: "3:1 Category Strip", dimensions: "900 x 300 px", aspect: "3/1", url: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=900&h=300&auto=format&fit=crop&q=80" },
+  { label: "9:16 Vertical Story", dimensions: "720 x 1280 px", aspect: "9/16", url: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=720&h=1280&auto=format&fit=crop&q=80" },
+];
 
 export default function BannersPage() {
   const [activeTab, setActiveTab] = useState<"popupModal" | "homepageBanners">("popupModal");
@@ -93,28 +102,42 @@ export default function BannersPage() {
       id: "b-1",
       title: "Summer AC Servicing Special Offer - 15% OFF",
       location: "Homepage Top Carousel",
-      imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80",
       secondImageIconUrl: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=300&auto=format&fit=crop&q=80",
       targetUrl: "https://helpmate-theta.vercel.app/services/ac",
       status: "Active",
       clicksCount: 1420,
+      bannerSize: "16:9 Hero (1200x675)",
     },
     {
       id: "b-2",
       title: "Deep Home Cleaning & Sanitization Deal",
       location: "Category Offer Banner",
-      imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&auto=format&fit=crop&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=300&auto=format&fit=crop&q=80",
       secondImageIconUrl: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=300&auto=format&fit=crop&q=80",
       targetUrl: "https://helpmate-theta.vercel.app/services/cleaning",
       status: "Active",
       clicksCount: 890,
+      bannerSize: "4:1 Wide Leaderboard (1200x300)",
+    },
+    {
+      id: "b-3",
+      title: "Electrical Circuit & MCB Safety Fest",
+      location: "Checkout Promo",
+      imageUrl: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=800&auto=format&fit=crop&q=80",
+      secondImageIconUrl: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=300&auto=format&fit=crop&q=80",
+      targetUrl: "https://helpmate-theta.vercel.app/services/electrical",
+      status: "Active",
+      clicksCount: 640,
+      bannerSize: "1:1 Square Mobile (800x800)",
     },
   ]);
 
   const [isAddBannerOpen, setIsAddBannerOpen] = useState(false);
   const [newBannerTitle, setNewBannerTitle] = useState("");
   const [newBannerLocation, setNewBannerLocation] = useState<"Homepage Top Carousel" | "Category Offer Banner" | "Checkout Promo">("Homepage Top Carousel");
-  const [newBannerImageUrl, setNewBannerImageUrl] = useState("https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&auto=format&fit=crop&q=80");
+  const [newBannerSize, setNewBannerSize] = useState("16:9 Hero (1200x675)");
+  const [newBannerImageUrl, setNewBannerImageUrl] = useState("https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80");
   const [newBannerSecondIconUrl, setNewBannerSecondIconUrl] = useState("https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=300&auto=format&fit=crop&q=80");
   const [newBannerTargetUrl, setNewBannerTargetUrl] = useState("https://helpmate-theta.vercel.app/services/ac");
 
@@ -131,6 +154,7 @@ export default function BannersPage() {
       targetUrl: newBannerTargetUrl,
       status: "Active",
       clicksCount: 0,
+      bannerSize: newBannerSize,
     };
 
     setPromoBanners([newBanner, ...promoBanners]);
@@ -311,52 +335,93 @@ export default function BannersPage() {
               {/* FORM FIELDS FOR STYLE 1: RICH TEXT + IMAGE */}
               {popupStyle === "rich_text_image" ? (
                 <div className="space-y-4">
-                  {/* Image & Left Badge */}
-                  <div className="p-4 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/60 space-y-3">
-                    <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
-                      <span>Left Side Showcase Photo & Warranty Badge</span>
-                    </label>
+                  {/* Image Upload & Size Presets */}
+                  <div className="p-4 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/60 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block">
+                        Main Showcase Photo Upload & Dimensions
+                      </label>
+                      <span className="text-[10px] text-purple-700 dark:text-purple-300 font-bold bg-purple-100 dark:bg-purple-900 px-2 py-0.5 rounded-full">
+                        Multi-Size Support
+                      </span>
+                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Upload Image</label>
+                    {/* Image Preview & Upload Box */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                      {/* Live Image Preview Thumbnail */}
+                      <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-xs">
+                        <img src={richBannerImage} alt="Banner Showcase Preview" className="w-full h-full object-cover" />
+                        <div className="absolute bottom-1.5 left-1.5 bg-black/70 text-white text-[9px] font-mono px-1.5 py-0.5 rounded">
+                          Preview
+                        </div>
+                      </div>
+
+                      {/* File Upload Dropzone / Button */}
+                      <div className="sm:col-span-2 space-y-2">
+                        <label className="flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-purple-300 dark:border-purple-800 hover:border-purple-500 bg-white dark:bg-slate-900 cursor-pointer transition-colors text-xs font-bold text-purple-700 dark:text-purple-300">
+                          <Upload className="w-4 h-4 text-purple-600" />
+                          <span>Click to Upload Local Image File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (re) => setRichBannerImage(re.target?.result as string);
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+
                         <div className="flex gap-2 items-center">
+                          <span className="text-[10px] text-slate-400 font-bold shrink-0">OR URL:</span>
                           <input
                             type="url"
                             value={richBannerImage}
                             onChange={(e) => setRichBannerImage(e.target.value)}
                             className="flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-xs outline-none"
-                            placeholder="Image URL..."
+                            placeholder="https://..."
                           />
-                          <label className="p-2 rounded-xl bg-purple-600 text-white font-bold text-xs cursor-pointer shrink-0">
-                            <Upload className="w-3.5 h-3.5" />
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = (re) => setRichBannerImage(re.target?.result as string);
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                            />
-                          </label>
                         </div>
                       </div>
+                    </div>
 
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Top-Left Warranty Badge Text</label>
-                        <input
-                          type="text"
-                          value={warrantyBadgeText}
-                          onChange={(e) => setWarrantyBadgeText(e.target.value)}
-                          className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-medium"
-                          placeholder="e.g. FREE 45 DAYS WARRANTY"
-                        />
+                    {/* Quick Preset Size Selector */}
+                    <div className="space-y-1.5 pt-2 border-t border-purple-100 dark:border-purple-900/40">
+                      <span className="text-[10px] font-extrabold uppercase text-slate-500 block">
+                        Select Preset Image Dimensions & Sizes:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PRESET_BANNER_IMAGES.map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => setRichBannerImage(preset.url)}
+                            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                              richBannerImage === preset.url
+                                ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                            }`}
+                          >
+                            <span>{preset.label}</span>
+                            <span className="opacity-75 font-mono text-[9px]">({preset.dimensions})</span>
+                          </button>
+                        ))}
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Top-Left Warranty Badge Text</label>
+                      <input
+                        type="text"
+                        value={warrantyBadgeText}
+                        onChange={(e) => setWarrantyBadgeText(e.target.value)}
+                        className="w-full p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none font-medium"
+                        placeholder="e.g. FREE 45 DAYS WARRANTY"
+                      />
                     </div>
                   </div>
 
@@ -893,10 +958,15 @@ export default function BannersPage() {
                   </div>
 
                   <div className="p-4 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-0.5 rounded-full border border-brand-200 dark:border-brand-800">
                         {banner.location}
                       </span>
+                      {banner.bannerSize && (
+                        <span className="text-[9px] font-mono font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800">
+                          {banner.bannerSize}
+                        </span>
+                      )}
                       {banner.clicksCount !== undefined && (
                         <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
                           <MousePointer className="w-3 h-3 text-purple-500" /> {banner.clicksCount} Clicks
@@ -971,7 +1041,7 @@ export default function BannersPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Location</label>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Target Location</label>
                     <select
                       value={newBannerLocation}
                       onChange={(e) => setNewBannerLocation(e.target.value as any)}
@@ -994,13 +1064,37 @@ export default function BannersPage() {
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                  <label className="font-bold text-slate-900 dark:text-white block flex items-center justify-between">
-                    <span>Main Banner Image</span>
-                  </label>
-                  <div className="flex gap-2 items-center">
-                    <label className="px-3 py-1.5 rounded-xl bg-brand-600 text-white font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0">
-                      <Upload className="w-3 h-3" /> Upload File
+                {/* Banner Size / Aspect Ratio Selector */}
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Select Banner Size / Aspect Ratio</label>
+                  <select
+                    value={newBannerSize}
+                    onChange={(e) => setNewBannerSize(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none cursor-pointer"
+                  >
+                    <option value="16:9 Hero (1200x675)">16:9 Hero Banner (1200 x 675 px)</option>
+                    <option value="4:1 Wide Leaderboard (1200x300)">4:1 Wide Leaderboard (1200 x 300 px)</option>
+                    <option value="1:1 Square Mobile (800x800)">1:1 Square Mobile App (800 x 800 px)</option>
+                    <option value="3:1 Category Strip (900x300)">3:1 Category Strip (900 x 300 px)</option>
+                    <option value="9:16 Vertical Story (720x1280)">9:16 Vertical Story (720 x 1280 px)</option>
+                  </select>
+                </div>
+
+                {/* Image Upload Dropzone & Multi-Size Presets */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="font-extrabold text-slate-900 dark:text-white block">
+                      Main Banner Image File & Presets
+                    </label>
+                    <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-bold">
+                      JPG, PNG, WEBP
+                    </span>
+                  </div>
+
+                  {/* Upload Box & URL Input */}
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
+                    <label className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs transition-colors">
+                      <Upload className="w-4 h-4" /> Upload Local Image
                       <input
                         type="file"
                         accept="image/*"
@@ -1015,13 +1109,44 @@ export default function BannersPage() {
                         }}
                       />
                     </label>
+
                     <input
                       type="url"
                       value={newBannerImageUrl}
                       onChange={(e) => setNewBannerImageUrl(e.target.value)}
-                      placeholder="Image URL..."
-                      className="flex-1 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 font-mono text-[10px]"
+                      placeholder="Or paste image URL..."
+                      className="w-full flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-[10px] bg-white dark:bg-slate-900"
                     />
+                  </div>
+
+                  {/* Preset Size Images */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">
+                      Quick Preset Dimension Images:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {PRESET_BANNER_IMAGES.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setNewBannerImageUrl(preset.url);
+                            setNewBannerSize(`${preset.aspect} ${preset.label} (${preset.dimensions})`);
+                          }}
+                          className={`p-1.5 rounded-xl border text-left text-[10px] transition-all cursor-pointer flex items-center gap-2 ${
+                            newBannerImageUrl === preset.url
+                              ? "bg-brand-50 dark:bg-brand-950/60 border-brand-500 font-bold text-brand-700 dark:text-brand-300"
+                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-100"
+                          }`}
+                        >
+                          <img src={preset.url} alt={preset.label} className="w-7 h-7 rounded object-cover shrink-0" />
+                          <div className="min-w-0">
+                            <div className="font-bold truncate">{preset.label}</div>
+                            <div className="opacity-75 text-[9px] font-mono">{preset.dimensions}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
