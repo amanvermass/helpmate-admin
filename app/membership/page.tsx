@@ -82,11 +82,11 @@ const THEME_COLOR_OPTIONS = [
 ];
 
 const PRESET_MEMBERSHIP_BANNERS = [
-  { label: "16:9 Hero Banner", dimensions: "1200 x 675 px", format: "16:9 Hero (1200x675)", url: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80" },
-  { label: "4:1 Wide Leaderboard", dimensions: "1200 x 300 px", format: "4:1 Wide Leaderboard (1200x300)", url: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=300&auto=format&fit=crop&q=80" },
-  { label: "1:1 Square Mobile", dimensions: "800 x 800 px", format: "1:1 Square Mobile (800x800)", url: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=800&auto=format&fit=crop&q=80" },
-  { label: "3:1 Category Strip", dimensions: "900 x 300 px", format: "3:1 Category Strip (900x300)", url: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=900&h=300&auto=format&fit=crop&q=80" },
-  { label: "9:16 Vertical Story", dimensions: "720 x 1280 px", format: "9:16 Vertical Story (720x1280)", url: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=720&h=1280&auto=format&fit=crop&q=80" },
+  { label: "16:9 VIP Gold Hero Banner", dimensions: "1200 x 675 px", format: "16:9 Hero (1200x675)", url: "https://images.unsplash.com/photo-1556742049-0a670f4a4591?w=1200&h=675&auto=format&fit=crop&q=80" },
+  { label: "4:1 Crown Leaderboard Banner", dimensions: "1200 x 300 px", format: "4:1 Wide Leaderboard (1200x300)", url: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=1200&h=300&auto=format&fit=crop&q=80" },
+  { label: "1:1 Member Pass Square", dimensions: "800 x 800 px", format: "1:1 Square Mobile (800x800)", url: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=800&auto=format&fit=crop&q=80" },
+  { label: "3:1 Priority Pass Strip", dimensions: "900 x 300 px", format: "3:1 Category Strip (900x300)", url: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=900&h=300&auto=format&fit=crop&q=80" },
+  { label: "9:16 VIP Story Banner", dimensions: "720 x 1280 px", format: "9:16 Vertical Story (720x1280)", url: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=720&h=1280&auto=format&fit=crop&q=80" },
 ];
 
 export default function MembershipManagementPage() {
@@ -94,54 +94,58 @@ export default function MembershipManagementPage() {
   const [freeOffers, setFreeOffers] = useState<FreeServiceOffer[]>(initialFreeServiceOffers);
   const [subscribers, setSubscribers] = useState<MemberSubscriber[]>(initialMemberSubscribers);
 
-  // MEMBERSHIP MARKETING BANNERS STATE (16:9, 4:1, 1:1, 3:1, 9:16)
+  // MEMBERSHIP MARKETING BANNERS STATE (SHOWING DEMO IMAGES FOR ALL 5 SIZES)
   const [membershipBanners, setMembershipBanners] = useState([
     {
-      id: "mb-1",
-      title: "Join HelpMate Gold Club - Get 15% OFF + 2 Free AC Servicing",
-      bannerFormat: "16:9 Hero (1200x675)",
-      dimensions: "1200 x 675 px",
-      imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80",
-      targetUrl: "https://helpmate-theta.vercel.app/membership",
-      status: "Active",
-      clicksCount: 3420,
-    },
-    {
       id: "mb-2",
-      title: "Crown VIP Pass Special Deal - Instant ₹150 OFF All Bookings",
       bannerFormat: "4:1 Wide Leaderboard (1200x300)",
       dimensions: "1200 x 300 px",
-      imageUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=300&auto=format&fit=crop&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1556740758-90de374c12ad?w=1200&h=300&auto=format&fit=crop&q=80",
       targetUrl: "https://helpmate-theta.vercel.app/membership",
       status: "Active",
       clicksCount: 1890,
     },
     {
       id: "mb-3",
-      title: "Checkout VIP Banner: Unlock ₹0 Booking Convenience Fee",
       bannerFormat: "1:1 Square Mobile (800x800)",
       dimensions: "800 x 800 px",
-      imageUrl: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&h=800&auto=format&fit=crop&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=800&auto=format&fit=crop&q=80",
       targetUrl: "https://helpmate-theta.vercel.app/membership",
       status: "Active",
       clicksCount: 950,
     },
+    {
+      id: "mb-4",
+      bannerFormat: "3:1 Category Strip (900x300)",
+      dimensions: "900 x 300 px",
+      imageUrl: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=900&h=300&auto=format&fit=crop&q=80",
+      targetUrl: "https://helpmate-theta.vercel.app/membership",
+      status: "Active",
+      clicksCount: 1240,
+    },
+    {
+      id: "mb-5",
+      bannerFormat: "9:16 Vertical Story (720x1280)",
+      dimensions: "720 x 1280 px",
+      imageUrl: "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=720&h=1280&auto=format&fit=crop&q=80",
+      targetUrl: "https://helpmate-theta.vercel.app/membership",
+      status: "Active",
+      clicksCount: 780,
+    },
   ]);
 
   const [isAddMbBannerOpen, setIsAddMbBannerOpen] = useState(false);
-  const [newMbTitle, setNewMbTitle] = useState("");
   const [newMbFormat, setNewMbFormat] = useState("16:9 Hero (1200x675)");
   const [newMbDimensions, setNewMbDimensions] = useState("1200 x 675 px");
-  const [newMbImageUrl, setNewMbImageUrl] = useState("https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=675&auto=format&fit=crop&q=80");
+  const [newMbImageUrl, setNewMbImageUrl] = useState("https://images.unsplash.com/photo-1556740758-90de374c12ad?w=1200&h=300&auto=format&fit=crop&q=80");
   const [newMbTargetUrl, setNewMbTargetUrl] = useState("https://helpmate-theta.vercel.app/membership");
 
   const handleCreateMembershipBanner = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMbTitle.trim()) return;
+    if (!newMbImageUrl) return;
 
     const newMb = {
       id: `mb-${Date.now()}`,
-      title: newMbTitle.trim(),
       bannerFormat: newMbFormat,
       dimensions: newMbDimensions,
       imageUrl: newMbImageUrl,
@@ -151,7 +155,6 @@ export default function MembershipManagementPage() {
     };
 
     setMembershipBanners([newMb, ...membershipBanners]);
-    setNewMbTitle("");
     setIsAddMbBannerOpen(false);
   };
 
@@ -1111,15 +1114,20 @@ export default function MembershipManagementPage() {
       {/* TAB 4: MARKETING BANNERS & CHECKOUT PROMOTION */}
       {activeTab === "marketing" && (
         <div className="space-y-6">
-          {/* Header Banner & Format Badge Bar */}
-          <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-900 via-slate-900 to-purple-950 text-white space-y-4 shadow-xl">
+          {/* Header Banner & Format Badge Bar - Clean Standard Page Container */}
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="px-3 py-1 rounded-full bg-purple-500/30 border border-purple-400/30 text-purple-300 text-xs font-black uppercase">
-                  Multi-Format Membership Banners Engine
-                </span>
-                <h3 className="text-xl font-black mt-2">App & Web VIP Marketing Banners</h3>
-                <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[10px] font-black uppercase tracking-wider">
+                    Multi-Format Banners Engine
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
+                    Multi-Size Adaptive Display
+                  </span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mt-2">App & Web VIP Marketing Banners</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl font-medium">
                   Manage promotional membership banners with multi-size aspect ratios (16:9, 4:1, 1:1, 3:1, 9:16) and direct image uploads.
                 </p>
               </div>
@@ -1127,130 +1135,136 @@ export default function MembershipManagementPage() {
               <button
                 type="button"
                 onClick={() => setIsAddMbBannerOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Plus className="w-4 h-4 stroke-[3]" /> Add Membership Banner
               </button>
             </div>
 
             {/* Supported Formats Pills */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
-              <span className="text-[10px] uppercase font-bold text-slate-400 self-center mr-1">Supported Formats:</span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-purple-200 text-[10px] font-mono font-bold">16:9 Hero (1200x675)</span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-amber-200 text-[10px] font-mono font-bold">4:1 Leaderboard (1200x300)</span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-emerald-200 text-[10px] font-mono font-bold">1:1 Square Mobile (800x800)</span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-cyan-200 text-[10px] font-mono font-bold">3:1 Strip (900x300)</span>
-              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-pink-200 text-[10px] font-mono font-bold">9:16 Vertical Story (720x1280)</span>
+            <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 self-center mr-1">Supported Formats:</span>
+              <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-purple-700 dark:text-purple-300 text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700">16:9 Hero (1200x675)</span>
+              <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-300 text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700">4:1 Leaderboard (1200x300)</span>
+              <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700">1:1 Square Mobile (800x800)</span>
+              <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700">3:1 Strip (900x300)</span>
+              <span className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-rose-700 dark:text-rose-300 text-[10px] font-mono font-bold border border-slate-200 dark:border-slate-700">9:16 Vertical Story (720x1280)</span>
             </div>
           </div>
 
-          {/* Membership Promotional Banners Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {membershipBanners.map((banner) => (
-              <div
-                key={banner.id}
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
-              >
-                <div>
-                  <div className="relative aspect-[16/9] bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <img
-                      src={banner.imageUrl}
-                      alt={banner.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+          {/* Membership Promotional Pure Image Banners Grid with Mixed Width Layout (Full Width, Half Width, One-Third) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+            {membershipBanners.map((banner) => {
+              const format = banner.bannerFormat;
 
-                    <div className="absolute top-3 left-3 z-10 flex gap-1.5 flex-wrap">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1 ${
+              // Column width grid layout (Full Width, Half/2-Third Width, One-Third Width)
+              const colSpanClass = format.includes("4:1")
+                ? "col-span-full" // Full width (spans 3 columns)
+                : format.includes("3:1")
+                ? "col-span-1 md:col-span-2" // Half / 2-third width (spans 2 columns)
+                : format.includes("16:9")
+                ? "col-span-1 md:col-span-2" // Half width (spans 2 columns)
+                : "col-span-1"; // One-third width (spans 1 column for 1:1 and 9:16)
+
+              const aspectClass = format.includes("4:1")
+                ? "aspect-[4/1]"
+                : format.includes("1:1")
+                ? "aspect-square max-h-72"
+                : format.includes("3:1")
+                ? "aspect-[3/1]"
+                : format.includes("9:16")
+                ? "aspect-[9/16] max-h-96"
+                : "aspect-[16/9]";
+
+              return (
+                <div
+                  key={banner.id}
+                  className={`${colSpanClass} rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all`}
+                >
+                  <div>
+                    {/* Dynamic Aspect-Ratio Banner Container displaying image in its exact size */}
+                    <div className={`relative ${aspectClass} bg-slate-100 dark:bg-slate-800 overflow-hidden w-full mx-auto`}>
+                      <img
+                        src={banner.imageUrl}
+                        alt="Membership Banner Image"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+
+                      <div className="absolute top-3 left-3 z-10 flex gap-1.5 flex-wrap">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1 ${
+                          banner.status === "Active"
+                            ? "bg-emerald-500 text-white"
+                            : "bg-slate-900/80 text-white backdrop-blur-md"
+                        }`}>
+                          <CheckCircle2 className="w-3 h-3" /> {banner.status}
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-3 left-3 z-10">
+                        <span className="px-2.5 py-1 rounded-lg bg-black/75 text-white backdrop-blur-md text-[10px] font-mono font-bold shadow-md">
+                          📐 {banner.dimensions}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 space-y-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2.5 py-0.5 rounded-md border border-purple-200 dark:border-purple-800">
+                          {banner.bannerFormat}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                          <MousePointer className="w-3 h-3 text-purple-500" /> {banner.clicksCount} Clicks
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 font-mono truncate">
+                        {banner.targetUrl}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMembershipBanners((prev) =>
+                          prev.map((b) => (b.id === banner.id ? { ...b, status: b.status === "Active" ? "Inactive" : "Active" } : b))
+                        )
+                      }
+                      className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-colors cursor-pointer ${
                         banner.status === "Active"
-                          ? "bg-emerald-500 text-white"
-                          : "bg-slate-900/80 text-white backdrop-blur-md"
-                      }`}>
-                        <CheckCircle2 className="w-3 h-3" /> {banner.status}
-                      </span>
-                    </div>
+                          ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300"
+                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                      }`}
+                    >
+                      {banner.status === "Active" ? "Pause Banner" : "Activate Banner"}
+                    </button>
 
-                    <div className="absolute bottom-3 left-3 z-10">
-                      <span className="px-2.5 py-1 rounded-lg bg-black/75 text-white backdrop-blur-md text-[10px] font-mono font-bold shadow-md">
-                        📐 {banner.dimensions}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <span className="text-[10px] font-mono font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800">
-                        {banner.bannerFormat}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                        <MousePointer className="w-3 h-3 text-purple-500" /> {banner.clicksCount} Clicks
-                      </span>
-                    </div>
-
-                    <h4 className="font-extrabold text-slate-900 dark:text-white text-xs leading-snug line-clamp-2">
-                      {banner.title}
-                    </h4>
-
-                    <p className="text-[10px] text-slate-400 font-mono truncate">
-                      {banner.targetUrl}
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setMembershipBanners(membershipBanners.filter((b) => b.id !== banner.id))}
+                      className="p-1.5 rounded-xl bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors cursor-pointer"
+                      title="Delete Banner"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMembershipBanners((prev) =>
-                        prev.map((b) => (b.id === banner.id ? { ...b, status: b.status === "Active" ? "Inactive" : "Active" } : b))
-                      )
-                    }
-                    className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-colors cursor-pointer ${
-                      banner.status === "Active"
-                        ? "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300"
-                        : "bg-emerald-600 text-white hover:bg-emerald-700"
-                    }`}
-                  >
-                    {banner.status === "Active" ? "Pause Banner" : "Activate Banner"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMembershipBanners(membershipBanners.filter((b) => b.id !== banner.id))}
-                    className="p-1.5 rounded-xl bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 transition-colors cursor-pointer"
-                    title="Delete Banner"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Checkout Membership Upsell Promotional Message Preview */}
-          <div className="p-5 rounded-3xl bg-slate-900 text-white space-y-3 border border-slate-800 shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
-                <Crown className="w-4 h-4 text-amber-400" />
-                Checkout Membership Upsell Card Preview
-              </span>
-              <span className="text-[10px] text-emerald-400 font-bold">Auto-Triggered on Booking Checkout</span>
-            </div>
-            <p className="text-xs text-slate-300">
-              "Join HelpMate Gold Today for ₹999 & Save ₹150 Instantly + 2 Free AC Cleaning Services!"
-            </p>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* ADD MEMBERSHIP PROMOTIONAL BANNER MODAL */}
+      {/* UPLOAD MEMBERSHIP BANNER IMAGE MODAL (ONLY IMAGE UPLOAD) */}
       {isAddMbBannerOpen && (
         <Portal>
           <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
-                  <Megaphone className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add Membership Banner</h3>
+                  <Upload className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Upload Membership Banner Image</h3>
                 </div>
                 <button type="button" onClick={() => setIsAddMbBannerOpen(false)} className="text-slate-400 hover:text-slate-600">
                   <X className="w-5 h-5" />
@@ -1258,137 +1272,67 @@ export default function MembershipManagementPage() {
               </div>
 
               <form onSubmit={handleCreateMembershipBanner} className="space-y-4 text-xs">
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Banner Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newMbTitle}
-                    onChange={(e) => setNewMbTitle(e.target.value)}
-                    placeholder="e.g. HelpMate Gold Club - 15% OFF + Free AC Service"
-                    className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none"
-                  />
-                </div>
+                {/* Upload Image Dropzone & Preview Box */}
+                <div className="space-y-3">
+                  {newMbImageUrl && (
+                    <div className="relative aspect-[16/9] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-sm">
+                      <img src={newMbImageUrl} alt="Uploaded Banner Preview" className="w-full h-full object-cover" />
+                      <div className="absolute top-2 right-2 bg-slate-950/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md">
+                        Live Preview
+                      </div>
+                    </div>
+                  )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Banner Format & Size</label>
-                    <select
-                      value={newMbFormat}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewMbFormat(val);
-                        if (val.includes("16:9")) setNewMbDimensions("1200 x 675 px");
-                        else if (val.includes("4:1")) setNewMbDimensions("1200 x 300 px");
-                        else if (val.includes("1:1")) setNewMbDimensions("800 x 800 px");
-                        else if (val.includes("3:1")) setNewMbDimensions("900 x 300 px");
-                        else if (val.includes("9:16")) setNewMbDimensions("720 x 1280 px");
-                      }}
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold outline-none cursor-pointer"
-                    >
-                      <option value="16:9 Hero (1200x675)">16:9 Hero Banner (1200 x 675 px)</option>
-                      <option value="4:1 Wide Leaderboard (1200x300)">4:1 Wide Leaderboard (1200 x 300 px)</option>
-                      <option value="1:1 Square Mobile (800x800)">1:1 Square Mobile (800 x 800 px)</option>
-                      <option value="3:1 Category Strip (900x300)">3:1 Category Strip (900 x 300 px)</option>
-                      <option value="9:16 Vertical Story (720x1280)">9:16 Vertical Story (720 x 1280 px)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Target Redirection URL</label>
+                  <label className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-purple-300 dark:border-purple-800 hover:border-purple-500 bg-purple-50/40 dark:bg-purple-950/20 cursor-pointer transition-colors text-center space-y-2">
+                    <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300">
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block">
+                        Click to Upload Image File
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">PNG, JPG, WEBP formats</span>
+                    </div>
                     <input
-                      type="url"
-                      value={newMbTargetUrl}
-                      onChange={(e) => setNewMbTargetUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-[10px] outline-none"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (re) => setNewMbImageUrl(re.target?.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
                     />
-                  </div>
-                </div>
+                  </label>
 
-                {/* Upload Dropzone & Quick Image Presets */}
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="font-extrabold text-slate-900 dark:text-white block">
-                      Banner Image Upload & Format Presets
-                    </label>
-                    <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 font-bold">
-                      {newMbDimensions}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-2.5 items-center">
-                    <label className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs transition-colors">
-                      <Upload className="w-4 h-4" /> Upload Image File
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (re) => setNewMbImageUrl(re.target?.result as string);
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
-
+                  <div className="flex gap-2 items-center pt-1">
+                    <span className="text-[10px] text-slate-400 font-bold shrink-0">Image URL:</span>
                     <input
                       type="url"
                       value={newMbImageUrl}
                       onChange={(e) => setNewMbImageUrl(e.target.value)}
-                      placeholder="Or paste image URL..."
-                      className="w-full flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-[10px] bg-white dark:bg-slate-900"
+                      placeholder="Paste image URL..."
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-[10px] bg-slate-50 dark:bg-slate-800 outline-none"
                     />
-                  </div>
-
-                  {/* Preset Size Options */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase">
-                      Preset Format Options:
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                      {PRESET_MEMBERSHIP_BANNERS.map((preset) => (
-                        <button
-                          key={preset.label}
-                          type="button"
-                          onClick={() => {
-                            setNewMbImageUrl(preset.url);
-                            setNewMbFormat(preset.format);
-                            setNewMbDimensions(preset.dimensions);
-                          }}
-                          className={`p-1.5 rounded-xl border text-left text-[10px] transition-all cursor-pointer flex items-center gap-2 ${
-                            newMbImageUrl === preset.url
-                              ? "bg-purple-50 dark:bg-purple-950/60 border-purple-500 font-bold text-purple-700 dark:text-purple-300"
-                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-100"
-                          }`}
-                        >
-                          <img src={preset.url} alt={preset.label} className="w-7 h-7 rounded object-cover shrink-0" />
-                          <div className="min-w-0">
-                            <div className="font-bold truncate">{preset.label}</div>
-                            <div className="opacity-75 text-[9px] font-mono">{preset.dimensions}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setIsAddMbBannerOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-600 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-extrabold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-purple-600 text-white font-extrabold shadow-md cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-md cursor-pointer transition-colors"
                   >
-                    Save Banner
+                    Save Banner Image
                   </button>
                 </div>
               </form>
