@@ -216,10 +216,9 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           href: "/pricing",
         },
         {
-          title: "Crown Membership & VIP",
+          title: "Membership",
           icon: Crown,
           href: "/membership",
-          badge: "VIP Club",
         },
       ],
     },
@@ -345,6 +344,11 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           title: "Reviews & Ratings",
           icon: Star,
           href: "/reviews",
+        },
+        {
+          title: "Membership",
+          icon: Crown,
+          href: "/membership",
         },
       ],
     },

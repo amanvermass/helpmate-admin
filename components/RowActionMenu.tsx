@@ -15,9 +15,10 @@ export interface ActionItem {
 
 export interface RowActionMenuProps {
   actions: ActionItem[];
+  forceDropdown?: boolean;
 }
 
-export function RowActionMenu({ actions }: RowActionMenuProps) {
+export function RowActionMenu({ actions, forceDropdown }: RowActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top?: number; bottom?: number; right: number }>({ right: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -108,8 +109,8 @@ export function RowActionMenu({ actions }: RowActionMenuProps) {
     return `${baseInline} hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 dark:hover:bg-brand-950/50 dark:hover:text-brand-400 dark:hover:border-brand-800`;
   };
 
-  // If less than 3 actions, show inline icon buttons with standardized decent styling aligned to right
-  if (actions.length < 3) {
+  // If less than 3 actions and not forced dropdown, show inline icon buttons with standardized decent styling aligned to right
+  if (actions.length < 3 && !forceDropdown) {
     return (
       <div className="flex items-center justify-end gap-1.5 w-full">
         {actions.map((action, idx) => {

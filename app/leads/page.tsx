@@ -580,89 +580,76 @@ export default function LeadCRMPage() {
         </div>
       )}
 
-      {/* Hero Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-850 to-brand-950 border border-slate-800 shadow-xl text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* Standard Clean Page Header (matching all other pages in HelpmateAdmin) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Target className="w-6 h-6 text-brand-600" />
+            <span>Lead CRM Operations</span>
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+            Manage lead inquiries, pipeline stage status, site inspections, and live booking conversions.
+          </p>
+        </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-brand-400 shadow-inner">
-              <Target className="w-8 h-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-black tracking-tight">Operations Lead CRM</h1>
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 backdrop-blur-md flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Helpmate Project Pipeline
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                Seamless operational pipeline converting inquiries into Varanasi site inspections, rate-card quotations, and live HelpMate bookings.
-              </p>
-            </div>
-          </div>
-
-          {/* Header Controls (STRICT AGENTS.md RULE: ONLY ONE PRIMARY BUTTON ON PAGE HEADER) */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* View Mode Toggle (Secondary Buttons) */}
-            <div className="flex items-center p-1 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setViewMode("kanban")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  viewMode === "kanban"
-                    ? "bg-white text-slate-900 shadow-md"
-                    : "text-slate-300 hover:text-white"
-                }`}
-              >
-                <Kanban className="w-3.5 h-3.5" />
-                Kanban Pipeline
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  viewMode === "table"
-                    ? "bg-white text-slate-900 shadow-md"
-                    : "text-slate-300 hover:text-white"
-                }`}
-              >
-                <TableIcon className="w-3.5 h-3.5" />
-                Data Table
-              </button>
-            </div>
-
-            {/* Export CSV (Secondary Button) */}
+        {/* Header Controls (STRICT AGENTS.md RULE: ONLY ONE PRIMARY BUTTON ON PAGE HEADER) */}
+        <div className="flex items-center gap-3 flex-wrap shrink-0">
+          {/* View Mode Toggle (Secondary Buttons) */}
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
             <button
               type="button"
-              onClick={() => alert("Exporting Lead CRM records...")}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-200 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 rounded-xl transition-all"
+              onClick={() => setViewMode("kanban")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+                viewMode === "kanban"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
             >
-              <Download className="w-3.5 h-3.5" />
-              Export
+              <Kanban className="w-3.5 h-3.5" />
+              <span>Kanban Board</span>
             </button>
-
-            {/* STRICT USER RULE COMPLIANCE: ONLY ONE PRIMARY BUTTON ON THE PAGE HEADER */}
             <button
               type="button"
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-black text-white bg-brand-600 hover:bg-brand-500 rounded-xl shadow-lg hover:shadow-brand-500/30 transition-all transform active:scale-95 border border-brand-400/30"
+              onClick={() => setViewMode("table")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer ${
+                viewMode === "table"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
             >
-              <UserPlus className="w-4 h-4" />
-              + Add New Lead
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>Data Table</span>
             </button>
           </div>
+
+          {/* Export CSV (Secondary Button) */}
+          <button
+            type="button"
+            onClick={() => alert("Exporting Lead CRM records...")}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export</span>
+          </button>
+
+          {/* SINGLE PRIMARY BUTTON FOR THE PAGE HEADER */}
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>+ Add New Lead</span>
+          </button>
         </div>
       </div>
 
-      {/* KPI Metric Cards Banner */}
+      {/* Standard KPI Metric Cards Banner */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-brand-500/40 transition-all">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Total Inquiries</span>
-            <Target className="w-4 h-4 text-brand-500" />
+            <Target className="w-4 h-4 text-brand-600" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white">{totalLeads}</div>
           <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
@@ -670,7 +657,7 @@ export default function LeadCRMPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-rose-500/40 transition-all">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Hot Intent Leads</span>
             <Flame className="w-4 h-4 text-rose-500" />
@@ -679,7 +666,7 @@ export default function LeadCRMPage() {
           <div className="text-[10px] text-slate-400 font-semibold mt-1">High Score & Immediate intent</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-emerald-500/40 transition-all">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Pipeline Est. Value</span>
             <DollarSign className="w-4 h-4 text-emerald-500" />
@@ -690,7 +677,7 @@ export default function LeadCRMPage() {
           <div className="text-[10px] text-slate-400 font-semibold mt-1">Active Pipeline Volume</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-blue-500/40 transition-all">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Conversion Rate</span>
             <CheckCircle2 className="w-4 h-4 text-blue-500" />
@@ -699,7 +686,7 @@ export default function LeadCRMPage() {
           <div className="text-[10px] text-slate-400 font-semibold mt-1">{convertedCount} converted to jobs</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs col-span-2 lg:col-span-1 hover:border-amber-500/40 transition-all">
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
             <span className="text-[11px] font-extrabold uppercase tracking-wider">Today's Follow-ups</span>
             <Clock className="w-4 h-4 text-amber-500" />
@@ -708,59 +695,6 @@ export default function LeadCRMPage() {
           <div className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-1">
             Pending agent call today
           </div>
-        </div>
-      </div>
-
-      {/* PIPELINE STAGE REVENUE DISTRIBUTION BAR */}
-      <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-2.5">
-        <div className="flex items-center justify-between text-xs font-black text-slate-900 dark:text-white">
-          <span className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-brand-600" />
-            Helpmate Pipeline Revenue & Velocity Breakdown
-          </span>
-          <span className="text-emerald-600 dark:text-emerald-400 font-mono">
-            Total Active Revenue: ₹{pipelineValue.toLocaleString()}
-          </span>
-        </div>
-
-        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
-          {STAGES.map((stg) => {
-            const stgLeads = leads.filter((l) => l.status === stg.label);
-            const stgValue = stgLeads.reduce((sum, l) => sum + l.estimatedValue, 0);
-            const pct = pipelineValue > 0 ? Math.round((stgValue / pipelineValue) * 100) : 0;
-            if (pct === 0) return null;
-
-            return (
-              <div
-                key={stg.label}
-                className={`h-full ${stg.bgColor.replace("/70", "")} hover:opacity-80 transition-all cursor-pointer relative group`}
-                style={{ width: `${pct}%` }}
-                onClick={() => setStatusFilter(stg.label)}
-                title={`${stg.label}: ₹${stgValue.toLocaleString()} (${pct}%)`}
-              />
-            );
-          })}
-        </div>
-
-        <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1 flex-wrap gap-2">
-          {STAGES.map((stg) => {
-            const count = leads.filter((l) => l.status === stg.label).length;
-            return (
-              <button
-                key={stg.label}
-                onClick={() => setStatusFilter(statusFilter === stg.label ? "All" : stg.label)}
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-left transition-all ${
-                  statusFilter === stg.label
-                    ? "bg-brand-50 border-brand-300 text-brand-700 font-bold"
-                    : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${stg.headerBadgeBg.split(" ")[0]}`} />
-                <span className="font-extrabold">{stg.label}:</span>
-                <span className="font-mono">{count} leads</span>
-              </button>
-            );
-          })}
         </div>
       </div>
 

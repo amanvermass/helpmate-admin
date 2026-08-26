@@ -1648,14 +1648,93 @@ export interface SupportTicketItem {
   subject: string;
   description: string;
   priority: "High" | "Medium" | "Low";
-  status: "Open" | "In Progress" | "Resolved" | "Closed";
+  status: "Replied" | "Customer Replied" | "In Progress" | "In Review" | "Answered" | "Closed";
   assignedAgent?: string;
+  assignedAdmin?: string;
   createdDate: string;
   lastUpdated: string;
   messages: SupportMessage[];
   callLogs: SupportCallLog[];
   internalNotes?: string[];
 }
+
+export interface OfficeAdminProfile {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  email: string;
+  phone: string;
+  department: string;
+  location: string;
+  assignedTicketsCount: number;
+}
+
+export const officeAdminProfiles: Record<string, OfficeAdminProfile> = {
+  "Priya Sharma": {
+    id: "adm-101",
+    name: "Priya Sharma",
+    role: "Senior Office Admin & Support Lead",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    email: "priya.sharma@helpmate.com",
+    phone: "+91 98390 12345",
+    department: "Customer Operations & Support Desk",
+    location: "Varanasi HQ",
+    assignedTicketsCount: 14,
+  },
+  "Rohan Verma": {
+    id: "adm-102",
+    name: "Rohan Verma",
+    role: "Office Admin & Dispatch Coordinator",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    email: "rohan.verma@helpmate.com",
+    phone: "+91 94152 67890",
+    department: "Partner Logistics & Scheduling",
+    location: "Varanasi HQ",
+    assignedTicketsCount: 9,
+  },
+  "Anand Verma": {
+    id: "adm-103",
+    name: "Anand Verma",
+    role: "Office Admin & Billing Specialist",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    email: "anand.verma@helpmate.com",
+    phone: "+91 91234 56789",
+    department: "Finance & Refunds Desk",
+    location: "Varanasi HQ",
+    assignedTicketsCount: 6,
+  },
+  "Neha Kapoor": {
+    id: "adm-104",
+    name: "Neha Kapoor",
+    role: "Office Admin & QC Inspector",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    email: "neha.kapoor@helpmate.com",
+    phone: "+91 98381 44920",
+    department: "Quality Assurance & Compliance",
+    location: "Varanasi HQ",
+    assignedTicketsCount: 4,
+  },
+  "Aman Verma": {
+    id: "adm-100",
+    name: "Aman Verma",
+    role: "Super Admin & Operations Lead",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+    email: "aman.verma@helpmate.com",
+    phone: "+91 99350 11200",
+    department: "Executive Management",
+    location: "Varanasi HQ",
+    assignedTicketsCount: 22,
+  },
+};
+
+export const officeAdminsList: string[] = [
+  "Priya Sharma",
+  "Rohan Verma",
+  "Anand Verma",
+  "Neha Kapoor",
+  "Aman Verma",
+];
 
 export const initialSupportTickets: SupportTicketItem[] = [
   {
@@ -1670,8 +1749,9 @@ export const initialSupportTickets: SupportTicketItem[] = [
     subject: "Water leaking from Split AC indoor unit post jet wash service",
     description: "Technician completed jet cleaning yesterday afternoon. Today morning water started dripping continuously onto the living room wall. Request urgent technician re-visit under 30-day warranty.",
     priority: "High",
-    status: "Open",
+    status: "Replied",
     assignedAgent: "Priya Sharma (Senior Support Specialist)",
+    assignedAdmin: "Priya Sharma",
     createdDate: "2026-08-20T10:15:00Z",
     lastUpdated: "2026-08-20T10:30:00Z",
     messages: [
@@ -1716,8 +1796,9 @@ export const initialSupportTickets: SupportTicketItem[] = [
     subject: "Technician arrived 45 mins late without prior status update",
     description: "Scheduled slot was 10:00 AM - 12:00 PM. Technician arrived at 12:45 PM without calling in advance to notify about traffic delay.",
     priority: "Medium",
-    status: "In Progress",
+    status: "Customer Replied",
     assignedAgent: "Rohan V. (HelpMate Support)",
+    assignedAdmin: "Rohan Verma",
     createdDate: "2026-08-19T14:20:00Z",
     lastUpdated: "2026-08-19T15:10:00Z",
     messages: [
@@ -1734,6 +1815,13 @@ export const initialSupportTickets: SupportTicketItem[] = [
         senderName: "Rohan V.",
         text: "We sincerely apologize Mr. Alok. Partner penalty advisory issued and ₹100 courtesy wallet credit applied.",
         timestamp: "2026-08-19 03:00 PM",
+      },
+      {
+        id: "msg-103",
+        sender: "Customer",
+        senderName: "Alok Verma",
+        text: "Thank you for the credit. Please ensure technicians are punctual in future bookings.",
+        timestamp: "2026-08-19 03:15 PM",
       },
     ],
     callLogs: [
@@ -1758,8 +1846,9 @@ export const initialSupportTickets: SupportTicketItem[] = [
     subject: "Double UPI transaction deduction for faucet installation",
     description: "Payment failed on first attempt via PhonePe but amount ₹599 was debited from bank account. Second payment of ₹599 succeeded.",
     priority: "High",
-    status: "In Progress",
+    status: "In Review",
     assignedAgent: "Anand Verma (Finance Desk)",
+    assignedAdmin: "Anand Verma",
     createdDate: "2026-08-18T11:00:00Z",
     lastUpdated: "2026-08-18T12:00:00Z",
     messages: [
@@ -1784,8 +1873,9 @@ export const initialSupportTickets: SupportTicketItem[] = [
     subject: "Reschedule slot change request for Sunday morning",
     description: "Requested time slot shift from 2:00 PM to 9:00 AM for deep kitchen cleaning.",
     priority: "Low",
-    status: "Resolved",
+    status: "Answered",
     assignedAgent: "Priya Sharma",
+    assignedAdmin: "Priya Sharma",
     createdDate: "2026-08-17T09:00:00Z",
     lastUpdated: "2026-08-17T09:45:00Z",
     messages: [
@@ -1818,8 +1908,9 @@ export const initialSupportTickets: SupportTicketItem[] = [
     subject: "Inquiry regarding 30-Day HelpMate Repair Protection Warranty",
     description: "Customer inquired if spare parts replaced during washing machine repair carry a separate manufacturer warranty.",
     priority: "Low",
-    status: "Closed",
+    status: "Answered",
     assignedAgent: "Rohan V.",
+    assignedAdmin: "Rohan Verma",
     createdDate: "2026-08-15T16:00:00Z",
     lastUpdated: "2026-08-15T16:20:00Z",
     messages: [
@@ -1833,6 +1924,119 @@ export const initialSupportTickets: SupportTicketItem[] = [
     ],
     callLogs: [],
     internalNotes: ["Warranty terms explained to customer."],
+  },
+  {
+    id: "TKT-VAR-9915",
+    bookingId: "HM-VAR-8825",
+    customerName: "Sanjay Gupta",
+    customerPhone: "+91 97920 44556",
+    customerEmail: "sanjay.gupta@gmail.com",
+    partnerName: "Sunil Kumar",
+    category: "Plumbing Services",
+    issueCategory: "Service Quality",
+    subject: "Main pipe leakage under kitchen sink post coupler repair",
+    description: "Technician installed new PVC coupler joint yesterday. Water leakage started under sink this morning. Urgent partner re-inspection requested.",
+    priority: "High",
+    status: "In Review",
+    assignedAgent: undefined,
+    assignedAdmin: undefined,
+    createdDate: "2026-08-25T08:30:00Z",
+    lastUpdated: "2026-08-25T08:30:00Z",
+    messages: [
+      {
+        id: "msg-501",
+        sender: "Customer",
+        senderName: "Sanjay Gupta",
+        text: "Please send a technician urgently. Water is leaking continuously from the sink pipe joint.",
+        timestamp: "2026-08-25 08:30 AM",
+      },
+    ],
+    callLogs: [],
+    internalNotes: ["Unassigned ticket created via app support portal. Awaiting Office Admin allocation."],
+  },
+  {
+    id: "TKT-VAR-9916",
+    bookingId: "HM-VAR-8829",
+    customerName: "Meena Mishra",
+    customerPhone: "+91 94501 88234",
+    customerEmail: "meena.mishra@outlook.com",
+    category: "Electrical & Wiring",
+    issueCategory: "Payments & Billing",
+    subject: "Refund for canceled switchboard repair booking not credited",
+    description: "Booking was canceled 3 days ago prior to partner dispatch. Refund of ₹399 has not reflected in HelpMate wallet.",
+    priority: "Medium",
+    status: "In Review",
+    assignedAgent: undefined,
+    assignedAdmin: undefined,
+    createdDate: "2026-08-24T14:15:00Z",
+    lastUpdated: "2026-08-24T16:00:00Z",
+    messages: [
+      {
+        id: "msg-601",
+        sender: "Customer",
+        senderName: "Meena Mishra",
+        text: "When will my canceled booking refund of ₹399 be processed?",
+        timestamp: "2026-08-24 02:15 PM",
+      },
+    ],
+    callLogs: [],
+    internalNotes: ["Pending billing desk assignment."],
+  },
+  {
+    id: "TKT-VAR-9917",
+    bookingId: "HM-VAR-8832",
+    customerName: "Karan Johar",
+    customerPhone: "+91 98399 77112",
+    customerEmail: "karan.j@gmail.com",
+    category: "AC Service & Repair",
+    issueCategory: "Partner Conduct",
+    subject: "Technician demanded extra cash payment above invoice",
+    description: "Technician asked for ₹350 cash for extra gas pressure testing which was already included in the standard service package.",
+    priority: "High",
+    status: "In Review",
+    assignedAgent: undefined,
+    assignedAdmin: undefined,
+    createdDate: "2026-08-25T11:00:00Z",
+    lastUpdated: "2026-08-25T11:00:00Z",
+    messages: [
+      {
+        id: "msg-701",
+        sender: "Customer",
+        senderName: "Karan Johar",
+        text: "The technician demanded ₹350 extra in cash. Please check the booking invoice.",
+        timestamp: "2026-08-25 11:00 AM",
+      },
+    ],
+    callLogs: [],
+    internalNotes: ["High priority conduct complaint needing prompt admin assignment."],
+  },
+  {
+    id: "TKT-VAR-9918",
+    bookingId: "HM-VAR-8835",
+    customerName: "Anjali Rao",
+    customerPhone: "+91 91612 33445",
+    customerEmail: "anjali.rao@gmail.com",
+    category: "Home Cleaning",
+    issueCategory: "Booking & Scheduling",
+    subject: "Request to update service location address for tomorrow",
+    description: "Shifted house within Sigra neighborhood. Requesting address update before tomorrow's deep cleaning slot.",
+    priority: "Low",
+    status: "In Review",
+    assignedAgent: undefined,
+    assignedAdmin: undefined,
+    createdDate: "2026-08-26T07:45:00Z",
+    lastUpdated: "2026-08-26T07:45:00Z",
+    messages: [
+      {
+        id: "msg-801",
+        sender: "Customer",
+        senderName: "Anjali Rao",
+        text: "Hi, I need to update my home address for tomorrow's cleaning service.",
+        timestamp: "2026-08-26 07:45 AM",
+      },
+    ],
+    callLogs: [],
+    internalNotes: ["Location modification request. Awaiting admin assignment."],
   },
 ];
 
@@ -1855,7 +2059,10 @@ export interface MembershipPlan {
   activeSubscribersCount: number;
   status: "Active" | "Draft" | "Archived";
   colorTheme: string; // gradient CSS or color hex
+  customPrimaryColor?: string;
+  customSecondaryColor?: string;
   perks: string[];
+  includedServices?: string[]; // Covered service categories
 }
 
 export interface FreeServiceOffer {
@@ -1905,6 +2112,7 @@ export const initialMembershipPlans: MembershipPlan[] = [
     activeSubscribersCount: 420,
     status: "Active",
     colorTheme: "from-slate-700 to-slate-900",
+    includedServices: ["Electrical Maintenance", "Plumbing Care", "Water Purifier (RO)"],
     perks: [
       "10% Flat Discount on all Services",
       "1x FREE Electrical Inspection per year",
@@ -1930,6 +2138,7 @@ export const initialMembershipPlans: MembershipPlan[] = [
     activeSubscribersCount: 840,
     status: "Active",
     colorTheme: "from-amber-600 via-amber-500 to-yellow-600",
+    includedServices: ["AC & Appliance Servicing", "Electrical Maintenance", "Plumbing Care", "Home Deep Cleaning", "Water Purifier (RO)"],
     perks: [
       "15% Unlimited Discount across all categories",
       "2x FREE AC Jet Cleaning Services (₹1,198 Value)",
@@ -1956,6 +2165,7 @@ export const initialMembershipPlans: MembershipPlan[] = [
     activeSubscribersCount: 168,
     status: "Active",
     colorTheme: "from-purple-900 via-purple-700 to-brand-600",
+    includedServices: ["AC & Appliance Servicing", "Electrical Maintenance", "Plumbing Care", "Home Deep Cleaning", "Water Purifier (RO)", "Home Painting & Waterproofing", "Pest Control & Fumigation"],
     perks: [
       "20% Maximum Discount on all repairs & maintenance",
       "2x FREE AC Foam Jet Servicing (₹1,598 Value)",
