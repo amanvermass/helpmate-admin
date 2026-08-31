@@ -112,11 +112,10 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => switchMode("super_admin")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              loginMode === "super_admin"
-                ? "bg-white text-brand-600 shadow-sm font-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${loginMode === "super_admin"
+              ? "bg-white text-brand-600 shadow-sm font-black"
+              : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <ShieldCheck className="w-3.5 h-3.5 text-brand-600" />
             <span>Super Admin</span>
@@ -125,11 +124,10 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => switchMode("office_admin")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              loginMode === "office_admin"
-                ? "bg-white text-purple-700 shadow-sm font-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${loginMode === "office_admin"
+              ? "bg-white text-purple-700 shadow-sm font-black"
+              : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <UserCheck className="w-3.5 h-3.5 text-purple-600" />
             <span>Office Admin</span>
@@ -138,11 +136,10 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => switchMode("partner")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              loginMode === "partner"
-                ? "bg-white text-emerald-700 shadow-sm font-black"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
+            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${loginMode === "partner"
+              ? "bg-white text-emerald-700 shadow-sm font-black"
+              : "text-slate-600 hover:text-slate-900"
+              }`}
           >
             <Wrench className="w-3.5 h-3.5 text-emerald-600" />
             <span>Partner</span>
@@ -153,20 +150,19 @@ export default function LoginPage() {
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
           {/* Active Mode Info Badge */}
           <div
-            className={`p-3 rounded-2xl text-xs font-bold flex items-center justify-between border ${
-              loginMode === "partner"
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : loginMode === "office_admin"
+            className={`p-3 rounded-2xl text-xs font-bold flex items-center justify-between border ${loginMode === "partner"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : loginMode === "office_admin"
                 ? "bg-purple-50 text-purple-800 border-purple-200"
                 : "bg-brand-50 text-brand-800 border-brand-200"
-            }`}
+              }`}
           >
             <span>
               {loginMode === "partner"
                 ? "🔑 Service Partner Login (Ramesh Yadav)"
                 : loginMode === "office_admin"
-                ? "🔑 Office Admin Desk (Dashboard, Bookings, Finance & Billing)"
-                : "🔑 Super Admin HQ (Full System Access)"}
+                  ? "🔑 Office Admin Desk (Dashboard, Bookings, Finance & Billing)"
+                  : "🔑 Super Admin HQ (Full System Access)"}
             </span>
           </div>
 
@@ -225,13 +221,12 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 rounded-xl ${
-                loginMode === "partner"
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : loginMode === "office_admin"
+              className={`w-full py-3 rounded-xl ${loginMode === "partner"
+                ? "bg-emerald-600 hover:bg-emerald-700"
+                : loginMode === "office_admin"
                   ? "bg-purple-600 hover:bg-purple-700"
                   : "bg-brand-600 hover:bg-brand-700"
-              } text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50`}
+                } text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50`}
             >
               {isLoading ? (
                 <>

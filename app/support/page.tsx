@@ -340,16 +340,32 @@ export default function SupportPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
+      {/* Header Banner & Office Admin Desk Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Headphones className="w-6 h-6 text-brand-600" />
-            <span>Customer Support & Complaint Desk</span>
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+              <Headphones className="w-6 h-6 text-brand-600" />
+              <span>Customer Support & Complaint Desk</span>
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-[10px] font-black uppercase">
+              Office Admin Console
+            </span>
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
             Manage customer queries, complaints, and service issues with dual resolution channels (Message & Call).
           </p>
+        </div>
+
+        {/* Office Admin Shift Badge & Quick Ticket Creation Button */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-xs">
+            <UserCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <div>
+              <div className="font-extrabold text-slate-900 dark:text-white text-[11px]">Priya Sharma (Office Admin)</div>
+              <div className="text-[10px] text-slate-500 font-mono">Active Duty • Varanasi HQ</div>
+            </div>
+          </div>
         </div>
       </div>
 
