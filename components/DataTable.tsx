@@ -391,8 +391,136 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         </div>
 
-        {/* Main Table Content */}
-        <div className="overflow-x-auto">
+        {/* Main Table Content - Responsive Mobile Cards Layout on Small Screens */}
+        <div className="block md:hidden divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+          {paginatedData.length === 0 ? (
+            <div className="py-10 px-4 text-center text-slate-400">
+              <FileSpreadsheet className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+              <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">No matching records found</p>
+              <p className="text-xs text-slate-400 mt-1">Try resetting filters or adding new data.</p>
+            </div>
+          ) : (
+            paginatedData.map((row, rowIndex) => {
+              const idStr = String(row[idField]);
+              const isSelected = selectedIds.has(idStr);
+              const globalRowIndex = (currentPage - 1) * pageSize + rowIndex + 1;
+
+              const statusCol = columns.find(
+                (c) => c.key === statusField || c.key.toLowerCase().includes("status")
+              );
+
+              const actionsCol = columns.find(
+                (c) => c.key.toLowerCase().includes("action") || c.header.toLowerCase().includes("action")
+              );
+
+              return (
+                <div
+                  key={idStr}
+                  className="p-4 space-y-3 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
+                >
+                  {/* Card Header: Checkbox + ID + Status */}
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleSelectRow(idStr)}
+                        className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer"
+                      />
+                      <span className="font-mono font-black text-brand-600 dark:text-brand-400 text-xs">
+                        {row[idField] || `#${globalRowIndex}`}
+                      </span>
+                    </div>
+
+                    {statusCol ? (
+                      <div>{statusCol.accessor ? statusCol.accessor(row, globalRowIndex) : String(row[statusField] || "")}</div>
+                    ) : row[statusField] ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {String(row[statusField])}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {/* Card Data Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    {columns.map((col) => {
+                      if (
+                        col.key === idField ||
+                        col.key === statusField ||
+                        col.key.toLowerCase().includes("action") ||
+                        col.header.toLowerCase().includes("action")
+                      ) {
+                        return null;
+                      }
+
+                      return (
+                        <div key={col.key} className="space-y-0.5">
+                          <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">
+                            {col.header}
+                          </span>
+                          <div className="text-xs font-bold text-slate-900 dark:text-white">
+                            {col.accessor ? col.accessor(row, globalRowIndex) : row[col.key]}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  {(actionsCol || hasDefaultActionsColumn) && (
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                        Row Actions
+                      </span>
+                      <div>
+                        {actionsCol ? (
+                          actionsCol.accessor ? (
+                            actionsCol.accessor(row, globalRowIndex)
+                          ) : (
+                            row[actionsCol.key]
+                          )
+                        ) : hasDefaultActionsColumn ? (
+                          <RowActionMenu
+                            actions={[
+                              {
+                                label: "View",
+                                icon: Eye,
+                                onClick: () => (onRowView ? onRowView(row) : setViewingRow(row)),
+                              },
+                              ...(onRowEdit
+                                ? [
+                                    {
+                                      label: "Edit",
+                                      icon: Edit2,
+                                      onClick: () => onRowEdit(row),
+                                    },
+                                  ]
+                                : []),
+                              {
+                                label: "Duplicate",
+                                icon: Copy,
+                                onClick: () => handleDuplicateRow(row),
+                              },
+                              {
+                                label: "Delete",
+                                icon: Trash2,
+                                onClick: () => setDeletingRow(row),
+                                danger: true,
+                              },
+                            ]}
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table Content */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300 border-collapse">
             <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-xs">
               <tr>
