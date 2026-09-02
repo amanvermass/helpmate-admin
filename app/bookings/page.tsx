@@ -342,6 +342,12 @@ function BookingsPageContent() {
     setDrawerBooking((prev) => (prev && prev.id === updated.id ? updated : prev));
   };
 
+  const formatSingleTimeSlot = (timeStr?: string) => {
+    if (!timeStr) return "10:00 AM";
+    const startPart = timeStr.split(/[-–—]| to /i)[0].trim();
+    return startPart;
+  };
+
   const columns = useMemo<Column<Booking>[]>(() => {
     const baseCols: Column<Booking>[] = [
       {
@@ -398,7 +404,11 @@ function BookingsPageContent() {
       {
         key: "timeSlot",
         header: "Time",
-        accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.timeSlot}</span>,
+        accessor: (row) => (
+          <span className="text-slate-700 dark:text-slate-300 font-extrabold text-xs">
+            {formatSingleTimeSlot(row.timeSlot)}
+          </span>
+        ),
         sortable: true,
       },
       {

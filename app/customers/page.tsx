@@ -212,6 +212,47 @@ export default function CustomersPage() {
       ),
     },
     {
+      key: "membershipPlanName",
+      header: "Member Type",
+      accessor: (row) => {
+        const plan =
+          row.membershipPlanName ||
+          (row.tier === "Crown Elite"
+            ? "Crown Elite VIP"
+            : row.tier === "VIP"
+            ? "HelpMate Gold Club"
+            : "Non-Member / Free");
+        const isCrown = plan.includes("Crown");
+        const isGold = plan.includes("Gold");
+        const isSilver = plan.includes("Silver");
+
+        const badgeStyle = isCrown
+          ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-300"
+          : isGold
+          ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300"
+          : isSilver
+          ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-300"
+          : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-300";
+
+        return (
+          <div className="flex flex-col gap-1">
+            <span
+              className={`px-2.5 py-1 rounded-full text-[10px] font-black border flex items-center gap-1 w-fit shadow-2xs ${badgeStyle}`}
+            >
+              {isCrown ? "👑" : isGold ? "🔥" : isSilver ? "⚡" : "👤"}
+              <span>{plan}</span>
+            </span>
+            {row.membershipExpiryDate && (
+              <span className="text-[9px] font-extrabold text-slate-400 font-mono">
+                Exp: {row.membershipExpiryDate}
+              </span>
+            )}
+          </div>
+        );
+      },
+      sortable: true,
+    },
+    {
       key: "totalSpend",
       header: "Lifetime Value & Jobs",
       accessor: (row) => (

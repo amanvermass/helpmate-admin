@@ -436,10 +436,18 @@ export interface Customer {
   walletBalance?: number;
   preferredPaymentMethod?: string;
   crmManager?: string;
-
   // Customer Identity & Aadhaar Verification (Optional for Customer KYC)
   aadhaarNumber?: string;
   aadhaarDocUrl?: string;
+
+  // Membership Subscription Details
+  membershipPlanName?: "Crown Elite VIP" | "HelpMate Gold Club" | "HelpMate Silver Pass" | "Non-Member / Free";
+  membershipStatus?: "Active" | "Expiring Soon" | "Expired" | "Inactive";
+  membershipStartDate?: string;
+  membershipExpiryDate?: string;
+  freeServicesClaimed?: number;
+  freeServicesTotal?: number;
+  discountPercent?: number;
 }
 
 export interface AuditLog {
@@ -1393,6 +1401,13 @@ export const initialCustomers: Customer[] = [
     crmManager: "Pooja Sharma (Operations HQ)",
     aadhaarNumber: "7821-4920-1102",
     aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    membershipPlanName: "Crown Elite VIP",
+    membershipStatus: "Active",
+    membershipStartDate: "15 Jan 2026",
+    membershipExpiryDate: "14 Jan 2027",
+    freeServicesClaimed: 2,
+    freeServicesTotal: 5,
+    discountPercent: 20,
   },
   {
     id: "cust-2",
@@ -1422,6 +1437,13 @@ export const initialCustomers: Customer[] = [
     crmManager: "Sunil Gupta (Varanasi Ops)",
     aadhaarNumber: "4920-1102-8821",
     aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    membershipPlanName: "HelpMate Gold Club",
+    membershipStatus: "Active",
+    membershipStartDate: "01 Mar 2026",
+    membershipExpiryDate: "28 Feb 2027",
+    freeServicesClaimed: 1,
+    freeServicesTotal: 3,
+    discountPercent: 15,
   },
   {
     id: "cust-3",
@@ -1448,6 +1470,13 @@ export const initialCustomers: Customer[] = [
     crmManager: "Ritu Singh (Support)",
     aadhaarNumber: "3310-9920-8812",
     aadhaarDocUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=80",
+    membershipPlanName: "HelpMate Silver Pass",
+    membershipStatus: "Expiring Soon",
+    membershipStartDate: "20 Sep 2025",
+    membershipExpiryDate: "19 Sep 2026",
+    freeServicesClaimed: 1,
+    freeServicesTotal: 1,
+    discountPercent: 10,
   },
 ];
 
@@ -2122,7 +2151,7 @@ export const initialMembershipPlans: MembershipPlan[] = [
     dedicatedManager: false,
     activeSubscribersCount: 420,
     status: "Active",
-    colorTheme: "from-slate-700 to-slate-900",
+    colorTheme: "from-blue-600 via-indigo-600 to-slate-900",
     includedServices: ["Electrical Maintenance", "Plumbing Care", "Water Purifier (RO)"],
     perks: [
       "10% Flat Discount on all Services",

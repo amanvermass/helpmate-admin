@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
@@ -48,6 +48,46 @@ export default function ExecutiveDashboard() {
   const [selectedBookingForAssign, setSelectedBookingForAssign] = useState<Booking | null>(null);
   const [assignedTechId, setAssignedTechId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Hold-to-drag scroll state for dashboard table
+  const dashTableRef = useRef<HTMLDivElement>(null);
+  const [isDashDragging, setIsDashDragging] = useState(false);
+  const [dashStartX, setDashStartX] = useState(0);
+  const [dashScrollLeft, setDashScrollLeft] = useState(0);
+
+  const handleDashMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("textarea") ||
+      target.closest("[role='button']")
+    ) {
+      return;
+    }
+    if (!dashTableRef.current) return;
+    setIsDashDragging(true);
+    setDashStartX(e.pageX - dashTableRef.current.offsetLeft);
+    setDashScrollLeft(dashTableRef.current.scrollLeft);
+  };
+
+  const handleDashMouseLeave = () => {
+    setIsDashDragging(false);
+  };
+
+  const handleDashMouseUp = () => {
+    setIsDashDragging(false);
+  };
+
+  const handleDashMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDashDragging || !dashTableRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - dashTableRef.current.offsetLeft;
+    const walk = (x - dashStartX) * 1.6;
+    dashTableRef.current.scrollLeft = dashScrollLeft - walk;
+  };
 
   const [newBooking, setNewBooking] = useState({
     customerName: "",

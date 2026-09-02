@@ -828,7 +828,7 @@ export default function MembershipManagementPage() {
               // Distinct high-contrast card header background gradients for Card 1, 2, and 3
               const headerGradient =
                 index === 0
-                  ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950"
+                  ? "bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900"
                   : index === 1
                   ? "bg-gradient-to-br from-amber-600 via-amber-500 to-yellow-600"
                   : "bg-gradient-to-br from-purple-950 via-purple-800 to-indigo-950";

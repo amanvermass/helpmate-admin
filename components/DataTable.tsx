@@ -99,6 +99,48 @@ export function DataTable<T extends Record<string, any>>({
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const [showMetadata, setShowMetadata] = useState(false);
 
+  // Hold click & drag to scroll table state
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragScrollLeft, setDragScrollLeft] = useState(0);
+
+  const handleTableMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Do not initiate drag if user clicked an interactive input, button, link, select, or menu
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("textarea") ||
+      target.closest("[role='button']")
+    ) {
+      return;
+    }
+
+    if (!tableContainerRef.current) return;
+    setIsDragging(true);
+    setDragStartX(e.pageX - tableContainerRef.current.offsetLeft);
+    setDragScrollLeft(tableContainerRef.current.scrollLeft);
+  };
+
+  const handleTableMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleTableMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTableMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !tableContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tableContainerRef.current.offsetLeft;
+    const walk = (x - dragStartX) * 1.6;
+    tableContainerRef.current.scrollLeft = dragScrollLeft - walk;
+  };
+
   React.useEffect(() => {
     setData(initialData);
   }, [initialData]);
@@ -519,8 +561,18 @@ export function DataTable<T extends Record<string, any>>({
           )}
         </div>
 
-        {/* Desktop Table Content */}
-        <div className="hidden md:block overflow-x-auto">
+        {/* Desktop Table Content - Hold Click & Drag to Scroll */}
+        <div
+          ref={tableContainerRef}
+          onMouseDown={handleTableMouseDown}
+          onMouseLeave={handleTableMouseLeave}
+          onMouseUp={handleTableMouseUp}
+          onMouseMove={handleTableMouseMove}
+          className={`hidden md:block overflow-x-auto select-none transition-all ${
+            isDragging ? "cursor-grabbing" : "cursor-grab"
+          }`}
+          title="Click and hold to drag table horizontally"
+        >
           <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300 border-collapse">
             <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 shadow-xs">
               <tr>

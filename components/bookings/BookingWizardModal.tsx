@@ -448,7 +448,7 @@ export function BookingWizardModal({
 
   // STEP 4: Schedule States
   const [bookingDate, setBookingDate] = useState("2026-08-12");
-  const [timeSlot, setTimeSlot] = useState("10:00 AM - 11:30 AM");
+  const [timeSlot, setTimeSlot] = useState("10:00 AM");
   const [preferredPartnerId, setPreferredPartnerId] = useState("");
 
   // STEP 5: Payment & Coupon States
@@ -1492,11 +1492,11 @@ export function BookingWizardModal({
                     value={timeSlot}
                     onChange={(val) => setTimeSlot(val)}
                     options={[
-                      { value: "08:00 AM - 09:30 AM", label: "08:00 AM - 09:30 AM (Morning)" },
-                      { value: "10:00 AM - 11:30 AM", label: "10:00 AM - 11:30 AM (Morning)" },
-                      { value: "12:00 PM - 01:30 PM", label: "12:00 PM - 01:30 PM (Afternoon)" },
-                      { value: "03:00 PM - 04:30 PM", label: "03:00 PM - 04:30 PM (Evening)" },
-                      { value: "05:30 PM - 07:00 PM", label: "05:30 PM - 07:00 PM (Prime Evening)" },
+                      { value: "08:00 AM", label: "08:00 AM (Morning)" },
+                      { value: "10:00 AM", label: "10:00 AM (Morning)" },
+                      { value: "12:00 PM", label: "12:00 PM (Afternoon)" },
+                      { value: "03:00 PM", label: "03:00 PM (Evening)" },
+                      { value: "05:30 PM", label: "05:30 PM (Prime Evening)" },
                     ]}
                   />
                 </div>

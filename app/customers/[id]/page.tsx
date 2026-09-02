@@ -27,11 +27,13 @@ import {
   Building,
   CreditCard,
   Sliders,
-  User,
-  ShieldCheck,
   Copy,
   Wind,
   Tv,
+  Crown,
+  Zap,
+  Gift,
+  User,
 } from "lucide-react";
 import { initialCustomers, Customer, varanasiLocalities, initialBookings, Booking, AddressRecipientType } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -898,6 +900,18 @@ export default function CustomerDetailPage() {
                 <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                   {customer.customerType || "Individual Household"}
                 </span>
+
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 flex items-center gap-1.5 shadow-2xs">
+                  <Crown className="w-3.5 h-3.5 text-amber-500" />
+                  <span>
+                    {customer.membershipPlanName ||
+                      (customer.tier === "Crown Elite"
+                        ? "Crown Elite VIP"
+                        : customer.tier === "VIP"
+                        ? "HelpMate Gold Club"
+                        : "HelpMate Silver Pass")}
+                  </span>
+                </span>
               </div>
 
               <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-3 flex-wrap pt-1">
@@ -1129,6 +1143,76 @@ export default function CustomerDetailPage() {
           </div>
 
           <div className="space-y-6">
+            {/* Membership Subscription & Expiry Details Card */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-purple-900 via-purple-950 to-slate-900 text-white shadow-xl space-y-5 relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-purple-800/80 pb-4">
+                <div className="flex items-center gap-2">
+                  <Crown className="w-6 h-6 text-amber-400" />
+                  <h3 className="text-base font-black text-white">Membership Details</h3>
+                </div>
+                <span
+                  className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border ${
+                    (customer.membershipStatus || "Active") === "Active"
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
+                      : (customer.membershipStatus || "") === "Expiring Soon"
+                      ? "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                      : "bg-slate-700 text-slate-300 border-slate-600"
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{customer.membershipStatus || "Active Subscription"}</span>
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase text-purple-300 tracking-wider block">
+                    Current Plan Tier
+                  </span>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xl font-black text-amber-300">
+                      {customer.membershipPlanName ||
+                        (customer.tier === "Crown Elite"
+                          ? "Crown Elite VIP"
+                          : customer.tier === "VIP"
+                          ? "HelpMate Gold Club"
+                          : "HelpMate Silver Pass")}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold text-white border border-white/20">
+                      {customer.discountPercent || (customer.tier === "Crown Elite" ? 20 : 15)}% OFF Benefit
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-purple-800/50 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="text-[10px] font-bold text-purple-300 uppercase block">Membership Expiry Date</span>
+                    <span className="text-sm font-extrabold text-white font-mono block">
+                      {customer.membershipExpiryDate || "14 Jan 2027"}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-emerald-400 block">
+                      ✓ Valid & Active Subscription
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="text-[10px] font-bold text-purple-300 uppercase block">Free Services Quota</span>
+                    <span className="text-sm font-extrabold text-amber-300 font-mono block">
+                      {customer.freeServicesClaimed ?? 2} / {customer.freeServicesTotal ?? 5} Claimed
+                    </span>
+                    <span className="text-[10px] font-semibold text-purple-200 block">
+                      {(customer.freeServicesTotal ?? 5) - (customer.freeServicesClaimed ?? 2)} Free Jobs Remaining
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-purple-800/40">
+                  <span className="text-purple-300 font-medium">Subscription Start Date:</span>
+                  <span className="font-bold text-white font-mono">{customer.membershipStartDate || "15 Jan 2026"}</span>
+                </div>
+              </div>
+            </div>
+
             <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-emerald-600" />
