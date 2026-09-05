@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   X,
   ChevronRight,
@@ -36,6 +36,7 @@ import {
   Edit2,
   Sliders,
   Filter,
+  RotateCcw,
 } from "lucide-react";
 import {
   Booking,
@@ -446,10 +447,69 @@ export function BookingWizardModal({
     { id: "sp-1", title: "Split AC Foam Jet Servicing", price: 599, quantity: 1, category: "AC Service & Repair", duration: "45 mins" },
   ]);
 
-  // STEP 4: Schedule States
-  const [bookingDate, setBookingDate] = useState("2026-08-12");
-  const [timeSlot, setTimeSlot] = useState("10:00 AM");
+  // STEP 4: Schedule States (Quick Cards + Custom Date Calendar + Clock Dial Time Picker)
+  const todayDateObj = new Date();
+  const defaultIsoDate = todayDateObj.toISOString().split("T")[0];
+  const [bookingDate, setBookingDate] = useState(defaultIsoDate);
+  const [timeSlot, setTimeSlot] = useState("12:00 PM");
   const [preferredPartnerId, setPreferredPartnerId] = useState("");
+
+  // Date selection states
+  const [selectedDateMode, setSelectedDateMode] = useState<"quick" | "custom">("quick");
+  const [quickDateIso, setQuickDateIso] = useState<string>(defaultIsoDate);
+  const [customDateIso, setCustomDateIso] = useState<string>("2026-09-04");
+  const [isCustomCalendarPopoverOpen, setIsCustomCalendarPopoverOpen] = useState(false);
+  const [calViewYear, setCalViewYear] = useState(todayDateObj.getFullYear());
+  const [calViewMonth, setCalViewMonth] = useState(todayDateObj.getMonth());
+
+  // Time selection states
+  const [selectedTimeMode, setSelectedTimeMode] = useState<"standard" | "custom">("standard");
+  const [standardTimeSlot, setStandardTimeSlot] = useState("12:00 PM");
+  const [customTimeHour, setCustomTimeHour] = useState(9);
+  const [customTimeMinute, setCustomTimeMinute] = useState(0);
+  const [customTimeAmPm, setCustomTimeAmPm] = useState<"AM" | "PM">("AM");
+  const [clockTab, setClockTab] = useState<"hour" | "minute">("hour");
+  const [isClockPickerOpen, setIsClockPickerOpen] = useState(false);
+
+  // Refs for Click-Outside Listeners
+  const calendarPopoverRef = useRef<HTMLDivElement>(null);
+  const clockPickerRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close Calendar Popover
+  useEffect(() => {
+    function handleClickOutsideCalendar(event: MouseEvent) {
+      if (
+        calendarPopoverRef.current &&
+        !calendarPopoverRef.current.contains(event.target as Node)
+      ) {
+        setIsCustomCalendarPopoverOpen(false);
+      }
+    }
+    if (isCustomCalendarPopoverOpen) {
+      document.addEventListener("mousedown", handleClickOutsideCalendar);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideCalendar);
+    };
+  }, [isCustomCalendarPopoverOpen]);
+
+  // Click outside to close Clock Picker Popover
+  useEffect(() => {
+    function handleClickOutsideClock(event: MouseEvent) {
+      if (
+        clockPickerRef.current &&
+        !clockPickerRef.current.contains(event.target as Node)
+      ) {
+        setIsClockPickerOpen(false);
+      }
+    }
+    if (isClockPickerOpen) {
+      document.addEventListener("mousedown", handleClickOutsideClock);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideClock);
+    };
+  }, [isClockPickerOpen]);
 
   // STEP 5: Payment & Coupon States
   const [couponCode, setCouponCode] = useState("");
@@ -771,18 +831,39 @@ export function BookingWizardModal({
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Search Existing Customer
-                    </label>
                     <CustomerSearchPicker
+                      label="Select Customer"
                       customers={customerList}
-                      selectedCustomer={customerList.find((c) => c.name === customerName) || null}
-                      onSelectCustomer={(cust) => {
+                      selectedCustomer={
+                        customerList.find((c) => c.name === customerName && c.phone === customerPhone) ||
+                        (customerName
+                          ? {
+                              id: "cust-sel",
+                              name: customerName,
+                              phone: customerPhone,
+                              email: customerEmail,
+                              locality: locality,
+                              pincode: pincode,
+                              address: address,
+                              tier: "Standard",
+                              totalSpend: 0,
+                              totalBookings: 0,
+                              lastBookingDate: "Today",
+                              joinedDate: "Today",
+                            }
+                          : null)
+                      }
+                      onSelectCustomer={(cust, isNewCustomer) => {
                         if (cust) {
                           setCustomerName(cust.name);
                           setCustomerPhone(cust.phone);
                           setCustomerEmail(cust.email);
-                          setLocality(cust.locality);
+                          if (cust.locality) setLocality(cust.locality);
+                          if (cust.pincode) setPincode(cust.pincode);
+                          if (cust.address) setAddress(cust.address);
+                          if (isNewCustomer) {
+                            setCustomerList((prev) => [cust, ...prev]);
+                          }
                         } else {
                           setCustomerName("");
                           setCustomerPhone("");
@@ -792,28 +873,6 @@ export function BookingWizardModal({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Customer Full Name *</label>
-                      <input
-                        type="text"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Rajesh Kumar Agrawal"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Mobile Phone Number *</label>
-                      <input
-                        type="tel"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="+91 98390 12345"
-                        className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none"
-                      />
-                    </div>
-                  </div>
 
                   {customerPhone && (
                     <div className="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 space-y-3">
@@ -1392,9 +1451,9 @@ export function BookingWizardModal({
                       <button
                         type="button"
                         onClick={() => handleAddServiceToCart()}
-                        className="w-full h-[42px] px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+                        className="w-full h-[42px] px-4 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900 font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                       >
-                        <Plus className="w-4 h-4" /> Add to Service List
+                        <Plus className="w-4 h-4 text-purple-600 dark:text-purple-400" /> Add to Service List
                       </button>
                     </div>
                   </div>
@@ -1468,39 +1527,477 @@ export function BookingWizardModal({
 
             {/* STEP 4: SCHEDULE & ASSIGN PARTNER */}
             {currentStep === 4 && (
-              <div className="space-y-5">
-                <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <Calendar className="w-5 h-5 text-brand-600" />
-                  <span>Step 4: Schedule Slot & Assign Service Partner</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-6">
+                {/* Header Title & Top Right Selected Arrival Card */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                   <div>
-                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Preferred Date
-                    </label>
-                    <input
-                      type="date"
-                      value={bookingDate}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full h-[42px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none text-xs"
-                    />
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                        STEP 4 OF 5 • Fast Technician Dispatch
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Calendar className="w-5.5 h-5.5 text-purple-700 dark:text-purple-400" />
+                      Schedule Arrival Slot
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                      Select your preferred date & time window for expert home service.
+                    </p>
                   </div>
 
-                  <CustomSelect
-                    label="Preferred Time Slot *"
-                    value={timeSlot}
-                    onChange={(val) => setTimeSlot(val)}
-                    options={[
-                      { value: "08:00 AM", label: "08:00 AM (Morning)" },
-                      { value: "10:00 AM", label: "10:00 AM (Morning)" },
-                      { value: "12:00 PM", label: "12:00 PM (Afternoon)" },
-                      { value: "03:00 PM", label: "03:00 PM (Evening)" },
-                      { value: "05:30 PM", label: "05:30 PM (Prime Evening)" },
-                    ]}
-                  />
+                  {/* SELECTED ARRIVAL CARD TOP RIGHT */}
+                  <div className="px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shrink-0 min-w-[210px]">
+                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block mb-0.5">
+                      SELECTED ARRIVAL
+                    </span>
+                    <div className="flex items-center gap-2 text-xs font-mono font-black text-slate-900 dark:text-white">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span>
+                        {selectedDateMode === "custom" ? customDateIso : quickDateIso} @ {selectedTimeMode === "custom" ? `${String(customTimeHour).padStart(2, "0")}:${String(customTimeMinute).padStart(2, "0")} ${customTimeAmPm}` : standardTimeSlot}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
+                {/* 1. SELECT SERVICE DATE */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-purple-700 dark:text-purple-400" />
+                      1. Select Service Date
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-400">Available Next 7 Days</span>
+                  </div>
+
+                  {/* CARDS ROW FOR DATES */}
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5 relative">
+                    {/* 5 Quick Date Cards */}
+                    {(() => {
+                      const today = new Date();
+                      return Array.from({ length: 5 }, (_, i) => {
+                        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+                        const yr = d.getFullYear();
+                        const mo = String(d.getMonth() + 1).padStart(2, "0");
+                        const dt = String(d.getDate()).padStart(2, "0");
+                        const iso = `${yr}-${mo}-${dt}`;
+                        const dayName = d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
+                        const monthName = d.toLocaleDateString("en-US", { month: "short" });
+                        const dayNum = d.getDate();
+                        const isSelected = selectedDateMode === "quick" && quickDateIso === iso;
+
+                        return (
+                          <button
+                            key={iso}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDateMode("quick");
+                              setQuickDateIso(iso);
+                              setBookingDate(iso);
+                              setIsCustomCalendarPopoverOpen(false);
+                            }}
+                            className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[74px] relative ${
+                              isSelected
+                                ? "bg-purple-800 text-white border-purple-800 shadow-lg ring-2 ring-purple-500/30 font-extrabold"
+                                : "bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-purple-300"
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs z-10">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                              </div>
+                            )}
+                            <span className={`text-[9px] font-black uppercase tracking-wider ${isSelected ? "text-purple-200" : "text-slate-400"}`}>
+                              {dayName}
+                            </span>
+                            <span className="text-lg font-black my-0 leading-tight">{dayNum}</span>
+                            <span className={`text-[9px] font-bold ${isSelected ? "text-purple-200" : "text-slate-400"}`}>
+                              {monthName} {dayNum}
+                            </span>
+                          </button>
+                        );
+                      });
+                    })()}
+
+                    {/* CUSTOM DATE CARD (6th card) */}
+                    <div className="relative" ref={calendarPopoverRef}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDateMode("custom");
+                          setBookingDate(customDateIso);
+                          setIsCustomCalendarPopoverOpen(!isCustomCalendarPopoverOpen);
+                        }}
+                        className={`w-full p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[74px] relative ${
+                          selectedDateMode === "custom"
+                            ? "bg-purple-800 text-white border-purple-800 shadow-lg ring-2 ring-purple-500/30 font-extrabold"
+                            : "bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-purple-300"
+                        }`}
+                      >
+                        {selectedDateMode === "custom" && (
+                          <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs z-10">
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          </div>
+                        )}
+                        <Calendar className={`w-3.5 h-3.5 mb-0.5 ${selectedDateMode === "custom" ? "text-purple-200" : "text-purple-600"}`} />
+                        <span className={`text-[9px] font-black uppercase tracking-wider ${selectedDateMode === "custom" ? "text-purple-200" : "text-slate-500"}`}>
+                          CUSTOM DATE
+                        </span>
+                        <span className="text-[11px] font-black font-mono mt-0.5 truncate max-w-[85px]">
+                          {customDateIso}
+                        </span>
+                      </button>
+
+                      {/* CUSTOM CALENDAR POPUP DROPDOWN (ALIGNED TO CUSTOM DATE CARD) */}
+                      {isCustomCalendarPopoverOpen && (
+                        <div className="absolute right-0 top-full mt-2 z-[9999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-2xl w-80 space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                          {/* Navigation Header */}
+                          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (calViewMonth === 0) {
+                                  setCalViewMonth(11);
+                                  setCalViewYear((y) => y - 1);
+                                } else {
+                                  setCalViewMonth((m) => m - 1);
+                                }
+                              }}
+                              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span className="font-black text-xs text-slate-900 dark:text-white">
+                              {new Date(calViewYear, calViewMonth, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (calViewMonth === 11) {
+                                  setCalViewMonth(0);
+                                  setCalViewYear((y) => y + 1);
+                                } else {
+                                  setCalViewMonth((m) => m + 1);
+                                }
+                              }}
+                              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {/* Day of Week Headers */}
+                          <div className="grid grid-cols-7 text-center font-black text-[10px] text-slate-400 uppercase">
+                            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                              <div key={d} className="py-1">{d}</div>
+                            ))}
+                          </div>
+
+                          {/* Days Grid */}
+                          {(() => {
+                            const firstDay = new Date(calViewYear, calViewMonth, 1).getDay();
+                            const daysInMo = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+                            const todayZero = new Date();
+                            todayZero.setHours(0, 0, 0, 0);
+
+                            const cells = [];
+                            for (let i = 0; i < firstDay; i++) {
+                              cells.push(<div key={`b-${i}`} />);
+                            }
+                            for (let day = 1; day <= daysInMo; day++) {
+                              const dObj = new Date(calViewYear, calViewMonth, day);
+                              dObj.setHours(0, 0, 0, 0);
+                              const isPast = dObj < todayZero;
+                              const yr = calViewYear;
+                              const mo = String(calViewMonth + 1).padStart(2, "0");
+                              const dt = String(day).padStart(2, "0");
+                              const iso = `${yr}-${mo}-${dt}`;
+                              const isSel = customDateIso === iso;
+
+                              cells.push(
+                                <button
+                                  key={`d-${day}`}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => {
+                                    setCustomDateIso(iso);
+                                    setBookingDate(iso);
+                                    setSelectedDateMode("custom");
+                                    setIsCustomCalendarPopoverOpen(false);
+                                  }}
+                                  className={`p-2 rounded-xl text-xs font-black text-center transition-all cursor-pointer ${
+                                    isPast
+                                      ? "text-slate-300 dark:text-slate-700 cursor-not-allowed opacity-40"
+                                      : isSel
+                                      ? "bg-purple-800 text-white shadow-md font-black"
+                                      : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200"
+                                  }`}
+                                >
+                                  {day}
+                                </button>
+                              );
+                            }
+                            return <div className="grid grid-cols-7 gap-1">{cells}</div>;
+                          })()}
+
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                            <span className="font-mono text-slate-500 font-bold">{customDateIso}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const todayStr = new Date().toISOString().split("T")[0];
+                                setCustomDateIso(todayStr);
+                                setBookingDate(todayStr);
+                                setSelectedDateMode("custom");
+                                setIsCustomCalendarPopoverOpen(false);
+                              }}
+                              className="text-purple-600 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                            >
+                              <RotateCcw className="w-3 h-3" /> Reset
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. SELECT ARRIVAL TIME WINDOW */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-purple-700 dark:text-purple-400" />
+                      2. Select Arrival Time Window
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-400">2-Hour Arrival Slot</span>
+                  </div>
+
+                  {/* CARDS ROW FOR TIME SLOTS */}
+                  <div className="grid grid-cols-2 sm:grid-cols-7 gap-2.5 relative">
+                    {/* 6 Standard Time Slots */}
+                    {["08:00 AM", "10:00 AM", "12:00 PM", "02:00 PM", "04:00 PM", "06:00 PM"].map((slot) => {
+                      const isSelected = selectedTimeMode === "standard" && standardTimeSlot === slot;
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTimeMode("standard");
+                            setStandardTimeSlot(slot);
+                            setTimeSlot(slot);
+                            setIsClockPickerOpen(false);
+                          }}
+                          className={`p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[70px] relative ${
+                            isSelected
+                              ? "bg-purple-800 text-white border-purple-800 shadow-lg ring-2 ring-purple-500/30 font-extrabold"
+                              : "bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-extrabold hover:border-purple-300"
+                          }`}
+                        >
+                          {isSelected && (
+                            <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs z-10">
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </div>
+                          )}
+                          <span className="text-xs font-black leading-snug">{slot}</span>
+                        </button>
+                      );
+                    })}
+
+                    {/* CUSTOM TIME CARD (7th card) WITH ANALOG CLOCK POPOVER */}
+                    <div className="relative" ref={clockPickerRef}>
+                      {(() => {
+                        const formattedCustomTime = `${String(customTimeHour).padStart(2, "0")}:${String(customTimeMinute).padStart(2, "0")} ${customTimeAmPm}`;
+                        const isSelected = selectedTimeMode === "custom";
+
+                        return (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedTimeMode("custom");
+                                setTimeSlot(formattedCustomTime);
+                                setIsClockPickerOpen(!isClockPickerOpen);
+                              }}
+                              className={`w-full p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[70px] relative ${
+                                isSelected
+                                  ? "bg-purple-800 text-white border-purple-800 shadow-lg ring-2 ring-purple-500/30 font-extrabold"
+                                  : "bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-purple-300"
+                              }`}
+                            >
+                              {isSelected && (
+                                <div className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-xs z-10">
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                </div>
+                              )}
+                              <Clock className={`w-3.5 h-3.5 mb-0.5 ${isSelected ? "text-purple-200" : "text-purple-600"}`} />
+                              <span className={`text-[9px] font-black uppercase tracking-wider ${isSelected ? "text-purple-200" : "text-slate-500"}`}>
+                                CUSTOM TIME
+                              </span>
+                              <span className="text-[11px] font-black font-mono mt-0.5 truncate max-w-[85px]">
+                                {formattedCustomTime}
+                              </span>
+                            </button>
+
+                            {/* CLOCK PICKER POPOVER (AUTOMATIC 2-STEP HOUR -> MINUTE FLOW WITH AM/PM) */}
+                            {isClockPickerOpen && (
+                              <div className="absolute right-0 top-full mt-2 z-[9999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-2xl w-80 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                                {/* Header Time Display with Interactive Hour/Minute Pills & AM/PM Toggle */}
+                                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5 text-base font-black font-mono">
+                                    <Clock className="w-4 h-4 text-purple-600 mr-0.5" />
+                                    <button
+                                      type="button"
+                                      onClick={() => setClockTab("hour")}
+                                      title="Click to edit hour"
+                                      className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                                        clockTab === "hour"
+                                          ? "bg-purple-800 text-white shadow-sm ring-2 ring-purple-500/30"
+                                          : "bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-200 hover:bg-purple-200"
+                                      }`}
+                                    >
+                                      {String(customTimeHour).padStart(2, "0")}
+                                    </button>
+                                    <span className="text-slate-400 font-bold">:</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setClockTab("minute")}
+                                      title="Click to edit minute"
+                                      className={`px-2.5 py-1 rounded-xl transition-all cursor-pointer ${
+                                        clockTab === "minute"
+                                          ? "bg-purple-800 text-white shadow-sm ring-2 ring-purple-500/30"
+                                          : "bg-purple-100 dark:bg-purple-950 text-purple-900 dark:text-purple-200 hover:bg-purple-200"
+                                      }`}
+                                    >
+                                      {String(customTimeMinute).padStart(2, "0")}
+                                    </button>
+                                  </div>
+
+                                  {/* AM / PM Toggle Pill */}
+                                  <div className="flex items-center p-1 bg-slate-200 dark:bg-slate-700 rounded-xl text-xs font-black">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCustomTimeAmPm("AM");
+                                        const updated = `${String(customTimeHour).padStart(2, "0")}:${String(customTimeMinute).padStart(2, "0")} AM`;
+                                        setTimeSlot(updated);
+                                      }}
+                                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                                        customTimeAmPm === "AM" ? "bg-purple-800 text-white shadow-xs" : "text-slate-600 dark:text-slate-300"
+                                      }`}
+                                    >
+                                      AM
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCustomTimeAmPm("PM");
+                                        const updated = `${String(customTimeHour).padStart(2, "0")}:${String(customTimeMinute).padStart(2, "0")} PM`;
+                                        setTimeSlot(updated);
+                                      }}
+                                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                                        customTimeAmPm === "PM" ? "bg-purple-800 text-white shadow-xs" : "text-slate-600 dark:text-slate-300"
+                                      }`}
+                                    >
+                                      PM
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Active Dial Title Banner */}
+                                <div className="text-center font-extrabold text-xs text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 py-1.5 rounded-xl border border-purple-100 dark:border-purple-900">
+                                  {clockTab === "hour" ? "1. Select Hour (1 — 12)" : "2. Select Minute (:00 — :55)"}
+                                </div>
+
+                                {/* CIRCULAR ANALOG CLOCK DIAL */}
+                                <div className="flex justify-center py-1">
+                                  <div className="relative w-52 h-52 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                                    {/* Center dot */}
+                                    <div className="w-3 h-3 rounded-full bg-purple-800 z-10" />
+
+                                    {/* Render 12 Dial Nodes */}
+                                    {clockTab === "hour"
+                                      ? Array.from({ length: 12 }, (_, i) => i + 1).map((hr) => {
+                                          const angleDeg = hr * 30 - 90;
+                                          const rad = (angleDeg * Math.PI) / 180;
+                                          const radius = 78;
+                                          const x = 104 + radius * Math.cos(rad) - 16;
+                                          const y = 104 + radius * Math.sin(rad) - 16;
+                                          const isSelectedHour = customTimeHour === hr;
+
+                                          return (
+                                            <button
+                                              key={`hr-${hr}`}
+                                              type="button"
+                                              style={{ left: `${x}px`, top: `${y}px` }}
+                                              onClick={() => {
+                                                setCustomTimeHour(hr);
+                                                const updated = `${String(hr).padStart(2, "0")}:${String(customTimeMinute).padStart(2, "0")} ${customTimeAmPm}`;
+                                                setTimeSlot(updated);
+                                                setClockTab("minute"); // Automatically switch to minute dial!
+                                              }}
+                                              className={`absolute w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all cursor-pointer ${
+                                                isSelectedHour
+                                                  ? "bg-purple-800 text-white shadow-md scale-110 ring-2 ring-purple-500/30"
+                                                  : "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-purple-100"
+                                              }`}
+                                            >
+                                              {hr}
+                                            </button>
+                                          );
+                                        })
+                                      : [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((mn, idx) => {
+                                          const angleDeg = idx * 30 - 90;
+                                          const rad = (angleDeg * Math.PI) / 180;
+                                          const radius = 78;
+                                          const x = 104 + radius * Math.cos(rad) - 16;
+                                          const y = 104 + radius * Math.sin(rad) - 16;
+                                          const isSelectedMin = customTimeMinute === mn;
+
+                                          return (
+                                            <button
+                                              key={`mn-${mn}`}
+                                              type="button"
+                                              style={{ left: `${x}px`, top: `${y}px` }}
+                                              onClick={() => {
+                                                setCustomTimeMinute(mn);
+                                                const updated = `${String(customTimeHour).padStart(2, "0")}:${String(mn).padStart(2, "0")} ${customTimeAmPm}`;
+                                                setTimeSlot(updated);
+                                                setIsClockPickerOpen(false); // Automatically close popover when minute is chosen!
+                                              }}
+                                              className={`absolute w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all cursor-pointer ${
+                                                isSelectedMin
+                                                  ? "bg-purple-800 text-white shadow-md scale-110 ring-2 ring-purple-500/30"
+                                                  : "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-purple-100"
+                                              }`}
+                                            >
+                                              :{String(mn).padStart(2, "0")}
+                                            </button>
+                                          );
+                                        })}
+                                  </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
+                                  <span className="font-mono text-purple-700 dark:text-purple-300 font-bold">
+                                    {String(customTimeHour).padStart(2, "0")}:{String(customTimeMinute).padStart(2, "0")} {customTimeAmPm}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsClockPickerOpen(false)}
+                                    className="px-4 py-1.5 bg-purple-800 hover:bg-purple-900 text-white rounded-xl font-bold text-xs shadow-xs cursor-pointer"
+                                  >
+                                    Done
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. TECHNICIAN ASSIGNMENT */}
                 <div className="space-y-2 text-xs">
                   <CustomSelect
                     label="Assign Varanasi Technician (Optional)"

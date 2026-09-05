@@ -120,7 +120,7 @@ export function CustomerSearchPicker({
             setIsAddingNew(!isAddingNew);
             setIsOpen(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-[11px] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 hover:bg-brand-100 dark:hover:bg-brand-900 font-extrabold text-[11px] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <UserPlus className="w-3.5 h-3.5" />
           <span>{isAddingNew ? "Cancel New Customer" : "+ Add New Customer"}</span>
@@ -287,9 +287,9 @@ export function CustomerSearchPicker({
             <button
               type="button"
               onClick={handleCreateAndSelectCustomer}
-              className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white rounded-xl font-black text-xs shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer ring-2 ring-emerald-500/30"
+              className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
             >
-              <CheckCircle2 className="w-4.5 h-4.5 text-white" />
+              <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
               <span>SAVE & AUTO-SELECT CUSTOMER</span>
             </button>
           </div>

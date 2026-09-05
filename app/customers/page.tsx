@@ -29,8 +29,10 @@ import {
   TrendingUp,
   Activity,
   User,
+  HeartHandshake,
+  HelpCircle,
 } from "lucide-react";
-import { initialCustomers, Customer, varanasiLocalities } from "@/lib/mockData";
+import { initialCustomers, Customer, varanasiLocalities, AddressRecipientType } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
@@ -60,6 +62,18 @@ export default function CustomersPage() {
   const [formLocality, setFormLocality] = useState("Sigra");
   const [formPincode, setFormPincode] = useState("221002");
   const [formAddress, setFormAddress] = useState("");
+  const [formAddressType, setFormAddressType] = useState<AddressRecipientType>("Self");
+  const [formAddressLabel, setFormAddressLabel] = useState("Home Address");
+  const [formRecipientName, setFormRecipientName] = useState("");
+  const [formRecipientPhone, setFormRecipientPhone] = useState("");
+
+  const recipientTypeOptions: { type: AddressRecipientType; label: string; icon: any; color: string }[] = [
+    { type: "Self", label: "Self", icon: User, color: "bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800" },
+    { type: "Family Member", label: "Family", icon: Users, color: "bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800" },
+    { type: "Friend / Neighbor", label: "Friend", icon: HeartHandshake, color: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800" },
+    { type: "Office / Work", label: "Office", icon: Briefcase, color: "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800" },
+    { type: "Other", label: "Other", icon: HelpCircle, color: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700" },
+  ];
 
   // Open Drawer for Creating a New Customer
   const handleOpenAddDrawer = () => {
@@ -74,6 +88,10 @@ export default function CustomersPage() {
     setFormLocality("Sigra");
     setFormPincode("221002");
     setFormAddress("");
+    setFormAddressType("Self");
+    setFormAddressLabel("Home Address");
+    setFormRecipientName("");
+    setFormRecipientPhone("");
     setIsDrawerOpen(true);
   };
 
@@ -90,6 +108,10 @@ export default function CustomersPage() {
     setFormLocality(cust.locality);
     setFormPincode(cust.pincode || "221002");
     setFormAddress(cust.address);
+    setFormAddressType("Self");
+    setFormAddressLabel("Home Address");
+    setFormRecipientName(cust.name);
+    setFormRecipientPhone(cust.phone);
     setIsDrawerOpen(true);
   };
 
@@ -550,11 +572,98 @@ export default function CustomersPage() {
                   )}
                 </div>
 
-                {/* SECTION 3: DELIVERY ADDRESS & LOCALITY */}
+                {/* SECTION 3: DELIVERY ADDRESS & RECIPIENT */}
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4">
                   <div className="flex items-center gap-2 text-slate-900 dark:text-white font-extrabold text-sm border-b border-slate-200 dark:border-slate-700 pb-2">
                     <MapPin className="w-4 h-4 text-emerald-600" />
-                    <span>3. Varanasi Locality & Street Address</span>
+                    <span>3. Delivery Address & Recipient Details</span>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Address Title Label
+                    </label>
+                    <input
+                      type="text"
+                      value={formAddressLabel}
+                      onChange={(e) => setFormAddressLabel(e.target.value)}
+                      placeholder="e.g. Home (Primary Residence), Office, Parents House"
+                      className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none text-xs focus:border-brand-500 transition-all"
+                    />
+                  </div>
+
+                  {/* RECIPIENT RELATIONSHIP BADGE SELECTOR */}
+                  <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 space-y-3">
+                    <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
+                      <span>Who is this address for?</span>
+                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase">Recipient Badge</span>
+                    </label>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {recipientTypeOptions.map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = formAddressType === opt.type;
+                        return (
+                          <button
+                            key={opt.type}
+                            type="button"
+                            onClick={() => {
+                              setFormAddressType(opt.type);
+                              if (opt.type === "Self") {
+                                setFormRecipientName(formName);
+                                setFormRecipientPhone(formPhone);
+                              }
+                            }}
+                            className={`p-2.5 rounded-xl border text-center font-bold text-[11px] transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                              isSelected
+                                ? opt.color + " shadow-xs ring-1"
+                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 shrink-0" />
+                            <span className="leading-tight">{opt.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* If Recipient is Family Member / Friend / Other: Input Recipient Contact Details */}
+                    {formAddressType !== "Self" && (
+                      <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 space-y-3 mt-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-purple-900 dark:text-purple-300">
+                          <Users className="w-4 h-4 text-purple-600" />
+                          <span>Recipient Contact Details ({formAddressType})</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                              Recipient Person Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={formRecipientName}
+                              onChange={(e) => setFormRecipientName(e.target.value)}
+                              placeholder="e.g. Rajesh Sharma (Father)"
+                              className="w-full h-[38px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                              Recipient Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              value={formRecipientPhone}
+                              onChange={(e) => setFormRecipientPhone(e.target.value)}
+                              placeholder="+91 98765 43210"
+                              className="w-full h-[38px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -589,7 +698,7 @@ export default function CustomersPage() {
 
                   <div>
                     <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Complete House / Street Delivery Address *
+                      Complete House / Street Delivery Address & Landmark *
                     </label>
                     <textarea
                       rows={3}

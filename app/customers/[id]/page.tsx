@@ -34,6 +34,7 @@ import {
   Zap,
   Gift,
   User,
+  HelpCircle,
 } from "lucide-react";
 import { initialCustomers, Customer, varanasiLocalities, initialBookings, Booking, AddressRecipientType } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
@@ -1814,48 +1815,84 @@ export default function CustomerDetailPage() {
                     />
                   </div>
 
-                  <CustomSelect
-                    label="Recipient Relationship *"
-                    value={addrFormType}
-                    onChange={(val) => setAddrFormType(val as any)}
-                    options={[
-                      { value: "Self", label: "Self (Customer Primary)" },
-                      { value: "Family Member", label: "Family Member" },
-                      { value: "Friend / Neighbor", label: "Friend / Neighbor" },
-                      { value: "Office / Work", label: "Office / Work" },
-                      { value: "Other", label: "Other" },
-                    ]}
-                    placeholder="Select Relationship..."
-                  />
+                  {/* RECIPIENT RELATIONSHIP BADGE SELECTOR */}
+                  <div className="p-4 rounded-2xl bg-amber-100/50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 space-y-3">
+                    <label className="font-extrabold text-amber-900 dark:text-amber-300 text-xs block flex items-center justify-between">
+                      <span>Who is this address for?</span>
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold uppercase">Recipient Badge</span>
+                    </label>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Recipient Contact Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={addrFormRecipientName}
-                        onChange={(e) => setAddrFormRecipientName(e.target.value)}
-                        placeholder="Rajesh Agrawal"
-                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-amber-500 transition-all"
-                        required
-                      />
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {[
+                        { type: "Self", label: "Self", icon: User, color: "bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800" },
+                        { type: "Family Member", label: "Family", icon: Users, color: "bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800" },
+                        { type: "Friend / Neighbor", label: "Friend", icon: HeartHandshake, color: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800" },
+                        { type: "Office / Work", label: "Office", icon: Briefcase, color: "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800" },
+                        { type: "Other", label: "Other", icon: HelpCircle, color: "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700" },
+                      ].map((opt) => {
+                        const Icon = opt.icon;
+                        const isSelected = addrFormType === opt.type;
+                        return (
+                          <button
+                            key={opt.type}
+                            type="button"
+                            onClick={() => {
+                              setAddrFormType(opt.type as AddressRecipientType);
+                              if (opt.type === "Self") {
+                                setAddrFormRecipientName(customer.name);
+                                setAddrFormRecipientPhone(customer.phone);
+                              }
+                            }}
+                            className={`p-2.5 rounded-xl border text-center font-bold text-[11px] transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                              isSelected
+                                ? opt.color + " shadow-xs ring-1"
+                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-300"
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 shrink-0" />
+                            <span className="leading-tight">{opt.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
 
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Recipient Mobile Phone *
-                      </label>
-                      <input
-                        type="tel"
-                        value={addrFormRecipientPhone}
-                        onChange={(e) => setAddrFormRecipientPhone(e.target.value)}
-                        placeholder="+91 98390 12345"
-                        className="w-full h-[42px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold outline-none focus:border-amber-500 transition-all"
-                        required
-                      />
-                    </div>
+                    {/* If Recipient is Family Member / Friend / Other: Input Recipient Contact Details */}
+                    {addrFormType !== "Self" && (
+                      <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 space-y-3 mt-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-300">
+                          <Users className="w-4 h-4 text-amber-600" />
+                          <span>Recipient Contact Details ({addrFormType})</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                              Recipient Person Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={addrFormRecipientName}
+                              onChange={(e) => setAddrFormRecipientName(e.target.value)}
+                              placeholder="e.g. Rajesh Sharma (Father)"
+                              className="w-full h-[38px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-amber-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                              Recipient Mobile Phone *
+                            </label>
+                            <input
+                              type="tel"
+                              value={addrFormRecipientPhone}
+                              onChange={(e) => setAddrFormRecipientPhone(e.target.value)}
+                              placeholder="+91 98765 43210"
+                              className="w-full h-[38px] px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
