@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { Portal } from "@/components/Portal";
@@ -8,7 +8,16 @@ import {
   initialCategories,
   CategoryItem,
 } from "@/lib/mockData";
+import {
+  getCategoriesApi,
+  createCategoryApi,
+  updateCategoryApi,
+  deleteCategoryApi,
+  toggleCategoryStatusApi,
+  ApiCategory,
+} from "@/lib/api";
 import { CustomSelect } from "@/components/CustomSelect";
+import { ShimmerRow, ShimmerCardGrid } from "@/components/ShimmerLoader";
 import {
   Sliders,
   Plus,
@@ -175,6 +184,37 @@ export default function CategoriesPage() {
     }));
   });
 
+  // Loading state for Shimmer Loader
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Fetch Categories from Backend API
+  const fetchCategoriesFromBackend = async () => {
+    setIsLoading(true);
+    try {
+      const res = await getCategoriesApi();
+      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped: CategoryItem[] = res.data.map((c: ApiCategory) => ({
+          id: c._id,
+          name: c.categoryName,
+          slug: c.slug,
+          icon: "Wrench",
+          iconUrl: c.iconUrl || "",
+          subcategories: c.subCategories ? c.subCategories.map((sub) => sub.name) : [],
+          subcategoriesCount: c.subCategories ? c.subCategories.length : 0,
+          servicesCount: 0,
+          status: c.status ? "Active" : "Inactive",
+        }));
+        setCategories(mapped);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategoriesFromBackend();
+  }, []);
+
   // Add / Edit Drawer State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
@@ -184,13 +224,30 @@ export default function CategoriesPage() {
     setDeleteModal({ open: true, cat });
   };
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (!deleteModal) return;
-    setCategories((prev) => prev.filter((c) => c.id !== deleteModal.cat.id));
-    if (editingCategory?.id === deleteModal.cat.id) {
+    const catToDelete = deleteModal.cat;
+
+    if (catToDelete.id.length === 24) {
+      await deleteCategoryApi(catToDelete.id);
+    }
+    setCategories((prev) => prev.filter((c) => c.id !== catToDelete.id));
+    if (editingCategory?.id === catToDelete.id) {
       setIsDrawerOpen(false);
     }
     setDeleteModal(null);
+  };
+
+  const handleToggleCategoryStatus = async (cat: CategoryItem) => {
+    const newStatusBool = cat.status !== "Active";
+    const newStatusStr: "Active" | "Inactive" = newStatusBool ? "Active" : "Inactive";
+
+    if (cat.id.length === 24) {
+      await toggleCategoryStatusApi(cat.id, newStatusBool);
+    }
+    setCategories((prev) =>
+      prev.map((c) => (c.id === cat.id ? { ...c, status: newStatusStr } : c))
+    );
   };
 
   // Form States
@@ -259,39 +316,65 @@ export default function CategoriesPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveCategory = (e: React.FormEvent) => {
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!catName.trim()) return;
 
+    const finalSlug = slug.trim() || catName.trim().toLowerCase().replace(/\s+/g, "-");
+    const subCatsPayload = subcategoriesList.map((name) => ({ name }));
+
     if (editingCategory) {
-      const updatedList = categories.map((c) =>
-        c.id === editingCategory.id
-          ? {
-              ...c,
-              name: catName,
-              slug: slug || catName.toLowerCase().replace(/\s+/g, "-"),
-              icon,
-              iconUrl: primaryIconUrl,
-              status,
-              subcategories: subcategoriesList,
-              subcategoriesCount: subcategoriesList.length,
-            }
-          : c
-      );
-      setCategories(updatedList);
+      if (editingCategory.id.length === 24) {
+        await updateCategoryApi(editingCategory.id, {
+          categoryName: catName.trim(),
+          slug: finalSlug,
+          iconUrl: primaryIconUrl,
+          subCategories: subCatsPayload,
+          status: status === "Active",
+        });
+        await fetchCategoriesFromBackend();
+      } else {
+        const updatedList = categories.map((c) =>
+          c.id === editingCategory.id
+            ? {
+                ...c,
+                name: catName,
+                slug: finalSlug,
+                icon,
+                iconUrl: primaryIconUrl,
+                status,
+                subcategories: subcategoriesList,
+                subcategoriesCount: subcategoriesList.length,
+              }
+            : c
+        );
+        setCategories(updatedList);
+      }
     } else {
-      const newCat: CategoryItem = {
-        id: `cat-${Date.now()}`,
-        name: catName,
-        slug: slug || catName.toLowerCase().replace(/\s+/g, "-"),
-        icon,
+      const apiRes = await createCategoryApi({
+        categoryName: catName.trim(),
+        slug: finalSlug,
         iconUrl: primaryIconUrl,
-        subcategories: subcategoriesList,
-        subcategoriesCount: subcategoriesList.length,
-        servicesCount: 0,
-        status,
-      };
-      setCategories([newCat, ...categories]);
+        subCategories: subCatsPayload,
+        status: status === "Active",
+      });
+
+      if (apiRes.success && apiRes.data) {
+        await fetchCategoriesFromBackend();
+      } else {
+        const newCat: CategoryItem = {
+          id: `cat-${Date.now()}`,
+          name: catName,
+          slug: finalSlug,
+          icon,
+          iconUrl: primaryIconUrl,
+          subcategories: subcategoriesList,
+          subcategoriesCount: subcategoriesList.length,
+          servicesCount: 0,
+          status,
+        };
+        setCategories([newCat, ...categories]);
+      }
     }
 
     setIsDrawerOpen(false);
@@ -370,6 +453,11 @@ export default function CategoriesPage() {
       accessor: (row) => (
         <RowActionMenu
           actions={[
+            {
+              label: row.status === "Active" ? "Set Inactive" : "Set Active",
+              icon: CheckCircle2,
+              onClick: () => handleToggleCategoryStatus(row),
+            },
             {
               label: "Edit",
               icon: Edit,
@@ -451,11 +539,15 @@ export default function CategoriesPage() {
               Showing {categories.length} Master Categories
             </span>
           </div>
-          <DataTable
-            columns={catColumns}
-            data={categories}
-            searchPlaceholder="Search category title or slug..."
-          />
+          {isLoading ? (
+            <ShimmerRow count={6} />
+          ) : (
+            <DataTable
+              columns={catColumns}
+              data={categories}
+              searchPlaceholder="Search category title or slug..."
+            />
+          )}
         </div>
       )}
 

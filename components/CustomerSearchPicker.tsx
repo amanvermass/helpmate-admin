@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, ReactNode } from "react";
 import { Customer, AddressRecipientType, varanasiLocalities } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
+import { getLocalitiesApi, createCustomerApi } from "@/lib/api";
 import {
   Search,
   UserPlus,
@@ -36,6 +37,36 @@ export function CustomerSearchPicker({
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [localityOptions, setLocalityOptions] = useState(varanasiLocalities);
+
+  useEffect(() => {
+    async function loadLocalities() {
+      try {
+        const res = await getLocalitiesApi({ limit: 100 });
+        if (res && res.success && res.data) {
+          const raw = res.data.localities || (Array.isArray(res.data) ? res.data : []);
+          if (Array.isArray(raw) && raw.length > 0) {
+            setLocalityOptions(
+              raw.map((l: any) => ({
+                id: l._id,
+                name: l.localityName || l.name,
+                pincode: l.pincode,
+                activeBookings: l.activeBookings || 0,
+                activeTechs: l.activeTechs || 0,
+                status: (l.status === false ? "Normal" : "High Demand") as any,
+                isServiceable: l.status !== false,
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error("loadLocalities error:", err);
+      }
+    }
+    loadLocalities();
+  }, []);
 
   // New Customer Inline Form States
   const [newName, setNewName] = useState("");
@@ -47,6 +78,8 @@ export function CustomerSearchPicker({
   const [recipientType, setRecipientType] = useState<AddressRecipientType>("Self");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
+  const [customerCategory, setCustomerCategory] = useState("individual_household");
+  const [propertyHouseholdType, setPropertyHouseholdType] = useState("apartment_flat");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -68,36 +101,83 @@ export function CustomerSearchPicker({
       c.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateAndSelectCustomer = () => {
-    if (!newName.trim() || !newPhone.trim()) return;
+  const handleCreateAndSelectCustomer = async () => {
+    if (!newName.trim() || !newPhone.trim()) {
+      setCreateError("Customer name and mobile number are required.");
+      return;
+    }
 
-    const created: Customer = {
-      id: `CUST-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: newName,
-      phone: newPhone,
-      email: newEmail || `${newName.toLowerCase().replace(/\s+/g, "")}@gmail.com`,
-      locality: newLocality,
-      pincode: newPincode,
-      address: newAddress || `${newLocality}, Varanasi`,
-      tier: "Standard",
-      totalSpend: 0,
-      totalBookings: 0,
-      lastBookingDate: "Never",
-      joinedDate: "Today",
-    };
+    setIsCreatingCustomer(true);
+    setCreateError("");
 
-    onSelectCustomer(created, true);
-    setIsAddingNew(false);
-    setIsOpen(false);
+    try {
+      const selectedLoc = localityOptions.find((l) => l.name.toLowerCase() === newLocality.toLowerCase()) || localityOptions[0];
+      const locId = (selectedLoc && selectedLoc.id && selectedLoc.id.length === 24) ? selectedLoc.id : "65d1a2b3c4d5e6f7a8b9c0d1";
+      const relType =
+        recipientType === "Self" ? "self" :
+        recipientType === "Family Member" ? "family_member" :
+        recipientType === "Friend / Neighbor" ? "friend_neighbor" :
+        recipientType === "Office / Work" ? "office_work" : "other_person";
 
-    // Reset inline state
-    setNewName("");
-    setNewPhone("");
-    setNewEmail("");
-    setNewAddress("");
-    setRecipientType("Self");
-    setRecipientName("");
-    setRecipientPhone("");
+      const res = await createCustomerApi({
+        fullName: newName.trim(),
+        mobile: newPhone.trim(),
+        email: newEmail.trim(),
+        customerCategory: customerCategory,
+        propertyHouseholdType: propertyHouseholdType,
+        address: {
+          addressLabel: recipientType === "Self" ? "Home (Primary)" : `${recipientType} Address`,
+          relationshipType: relType,
+          localityId: locId,
+          pincode: newPincode.trim() || selectedLoc?.pincode || "221002",
+          serviceAddress: newAddress.trim() || `${newLocality}, Varanasi`,
+        },
+      });
+
+      let createdId = `CUST-${Math.floor(1000 + Math.random() * 9000)}`;
+      if (res && res.success && res.data?.customer?._id) {
+        createdId = res.data.customer._id;
+      } else if (res && res.message && !res.success) {
+        setCreateError(res.message);
+        setIsCreatingCustomer(false);
+        return;
+      }
+
+      const created: Customer = {
+        id: createdId,
+        name: newName.trim(),
+        phone: newPhone.trim(),
+        email: newEmail.trim() || `${newName.toLowerCase().replace(/\s+/g, "")}@gmail.com`,
+        locality: newLocality,
+        pincode: newPincode,
+        address: newAddress || `${newLocality}, Varanasi`,
+        tier: "Standard",
+        totalSpend: 0,
+        totalBookings: 0,
+        lastBookingDate: "Never",
+        joinedDate: "Today",
+      };
+
+      onSelectCustomer(created, true);
+      setIsAddingNew(false);
+      setIsOpen(false);
+
+      // Reset inline state
+      setNewName("");
+      setNewPhone("");
+      setNewEmail("");
+      setNewAddress("");
+      setRecipientType("Self");
+      setRecipientName("");
+      setRecipientPhone("");
+      setCustomerCategory("individual_household");
+      setPropertyHouseholdType("apartment_flat");
+    } catch (err) {
+      console.error("handleCreateAndSelectCustomer error:", err);
+      setCreateError("Failed to save customer via API.");
+    } finally {
+      setIsCreatingCustomer(false);
+    }
   };
 
   const recipientTypeOptions: { type: AddressRecipientType; label: string; icon: any; color: string }[] = [
@@ -187,6 +267,40 @@ export function CustomerSearchPicker({
             </div>
           </div>
 
+          {/* Customer Category & Property Household Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                Customer Category *
+              </label>
+              <select
+                value={customerCategory}
+                onChange={(e) => setCustomerCategory(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+              >
+                <option value="individual_household">Individual / Household</option>
+                <option value="business">Business / Commercial</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                Property / Household Type *
+              </label>
+              <select
+                value={propertyHouseholdType}
+                onChange={(e) => setPropertyHouseholdType(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+              >
+                <option value="apartment_flat">Apartment / Flat</option>
+                <option value="independent_house">Independent House</option>
+                <option value="villa">Villa / Bungalow</option>
+                <option value="office_shop">Office / Shop</option>
+                <option value="other">Other Property</option>
+              </select>
+            </div>
+          </div>
+
           {/* RECIPIENT RELATIONSHIP BADGE SELECTOR */}
           <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800 space-y-2.5">
             <label className="font-extrabold text-purple-900 dark:text-purple-300 text-xs block flex items-center justify-between">
@@ -253,10 +367,10 @@ export function CustomerSearchPicker({
               value={newLocality}
               onChange={(val) => {
                 setNewLocality(val);
-                const foundLoc = varanasiLocalities.find((l) => l.name === val);
+                const foundLoc = localityOptions.find((l) => l.name === val);
                 if (foundLoc) setNewPincode(foundLoc.pincode);
               }}
-              options={varanasiLocalities.map((loc) => ({
+              options={localityOptions.map((loc) => ({
                 value: loc.name,
                 label: `${loc.name} (${loc.pincode})`,
               }))}
@@ -276,6 +390,12 @@ export function CustomerSearchPicker({
             </div>
           </div>
 
+          {createError && (
+            <p className="text-xs text-rose-600 dark:text-rose-400 font-bold px-1">
+              ⚠️ {createError}
+            </p>
+          )}
+
           <div className="pt-2 border-t border-brand-200 dark:border-brand-800 flex gap-2">
             <button
               type="button"
@@ -287,10 +407,17 @@ export function CustomerSearchPicker({
             <button
               type="button"
               onClick={handleCreateAndSelectCustomer}
-              className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+              disabled={isCreatingCustomer}
+              className="flex-1 py-3 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
             >
-              <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
-              <span>SAVE & AUTO-SELECT CUSTOMER</span>
+              {isCreatingCustomer ? (
+                <span>SAVING CUSTOMER...</span>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>SAVE & AUTO-SELECT CUSTOMER</span>
+                </>
+              )}
             </button>
           </div>
         </div>

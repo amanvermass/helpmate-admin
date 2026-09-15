@@ -14,11 +14,15 @@ export interface ServiceAddon {
   price: number;
   unit: string;
   category: string;
+  description?: string;
+  imageUrl?: string;
   status: "Active" | "Inactive";
 }
 
 export interface ServiceItem {
   id: string;
+  categoryId?: string;
+  subCategoryId?: string;
   category: string;
   subcategory?: string;
   title: string;
@@ -33,6 +37,7 @@ export interface ServiceItem {
   isInspectionBased?: boolean;
   addons?: ServiceAddon[];
   systemType?: string[];
+  serviceAction?: string;
   thumbnailUrl?: string;
   status: "Active" | "Inactive";
   createdBy?: string;
@@ -227,6 +232,11 @@ export interface Technician {
   bondedInsurance: boolean;
   status: "Working" | "In Transit" | "Absent" | "Available" | "On Job" | "Offline" | "Approved" | "Pending" | "Rejected";
   joiningDate: string;
+  lastCompletedJob?: {
+    title: string;
+    bookingId?: string;
+    completedAt?: string;
+  };
 
   // Earnings & Settlement
   totalEarnings: number;
@@ -298,6 +308,12 @@ export interface SelectedServiceItem {
   quantity: number;
   category?: string;
   duration?: string;
+  categoryId?: string;
+  subCategoryId?: string;
+  serviceActionId?: string;
+  rawServiceId?: string;
+  packageId?: string;
+  addons?: any[];
 }
 
 export type AddressRecipientType = "Self" | "Family Member" | "Friend / Neighbor" | "Office / Work" | "Other";
@@ -327,6 +343,8 @@ export interface Booking {
   createdBy?: string;
   id: string; // Booking / Invoice ID
   jobId?: string; // Unique Job Tracking Code e.g. HM-JOB-8821
+  bookingNumber?: string;
+  customerId?: string;
   broadcastOffers?: BroadcastPartnerOffer[];
   customerName: string;
   customerPhone: string;
@@ -363,6 +381,8 @@ export interface Booking {
   cgst: number; // 9%
   sgst: number; // 9%
   totalAmount: number;
+  finalAmount?: number;
+  paymentStatus?: "Paid" | "Pending" | "Refunded" | string;
   invoiceType: "B2C" | "B2B";
 
   // Commission (Fixed 25%)
@@ -403,6 +423,7 @@ export interface Booking {
   timeSlot: string;
   paymentMethod: "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet" | "Online" | "Partial Payment";
   createdAt?: string;
+  bookingDate?: string;
   callingDate?: string;
   callingPerson?: string;
   handledBy?: string;
@@ -931,6 +952,11 @@ export const initialTechnicians: Technician[] = [
     bondedInsurance: true,
     status: "Working",
     joiningDate: "14 Jan 2024",
+    lastCompletedJob: {
+      title: "Split AC Foam Jet Servicing",
+      bookingId: "BK-VNS-8821",
+      completedAt: "Today, 09:30 AM",
+    },
     totalEarnings: 284500,
     commissionPaid: 71125,
     pendingPayout: 14200,
@@ -953,6 +979,11 @@ export const initialTechnicians: Technician[] = [
     bondedInsurance: true,
     status: "In Transit",
     joiningDate: "05 Nov 2023",
+    lastCompletedJob: {
+      title: "Full Body Deep Tissue Spa",
+      bookingId: "BK-VNS-7732",
+      completedAt: "Today, 08:15 AM",
+    },
     totalEarnings: 412000,
     commissionPaid: 103000,
     pendingPayout: 18900,
@@ -974,6 +1005,11 @@ export const initialTechnicians: Technician[] = [
     bondedInsurance: true,
     status: "Absent",
     joiningDate: "20 Feb 2024",
+    lastCompletedJob: {
+      title: "MCB & Submersible Wiring Repair",
+      bookingId: "BK-VNS-9910",
+      completedAt: "Yesterday, 05:45 PM",
+    },
     totalEarnings: 156000,
     commissionPaid: 39000,
     pendingPayout: 8500,
@@ -995,6 +1031,11 @@ export const initialTechnicians: Technician[] = [
     bondedInsurance: true,
     status: "Available",
     joiningDate: "10 Mar 2024",
+    lastCompletedJob: {
+      title: "Overhead Tank Leakage Fix",
+      bookingId: "BK-VNS-6641",
+      completedAt: "Yesterday, 02:30 PM",
+    },
     totalEarnings: 198000,
     commissionPaid: 49500,
     pendingPayout: 11200,

@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, use, useMemo } from "react";
+import React, { useState, use, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { initialBookings, Booking, initialTechnicians, Technician, initialCustomers, SelectedAddOnItem } from "@/lib/mockData";
+import { mapApiBooking } from "../page";
+import { getBookingDetailsApi, getBookingsApi } from "@/lib/api";
 import {
   ArrowLeft,
   CalendarCheck,
@@ -54,11 +56,51 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const { role } = useRbac();
   const isOfficeAdmin = role === "Office Admin";
 
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-  const currentBooking = bookings.find((b) => b.id.toLowerCase() === bookingId.toLowerCase()) || bookings[0];
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchBooking = async () => {
+      setIsLoading(true);
+      try {
+        const detailsRes = await getBookingDetailsApi(bookingId);
+        if (isMounted && detailsRes && detailsRes.success && detailsRes.data) {
+          const mapped = mapApiBooking(detailsRes.data);
+          setBookings([mapped]);
+        } else {
+          const listRes = await getBookingsApi();
+          if (isMounted && listRes && listRes.success && Array.isArray(listRes.data)) {
+            const mappedList = listRes.data.map(mapApiBooking);
+            setBookings(mappedList);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching booking details:", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    fetchBooking();
+    return () => {
+      isMounted = false;
+    };
+  }, [bookingId]);
+
+  const currentBooking = useMemo(() => {
+    if (bookings.length === 0) return null;
+    return (
+      bookings.find(
+        (b) =>
+          b.id.toLowerCase() === bookingId.toLowerCase() ||
+          (b.bookingNumber && b.bookingNumber.toLowerCase() === bookingId.toLowerCase())
+      ) || bookings[0]
+    );
+  }, [bookings, bookingId]);
 
   // Customer Order Sequence Calculation
   const customerBookings = useMemo(() => {
+    if (!currentBooking) return [];
     return bookings.filter(
       (b) =>
         (currentBooking.customerPhone && b.customerPhone === currentBooking.customerPhone) ||
@@ -74,7 +116,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     });
   }, [customerBookings]);
 
-  const currentBookingIndex = sortedCustomerBookings.findIndex((b) => b.id === currentBooking.id);
+  const currentBookingIndex = currentBooking ? sortedCustomerBookings.findIndex((b) => b.id === currentBooking.id) : -1;
   const orderNumber = currentBookingIndex >= 0 ? currentBookingIndex + 1 : 1;
   const totalCustomerOrders = Math.max(customerBookings.length, 1);
   const isFirstOrder = orderNumber === 1;
@@ -181,9 +223,11 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleCopyId = () => {
-    navigator.clipboard.writeText(currentBooking.id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (currentBooking) {
+      navigator.clipboard.writeText(currentBooking.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const formatInvoiceNumber = (id: string) => {
@@ -202,6 +246,25 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
     );
     return found ? found.id : "cust-1";
   };
+
+  if (isLoading || !currentBooking) {
+    return (
+      <div className="w-full space-y-6 pb-12 animate-pulse">
+        <div className="flex justify-between items-center pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            <div className="h-4 w-96 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+          </div>
+          <div className="h-10 w-36 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="h-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6"></div>
+          <div className="h-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6"></div>
+          <div className="h-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6"></div>
+        </div>
+      </div>
+    );
+  }
 
   // Financial Calculations
   const base = currentBooking.basePrice || 699;

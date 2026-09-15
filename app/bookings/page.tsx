@@ -1,29 +1,21 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { initialBookings, Booking, BookingStatus, Technician, initialTechnicians, initialCustomers, SelectedAddOnItem, BroadcastPartnerOffer } from "@/lib/mockData";
+import { Booking, BookingStatus, Technician, initialTechnicians, SelectedAddOnItem, BroadcastPartnerOffer } from "@/lib/mockData";
 import {
   Calendar,
   CalendarCheck,
   CheckCircle2,
-  Clock,
-  User,
   Phone,
-  MapPin,
   FileText,
-  Printer,
-  DollarSign,
-  AlertCircle,
   ShieldCheck,
   Wrench,
-  KeyRound,
   Eye,
   Edit2,
   UserPlus,
-  Filter,
   Plus,
   X,
   ArrowRight,
@@ -36,6 +28,7 @@ import {
   ChevronRight,
   Globe,
   Building2,
+  RefreshCw,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { BookingWizardModal } from "@/components/bookings/BookingWizardModal";
@@ -46,6 +39,209 @@ import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
 import { RescheduleBookingModal } from "@/components/bookings/RescheduleBookingModal";
 import { useRbac } from "@/context/RbacContext";
+import { getBookingCategoriesApi, getBookingsApi, ApiBookingCategoryStat } from "@/lib/api";
+
+export function mapApiBooking(b: any): Booking {
+  const item0 = b.items?.[0];
+  const catName = item0?.category?.name || "General";
+  const subCatName = item0?.subCategory?.name || "";
+  const serviceActionName = item0?.serviceAction?.name || "";
+  const pkgTitle = item0?.package?.name || item0?.package?.packageName || serviceActionName || "Service Package";
+
+  const originStr = (b.origin || "").toLowerCase();
+  const isOnline = originStr === "website" || originStr === "app";
+  const createdByStr = b.handledBy?.name
+    ? b.handledBy.name
+    : isOnline
+    ? "Customer Online"
+    : originStr === "admin"
+    ? "Super Admin (HQ)"
+    : b.origin || "Customer Online";
+
+  const rawWorkingDate = b.workingDate ? b.workingDate.split("T")[0] : "";
+  const formattedWorkingDate = rawWorkingDate
+    ? new Date(b.workingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : "Today";
+
+  const rawCallingDate = b.callingDate ? b.callingDate.split("T")[0] : "";
+  const formattedCallingDate = b.callingDate
+    ? new Date(b.callingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : "";
+
+  const bookingIdDisplay = b.bookingNumber || (b._id ? `BK-${b._id.slice(-6).toUpperCase()}` : "BK-UNKNOWN");
+
+  // Map all items into servicesList
+  const servicesList = (b.items || []).map((item: any, idx: number) => {
+    const itemTitle = item.package?.name || item.package?.packageName || item.serviceAction?.name || "Service";
+    return {
+      id: item.package?.id || item.package?._id || item.serviceAction?.id || String(idx),
+      serviceCode: `${bookingIdDisplay}-${String(idx + 1).padStart(2, "0")}`,
+      title: itemTitle,
+      price: item.totalPrice || item.unitPrice || item.package?.price || 0,
+      quantity: item.quantity || 1,
+      category: item.category?.name,
+      duration: item.package?.duration ? `${item.package.duration} mins` : undefined,
+    };
+  });
+
+  // Calculate status mapping
+  let status: BookingStatus = "Pending";
+  const statusStr = (b.bookingStatus || "").toLowerCase();
+  if (statusStr === "completed") {
+    status = "Completed";
+  } else if (statusStr === "cancelled") {
+    status = "Cancelled";
+  } else if (statusStr === "rejected") {
+    status = "Rejected";
+  } else if (statusStr === "in_progress" || statusStr === "on_the_way") {
+    status = "In Progress";
+  } else if (statusStr === "accepted" || statusStr === "assigned" || b.assignedPartner?.name) {
+    status = "Assigned";
+  } else if (statusStr === "pending") {
+    status = b.assignedPartner?.name ? "Assigned" : "Pending";
+  } else if (statusStr === "draft") {
+    status = "Draft";
+  }
+
+  const basePriceVal = item0?.totalPrice || item0?.unitPrice || item0?.package?.price || b.amount || 0;
+  const totalAmountVal = b.amount !== undefined ? b.amount : basePriceVal;
+
+  const fullAddress = [
+    b.serviceAddress?.serviceAddress,
+    b.serviceAddress?.landmark ? `Near ${b.serviceAddress.landmark}` : "",
+    b.serviceAddress?.localityName,
+    b.serviceAddress?.pincode,
+  ]
+    .filter(Boolean)
+    .join(", ") || "Varanasi, UP";
+
+  return {
+    id: b._id || b.bookingNumber,
+    jobId: bookingIdDisplay,
+    bookingNumber: b.bookingNumber || bookingIdDisplay,
+    customerId: b.customer?.customerId || b.customer?._id,
+    createdBy: createdByStr,
+    customerName: b.customer?.name || "Customer",
+    customerPhone: b.customer?.mobile || "",
+    customerEmail: b.customer?.email || "",
+    city: "Varanasi",
+    locality: b.serviceAddress?.localityName || "Varanasi Zone",
+    pincode: b.serviceAddress?.pincode || "221002",
+    address: fullAddress,
+    serviceTitle: pkgTitle,
+    serviceName: serviceActionName || pkgTitle,
+    scheduledDate: formattedWorkingDate,
+    scheduledTime: b.time || "08:00 AM",
+    category: catName,
+    subCategory: subCatName,
+    packageTitle: pkgTitle,
+    addons: (item0?.selectedAddons || []).map((a: any) => a.name || a.title || "Addon"),
+    servicesList: servicesList,
+    basePrice: basePriceVal,
+    convenienceFee: 49,
+    cgst: Math.round((totalAmountVal || 0) * 0.09),
+    sgst: Math.round((totalAmountVal || 0) * 0.09),
+    totalAmount: totalAmountVal,
+    finalAmount: totalAmountVal,
+    commissionAmount: Math.round(basePriceVal * 0.25),
+    partnerEarnings: Math.round(basePriceVal * 0.75),
+    invoiceType: "B2C",
+    paymentMethod: isOnline ? "Online" : "Cash on Service",
+    paymentStatus: status === "Completed" ? "Paid" : "Pending",
+    status: status,
+    technicianId: b.assignedPartner?.partnerId || b.assignedPartner?._id || undefined,
+    technicianName: b.assignedPartner?.name || undefined,
+    technicianPhone: b.assignedPartner?.mobile || undefined,
+    bookingDate: formattedCallingDate || formattedWorkingDate,
+    callingDate: formattedCallingDate || rawCallingDate,
+    callingPerson: b.handledBy?.name || (isOnline ? "Online Direct" : "HQ Admin"),
+    handledBy: b.handledBy?.name || (isOnline ? "Website Direct" : "HQ Admin"),
+    date: formattedWorkingDate,
+    timeSlot: b.time || "08:00 AM",
+  };
+}
+
+function CategoryCardsShimmer() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="space-y-2">
+          <div className="h-7 bg-slate-200 dark:bg-slate-800 rounded-xl w-64"></div>
+          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-lg w-96"></div>
+        </div>
+        <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl w-36"></div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800"></div>
+              <div className="h-6 w-20 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+            </div>
+            <div className="space-y-2">
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded-lg w-3/4"></div>
+              <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded-md w-full"></div>
+              <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded-md w-2/3"></div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 pt-2">
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+              <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TableShimmer() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-28 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            <div className="h-7 w-64 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+          </div>
+          <div className="h-4 w-96 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+        </div>
+        <div className="h-10 w-36 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+            <div className="h-7 bg-slate-200 dark:bg-slate-800 rounded-lg w-20"></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden space-y-4 p-4">
+        <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded-xl w-64"></div>
+          <div className="h-9 bg-slate-200 dark:bg-slate-800 rounded-xl w-48"></div>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-32"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-24"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-28"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-20"></div>
+              <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-16"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function BookingsPageContent() {
   const router = useRouter();
@@ -55,25 +251,56 @@ function BookingsPageContent() {
   const { role } = useRbac();
   const isOfficeAdmin = role === "Office Admin";
 
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [apiCategories, setApiCategories] = useState<ApiBookingCategoryStat[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      // Show loading shimmer only on initial fetch when no bookings are loaded
+      if (bookings.length === 0) {
+        setIsLoadingData(true);
+      }
+      try {
+        const catRes = await getBookingCategoriesApi();
+        if (isMounted && catRes && catRes.success && catRes.data?.categories) {
+          setApiCategories(catRes.data.categories);
+        }
+
+        const bookingsRes = await getBookingsApi();
+        if (isMounted && bookingsRes && bookingsRes.success && Array.isArray(bookingsRes.data)) {
+          const mappedList: Booking[] = bookingsRes.data.map(mapApiBooking);
+          setBookings(mappedList);
+        }
+      } catch (err) {
+        console.error("Error loading categories or bookings:", err);
+      } finally {
+        if (isMounted) setIsLoadingData(false);
+      }
+    };
+
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
   const [cardFilter, setCardFilter] = useState<"ALL" | "UNASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED">("ALL");
   const [channelFilter, setChannelFilter] = useState<"ALL" | "ONLINE" | "MANUAL">("ALL");
 
-  // Helper to identify Online Customer Bookings vs Desk Manual Bookings
   const isOnlineBooking = (b: Booking) => {
-    const isOnlinePayment =
-      b.paymentMethod === "Online" ||
-      b.paymentMethod === "UPI" ||
-      b.paymentMethod === "Card" ||
-      b.paymentMethod === "Helpmate Wallet";
-    const isOnlineSource =
-      !b.createdBy ||
-      b.createdBy.toLowerCase().includes("online") ||
-      b.createdBy.toLowerCase().includes("app") ||
-      b.createdBy.toLowerCase().includes("website") ||
-      !b.createdBy.toLowerCase().includes("office");
-    return isOnlinePayment || isOnlineSource;
+    if (b.createdBy) {
+      const lower = b.createdBy.toLowerCase();
+      if (lower.includes("online") || lower.includes("website") || lower.includes("app") || lower.includes("direct")) {
+        return true;
+      }
+      if (lower.includes("admin") || lower.includes("office") || lower.includes("hq") || lower.includes("super admin")) {
+        return false;
+      }
+    }
+    return b.paymentMethod === "Online" || b.paymentMethod === "UPI" || b.paymentMethod === "Card";
   };
 
   const handleSelectCategory = (catName: string | null) => {
@@ -132,7 +359,7 @@ function BookingsPageContent() {
   };
 
   const formatInvoiceNumber = (id: string) => {
-    if (!id) return "INV-2026-001";
+    if (!id) return "INV-0000";
     const cleanId = id.replace(/^(INV-)?(bk-)?/gi, "");
     if (cleanId.length > 5 && !isNaN(Number(cleanId))) {
       return `INV-${cleanId.slice(-5)}`;
@@ -146,14 +373,6 @@ function BookingsPageContent() {
     return cleanDate || "Today";
   };
 
-  const getCustomerId = (name?: string, phone?: string) => {
-    if (!name && !phone) return "cust-1";
-    const found = initialCustomers.find(
-      (c) => (phone && c.phone === phone) || (name && c.name.toLowerCase() === name.toLowerCase())
-    );
-    return found ? found.id : "cust-1";
-  };
-
   // Base role-filtered bookings list
   const roleFilteredBookings = useMemo(() => {
     if (isOfficeAdmin) {
@@ -162,7 +381,7 @@ function BookingsPageContent() {
     return bookings;
   }, [bookings, isOfficeAdmin]);
 
-  // Compute Category Level Statistics
+  // Compute Category Level Statistics dynamically
   const categoryStatsList = useMemo(() => {
     const catMap: Record<
       string,
@@ -343,7 +562,7 @@ function BookingsPageContent() {
   };
 
   const formatSingleTimeSlot = (timeStr?: string) => {
-    if (!timeStr) return "10:00 AM";
+    if (!timeStr) return "08:00 AM";
     const startPart = timeStr.split(/[-–—]| to /i)[0].trim();
     return startPart;
   };
@@ -358,13 +577,14 @@ function BookingsPageContent() {
         className: "w-[140px] min-w-[140px] max-w-[140px]",
         accessor: (row) => {
           const catQuery = selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : "";
+          const displayId = row.bookingNumber || row.jobId || row.id;
           return (
             <button
               type="button"
               onClick={() => router.push(`/bookings/${row.id}${catQuery}`)}
               className="font-mono font-extrabold text-brand-600 dark:text-brand-400 hover:underline cursor-pointer text-xs"
             >
-              {row.id}
+              {displayId}
             </button>
           );
         },
@@ -386,6 +606,57 @@ function BookingsPageContent() {
               {isOnline ? <Globe className="w-3 h-3 text-purple-600" /> : <Building2 className="w-3 h-3 text-slate-500" />}
               <span>{isOnline ? "Online" : "Manual"}</span>
             </span>
+          );
+        },
+        sortable: true,
+      },
+      {
+        key: "technicianName",
+        header: "Assign Partner",
+        accessor: (row) => {
+          return (
+            <div className="flex items-center justify-between gap-2 max-w-[200px]">
+              {row.technicianName ? (
+                <>
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 truncate" title={row.technicianName}>
+                      <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                      <span className="truncate">{row.technicianName}</span>
+                    </div>
+                    {row.technicianPhone && (
+                      <div className="font-mono text-[11px] text-slate-500 font-semibold flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>{row.technicianPhone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setAssignBooking(row)}
+                    title="Reassign Partner"
+                    className="p-1.5 rounded-xl text-slate-500 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shrink-0 flex items-center justify-center"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-brand-600" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-lg border border-amber-200 shrink-0">
+                    Unassigned
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setAssignBooking(row)}
+                    title="Assign Partner"
+                    className="p-1.5 rounded-xl text-brand-600 bg-brand-50 dark:bg-brand-950/60 hover:bg-brand-100 dark:hover:bg-brand-900/80 border border-brand-200 dark:border-brand-800 transition-colors cursor-pointer shrink-0 flex items-center justify-center"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </button>
+                </>
+              )}
+            </div>
           );
         },
         sortable: true,
@@ -414,7 +685,7 @@ function BookingsPageContent() {
       {
         key: "callingDate",
         header: "Calling date",
-        accessor: (row) => <span className="text-slate-500 dark:text-slate-400 font-medium">{row.callingDate || "2026-07-25"}</span>,
+        accessor: (row) => <span className="text-slate-500 dark:text-slate-400 font-medium">{row.callingDate || "-"}</span>,
         sortable: true,
       },
       {
@@ -429,11 +700,13 @@ function BookingsPageContent() {
               </span>
             );
           }
-          const custId = getCustomerId(row.customerName, row.customerPhone);
+          const targetPath = row.customerId
+            ? `/customers/${row.customerId}?from=${encodeURIComponent("/bookings")}`
+            : `/customers?search=${encodeURIComponent(row.customerPhone || row.customerName)}`;
           return (
             <button
               type="button"
-              onClick={() => router.push(`/customers/${custId}?from=${encodeURIComponent("/bookings")}`)}
+              onClick={() => router.push(targetPath)}
               className="font-extrabold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 hover:underline text-left truncate max-w-[150px] block cursor-pointer"
               title={`View ${row.customerName} details`}
             >
@@ -472,7 +745,7 @@ function BookingsPageContent() {
                 {row.servicesList.map((s, idx) => (
                   <div key={s.id || idx} className="flex items-center gap-1.5 text-[10px]">
                     <span className="font-mono font-black bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 px-1.5 py-0.2 rounded border border-purple-200 shrink-0">
-                      {s.serviceCode || `HM-SVC-${row.id.replace(/[^0-9]/g, "")}-${String(idx + 1).padStart(2, "0")}`}
+                      {s.serviceCode || `${row.bookingNumber || row.id}-${String(idx + 1).padStart(2, "0")}`}
                     </span>
                     <span className="truncate text-slate-600 dark:text-slate-300 font-medium">
                       {s.title} (x{s.quantity})
@@ -482,7 +755,7 @@ function BookingsPageContent() {
               </div>
             ) : (
               <span className="text-[10px] font-mono font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 px-1.5 py-0.2 rounded border border-brand-200">
-                HM-SVC-{row.id.replace(/[^0-9]/g, "")}-01
+                {row.bookingNumber || row.id}-01
               </span>
             )}
           </div>
@@ -498,15 +771,15 @@ function BookingsPageContent() {
       {
         key: "callingPerson",
         header: "Calling Person",
-        accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.callingPerson || "Pooja Sharma (Operations)"}</span>,
+        accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.callingPerson || "-"}</span>,
         sortable: true,
       },
       {
         key: "notes",
         header: "Remark",
         accessor: (row) => (
-          <div className="max-w-[170px] truncate text-slate-500 italic" title={row.notes || row.inspectionRemarks || "Standard order"}>
-            {row.notes || row.inspectionRemarks || "Standard order"}
+          <div className="max-w-[170px] truncate text-slate-500 italic" title={row.notes || row.inspectionRemarks || "-"}>
+            {row.notes || row.inspectionRemarks || "-"}
           </div>
         ),
         sortable: true,
@@ -533,41 +806,9 @@ function BookingsPageContent() {
         sortable: true,
       },
       {
-        key: "technicianName",
-        header: "Assigned Partner Details",
-        accessor: (row) => {
-          const partnerPhone = row.technicianPhone || (row.technicianId === "tech-101" ? "+91 98390 11200" : row.technicianId === "tech-102" ? "+91 94152 44920" : "+91 91234 88100");
-          return row.technicianName ? (
-            <div className="space-y-0.5 max-w-[170px]">
-              <div className="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 truncate" title={row.technicianName}>
-                <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                <span>{row.technicianName}</span>
-              </div>
-              <div className="font-mono text-[11px] text-slate-500 font-semibold flex items-center gap-1">
-                <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                <span>{partnerPhone}</span>
-              </div>
-            </div>
-          ) : isOfficeAdmin ? (
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-lg border border-amber-200">
-              Unassigned
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAssignBooking(row)}
-              className="text-[10px] font-extrabold px-2.5 py-1 rounded-xl bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 cursor-pointer hover:bg-amber-100"
-            >
-              Assign Partner
-            </button>
-          );
-        },
-        sortable: true,
-      },
-      {
         key: "handledBy",
         header: "Handel By",
-        accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.handledBy || "Aman Verma (HQ)"}</span>,
+        accessor: (row) => <span className="text-slate-600 dark:text-slate-400 font-medium">{row.handledBy || "-"}</span>,
         sortable: true,
       },
       {
@@ -621,29 +862,13 @@ function BookingsPageContent() {
     return baseCols;
   }, [isOfficeAdmin, selectedCategory, router]);
 
-  const statusOptions: BookingStatus[] = [
-    "Draft",
-    "Pending",
-    "Waiting For Assignment",
-    "Assigned",
-    "Partner Accepted",
-    "Inspection Pending",
-    "Price Approval Pending",
-    "Customer Approval Pending",
-    "Confirmed",
-    "In Progress",
-    "Completed",
-    "Cancelled",
-    "Refunded",
-    "Rejected",
-  ];
-
   return (
     <div className="space-y-6">
-      {!selectedCategory ? (
+      {isLoadingData ? (
+        !selectedCategory ? <CategoryCardsShimmer /> : <TableShimmer />
+      ) : !selectedCategory ? (
         /* ─── VIEW 1: CATEGORY SELECTION HUB (ONLY CATEGORIES SHOWN) ─── */
         <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Simple Clean Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div>
               <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
@@ -787,12 +1012,8 @@ function BookingsPageContent() {
       ) : (
         /* ─── VIEW 2: SELECTED CATEGORY OPERATIONS TABLE (NEXT PAGE VIEW) ─── */
         <div className="space-y-6 animate-in fade-in duration-300">
-          {/* Header with Back to Category Hub button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div className="space-y-2">
-              {/* In-page Breadcrumbs Navigation */}
-             
-
               <div className="flex items-center gap-3 pt-1">
                 <button
                   type="button"
@@ -843,13 +1064,9 @@ function BookingsPageContent() {
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                  Total Bookings
-                </span>
+                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Total Bookings</span>
                 {cardFilter === "ALL" && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500 text-white">
-                    Active
-                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500 text-white">Active</span>
                 )}
               </div>
               <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
@@ -869,9 +1086,7 @@ function BookingsPageContent() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Waiting Partner</span>
                 {cardFilter === "UNASSIGNED" && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white">
-                    Filtered
-                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white">Filtered</span>
                 )}
               </div>
               <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
@@ -891,9 +1106,7 @@ function BookingsPageContent() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">In Progress</span>
                 {cardFilter === "IN_PROGRESS" && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500 text-white">
-                    Filtered
-                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500 text-white">Filtered</span>
                 )}
               </div>
               <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
@@ -913,9 +1126,7 @@ function BookingsPageContent() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Completed Jobs</span>
                 {cardFilter === "COMPLETED" && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500 text-white">
-                    Filtered
-                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500 text-white">Filtered</span>
                 )}
               </div>
               <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
@@ -935,9 +1146,7 @@ function BookingsPageContent() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">Cancelled Jobs</span>
                 {cardFilter === "CANCELLED" && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white">
-                    Filtered
-                  </span>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500 text-white">Filtered</span>
                 )}
               </div>
               <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
@@ -1024,7 +1233,6 @@ function BookingsPageContent() {
         onJobCompleted={handleJobCompleted}
       />
 
-      {/* Edit Booking Modal */}
       <EditBookingModal
         isOpen={Boolean(editingBooking)}
         booking={editingBooking}
@@ -1032,7 +1240,6 @@ function BookingsPageContent() {
         onBookingUpdated={handleBookingUpdated}
       />
 
-      {/* Reschedule Booking Modal */}
       <RescheduleBookingModal
         isOpen={Boolean(reschedulingBooking)}
         booking={reschedulingBooking}
@@ -1051,7 +1258,6 @@ function BookingsPageContent() {
       {createdBookingToast && (
         <Portal>
           <div className="fixed bottom-6 right-6 z-[9999999] max-w-sm w-full bg-slate-900 text-white rounded-3xl p-5 shadow-2xl border border-slate-800 ring-1 ring-slate-700/50 animate-in slide-in-from-bottom-5 duration-300 outline-none">
-            {/* Top Right Close Icon */}
             <button
               type="button"
               onClick={() => setCreatedBookingToast(null)}
@@ -1072,7 +1278,7 @@ function BookingsPageContent() {
                     Booking Confirmed
                   </span>
                   <span className="font-mono text-[11px] font-extrabold text-slate-300">
-                    {createdBookingToast.id}
+                    {createdBookingToast.bookingNumber || createdBookingToast.id}
                   </span>
                 </div>
 
@@ -1108,7 +1314,7 @@ function BookingsPageContent() {
         </Portal>
       )}
 
-      {/* ─── HIDDEN PRINT CANVAS: STRICT SINGLE-PAGE A4 GST TAX INVOICE PRINT ─── */}
+      {/* ─── HIDDEN PRINT CANVAS ─── */}
       <style jsx global>{`
         @page {
           size: A4 portrait;
@@ -1192,11 +1398,11 @@ function BookingsPageContent() {
                 </div>
 
                 <div className="font-mono text-xs font-black text-black bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-300">
-                  Invoice No: <span className="text-black font-extrabold">{formatInvoiceNumber(printTargetBooking.id)}</span>
+                  Invoice No: <span className="text-black font-extrabold">{formatInvoiceNumber(printTargetBooking.bookingNumber || printTargetBooking.id)}</span>
                 </div>
 
                 <div className="text-[10px] text-slate-600 font-semibold">
-                  Invoice Date: <span className="font-bold text-black">{printTargetBooking.date || "30 July 2026"}</span>
+                  Invoice Date: <span className="font-bold text-black">{printTargetBooking.date || "Today"}</span>
                 </div>
               </div>
             </div>
@@ -1237,7 +1443,7 @@ function BookingsPageContent() {
                   Payment Method: {printTargetBooking.paymentMethod || "UPI / Digital Prepaid"}
                 </div>
                 <div className="font-bold text-emerald-700 flex items-center gap-1 text-[10px]">
-                  ✓ Payment Status: Paid Clean
+                  ✓ Payment Status: {printTargetBooking.paymentStatus || "Paid"}
                 </div>
               </div>
             </div>
@@ -1321,9 +1527,8 @@ function BookingsPageContent() {
 
 export default function BookingsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center font-bold text-slate-400">Loading bookings directory...</div>}>
+    <Suspense fallback={<TableShimmer />}>
       <BookingsPageContent />
     </Suspense>
   );
 }
-

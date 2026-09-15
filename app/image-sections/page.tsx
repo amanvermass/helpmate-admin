@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Edit2,
@@ -25,9 +25,23 @@ import {
   Heart,
   Tag,
   Upload,
+  Loader2,
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { initialServices, ServiceItem } from "@/lib/mockData";
+import {
+  getAdminTrendingPackagesApi,
+  getTrendingCatalogPackagesApi,
+  addTrendingPackageApi,
+  removeTrendingPackageApi,
+  ApiTrendingPackage,
+  ApiTrendingCatalogItem,
+  getWebsiteZonesApi,
+  addWebsiteZoneApi,
+  updateWebsiteZoneApi,
+  deleteWebsiteZoneApi,
+  ApiWebsiteZone,
+} from "@/lib/api";
 
 interface ZoneCard {
   id: string;
@@ -55,6 +69,7 @@ interface ServiceCard {
 
 interface TrendingServiceCard {
   id: string;
+  packageId?: string;
   title: string;
   category: string;
   durationMins: number;
@@ -281,35 +296,138 @@ export default function ImageSectionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [zones, setZones] = useState<ZoneCard[]>(initialZones);
   const [serviceCards, setServiceCards] = useState<ServiceCard[]>(initialServiceCards);
-  const [trendingServices, setTrendingServices] = useState<TrendingServiceCard[]>(initialTrendingServices);
-
+  const [trendingServices, setTrendingServices] = useState<TrendingServiceCard[]>([]);
+  const [isZonesLoading, setIsZonesLoading] = useState(false);
+  const [isTrendingLoading, setIsTrendingLoading] = useState(false);
   const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
-  const [catalogServices, setCatalogServices] = useState<ServiceItem[]>(initialServices);
+  const [catalogPackages, setCatalogPackages] = useState<ApiTrendingCatalogItem[]>([]);
+  const [isCatalogLoading, setIsCatalogLoading] = useState(false);
 
-  const toggleCatalogServiceInTrending = (srv: ServiceItem) => {
-    const exists = trendingServices.some((t) => t.title.toLowerCase() === srv.title.toLowerCase());
-    if (exists) {
-      setTrendingServices(trendingServices.filter((t) => t.title.toLowerCase() !== srv.title.toLowerCase()));
-    } else {
-      const newTrendingItem: TrendingServiceCard = {
-        id: `trend-${srv.id}`,
-        title: srv.title,
-        category: srv.category,
-        durationMins: parseInt(srv.duration) || 60,
-        rating: srv.rating || 4.9,
-        reviewsCount: srv.reviewsCount || 100,
-        description: srv.subtitle || "Popular service with top customer ratings in Varanasi.",
-        discountPercentage: srv.originalPrice > srv.price ? `${Math.round(((srv.originalPrice - srv.price) / srv.originalPrice) * 100)}% OFF` : "BESTSELLER",
-        price: String(srv.price),
-        originalPrice: String(srv.originalPrice),
-        imageUrl: srv.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&auto=format&fit=crop&q=80",
-        bookCtaText: "Book Now →",
-        bookCtaLink: "/services",
-        isActive: true,
-        sortOrder: trendingServices.length + 1,
-      };
-      setTrendingServices([...trendingServices, newTrendingItem]);
+  const fetchZones = async () => {
+    setIsZonesLoading(true);
+    try {
+      const res = await getWebsiteZonesApi({ forceRefresh: true });
+      if (res && res.success && Array.isArray(res.data)) {
+        const mapped: ZoneCard[] = res.data.map((item: ApiWebsiteZone, index: number) => ({
+          id: item._id,
+          name: item.zoneName,
+          city: item.city,
+          proCount: item.proCount || 0,
+          imageUrl: item.imageUrl || "/bhu-gate.png",
+          isActive: item.status ?? true,
+          areas: item.areasCovered || [],
+          sortOrder: item.sortOrder ?? index + 1,
+        }));
+        setZones(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch website zones:", err);
+    } finally {
+      setIsZonesLoading(false);
+    }
+  };
+
+  const fetchTrendingPackages = async () => {
+    setIsTrendingLoading(true);
+    try {
+      const res = await getAdminTrendingPackagesApi(true);
+      if (res && res.success && Array.isArray(res.data)) {
+        const mapped: TrendingServiceCard[] = res.data.map((item: ApiTrendingPackage, index: number) => {
+          const pkg = typeof item.packageId === "object" ? item.packageId : null;
+          const pkgId = pkg ? pkg._id : (typeof item.packageId === "string" ? item.packageId : item._id);
+          const originalPrice = pkg?.originalPrice ?? 0;
+          const price = pkg?.price ?? 0;
+          const discountPercentage =
+            originalPrice > price && originalPrice > 0
+              ? `${Math.round(((originalPrice - price) / originalPrice) * 100)}% OFF`
+              : "BESTSELLER";
+
+          return {
+            id: item._id,
+            packageId: pkgId,
+            title: pkg?.packageName || "Trending Package",
+            category: pkg?.subtitle || "Trending Service",
+            durationMins: pkg?.duration || 60,
+            rating: 4.9,
+            reviewsCount: 120,
+            description: pkg?.description || pkg?.subtitle || "",
+            discountPercentage,
+            price: String(price),
+            originalPrice: String(originalPrice),
+            imageUrl: pkg?.imageUrl || pkg?.thumbnailUrl || "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&auto=format&fit=crop&q=80",
+            bookCtaText: "Book Now →",
+            bookCtaLink: "/services",
+            isActive: item.status ?? true,
+            sortOrder: item.displayOrder ?? index + 1,
+          };
+        });
+        setTrendingServices(mapped);
+      }
+    } catch (err) {
+      console.error("Failed to fetch trending packages:", err);
+    } finally {
+      setIsTrendingLoading(false);
+    }
+  };
+
+  const fetchCatalogPackages = async (search: string = "") => {
+    setIsCatalogLoading(true);
+    try {
+      const res = await getTrendingCatalogPackagesApi({ search, limit: 50 });
+      if (res && res.success && Array.isArray(res.data)) {
+        setCatalogPackages(res.data);
+      } else {
+        setCatalogPackages([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch catalog packages:", err);
+      setCatalogPackages([]);
+    } finally {
+      setIsCatalogLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "zones") {
+      fetchZones();
+    } else if (activeTab === "trending") {
+      fetchTrendingPackages();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (isCatalogPickerOpen) {
+      const timer = setTimeout(() => {
+        fetchCatalogPackages(catalogSearch);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isCatalogPickerOpen, catalogSearch]);
+
+  const handleAddPackageToTrending = async (packageId: string) => {
+    try {
+      const res = await addTrendingPackageApi(packageId);
+      if (res && res.success) {
+        await fetchTrendingPackages();
+      } else {
+        alert(res?.message || "Failed to add package to trending.");
+      }
+    } catch (err) {
+      console.error("Error adding package to trending:", err);
+    }
+  };
+
+  const handleRemovePackageFromTrending = async (packageId: string) => {
+    try {
+      const res = await removeTrendingPackageApi(packageId);
+      if (res && res.success) {
+        await fetchTrendingPackages();
+      } else {
+        alert(res?.message || "Failed to remove package from trending.");
+      }
+    } catch (err) {
+      console.error("Error removing package from trending:", err);
     }
   };
 
@@ -324,23 +442,60 @@ export default function ImageSectionsPage() {
   const [previewZone, setPreviewZone] = useState<ZoneCard | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string; type: TabType; name: string } | null>(null);
 
-  const [zoneModal, setZoneModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<ZoneCard> }>({ open: false, mode: "add", data: {} });
+  const [zoneModal, setZoneModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<ZoneCard>; file?: File | null }>({ open: false, mode: "add", data: {} });
   const [serviceModal, setServiceModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<ServiceCard> }>({ open: false, mode: "add", data: {} });
   const [trendingModal, setTrendingModal] = useState<{ open: boolean; mode: "add" | "edit"; data: Partial<TrendingServiceCard> }>({ open: false, mode: "add", data: {} });
 
-  const saveZone = () => {
+  const saveZone = async () => {
     const d = zoneModal.data;
-    if (!d.name || !d.imageUrl) return;
-    if (zoneModal.mode === "add") {
-      const newZone: ZoneCard = { id: `zone-${Date.now()}`, name: d.name!, city: d.city || "Varanasi", proCount: d.proCount || 0, imageUrl: d.imageUrl!, isActive: d.isActive ?? true, areas: d.areas || [], sortOrder: d.sortOrder || zones.length + 1 };
-      setZones([...zones, newZone]);
-    } else {
-      setZones(zones.map((z) => z.id === d.id ? { ...z, ...d } as ZoneCard : z));
+    if (!d.name) {
+      alert("Zone name is required.");
+      return;
     }
-    setZoneModal({ open: false, mode: "add", data: {} });
+    if (!d.city) {
+      alert("City is required.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("zoneName", d.name);
+    formData.append("city", d.city);
+    formData.append("proCount", String(d.proCount || 0));
+    formData.append("sortOrder", String(d.sortOrder || 1));
+    formData.append("areasCovered", (d.areas || []).join(", "));
+    formData.append("status", String(d.isActive ?? true));
+
+    if (zoneModal.file) {
+      formData.append("image", zoneModal.file);
+    }
+
+    try {
+      if (zoneModal.mode === "add") {
+        if (!zoneModal.file) {
+          alert("Zone image file is required.");
+          return;
+        }
+        const res = await addWebsiteZoneApi(formData);
+        if (res && res.success) {
+          await fetchZones();
+          setZoneModal({ open: false, mode: "add", data: {}, file: null });
+        } else {
+          alert(res?.message || "Failed to add zone.");
+        }
+      } else {
+        if (!d.id) return;
+        const res = await updateWebsiteZoneApi(d.id, formData);
+        if (res && res.success) {
+          await fetchZones();
+          setZoneModal({ open: false, mode: "add", data: {}, file: null });
+        } else {
+          alert(res?.message || "Failed to update zone.");
+        }
+      }
+    } catch (err) {
+      console.error("Error saving zone:", err);
+    }
   };
-
-
 
   const saveService = () => {
     const d = serviceModal.data;
@@ -381,10 +536,25 @@ export default function ImageSectionsPage() {
     setTrendingModal({ open: false, mode: "add", data: {} });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteModal) return;
-    if (deleteModal.type === "zones") setZones(zones.filter((z) => z.id !== deleteModal.id));
-    if (deleteModal.type === "trending") setTrendingServices(trendingServices.filter((t) => t.id !== deleteModal.id));
+    if (deleteModal.type === "zones") {
+      try {
+        const res = await deleteWebsiteZoneApi(deleteModal.id);
+        if (res && res.success) {
+          await fetchZones();
+        } else {
+          alert(res?.message || "Failed to delete zone.");
+        }
+      } catch (err) {
+        console.error("Error deleting zone:", err);
+      }
+    }
+    if (deleteModal.type === "trending") {
+      const item = trendingServices.find((t) => t.id === deleteModal.id || t.packageId === deleteModal.id);
+      const targetPkgId = item?.packageId || deleteModal.id;
+      await handleRemovePackageFromTrending(targetPkgId);
+    }
     setDeleteModal(null);
   };
 
@@ -527,47 +697,64 @@ export default function ImageSectionsPage() {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredZones.map((zone) => (
-                <div key={zone.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${zone.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 dark:border-slate-700 opacity-60"}`}>
-                  <div className="relative h-40 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <img src={zone.imageUrl} alt={zone.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/bhu-gate.png"; }} />
-                    <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${zone.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{zone.isActive ? "LIVE" : "HIDDEN"}</div>
-                    <div className="absolute top-2 left-2 bg-black/50 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"><GripVertical className="w-2.5 h-2.5" />#{zone.sortOrder}</div>
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <div>
-                      <h3 className="font-black text-sm text-slate-900 dark:text-white">{zone.name}</h3>
-                      <p className="text-[10px] text-slate-500 flex items-center gap-1"><MapPin className="w-2.5 h-2.5 text-brand-600" />{zone.city}</p>
+            {isZonesLoading ? (
+              <div className="flex items-center justify-center py-16 text-slate-500">
+                <Loader2 className="w-6 h-6 animate-spin mr-2 text-brand-600" />
+                <span className="text-xs font-bold">Loading website zones...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredZones.map((zone) => (
+                  <div key={zone.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${zone.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 dark:border-slate-700 opacity-60"}`}>
+                    <div className="relative h-40 bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <img src={zone.imageUrl} alt={zone.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/bhu-gate.png"; }} />
+                      <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${zone.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{zone.isActive ? "LIVE" : "HIDDEN"}</div>
+                      <div className="absolute top-2 left-2 bg-black/50 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"><GripVertical className="w-2.5 h-2.5" />#{zone.sortOrder}</div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px]">
-                      <Users className="w-3 h-3 text-purple-500" />
-                      <span className="font-bold text-slate-700 dark:text-slate-300">{zone.proCount} Pros</span>
-                      <span className="text-slate-400">•</span>
-                      <span className="text-slate-500">{zone.areas.length} Areas</span>
-                    </div>
-                    {zone.areas.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {zone.areas.slice(0, 4).map((a) => (
-                          <span key={a} className="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded-md">{a}</span>
-                        ))}
-                        {zone.areas.length > 4 && <span className="text-[9px] font-bold bg-purple-100 dark:bg-purple-900/40 text-purple-600 px-1.5 py-0.5 rounded-md">+{zone.areas.length - 4}</span>}
+                    <div className="p-3 space-y-2">
+                      <div>
+                        <h3 className="font-black text-sm text-slate-900 dark:text-white">{zone.name}</h3>
+                        <p className="text-[10px] text-slate-500 flex items-center gap-1"><MapPin className="w-2.5 h-2.5 text-brand-600" />{zone.city}</p>
                       </div>
-                    )}
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <Users className="w-3 h-3 text-purple-500" />
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{zone.proCount} Pros</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-slate-500">{zone.areas.length} Areas</span>
+                      </div>
+                      {zone.areas.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {zone.areas.slice(0, 4).map((a) => (
+                            <span key={a} className="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded-md">{a}</span>
+                          ))}
+                          {zone.areas.length > 4 && <span className="text-[9px] font-bold bg-purple-100 dark:bg-purple-900/40 text-purple-600 px-1.5 py-0.5 rounded-md">+{zone.areas.length - 4}</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-3 pb-3 flex items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <button type="button" onClick={() => setPreviewZone(zone)} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-purple-600 transition-colors cursor-pointer" title="View Details"><Eye className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={() => setZoneModal({ open: true, mode: "edit", data: { ...zone } })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand-600 transition-colors cursor-pointer" title="Edit Zone"><Edit2 className="w-3.5 h-3.5" /></button>
+                      <button type="button" onClick={async () => {
+                        const nextStatus = !zone.isActive;
+                        const formData = new FormData();
+                        formData.append("status", String(nextStatus));
+                        const res = await updateWebsiteZoneApi(zone.id, formData);
+                        if (res && res.success) {
+                          await fetchZones();
+                        } else {
+                          alert(res?.message || "Failed to update zone status.");
+                        }
+                      }} className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${zone.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{zone.isActive ? "Live" : "Hidden"}</button>
+                      <button type="button" onClick={() => setDeleteModal({ open: true, id: zone.id, type: "zones", name: zone.name })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors cursor-pointer ml-auto" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
                   </div>
-                  <div className="px-3 pb-3 flex items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onClick={() => setPreviewZone(zone)} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-purple-600 transition-colors cursor-pointer" title="View Details"><Eye className="w-3.5 h-3.5" /></button>
-                    <button type="button" onClick={() => setZoneModal({ open: true, mode: "edit", data: { ...zone } })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand-600 transition-colors cursor-pointer" title="Edit Zone"><Edit2 className="w-3.5 h-3.5" /></button>
-                    <button type="button" onClick={() => setZones(zones.map((z) => z.id === zone.id ? { ...z, isActive: !z.isActive } : z))} className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${zone.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{zone.isActive ? "Live" : "Hidden"}</button>
-                    <button type="button" onClick={() => setDeleteModal({ open: true, id: zone.id, type: "zones", name: zone.name })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-600 transition-colors cursor-pointer ml-auto" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
-                  </div>
-                </div>
-              ))}
-              <button type="button" onClick={() => setZoneModal({ open: true, mode: "add", data: { name: "", city: "Varanasi", proCount: 0, imageUrl: "", isActive: true, areas: [], sortOrder: zones.length + 1 } })} className="rounded-2xl border-2 border-dashed border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 h-64 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-all">
-                <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center"><Plus className="w-5 h-5 text-purple-600" /></div>
-                <span className="text-xs font-bold text-purple-600">Add New Zone</span>
-              </button>
-            </div>
+                ))}
+                <button type="button" onClick={() => setZoneModal({ open: true, mode: "add", data: { name: "", city: "Varanasi", proCount: 0, imageUrl: "", isActive: true, areas: [], sortOrder: zones.length + 1 }, file: null })} className="rounded-2xl border-2 border-dashed border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 h-64 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-all">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center"><Plus className="w-5 h-5 text-purple-600" /></div>
+                  <span className="text-xs font-bold text-purple-600">Add New Zone</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -644,47 +831,52 @@ export default function ImageSectionsPage() {
 
           {/* ADMIN CARDS EDIT GRID & SELECTION */}
           <div className="space-y-4">
-           
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredTrending.map((item) => (
-                <div key={item.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${item.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 dark:border-slate-700 opacity-60"}`}>
-                  <div className="relative h-36 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80"; }} />
-                    <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-full">{item.discountPercentage}</div>
-                    <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${item.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{item.isActive ? "LIVE" : "HIDDEN"}</div>
-                  </div>
-
-                  <div className="p-3 space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
-                      <span>{item.category} • {item.durationMins} mins</span>
-                      <span className="text-amber-500 font-bold">★ {item.rating}</span>
+            {isTrendingLoading ? (
+              <div className="flex items-center justify-center py-16 text-slate-500">
+                <Loader2 className="w-6 h-6 animate-spin mr-2 text-brand-600" />
+                <span className="text-xs font-bold">Loading trending packages from backend...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredTrending.map((item) => (
+                  <div key={item.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${item.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 dark:border-slate-700 opacity-60"}`}>
+                    <div className="relative h-36 bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80"; }} />
+                      <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-full">{item.discountPercentage}</div>
+                      <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${item.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{item.isActive ? "LIVE" : "HIDDEN"}</div>
                     </div>
 
-                    <h4 className="font-black text-xs text-slate-900 dark:text-white leading-snug line-clamp-1">{item.title}</h4>
-                    <p className="text-[10px] text-slate-500 line-clamp-2">{item.description}</p>
+                    <div className="p-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                        <span>{item.category} • {item.durationMins} mins</span>
+                        <span className="text-amber-500 font-bold">★ {item.rating}</span>
+                      </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="font-black text-xs text-purple-600 dark:text-purple-400">₹{item.price} <span className="text-slate-400 line-through text-[10px]">₹{item.originalPrice}</span></span>
-                      <span className="text-[10px] text-slate-400 font-mono">Rank #{item.sortOrder}</span>
+                      <h4 className="font-black text-xs text-slate-900 dark:text-white leading-snug line-clamp-1">{item.title}</h4>
+                      <p className="text-[10px] text-slate-500 line-clamp-2">{item.description}</p>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="font-black text-xs text-purple-600 dark:text-purple-400">₹{item.price} <span className="text-slate-400 line-through text-[10px]">₹{item.originalPrice}</span></span>
+                        <span className="text-[10px] text-slate-400 font-mono">Rank #{item.sortOrder}</span>
+                      </div>
+                    </div>
+
+                    <div className="px-3 pb-3 flex items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <button type="button" onClick={() => setTrendingServices(trendingServices.map((t) => t.id === item.id ? { ...t, isActive: !t.isActive } : t))} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${item.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{item.isActive ? "Live" : "Hidden"}</button>
+                      <button type="button" onClick={() => setDeleteModal({ open: true, id: item.id, type: "trending", name: item.title })} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer text-[10px] font-extrabold ml-auto flex items-center gap-1" title="Remove from Trending"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
                     </div>
                   </div>
+                ))}
 
-                  <div className="px-3 pb-3 flex items-center gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <button type="button" onClick={() => setTrendingServices(trendingServices.map((t) => t.id === item.id ? { ...t, isActive: !t.isActive } : t))} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${item.isActive ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>{item.isActive ? "Live" : "Hidden"}</button>
-                    <button type="button" onClick={() => setTrendingServices(trendingServices.filter((t) => t.id !== item.id))} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer text-[10px] font-extrabold ml-auto flex items-center gap-1" title="Remove from Trending"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
+                <button type="button" onClick={() => setIsCatalogPickerOpen(true)} className="rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/20 h-56 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 hover:bg-amber-100/50 transition-all text-center p-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lux">
+                    <Flame className="w-6 h-6 fill-white" />
                   </div>
-                </div>
-              ))}
-
-              <button type="button" onClick={() => setIsCatalogPickerOpen(true)} className="rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/20 h-56 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 hover:bg-amber-100/50 transition-all text-center p-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lux">
-                  <Flame className="w-6 h-6 fill-white" />
-                </div>
-                <span className="text-xs font-black text-slate-900 dark:text-white">Select Service from Catalog</span>
-                <span className="text-[10px] font-semibold text-slate-500 max-w-[180px]">Pick any service from Catalog to add to Trending</span>
-              </button>
-            </div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white">Select Service from Catalog</span>
+                  <span className="text-[10px] font-semibold text-slate-500 max-w-[180px]">Pick any service from Catalog to add to Trending</span>
+                </button>
+              </div>
+            )}
           </div>
 
         </div>
@@ -827,7 +1019,7 @@ export default function ImageSectionsPage() {
                           if (file) {
                             const reader = new FileReader();
                             reader.onloadend = () => {
-                              setZoneModal({ ...zoneModal, data: { ...zoneModal.data, imageUrl: reader.result as string } });
+                              setZoneModal({ ...zoneModal, file, data: { ...zoneModal.data, imageUrl: reader.result as string } });
                             };
                             reader.readAsDataURL(file);
                           }
@@ -935,40 +1127,60 @@ export default function ImageSectionsPage() {
 
               {/* Catalog Services List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {catalogServices
-                  .filter((s) => !catalogSearch || s.title.toLowerCase().includes(catalogSearch.toLowerCase()) || s.category.toLowerCase().includes(catalogSearch.toLowerCase()))
-                  .map((srv) => {
-                    const isAlreadyTrending = trendingServices.some((t) => t.title.toLowerCase() === srv.title.toLowerCase());
+                {isCatalogLoading ? (
+                  <div className="flex items-center justify-center py-12 text-slate-500">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2 text-amber-500" />
+                    <span className="text-xs font-bold">Searching catalog packages...</span>
+                  </div>
+                ) : catalogPackages.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 text-xs font-medium">
+                    No matching catalog packages found.
+                  </div>
+                ) : (
+                  catalogPackages.map((catItem) => {
+                    const isAlreadyTrending = trendingServices.some((t) => t.packageId === catItem.packageId);
                     return (
                       <div
-                        key={srv.id}
+                        key={catItem.packageId}
                         className="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-amber-300 transition-all flex items-center justify-between gap-4 shadow-xs"
                       >
                         <div className="flex items-center gap-3.5">
                           <img
-                            src={srv.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80"}
-                            alt={srv.title}
+                            src={catItem.imageUrl || catItem.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80"}
+                            alt={catItem.packageName}
                             className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                           />
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">{srv.title}</h4>
+                              <h4 className="font-extrabold text-slate-900 dark:text-white text-xs">{catItem.packageName}</h4>
                               <span className="px-2 py-0.5 rounded text-[9px] font-black bg-brand-50 text-brand-600 border border-brand-200">
-                                {srv.category}
+                                {catItem.category?.name || "Service"}
                               </span>
+                              {catItem.serviceAction?.name && (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-purple-50 text-purple-600 border border-purple-200">
+                                  {catItem.serviceAction.name}
+                                </span>
+                              )}
                             </div>
                             <p className="text-[11px] text-slate-500 font-semibold flex items-center gap-2 mt-0.5">
-                              <span className="font-mono font-bold text-slate-900 dark:text-white">₹{srv.price}</span>
-                              <span className="text-slate-400 line-through text-[10px]">₹{srv.originalPrice}</span>
+                              <span className="font-mono font-bold text-slate-900 dark:text-white">₹{catItem.price}</span>
+                              <span className="text-slate-400 line-through text-[10px]">₹{catItem.originalPrice}</span>
                               <span>•</span>
-                              <span className="text-amber-500 font-bold">★ {srv.rating}</span>
+                              <span className="text-amber-600 font-bold">{catItem.discountPercentage}% OFF</span>
+                              {catItem.duration && <span>• {catItem.duration} mins</span>}
                             </p>
                           </div>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => toggleCatalogServiceInTrending(srv)}
+                          onClick={() => {
+                            if (isAlreadyTrending) {
+                              handleRemovePackageFromTrending(catItem.packageId);
+                            } else {
+                              handleAddPackageToTrending(catItem.packageId);
+                            }
+                          }}
                           className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                             isAlreadyTrending
                               ? "bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-600 hover:text-white"
@@ -980,7 +1192,8 @@ export default function ImageSectionsPage() {
                         </button>
                       </div>
                     );
-                  })}
+                  })
+                )}
               </div>
 
               {/* Footer */}

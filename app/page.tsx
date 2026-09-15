@@ -28,6 +28,7 @@ import {
   Search,
   Filter,
   Layers,
+  RefreshCw,
 } from "lucide-react";
 import {
   analyticsData,
@@ -310,22 +311,20 @@ export default function ExecutiveDashboard() {
                 <button
                   type="button"
                   onClick={() => setChartMode("revenue")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    chartMode === "revenue"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === "revenue"
                       ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   Revenue (₹)
                 </button>
                 <button
                   type="button"
                   onClick={() => setChartMode("bookings")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    chartMode === "bookings"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartMode === "bookings"
                       ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   Bookings Count
                 </button>
@@ -339,11 +338,11 @@ export default function ExecutiveDashboard() {
                 <div className="flex flex-col justify-between text-right shrink-0 py-1" style={{ height: "200px" }}>
                   {chartMode === "revenue"
                     ? ["₹16L", "₹12L", "₹8L", "₹4L", "₹0"].map((l) => (
-                        <span key={l} className="text-[10px] font-mono font-bold text-slate-400">{l}</span>
-                      ))
+                      <span key={l} className="text-[10px] font-mono font-bold text-slate-400">{l}</span>
+                    ))
                     : ["1,600", "1,200", "800", "400", "0"].map((l) => (
-                        <span key={l} className="text-[10px] font-mono font-bold text-slate-400">{l}</span>
-                      ))}
+                      <span key={l} className="text-[10px] font-mono font-bold text-slate-400">{l}</span>
+                    ))}
                 </div>
 
                 {/* Chart Grid with SVG Area Path & Nodes */}
@@ -417,11 +416,10 @@ export default function ExecutiveDashboard() {
                           </div>
 
                           <div
-                            className={`absolute w-3.5 h-3.5 -ml-1.75 -mt-1.75 rounded-full bg-white dark:bg-slate-900 border-2.5 shadow-md group-hover:scale-150 transition-all duration-500 cursor-pointer ${
-                              chartMode === "revenue"
+                            className={`absolute w-3.5 h-3.5 -ml-1.75 -mt-1.75 rounded-full bg-white dark:bg-slate-900 border-2.5 shadow-md group-hover:scale-150 transition-all duration-500 cursor-pointer ${chartMode === "revenue"
                                 ? "border-brand-600 group-hover:bg-brand-600 group-hover:border-white"
                                 : "border-emerald-600 group-hover:bg-emerald-600 group-hover:border-white"
-                            }`}
+                              }`}
                             style={{ top: `${topPos}%`, left: "50%" }}
                           />
                         </div>
@@ -547,11 +545,10 @@ export default function ExecutiveDashboard() {
                     key={loc.id}
                     type="button"
                     onClick={() => setSelectedLocality(isSelected ? "All" : loc.name)}
-                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
-                      isSelected
+                    className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${isSelected
                         ? "bg-brand-600 text-white border-brand-600 shadow-md"
                         : "bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-brand-300 text-slate-900 dark:text-white"
-                    }`}
+                      }`}
                   >
                     <p className={`text-[11px] font-bold truncate ${isSelected ? "text-white" : "text-slate-900 dark:text-white"}`}>
                       {loc.name}
@@ -561,15 +558,14 @@ export default function ExecutiveDashboard() {
                         {loc.activeBookings} active
                       </span>
                       <span
-                        className={`font-extrabold px-1 rounded ${
-                          isSelected
+                        className={`font-extrabold px-1 rounded ${isSelected
                             ? "bg-white/20 text-white"
                             : loc.status === "Peak"
-                            ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
-                            : loc.status === "High Demand"
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                        }`}
+                              ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                              : loc.status === "High Demand"
+                                ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                                : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                          }`}
                       >
                         {loc.status}
                       </span>
@@ -635,7 +631,7 @@ export default function ExecutiveDashboard() {
 
       </div>
 
-   
+
 
       {/* ─── 5. FULL-WIDTH STANDALONE LIVE VARANASI ASSIGNMENT FEED CONSOLE ─── */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-5 w-full">
@@ -677,11 +673,10 @@ export default function ExecutiveDashboard() {
                   key={st}
                   type="button"
                   onClick={() => setSelectedStatus(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                    selectedStatus === st
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${selectedStatus === st
                       ? "bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {st}
                 </button>
@@ -737,28 +732,49 @@ export default function ExecutiveDashboard() {
                       ₹{b.totalAmount}
                     </td>
                     <td className="py-3.5 px-4">
-                      {b.technicianName ? (
-                        <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
-                          <UserCheck className="w-3.5 h-3.5" />
-                          <span>{b.technicianName}</span>
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                          <AlertCircle className="w-3 h-3" /> Unassigned
-                        </span>
-                      )}
+                      <div className="flex items-center justify-between gap-1.5">
+                        {b.technicianName ? (
+                          <>
+                            <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                              <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">{b.technicianName}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBookingForAssign(b)}
+                              title="Reassign Partner"
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer shrink-0"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 text-brand-600" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                              <AlertCircle className="w-3 h-3" /> Unassigned
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBookingForAssign(b)}
+                              title="Assign Partner"
+                              className="p-1.5 rounded-lg text-brand-600 bg-brand-50 dark:bg-brand-950/60 hover:bg-brand-100 border border-brand-200 dark:border-brand-800 transition-colors cursor-pointer shrink-0"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border inline-block ${
-                          b.status === "Completed"
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border inline-block ${b.status === "Completed"
                             ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                             : b.status === "In Progress"
-                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                            : b.status === "Assigned"
-                            ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                            : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                        }`}
+                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                              : b.status === "Assigned"
+                                ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                          }`}
                       >
                         {b.status}
                       </span>
@@ -823,11 +839,10 @@ export default function ExecutiveDashboard() {
                     <div
                       key={t.id}
                       onClick={() => setAssignedTechId(t.id)}
-                      className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
-                        assignedTechId === t.id
+                      className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${assignedTechId === t.id
                           ? "bg-slate-900 text-white border-slate-900"
                           : "bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:border-slate-400"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-extrabold text-xs flex items-center justify-center">

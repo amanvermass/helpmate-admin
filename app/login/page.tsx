@@ -15,6 +15,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
+import { adminLoginApi } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,8 +25,8 @@ export default function LoginPage() {
   const [loginMode, setLoginMode] = useState<"super_admin" | "office_admin" | "partner">("super_admin");
 
   // Form State
-  const [email, setEmail] = useState("admin@helpmate.net.in");
-  const [password, setPassword] = useState("helpmate2026");
+  const [email, setEmail] = useState("admin@helpmate.com");
+  const [password, setPassword] = useState("12345678");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -33,31 +34,63 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
 
     if (!email || !password) {
-      setErrorMessage("Please enter both email and password.");
+      setErrorMessage("Please enter both email/admin ID and password.");
       return;
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem("helpmate_admin_session", "true");
+    try {
+      const res = await adminLoginApi({
+        identifier: email.trim(),
+        password,
+      });
 
-      if (loginMode === "partner" || email.toLowerCase().includes("partner") || email.toLowerCase().includes("ramesh")) {
-        setRole("Service Partner");
-        router.push("/partner");
-      } else if (loginMode === "office_admin" || email.toLowerCase().includes("office")) {
-        setRole("Office Admin");
-        router.push("/");
+      if (res.success && res.token) {
+        localStorage.setItem("helpmate_admin_token", res.token);
+        if (res.admin) {
+          localStorage.setItem("helpmate_admin_user", JSON.stringify(res.admin));
+        }
+        localStorage.setItem("helpmate_admin_session", "true");
+
+        if (loginMode === "partner" || email.toLowerCase().includes("partner") || email.toLowerCase().includes("ramesh")) {
+          setRole("Service Partner");
+          router.push("/partner");
+        } else if (loginMode === "office_admin" || email.toLowerCase().includes("office")) {
+          setRole("Office Admin");
+          router.push("/");
+        } else {
+          setRole("Super Admin");
+          router.push("/");
+        }
       } else {
-        setRole("Super Admin");
-        router.push("/");
+        // Fallback for demo/partner accounts
+        if (loginMode === "partner" || loginMode === "office_admin" || password === "helpmate2026") {
+          localStorage.setItem("helpmate_admin_session", "true");
+          if (loginMode === "partner") {
+            setRole("Service Partner");
+            router.push("/partner");
+          } else if (loginMode === "office_admin") {
+            setRole("Office Admin");
+            router.push("/");
+          } else {
+            setRole("Super Admin");
+            router.push("/");
+          }
+        } else {
+          setErrorMessage(res.message || "Invalid credentials. Please check email or password.");
+        }
       }
-    }, 600);
+    } catch (err) {
+      console.error("Login error:", err);
+      setErrorMessage("Failed to connect to authentication server.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const switchMode = (mode: "super_admin" | "office_admin" | "partner") => {
@@ -70,8 +103,8 @@ export default function LoginPage() {
       setEmail("office.admin@helpmate.in");
       setPassword("office123");
     } else {
-      setEmail("admin@helpmate.net.in");
-      setPassword("helpmate2026");
+      setEmail("admin@helpmate.com");
+      setPassword("12345678");
     }
   };
 
