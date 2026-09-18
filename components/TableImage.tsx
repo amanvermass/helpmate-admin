@@ -1,0 +1,52 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Wrench, Image as ImageIcon } from "lucide-react";
+import { formatImageUrl } from "@/lib/api";
+
+interface TableImageProps {
+  src?: string;
+  alt?: string;
+  className?: string;
+  containerClassName?: string;
+  fallbackIcon?: "wrench" | "image";
+}
+
+export function TableImage({
+  src,
+  alt = "Image",
+  className = "w-full h-full object-cover group-hover:scale-110 transition-transform duration-300",
+  containerClassName = "w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0 group flex items-center justify-center relative",
+  fallbackIcon = "wrench",
+}: TableImageProps) {
+  const [hasError, setHasError] = useState(false);
+  const formattedUrl = formatImageUrl(src);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  const IconComponent = fallbackIcon === "wrench" ? Wrench : ImageIcon;
+
+  if (!formattedUrl || hasError) {
+    return (
+      <div className={containerClassName}>
+        <IconComponent className="w-5 h-5 text-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={containerClassName}>
+      <img
+        src={formattedUrl}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        className={className}
+        onError={() => setHasError(true)}
+      />
+    </div>
+  );
+}

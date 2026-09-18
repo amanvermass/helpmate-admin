@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
+import { TableImage } from "@/components/TableImage";
 import { Portal } from "@/components/Portal";
 import { ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
 import {
@@ -28,6 +29,7 @@ import {
   ApiServiceAction,
   ApiLocality,
   API_BASE_URL,
+  formatImageUrl,
 } from "@/lib/api";
 import { ShimmerRow, ShimmerCardGrid } from "@/components/ShimmerLoader";
 import { Wrench, Plus, CheckCircle2, MapPin, Tag, X, Filter, Sliders, Briefcase, Trash2, Link, Layers, AlertCircle, Edit, ChevronDown, FileImage, Upload, Megaphone, Eye, Flame, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
@@ -49,11 +51,13 @@ function safeStr(val: any): string {
 interface ServiceOfferingRow {
   id: string;
   title: string;
+  subtitle?: string;
   type?: string;
   price: number;
   duration: string;
   description?: string;
   thumbnailUrl?: string;
+  imageFile?: File;
   addonIds?: string[];
 }
 
@@ -172,7 +176,8 @@ export default function CmsPage() {
           const priceVal = s.price !== undefined ? Number(s.price) : 699;
           const origPriceVal = s.originalPrice !== undefined ? Number(s.originalPrice) : Math.round(priceVal * 1.3);
           const durationVal = typeof s.duration === "number" ? `${s.duration} mins` : (s.duration || "45 mins");
-          const subtitleVal = s.description || s.subtitle || `Expert ${titleStr} service with 30-day HelpMate guarantee`;
+          const subtitleVal = s.subtitle ? safeStr(s.subtitle) : "";
+          const descriptionVal = s.description ? safeStr(s.description) : `Expert ${titleStr} service with 30-day HelpMate guarantee`;
 
           const rawImg = s.imageUrl || s.thumbnailUrl || "";
           const thumbVal = rawImg;
@@ -190,6 +195,7 @@ export default function CmsPage() {
             subcategory: subCategoryNameStr,
             title: titleStr,
             subtitle: subtitleVal,
+            description: descriptionVal,
             price: priceVal,
             originalPrice: origPriceVal,
             duration: durationVal,
@@ -466,20 +472,11 @@ export default function CmsPage() {
       key: "thumbnailUrl",
       header: "Thumbnail",
       accessor: (row) => (
-        <div className="w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0 group flex items-center justify-center">
-          {row.thumbnailUrl ? (
-            <img
-              src={row.thumbnailUrl}
-              alt={row.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <Wrench className="w-5 h-5 text-slate-400" />
-          )}
-        </div>
+        <TableImage
+          src={row.thumbnailUrl || (row as any).imageUrl}
+          alt={row.title}
+          fallbackIcon="wrench"
+        />
       ),
     },
     {
@@ -611,20 +608,12 @@ export default function CmsPage() {
       key: "imageUrl",
       header: "Image",
       accessor: (row) => (
-        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center">
-          {row.imageUrl ? (
-            <img
-              src={row.imageUrl}
-              alt={row.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <ImageIcon className="w-4 h-4 text-slate-400" />
-          )}
-        </div>
+        <TableImage
+          src={row.imageUrl}
+          alt={row.title}
+          fallbackIcon="image"
+          containerClassName="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center relative"
+        />
       ),
     },
     {
@@ -929,8 +918,10 @@ export default function CmsPage() {
       {
         id: `offering-${Date.now()}`,
         title: "",
+        subtitle: "",
         price: 699,
         duration: "45 mins",
+        description: "",
         addonIds: [],
       },
     ]);
@@ -963,6 +954,7 @@ export default function CmsPage() {
       {
         id: `offering-${Date.now()}`,
         title: "",
+        subtitle: "",
         price: 699,
         duration: "45 mins",
         description: "",
@@ -1031,9 +1023,10 @@ export default function CmsPage() {
       {
         id: item.id,
         title: item.title,
+        subtitle: item.subtitle || "",
         price: item.price,
         duration: item.duration,
-        description: item.subtitle || "",
+        description: item.description || item.subtitle || "",
         thumbnailUrl: packageImage,
         addonIds: extractedAddonIds,
       },
@@ -1160,21 +1153,38 @@ export default function CmsPage() {
       const packageAddonIds = (firstOff.addonIds || []).filter((id) => id.length === 24);
 
       if (editingServiceId.length === 24) {
-        const updatePkgRes = await updatePackageApi(editingServiceId, {
-          serviceId: actionIdToUse || catIdToUse,
-          serviceActionId: actionIdToUse,
-          categoryId: catIdToUse,
-          subCategoryId: subCatIdToUse,
-          serviceAction: selectedServiceAction,
-          packageName: firstOff.title,
-          description: firstOff.description,
-          price: firstOff.price,
-          duration: parseInt(String(firstOff.duration)) || 45,
-          originalPrice: Math.round((firstOff.price || 699) * 1.3),
-          imageUrl: firstOff.thumbnailUrl || "",
-          thumbnailUrl: firstOff.thumbnailUrl || "",
-          addons: packageAddonIds,
-        });
+        let updatePayload: any;
+        if (firstOff.imageFile instanceof File) {
+          const form = new FormData();
+          form.append("image", firstOff.imageFile);
+          form.append("packageName", firstOff.title);
+          if (firstOff.subtitle && firstOff.subtitle.trim()) form.append("subtitle", firstOff.subtitle.trim());
+          if (firstOff.description && firstOff.description.trim()) form.append("description", firstOff.description.trim());
+          form.append("price", String(firstOff.price));
+          form.append("duration", String(parseInt(String(firstOff.duration)) || 45));
+          form.append("originalPrice", String(Math.round((firstOff.price || 699) * 1.3)));
+          packageAddonIds.forEach((addonId) => form.append("addons", addonId));
+          updatePayload = form;
+        } else {
+          updatePayload = {
+            serviceId: actionIdToUse || catIdToUse,
+            serviceActionId: actionIdToUse,
+            categoryId: catIdToUse,
+            subCategoryId: subCatIdToUse,
+            serviceAction: selectedServiceAction,
+            packageName: firstOff.title,
+            subtitle: firstOff.subtitle && firstOff.subtitle.trim() ? firstOff.subtitle.trim() : undefined,
+            description: firstOff.description && firstOff.description.trim() ? firstOff.description.trim() : undefined,
+            price: firstOff.price,
+            duration: parseInt(String(firstOff.duration)) || 45,
+            originalPrice: Math.round((firstOff.price || 699) * 1.3),
+            imageUrl: firstOff.thumbnailUrl || "",
+            thumbnailUrl: firstOff.thumbnailUrl || "",
+            addons: packageAddonIds,
+          };
+        }
+
+        const updatePkgRes = await updatePackageApi(editingServiceId, updatePayload);
         if (updatePkgRes && updatePkgRes.success === false) {
           alert(`Update package failed: ${updatePkgRes.message || "Unknown error"}`);
         }
@@ -1189,13 +1199,14 @@ export default function CmsPage() {
 
       const packageListPayload = validOfferings.map((off) => ({
         packageName: off.title,
-        subtitle: off.description || off.title,
-        description: off.description || `${off.title} service`,
+        subtitle: off.subtitle && off.subtitle.trim() ? off.subtitle.trim() : undefined,
+        description: off.description && off.description.trim() ? off.description.trim() : `${off.title} service`,
         price: off.price,
         originalPrice: Math.round((off.price || 699) * 1.3),
         duration: parseInt(String(off.duration)) || 45,
         imageUrl: off.thumbnailUrl || "",
         thumbnailUrl: off.thumbnailUrl || "",
+        imageFile: off.imageFile,
         addons: (off.addonIds || []).filter((id) => id.length === 24),
       }));
 
@@ -1644,14 +1655,6 @@ export default function CmsPage() {
                     <span className="font-extrabold text-brand-900 dark:text-brand-300 block text-xs">
                       2. Service Packages ({serviceOfferings.length})
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleAddOfferingRow}
-                      className="px-2.5 py-1 bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 rounded-lg text-[11px] font-bold shadow-xs flex items-center gap-1 hover:bg-brand-100 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Package</span>
-                    </button>
                   </div>
 
                   <div className="space-y-3">
@@ -1710,112 +1713,146 @@ export default function CmsPage() {
                             </div>
                           </div>
 
+                          {/* Package Subtitle & Duration Row */}
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            {/* Duration */}
-                            <CustomSelect
-                              label="Duration *"
-                              value={off.duration}
-                              onChange={(val) => handleUpdateOfferingRow(idx, "duration", val)}
-                              options={[
-                                { value: "30 mins", label: "30 mins" },
-                                { value: "45 mins", label: "45 mins" },
-                                { value: "60 mins", label: "60 mins" },
-                                { value: "90 mins", label: "90 mins" },
-                                { value: "2 - 3 hrs", label: "2 - 3 hrs" },
-                              ]}
-                            />
-
-                            {/* Description */}
+                            {/* Subtitle */}
                             <div className="sm:col-span-2">
                               <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
-                                Package Description
+                                Package Subtitle
                               </label>
                               <input
                                 type="text"
-                                value={off.description || ""}
-                                onChange={(e) => handleUpdateOfferingRow(idx, "description", e.target.value)}
-                                placeholder="e.g. Includes deep foam jet cleaning, drain line clearing & 30-day warranty"
+                                value={off.subtitle || ""}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "subtitle", e.target.value)}
+                                placeholder="e.g. Deep Foam Jet & Anti-Bacterial Spray"
                                 className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+                              />
+                            </div>
+
+                            {/* Duration */}
+                            <div>
+                              <CustomSelect
+                                label="Duration *"
+                                value={off.duration}
+                                onChange={(val) => handleUpdateOfferingRow(idx, "duration", val)}
+                                options={[
+                                  { value: "30 mins", label: "30 mins" },
+                                  { value: "45 mins", label: "45 mins" },
+                                  { value: "60 mins", label: "60 mins" },
+                                  { value: "90 mins", label: "90 mins" },
+                                  { value: "2 - 3 hrs", label: "2 - 3 hrs" },
+                                ]}
                               />
                             </div>
                           </div>
 
-                          {/* Custom Service Image Upload */}
-                          <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 space-y-1.5">
-                            <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                              <span>Package Image</span>
-                              <span className="text-brand-600 font-extrabold text-[9px] uppercase">Upload File</span>
+                          {/* Package Description (Separate Row) */}
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                              Package Description
                             </label>
-                            <div className="flex items-center gap-2">
-                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                {off.thumbnailUrl || serviceThumbnail ? (
-                                  <img
-                                    src={off.thumbnailUrl || serviceThumbnail}
-                                    alt="Package Thumbnail"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).style.display = "none";
-                                    }}
-                                  />
-                                ) : (
-                                  <ImageIcon className="w-4 h-4 text-slate-400" />
-                                )}
+                            <input
+                              type="text"
+                              value={off.description || ""}
+                              onChange={(e) => handleUpdateOfferingRow(idx, "description", e.target.value)}
+                              placeholder="e.g. Includes deep foam jet cleaning, drain line clearing & 30-day warranty"
+                              className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold outline-none focus:border-brand-500 text-xs"
+                            />
+                          </div>
+
+                          {/* COMBINED ROW: PACKAGE IMAGE & SPARE PART ADD-ONS DROPDOWN IN SAME LINE */}
+                          <div className="pt-2.5 border-t border-slate-100 dark:border-slate-700/60 space-y-2.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                              {/* Left Column: Package Image */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                  <span>Package Image</span>
+                                  <span className="text-brand-600 font-extrabold text-[9px] uppercase">
+                                    {off.thumbnailUrl || off.imageFile ? "Image Attached" : "Upload File"}
+                                  </span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                    {off.thumbnailUrl || serviceThumbnail ? (
+                                      <img
+                                        src={off.thumbnailUrl || serviceThumbnail}
+                                        alt="Package Thumbnail"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = "none";
+                                        }}
+                                      />
+                                    ) : (
+                                      <ImageIcon className="w-4 h-4 text-slate-400" />
+                                    )}
+                                  </div>
+
+                                  {off.thumbnailUrl || off.imageFile ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleUpdateOfferingRow(idx, "thumbnailUrl", "");
+                                        handleUpdateOfferingRow(idx, "imageFile", undefined);
+                                      }}
+                                      className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs transition-colors"
+                                      title="Delete Image"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span>Delete Image</span>
+                                    </button>
+                                  ) : (
+                                    <label className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs transition-colors">
+                                      <Upload className="w-3.5 h-3.5 text-brand-600" />
+                                      <span>Upload Image</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            handleUpdateOfferingRow(idx, "imageFile", file);
+                                            const reader = new FileReader();
+                                            reader.onload = (re) => {
+                                              handleUpdateOfferingRow(idx, "thumbnailUrl", re.target?.result as string);
+                                            };
+                                            reader.readAsDataURL(file);
+                                          }
+                                        }}
+                                      />
+                                    </label>
+                                  )}
+                                </div>
                               </div>
-                              <label className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs">
-                                <Upload className="w-3 h-3 text-brand-600" />
-                                <span>Upload Image</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onload = (re) => {
-                                        handleUpdateOfferingRow(idx, "thumbnailUrl", re.target?.result as string);
-                                      };
-                                      reader.readAsDataURL(file);
+
+                              {/* Right Column: Spare Part Add-ons Dropdown */}
+                              <div>
+                                <CustomSelect
+                                  label={`Spare Part Add-ons (${(off.addonIds || []).length} Selected)`}
+                                  value=""
+                                  selectedValues={off.addonIds || []}
+                                  placeholder={addons.length > 0 ? "Select Spare Part Add-on to link..." : "No spare parts available"}
+                                  disabled={addons.length === 0}
+                                  menuPlacement="top"
+                                  onChange={(selectedAddonId) => {
+                                    const currentIds = off.addonIds || [];
+                                    if (currentIds.includes(selectedAddonId)) {
+                                      handleUpdateOfferingRow(idx, "addonIds", currentIds.filter((id) => id !== selectedAddonId));
+                                    } else {
+                                      handleUpdateOfferingRow(idx, "addonIds", [...currentIds, selectedAddonId]);
                                     }
                                   }}
+                                  options={addons.map((addon) => ({
+                                    value: addon.id,
+                                    label: `${addon.title} — ₹${addon.price} / ${addon.unit}`,
+                                  }))}
+                                  onAddAction={() => {
+                                    setInlineAddonPackageIndex(inlineAddonPackageIndex === idx ? null : idx);
+                                  }}
+                                  addActionLabel="+ Add New Add-on"
                                 />
-                              </label>
-                              {off.thumbnailUrl && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateOfferingRow(idx, "thumbnailUrl", "")}
-                                  className="px-2.5 py-1.5 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0"
-                                  title="Remove Image"
-                                >
-                                  <X className="w-3 h-3" />
-                                  <span>Remove</span>
-                                </button>
-                              )}
+                              </div>
                             </div>
-                          </div>
-                          {/* SPARE PART ADD-ONS DROPDOWN & INLINE ADD FORM */}
-                          <div className="pt-2.5 border-t border-slate-100 dark:border-slate-700/60 space-y-2.5">
-                            {/* Addon Dropdown with Add Action */}
-                            <CustomSelect
-                              label={`Spare Part Add-ons for Package #${idx + 1} (${(off.addonIds || []).length} Selected)`}
-                              value=""
-                              placeholder={addons.length > 0 ? "Select Spare Part Add-on to link..." : "No spare parts available"}
-                              disabled={addons.length === 0}
-                              onChange={(selectedAddonId) => {
-                                const currentIds = off.addonIds || [];
-                                if (!currentIds.includes(selectedAddonId)) {
-                                  handleUpdateOfferingRow(idx, "addonIds", [...currentIds, selectedAddonId]);
-                                }
-                              }}
-                              options={addons.map((addon) => ({
-                                value: addon.id,
-                                label: `${addon.title} — ₹${addon.price} / ${addon.unit}`,
-                              }))}
-                              onAddAction={() => {
-                                setInlineAddonPackageIndex(inlineAddonPackageIndex === idx ? null : idx);
-                              }}
-                              addActionLabel="+ Add New Add-on"
-                            />
 
                             {/* INLINE ADD-ON ADD FORM (OPENS DIRECTLY BELOW ADDON DROPDOWN) */}
                             {inlineAddonPackageIndex === idx && (
@@ -1996,6 +2033,19 @@ export default function CmsPage() {
                           className="px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-xs font-bold border border-brand-200 inline-flex items-center gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" /> Add First Package
+                        </button>
+                      </div>
+                    )}
+
+                    {serviceOfferings.length > 0 && (
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={handleAddOfferingRow}
+                          className="w-full py-2.5 px-4 rounded-xl bg-brand-50/80 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-dashed border-brand-300 dark:border-brand-700 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                          <span>+ Add Another Package</span>
                         </button>
                       </div>
                     )}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { Portal } from "@/components/Portal";
+import { TableImage } from "@/components/TableImage";
 import {
   initialCategories,
   CategoryItem,
@@ -15,6 +16,7 @@ import {
   deleteCategoryApi,
   toggleCategoryStatusApi,
   ApiCategory,
+  formatImageUrl,
 } from "@/lib/api";
 import { CustomSelect } from "@/components/CustomSelect";
 import { ShimmerRow, ShimmerCardGrid } from "@/components/ShimmerLoader";
@@ -32,141 +34,24 @@ import {
   Trash2,
 } from "lucide-react";
 
-// EXACT DUAL-TONE VECTOR ICONS MATCHING USER'S SCREENSHOT
-function AirConditionerSVG() {
+function CategoryIconDisplay({ iconUrl, name, sizeClassName = "w-full h-full" }: { iconUrl?: string; name: string; sizeClassName?: string }) {
   return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="6" y="14" width="36" height="16" rx="3" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <circle cx="34" cy="20" r="1.5" fill="#10B981" />
-      <line x1="10" y1="24" x2="38" y2="24" stroke="#4C1D4F" strokeWidth="1.5" strokeDasharray="2 2" />
-      <path d="M12 34L14 39" stroke="#E056FD" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M19 34L21 39" stroke="#E056FD" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M26 34L28 39" stroke="#E056FD" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M33 34L35 39" stroke="#E056FD" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
+    <TableImage
+      src={iconUrl}
+      alt={name || "Category Icon"}
+      containerClassName={`${sizeClassName} flex items-center justify-center relative overflow-hidden`}
+      className="w-full h-full object-contain"
+      fallbackIcon="image"
+    />
   );
 }
-
-function AppliancesSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="8" y="10" width="14" height="28" rx="2" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <line x1="8" y1="22" x2="22" y2="22" stroke="#4C1D4F" strokeWidth="2" />
-      <line x1="18" y1="14" x2="18" y2="18" stroke="#4C1D4F" strokeWidth="2" strokeLinecap="round" />
-      <line x1="18" y1="26" x2="18" y2="32" stroke="#4C1D4F" strokeWidth="2" strokeLinecap="round" />
-
-      <rect x="24" y="18" width="16" height="20" rx="2" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <circle cx="32" cy="29" r="4.5" stroke="#E056FD" strokeWidth="2.5" fill="#FAF5FA" />
-      <circle cx="28" cy="22" r="1" fill="#4C1D4F" />
-      <circle cx="32" cy="22" r="1" fill="#4C1D4F" />
-    </svg>
-  );
-}
-
-function CleaningSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="24" y="24" width="14" height="12" rx="4" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <circle cx="28" cy="34" r="2.5" stroke="#4C1D4F" strokeWidth="2" fill="#E056FD" />
-      <circle cx="34" cy="34" r="2.5" stroke="#4C1D4F" strokeWidth="2" fill="#E056FD" />
-      <path d="M26 24C26 18 20 12 14 16" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M14 16L10 32" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M8 32H16" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <line x1="38" y1="26" x2="43" y2="24" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
-      <line x1="39" y1="31" x2="44" y2="30" stroke="#10B981" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PlumbingSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 36V16C14 12 18 8 24 8C30 8 34 12 34 16V22" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <rect x="30" y="22" width="8" height="5" rx="1" fill="#4C1D4F" />
-      <path d="M34 29C34 29 30 34 34 37C36.2 37 38 35.2 38 33C38 31 34 29 34 29Z" fill="#3B82F6" stroke="#2563EB" strokeWidth="1.5" />
-      <line x1="10" y1="36" x2="18" y2="36" stroke="#4C1D4F" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ElectricianSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="22" r="12" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <path d="M25 15L20 23H25L23 29L29 21H24L25 15Z" fill="#EF4444" stroke="#DC2626" strokeWidth="1" />
-      <path d="M24 34C18 34 12 32 14 42" stroke="#E056FD" strokeWidth="2.5" strokeLinecap="round" />
-      <rect x="22" y="8" width="4" height="2" fill="#4C1D4F" />
-    </svg>
-  );
-}
-
-function CarpenterSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="10" y="30" width="28" height="6" rx="1" stroke="#4C1D4F" strokeWidth="2" fill="#FED7AA" />
-      <line x1="14" y1="36" x2="12" y2="42" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <line x1="34" y1="36" x2="36" y2="42" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M20 30L26 12L32 14L28 30" stroke="#4C1D4F" strokeWidth="2" fill="#E2E8F0" />
-      <circle cx="27" cy="13" r="3" fill="#EF4444" stroke="#4C1D4F" strokeWidth="2" />
-      <line x1="23" y1="30" x2="25" y2="30" stroke="#EF4444" strokeWidth="3" />
-    </svg>
-  );
-}
-
-function PaintingSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="16" y="10" width="18" height="8" rx="2" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <path d="M34 14H38V24H26V30" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="23" y="30" width="6" height="12" rx="1" fill="#4C1D4F" />
-      <path d="M10 10H14" stroke="#E056FD" strokeWidth="3" strokeLinecap="round" />
-      <path d="M12 18V24" stroke="#E056FD" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PestControlSVG() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="16" y="18" width="16" height="22" rx="4" stroke="#4C1D4F" strokeWidth="2.5" fill="#FDF4FF" />
-      <circle cx="24" cy="29" r="4" stroke="#4C1D4F" strokeWidth="2" fill="#FAF5FA" />
-      <path d="M22 29L26 29M24 27L24 31" stroke="#E056FD" strokeWidth="2" />
-      <path d="M24 18V12H28" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20 12H28" stroke="#4C1D4F" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M12 24V34" stroke="#4C1D4F" strokeWidth="2" strokeDasharray="2 2" />
-    </svg>
-  );
-}
-
-const renderVectorIconByName = (name: string) => {
-  switch (name) {
-    case "Air Conditioner":
-      return <AirConditionerSVG />;
-    case "Appliances":
-      return <AppliancesSVG />;
-    case "Cleaning":
-      return <CleaningSVG />;
-    case "Plumbing":
-      return <PlumbingSVG />;
-    case "Electrician":
-      return <ElectricianSVG />;
-    case "Carpenter":
-      return <CarpenterSVG />;
-    case "Painting":
-      return <PaintingSVG />;
-    case "Pest Control":
-      return <PestControlSVG />;
-    default:
-      return <AirConditionerSVG />;
-  }
-};
 
 export default function CategoriesPage() {
   // Tab State: "masterTable" is 1st tab & default active
   const [activeCategoryTab, setActiveCategoryTab] = useState<"masterTable" | "serviceIcons">("masterTable");
 
   const [categories, setCategories] = useState<CategoryItem[]>(() => {
-    // Ensure all 8 categories exist
+    // Base catalog list initialized with fallback media API paths
     const baseList: CategoryItem[] = [
       { id: "cat-1", name: "Air Conditioner", slug: "ac", icon: "Wrench", subcategoriesCount: 4, subcategories: ["Split AC", "Window AC", "Cassette AC", "Inverter AC"], servicesCount: 12, status: "Active" },
       { id: "cat-2", name: "Appliances", slug: "appliances", icon: "Tv", subcategoriesCount: 3, subcategories: ["Refrigerator Repair", "Washing Machine", "Microwave & Oven"], servicesCount: 10, status: "Active" },
@@ -180,7 +65,7 @@ export default function CategoriesPage() {
 
     return baseList.map((c) => ({
       ...c,
-      iconUrl: c.iconUrl || "",
+      iconUrl: c.iconUrl || (c.id && c.id.length === 24 ? `/api/media/category/${c.id}/icon` : ""),
     }));
   });
 
@@ -193,17 +78,20 @@ export default function CategoriesPage() {
     try {
       const res = await getCategoriesApi();
       if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
-        const mapped: CategoryItem[] = res.data.map((c: ApiCategory) => ({
-          id: c._id,
-          name: c.categoryName,
-          slug: c.slug,
-          icon: "Wrench",
-          iconUrl: c.iconUrl || "",
-          subcategories: c.subCategories ? c.subCategories.map((sub) => sub.name) : [],
-          subcategoriesCount: c.subCategories ? c.subCategories.length : 0,
-          servicesCount: 0,
-          status: c.status ? "Active" : "Inactive",
-        }));
+        const mapped: CategoryItem[] = res.data.map((c: ApiCategory) => {
+          const apiIcon = c.iconUrl || (c as any).icon || (c._id ? `/api/media/category/${c._id}/icon` : "");
+          return {
+            id: c._id,
+            name: c.categoryName,
+            slug: c.slug,
+            icon: "Wrench",
+            iconUrl: apiIcon,
+            subcategories: c.subCategories ? c.subCategories.map((sub) => sub.name) : [],
+            subcategoriesCount: c.subCategories ? c.subCategories.length : 0,
+            servicesCount: 0,
+            status: c.status ? "Active" : "Inactive",
+          };
+        });
         setCategories(mapped);
       }
     } finally {
@@ -306,9 +194,9 @@ export default function CategoriesPage() {
         prev.map((c) =>
           c.id === catId
             ? {
-                ...c,
-                iconUrl: result,
-              }
+              ...c,
+              iconUrl: result,
+            }
             : c
         )
       );
@@ -337,15 +225,15 @@ export default function CategoriesPage() {
         const updatedList = categories.map((c) =>
           c.id === editingCategory.id
             ? {
-                ...c,
-                name: catName,
-                slug: finalSlug,
-                icon,
-                iconUrl: primaryIconUrl,
-                status,
-                subcategories: subcategoriesList,
-                subcategoriesCount: subcategoriesList.length,
-              }
+              ...c,
+              name: catName,
+              slug: finalSlug,
+              icon,
+              iconUrl: primaryIconUrl,
+              status,
+              subcategories: subcategoriesList,
+              subcategoriesCount: subcategoriesList.length,
+            }
             : c
         );
         setCategories(updatedList);
@@ -386,13 +274,12 @@ export default function CategoriesPage() {
       header: "Category Title & Primary Icon",
       accessor: (row) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-purple-500 bg-slate-50 dark:bg-slate-800 shadow-sm shrink-0 flex items-center justify-center p-1">
-            {row.iconUrl ? (
-              <img src={row.iconUrl} alt={row.name} className="w-full h-full object-contain" />
-            ) : (
-              renderVectorIconByName(row.name)
-            )}
-          </div>
+          <TableImage
+            src={row.iconUrl || (row.id && row.id.length === 24 ? `/api/media/category/${row.id}/icon` : "")}
+            alt={row.name}
+            containerClassName="w-10 h-10 rounded-2xl overflow-hidden border-2 border-purple-500 bg-slate-50 dark:bg-slate-800 shadow-sm shrink-0 flex items-center justify-center p-0.5 relative group"
+            fallbackIcon="image"
+          />
           <div className="flex flex-col">
             <span className="font-extrabold text-slate-900 dark:text-white text-xs">{row.name}</span>
             <span className="text-[10px] text-slate-400 font-mono">slug: /{row.slug}</span>
@@ -436,11 +323,10 @@ export default function CategoriesPage() {
       header: "Status",
       accessor: (row) => (
         <span
-          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-            row.status === "Active"
+          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${row.status === "Active"
               ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
               : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-          }`}
+            }`}
         >
           {row.status}
         </span>
@@ -504,11 +390,10 @@ export default function CategoriesPage() {
         <button
           type="button"
           onClick={() => setActiveCategoryTab("masterTable")}
-          className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeCategoryTab === "masterTable"
+          className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${activeCategoryTab === "masterTable"
               ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
+            }`}
         >
           <Sliders className="w-4 h-4 text-brand-600" />
           <span>Master Category Table</span>
@@ -517,11 +402,10 @@ export default function CategoriesPage() {
         <button
           type="button"
           onClick={() => setActiveCategoryTab("serviceIcons")}
-          className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
-            activeCategoryTab === "serviceIcons"
+          className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${activeCategoryTab === "serviceIcons"
               ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
               : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          }`}
+            }`}
         >
           <ImageIcon className="w-4 h-4 text-purple-600" />
           <span>Main Service Icons</span>
@@ -583,15 +467,7 @@ export default function CategoriesPage() {
               >
                 {/* TOP DUAL-TONE VECTOR / UPLOADED ICON PREVIEW BOX */}
                 <div className="relative w-full h-36 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center p-4 shadow-xs group-hover:scale-103 transition-transform">
-                  {cat.iconUrl ? (
-                    <img
-                      src={cat.iconUrl}
-                      alt={cat.name}
-                      className="w-20 h-20 object-contain"
-                    />
-                  ) : (
-                    renderVectorIconByName(cat.name)
-                  )}
+                  <CategoryIconDisplay iconUrl={cat.iconUrl} name={cat.name} sizeClassName="w-20 h-20" />
                 </div>
 
                 {/* PROMINENT ICON UPLOAD BAR */}
@@ -735,15 +611,7 @@ export default function CategoriesPage() {
                     </label>
                     <div className="flex gap-2 items-center">
                       <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-purple-500 shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center p-1">
-                        {primaryIconUrl ? (
-                          <img
-                            src={primaryIconUrl}
-                            alt="Primary Icon"
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          editingCategory ? renderVectorIconByName(editingCategory.name) : <AirConditionerSVG />
-                        )}
+                        <CategoryIconDisplay iconUrl={primaryIconUrl} name={catName || editingCategory?.name || ""} />
                       </div>
                       <label className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-[10px] flex items-center gap-1 cursor-pointer shrink-0 shadow-xs">
                         <Upload className="w-3.5 h-3.5" />

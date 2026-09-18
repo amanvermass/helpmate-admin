@@ -27,6 +27,7 @@ export interface ServiceItem {
   subcategory?: string;
   title: string;
   subtitle: string;
+  description?: string;
   price: number;
   originalPrice: number;
   duration: string;

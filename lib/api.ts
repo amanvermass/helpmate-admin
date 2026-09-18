@@ -48,6 +48,21 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
   });
 }
 
+export async function safeJsonResponse(res: Response): Promise<any> {
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    const text = await res.text();
+    console.warn(`[API Warning] Received non-JSON response (${res.status}):`, text.slice(0, 150));
+    return { success: false, message: `Server returned non-JSON response (${res.status})` };
+  }
+  try {
+    return await res.json();
+  } catch (err) {
+    console.error("[API Error] JSON parse failed:", err);
+    return { success: false, message: "Failed to parse JSON response from server." };
+  }
+}
+
 // ─── IN-MEMORY API RESPONSE CACHE ───
 const apiCache = new Map<string, any>();
 
@@ -243,19 +258,52 @@ export async function createCategoryApi(
       categoryName: string;
       slug: string;
       iconUrl?: string;
-      subCategories?: Array<{ name: string }>;
+      iconFile?: File;
+      subCategories?: Array<{ _id?: string; name: string }>;
       status?: boolean;
     }
 ) {
   clearApiCache("getCategoriesApi");
   clearApiCache("getCategoryDropdownApi");
   try {
-    const isFormData = typeof FormData !== "undefined" && payload instanceof FormData;
+    let body: any;
+    if (typeof FormData !== "undefined" && payload instanceof FormData) {
+      body = payload;
+    } else {
+      const objPayload = payload as {
+        categoryName: string;
+        slug: string;
+        iconUrl?: string;
+        iconFile?: File;
+        subCategories?: Array<{ _id?: string; name: string }>;
+        status?: boolean;
+      };
+      const formData = new FormData();
+      formData.append("categoryName", objPayload.categoryName || "");
+      formData.append("slug", objPayload.slug || "");
+      formData.append("status", String(objPayload.status !== false));
+      if (objPayload.subCategories) {
+        formData.append("subCategories", JSON.stringify(objPayload.subCategories));
+      }
+
+      if (objPayload.iconFile instanceof File) {
+        formData.append("icon", objPayload.iconFile);
+      } else if (objPayload.iconUrl) {
+        const blob = dataURLtoBlob(objPayload.iconUrl);
+        if (blob) {
+          formData.append("icon", blob, "category_icon.jpg");
+        } else {
+          formData.append("iconUrl", objPayload.iconUrl);
+        }
+      }
+      body = formData;
+    }
+
     const res = await authFetch(`${API_BASE_URL}/category`, {
       method: "POST",
-      body: isFormData ? payload : JSON.stringify(payload),
+      body,
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("createCategoryApi error:", error);
     return { success: false, message: "Failed to create category." };
@@ -270,6 +318,7 @@ export async function updateCategoryApi(
       categoryName: string;
       slug: string;
       iconUrl?: string;
+      iconFile?: File;
       subCategories?: Array<{ _id?: string; name: string }>;
       status?: boolean;
     }
@@ -277,12 +326,44 @@ export async function updateCategoryApi(
   clearApiCache("getCategoriesApi");
   clearApiCache("getCategoryDropdownApi");
   try {
-    const isFormData = typeof FormData !== "undefined" && payload instanceof FormData;
+    let body: any;
+    if (typeof FormData !== "undefined" && payload instanceof FormData) {
+      body = payload;
+    } else {
+      const objPayload = payload as {
+        categoryName: string;
+        slug: string;
+        iconUrl?: string;
+        iconFile?: File;
+        subCategories?: Array<{ _id?: string; name: string }>;
+        status?: boolean;
+      };
+      const formData = new FormData();
+      formData.append("categoryName", objPayload.categoryName || "");
+      formData.append("slug", objPayload.slug || "");
+      formData.append("status", String(objPayload.status !== false));
+      if (objPayload.subCategories) {
+        formData.append("subCategories", JSON.stringify(objPayload.subCategories));
+      }
+
+      if (objPayload.iconFile instanceof File) {
+        formData.append("icon", objPayload.iconFile);
+      } else if (objPayload.iconUrl) {
+        const blob = dataURLtoBlob(objPayload.iconUrl);
+        if (blob) {
+          formData.append("icon", blob, "category_icon.jpg");
+        } else {
+          formData.append("iconUrl", objPayload.iconUrl);
+        }
+      }
+      body = formData;
+    }
+
     const res = await authFetch(`${API_BASE_URL}/category/${id}`, {
       method: "PUT",
-      body: isFormData ? payload : JSON.stringify(payload),
+      body,
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("updateCategoryApi error:", error);
     return { success: false, message: "Failed to update category." };
@@ -669,7 +750,7 @@ export async function getServiceActionsApi(
   if (cached) return cached;
   try {
     const res = await authFetch(`${API_BASE_URL}/service-actions${queryString}`);
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -690,7 +771,7 @@ export async function getServiceActionDropdownApi(params?: { categoryId?: string
     if (params?.subCategoryId) query.append("subCategoryId", params.subCategoryId);
 
     const res = await authFetch(`${API_BASE_URL}/service-actions/dropdown?${query.toString()}`);
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -794,7 +875,7 @@ export async function getPackagesApi(params?: {
     query.append("limit", String(params?.limit || 100));
 
     const res = await authFetch(`${API_BASE_URL}/package?${query.toString()}`);
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -830,16 +911,85 @@ export async function getPackageDropdownApi(params?: string | {
       if (params.subcategory) query.append("subcategory", params.subcategory);
     }
     const res = await authFetch(`${API_BASE_URL}/package/dropdown?${query.toString()}`);
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("getPackageDropdownApi error:", error);
     return { success: false, message: "Failed to fetch package dropdown." };
   }
 }
 
+export function formatImageUrl(imgUrl?: string): string {
+  if (!imgUrl || typeof imgUrl !== "string") return "";
+  let trimmed = imgUrl.trim();
+  if (!trimmed) return "";
+
+  // Data URLs (base64) and blob URLs don't need transformation
+  if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) {
+    return trimmed;
+  }
+
+  // 1. Google Drive file view links to direct image source
+  const gdriveFileMatch = trimmed.match(/drive\.google\.com\/file\/d\/([^\/&#?]+)/);
+  const gdriveIdMatch = trimmed.match(/drive\.google\.com\/(?:open|uc)\?.*id=([^\/&#?]+)/);
+  const gdriveId = gdriveFileMatch ? gdriveFileMatch[1] : gdriveIdMatch ? gdriveIdMatch[1] : null;
+
+  if (gdriveId) {
+    return `https://lh3.googleusercontent.com/d/${gdriveId}`;
+  }
+
+  // 2. Dropbox share link conversion
+  if (trimmed.includes("dropbox.com")) {
+    if (trimmed.includes("dl=0")) {
+      trimmed = trimmed.replace("dl=0", "raw=1");
+    } else if (!trimmed.includes("raw=1")) {
+      trimmed += (trimmed.includes("?") ? "&" : "?") + "raw=1";
+    }
+  }
+
+  // 3. Convert backslashes (Windows paths like uploads\image.png) to forward slashes
+  trimmed = trimmed.replace(/\\/g, "/");
+
+  // 4. Handle backend API media URLs via same-origin Next.js proxy rewrite
+  if (trimmed.includes("/api/media/")) {
+    const mediaIdx = trimmed.indexOf("/api/media/");
+    trimmed = trimmed.substring(mediaIdx);
+  } else if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    const backendOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+    if (!trimmed.startsWith("/")) {
+      trimmed = `/${trimmed}`;
+    }
+    trimmed = `${backendOrigin}${trimmed}`;
+  }
+
+  // 5. Safely encode space characters and unescaped symbols
+  try {
+    return encodeURI(decodeURI(trimmed));
+  } catch {
+    return trimmed;
+  }
+}
+
 export function cleanImagePayload(imgUrl?: string): string {
   if (!imgUrl) return "";
-  return String(imgUrl).trim();
+  return formatImageUrl(imgUrl);
+}
+
+function dataURLtoBlob(dataUrl?: string): Blob | null {
+  if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) return null;
+  try {
+    const parts = dataUrl.split(",");
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const bstr = atob(parts[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  } catch {
+    return null;
+  }
 }
 
 export async function createPackageApi(
@@ -884,43 +1034,60 @@ export async function createPackageApi(
       bodyData = payload as FormData;
     } else {
       const pkgObj = payload as any;
-      let finalPayload: any = pkgObj;
+      const serviceActionId = pkgObj.serviceActionId || pkgObj.serviceId || "";
+
+      let rawPackages: any[] = [];
       if (Array.isArray(pkgObj.packages)) {
-        finalPayload = {
-          ...pkgObj,
-          packages: pkgObj.packages.map((p: any) => ({
-            ...p,
-            imageUrl: cleanImagePayload(p.imageUrl || p.thumbnailUrl),
-            thumbnailUrl: cleanImagePayload(p.thumbnailUrl || p.imageUrl),
-          })),
-        };
-      } else if (!pkgObj.packages && (pkgObj.packageName || pkgObj.price !== undefined)) {
-        const cleanedImg = cleanImagePayload(pkgObj.imageUrl || pkgObj.thumbnailUrl);
-        const singlePkg = {
-          packageName: pkgObj.packageName || "",
-          subtitle: pkgObj.subtitle || "",
-          description: pkgObj.description || "",
-          price: Number(pkgObj.price) || 0,
-          originalPrice: Number(pkgObj.originalPrice) || Number(pkgObj.price) || 0,
-          duration: Number(pkgObj.duration) || 60,
-          imageUrl: cleanedImg,
-          thumbnailUrl: cleanedImg,
-          addons: pkgObj.addons || [],
+        rawPackages = pkgObj.packages;
+      } else if (pkgObj.packageName || pkgObj.price !== undefined) {
+        rawPackages = [pkgObj];
+      }
+
+      const formData = new FormData();
+      if (serviceActionId) {
+        formData.append("serviceActionId", serviceActionId);
+      }
+
+      const formattedPackages = rawPackages.map((p: any, index: number) => {
+        let fileBlob: Blob | File | null = null;
+        if (typeof File !== "undefined" && p.imageFile instanceof File) {
+          fileBlob = p.imageFile;
+        } else {
+          const rawUri = p.imageUrl || p.thumbnailUrl || "";
+          fileBlob = dataURLtoBlob(rawUri);
+        }
+
+        if (fileBlob) {
+          const mimeType = (fileBlob as any).type || "image/jpeg";
+          const ext = mimeType.split("/")[1] || "jpeg";
+          formData.append(`package_${index}_image`, fileBlob, `package_${index}_image.${ext}`);
+        }
+
+        const pkgItem: any = {
+          packageName: p.packageName || p.title || "",
+          description: p.description || `${p.packageName || "Service"} package`,
+          price: Number(p.price) || 0,
+          originalPrice: Number(p.originalPrice) || Math.round((Number(p.price) || 0) * 1.3),
+          duration: Number(p.duration) || 60,
+          addons: p.addons || [],
         };
 
-        finalPayload = {
-          serviceActionId: pkgObj.serviceActionId,
-          packages: [singlePkg],
-        };
-      }
-      bodyData = JSON.stringify(finalPayload);
+        if (p.subtitle && typeof p.subtitle === "string" && p.subtitle.trim()) {
+          pkgItem.subtitle = p.subtitle.trim();
+        }
+
+        return pkgItem;
+      });
+
+      formData.append("packages", JSON.stringify(formattedPackages));
+      bodyData = formData;
     }
 
     const res = await authFetch(`${API_BASE_URL}/package`, {
       method: "POST",
       body: bodyData,
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("createPackageApi error:", error);
     return { success: false, message: "Failed to create package." };
@@ -929,36 +1096,95 @@ export async function createPackageApi(
 
 export async function updatePackageApi(
   id: string,
-  payload: {
-    serviceId?: string;
-    serviceActionId?: string;
-    categoryId?: string;
-    subCategoryId?: string;
-    serviceAction?: string;
-    packageName?: string;
-    description?: string;
-    subtitle?: string;
-    price?: number;
-    duration?: number | string;
-    originalPrice?: number;
-    thumbnailUrl?: string;
-    imageUrl?: string;
-    addons?: string[];
-    status?: boolean;
-  }
+  payload:
+    | FormData
+    | {
+      serviceId?: string;
+      serviceActionId?: string;
+      categoryId?: string;
+      subCategoryId?: string;
+      serviceAction?: string;
+      packageName?: string;
+      description?: string;
+      subtitle?: string;
+      price?: number;
+      duration?: number | string;
+      originalPrice?: number;
+      thumbnailUrl?: string;
+      imageUrl?: string;
+      imageFile?: File;
+      addons?: string[];
+      status?: boolean;
+    }
 ) {
   clearApiCache("getPackagesApi");
-  const cleanedPayload = {
-    ...payload,
-    ...(payload.imageUrl !== undefined ? { imageUrl: cleanImagePayload(payload.imageUrl) } : {}),
-    ...(payload.thumbnailUrl !== undefined ? { thumbnailUrl: cleanImagePayload(payload.thumbnailUrl) } : {}),
-  };
   try {
+    const isFormData = typeof FormData !== "undefined" && payload instanceof FormData;
+    let bodyData: BodyInit;
+    if (isFormData) {
+      bodyData = payload as FormData;
+    } else {
+      const objPayload = payload as Record<string, any>;
+      let fileBlob: Blob | File | null = null;
+      if (typeof File !== "undefined" && objPayload.imageFile instanceof File) {
+        fileBlob = objPayload.imageFile;
+      } else {
+        const rawUri = objPayload.imageUrl || objPayload.thumbnailUrl || "";
+        fileBlob = dataURLtoBlob(rawUri);
+      }
+
+      const validBackendKeys = [
+        "serviceActionId",
+        "packageName",
+        "subtitle",
+        "description",
+        "price",
+        "originalPrice",
+        "duration",
+        "addons",
+        "status",
+      ];
+
+      if (fileBlob) {
+        const formData = new FormData();
+        const mimeType = (fileBlob as any).type || "image/jpeg";
+        const ext = mimeType.split("/")[1] || "jpeg";
+        formData.append("image", fileBlob, `package_image.${ext}`);
+
+        Object.keys(objPayload).forEach((key) => {
+          if (validBackendKeys.includes(key) && objPayload[key] !== undefined) {
+            if (key === "subtitle" && (!objPayload[key] || !String(objPayload[key]).trim())) {
+              return;
+            }
+            if (Array.isArray(objPayload[key])) {
+              objPayload[key].forEach((val: any) => formData.append("addons", val));
+            } else {
+              formData.append(key, String(objPayload[key]));
+            }
+          }
+        });
+        bodyData = formData;
+      } else {
+        const cleanedPayload: Record<string, any> = {};
+        for (const key of validBackendKeys) {
+          if (objPayload[key] !== undefined) {
+            if (key === "subtitle" && (!objPayload[key] || !String(objPayload[key]).trim())) {
+              continue;
+            }
+            cleanedPayload[key] = objPayload[key];
+          }
+        }
+        if (objPayload.imageUrl) {
+          cleanedPayload.imageUrl = cleanImagePayload(objPayload.imageUrl);
+        }
+        bodyData = JSON.stringify(cleanedPayload);
+      }
+    }
     const res = await authFetch(`${API_BASE_URL}/package/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(cleanedPayload),
+      body: bodyData,
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("updatePackageApi error:", error);
     return { success: false, message: "Failed to update package." };

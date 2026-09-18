@@ -12,6 +12,7 @@ export interface CustomSelectOption {
 export interface CustomSelectProps {
   label?: string;
   value: string;
+  selectedValues?: string[];
   onChange: (val: string) => void;
   options: CustomSelectOption[];
   placeholder?: string;
@@ -21,11 +22,13 @@ export interface CustomSelectProps {
   disabled?: boolean;
   size?: "sm" | "md";
   searchable?: boolean;
+  menuPlacement?: "auto" | "top" | "bottom";
 }
 
 export function CustomSelect({
   label,
   value,
+  selectedValues,
   onChange,
   options,
   placeholder = "Select option...",
@@ -35,9 +38,11 @@ export function CustomSelect({
   disabled = false,
   size = "md",
   searchable = false,
+  menuPlacement = "auto",
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [openTop, setOpenTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,6 +54,20 @@ export function CustomSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      if (menuPlacement === "top") {
+        setOpenTop(true);
+      } else if (menuPlacement === "bottom") {
+        setOpenTop(false);
+      } else {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        setOpenTop(spaceBelow < 250);
+      }
+    }
+  }, [isOpen, menuPlacement]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -110,7 +129,9 @@ export function CustomSelect({
       {/* Dropdown Menu Popup */}
       {isOpen && !disabled && (
         <div
-          className={`absolute left-0 right-0 top-full mt-1 z-[99999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${
+          className={`absolute left-0 right-0 ${
+            openTop ? "bottom-full mb-1" : "top-full mt-1"
+          } z-[99999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${
             size === "sm" ? "rounded-xl p-1 shadow-2xl max-h-80" : "rounded-2xl p-1.5 shadow-2xl max-h-80"
           } space-y-1 animate-in fade-in-50 zoom-in-95 duration-150 overflow-y-auto min-w-full`}
         >
@@ -131,7 +152,7 @@ export function CustomSelect({
 
           {filteredOptions.length > 0 ? (
             filteredOptions.map((opt, idx) => {
-              const isSelected = opt.value === value;
+              const isSelected = opt.value === value || (Array.isArray(selectedValues) && selectedValues.includes(opt.value));
               return (
                 <button
                   key={`${opt.value || opt.label}-${idx}`}
@@ -147,7 +168,7 @@ export function CustomSelect({
                       : "px-3 py-2.5 rounded-xl text-xs font-bold"
                   } text-left flex items-center justify-between gap-2 transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-brand-600 text-white shadow-xs"
+                      ? "bg-purple-50 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
@@ -156,7 +177,7 @@ export function CustomSelect({
                     <span>{opt.label}</span>
                   </span>
                   {isSelected && (
-                    <CheckCircle2 className={`${size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5"} shrink-0 ml-1`} />
+                    <CheckCircle2 className={`${size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4"} text-purple-600 dark:text-purple-400 shrink-0 ml-1`} />
                   )}
                 </button>
               );
