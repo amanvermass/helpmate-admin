@@ -556,7 +556,9 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
               <span className="text-[11px] font-bold text-slate-900 dark:text-white leading-tight">
                 {isPartner ? "Partner Account" : "Role"}
               </span>
-              <span className="text-[9px] text-brand-600 dark:text-brand-400 font-extrabold">{role}</span>
+              <span className="text-[9px] text-brand-600 dark:text-brand-400 font-extrabold">
+                {typeof role === "string" ? role : (role as any)?.name || "Super Admin"}
+              </span>
             </div>
           </div>
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />

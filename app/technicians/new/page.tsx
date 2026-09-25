@@ -1,11 +1,32 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { initialTechnicians, varanasiLocalities } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
 import { Portal } from "@/components/Portal";
+import { toast } from "@/components/Toast";
+import {
+  getCategoriesApi,
+  getServiceActionsApi,
+  getServiceActionDropdownApi,
+  getPackagesApi,
+  getLocalitiesApi,
+  getLocalityDropdownApi,
+  getPartnerByIdApi,
+  createPartnerApi,
+  updatePartnerApi,
+  sendPartnerMobileOtpApi,
+  verifyPartnerMobileOtpApi,
+  sendGuarantorMobileOtpApi,
+  verifyGuarantorMobileOtpApi,
+  formatImageUrl,
+  ApiCategory,
+  ApiServiceAction,
+  ApiLocality,
+  CreatePartnerPayload,
+} from "@/lib/api";
 import {
   ArrowLeft,
   ShieldCheck,
@@ -27,6 +48,7 @@ import {
   XCircle,
   Plus,
   Trash2,
+  Wrench,
   Filter,
   Check,
   X,
@@ -257,19 +279,68 @@ function TechnicianFormContent() {
   // 4-Stage Stepper: 1 = Personal & Bank, 2 = Service & Zone, 3 = KYC & Guarantor, 4 = Review & Submit
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
+  // ─── API STATE: CATEGORIES, SERVICE ACTIONS, PACKAGES & LOCALITIES ───
+  const [apiCategories, setApiCategories] = useState<ApiCategory[]>([]);
+  const [apiServiceActions, setApiServiceActions] = useState<ApiServiceAction[]>([]);
+  const [allServiceActionsMaster, setAllServiceActionsMaster] = useState<ApiServiceAction[]>([]);
+  const [apiPackages, setApiPackages] = useState<any[]>([]);
+  const [apiLocalities, setApiLocalities] = useState<ApiLocality[]>([]);
+  const [allLocalitiesMaster, setAllLocalitiesMaster] = useState<ApiLocality[]>([]);
+  const [selectedServiceActionIds, setSelectedServiceActionIds] = useState<string[]>([]);
+  const [selectedServicePincodeIds, setSelectedServicePincodeIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchApiOptions = async () => {
+      try {
+        const [catRes, actionsRes, pkgRes, locRes] = await Promise.all([
+          getCategoriesApi(),
+          getServiceActionsApi(),
+          getPackagesApi(),
+          getLocalityDropdownApi(),
+        ]);
+        if (isMounted) {
+          if (catRes && catRes.success && Array.isArray(catRes.data)) {
+            setApiCategories(catRes.data);
+          }
+          if (actionsRes && actionsRes.success && Array.isArray(actionsRes.data)) {
+            setApiServiceActions(actionsRes.data);
+            setAllServiceActionsMaster(actionsRes.data);
+          }
+          if (pkgRes && pkgRes.success && Array.isArray(pkgRes.data)) {
+            setApiPackages(pkgRes.data);
+          }
+          if (locRes && locRes.success && Array.isArray(locRes.data)) {
+            setApiLocalities(locRes.data);
+            setAllLocalitiesMaster(locRes.data);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load partner form API options:", err);
+      }
+    };
+    fetchApiOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // ─── STEP 1 STATE: PERSONAL & BANK DETAILS ───
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [phoneOtp, setPhoneOtp] = useState("");
   const [showPhoneOtpInput, setShowPhoneOtpInput] = useState(false);
+  const [mobileVerificationToken, setMobileVerificationToken] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
 
+  const [isEditLoading, setIsEditLoading] = useState<boolean>(Boolean(editId));
+
   // Bank Details
-  const [bankName, setBankName] = useState("HDFC Bank (Sigra Branch)");
-  const [bankAccountNumber, setBankAccountNumber] = useState("50100299182711");
-  const [ifscCode, setIfscCode] = useState("HDFC0001827");
+  const [bankName, setBankName] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
   const [upiId, setUpiId] = useState("");
 
   // ─── STEP 2 STATE: HIERARCHICAL MULTI-SELECT SERVICE & AREA-TO-AREA ZONE ───
@@ -282,24 +353,28 @@ function TechnicianFormContent() {
   const [typeSearchQuery, setTypeSearchQuery] = useState("");
   const [subTypeSearchQuery, setSubTypeSearchQuery] = useState("");
   const [serviceSearchQuery, setServiceSearchQuery] = useState("");
+  const [pincodeSearchQuery, setPincodeSearchQuery] = useState("");
 
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [isSubTypeDropdownOpen, setIsSubTypeDropdownOpen] = useState(false);
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
+  const [isPincodeDropdownOpen, setIsPincodeDropdownOpen] = useState(false);
 
   // Helper to open one dropdown while closing all others
-  const toggleDropdown = (name: "category" | "subType" | "type" | "service") => {
+  const toggleDropdown = (name: "category" | "subType" | "type" | "service" | "pincode") => {
     setIsCategoryDropdownOpen(name === "category" ? !isCategoryDropdownOpen : false);
     setIsSubTypeDropdownOpen(name === "subType" ? !isSubTypeDropdownOpen : false);
     setIsTypeDropdownOpen(name === "type" ? !isTypeDropdownOpen : false);
     setIsServiceDropdownOpen(name === "service" ? !isServiceDropdownOpen : false);
+    setIsPincodeDropdownOpen(name === "pincode" ? !isPincodeDropdownOpen : false);
   };
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const subTypeRef = useRef<HTMLDivElement>(null);
   const typeRef = useRef<HTMLDivElement>(null);
   const serviceRef = useRef<HTMLDivElement>(null);
+  const pincodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -308,12 +383,14 @@ function TechnicianFormContent() {
       const isOutsideSubType = !subTypeRef.current || !subTypeRef.current.contains(target);
       const isOutsideType = !typeRef.current || !typeRef.current.contains(target);
       const isOutsideService = !serviceRef.current || !serviceRef.current.contains(target);
+      const isOutsidePincode = !pincodeRef.current || !pincodeRef.current.contains(target);
 
-      if (isOutsideCategory && isOutsideSubType && isOutsideType && isOutsideService) {
+      if (isOutsideCategory && isOutsideSubType && isOutsideType && isOutsideService && isOutsidePincode) {
         setIsCategoryDropdownOpen(false);
         setIsSubTypeDropdownOpen(false);
         setIsTypeDropdownOpen(false);
         setIsServiceDropdownOpen(false);
+        setIsPincodeDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -322,37 +399,14 @@ function TechnicianFormContent() {
     };
   }, []);
 
-  const [selectedServices, setSelectedServices] = useState<CatalogServiceItem[]>([
-    {
-      id: "ac-srv-1",
-      category: "AC Repair & Service",
-      type: "Servicing & Deep Cleaning",
-      title: "Split AC Power Jet Servicing",
-      price: 599,
-      image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&auto=format&fit=crop&q=80",
-      desc: "High pressure water jet coil cleaning & anti-bacterial sanitization",
-    },
-    {
-      id: "ac-rep-1",
-      category: "AC Repair & Service",
-      type: "Repair & Troubleshooting",
-      title: "AC Gas Charging & Leakage Repair",
-      price: 2200,
-      image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&auto=format&fit=crop&q=80",
-      desc: "Freon R32 / R410a gas top-up & copper pipe brazing leak test",
-    },
-  ]);
+  const [selectedServices, setSelectedServices] = useState<CatalogServiceItem[]>([]);
 
   // Pincode Service Areas (Multi-select)
   const [customPincodeInput, setCustomPincodeInput] = useState("");
   const [isPincodeModalOpen, setIsPincodeModalOpen] = useState(false);
   const [modalCustomPincode, setModalCustomPincode] = useState("");
   const [modalCustomArea, setModalCustomArea] = useState("");
-  const [coverageZones, setCoverageZones] = useState<string[]>([
-    "221001 - Sigra, Luxa & Chetganj",
-    "221002 - Varanasi Cantt, Nadesar & Mint House",
-    "221005 - Lanka, BHU & Assi Ghat",
-  ]);
+  const [coverageZones, setCoverageZones] = useState<string[]>([]);
 
   const handleAddCustomPincode = () => {
     if (!customPincodeInput.trim()) return;
@@ -362,6 +416,196 @@ function TechnicianFormContent() {
       setCoverageZones([...coverageZones, pinLabel]);
     }
     setCustomPincodeInput("");
+  };
+
+  // ─── DYNAMIC API DERIVED LISTS & HANDLERS FOR STEP 2 ───
+  const selectedCategoryObj = useMemo(() => {
+    if (!selectedCategoryFilter || selectedCategoryFilter === "All") return null;
+    return apiCategories.find(
+      (c) => c._id === selectedCategoryFilter || c.categoryName.toLowerCase() === selectedCategoryFilter.toLowerCase()
+    ) || null;
+  }, [apiCategories, selectedCategoryFilter]);
+
+  const selectedSubCategoryObj = useMemo(() => {
+    if (!selectedCategoryObj || selectedSubTypeFilters.length === 0) return null;
+    const subName = selectedSubTypeFilters[0];
+    const subs = selectedCategoryObj.subCategories || [];
+    return subs.find((s: any) => s._id === subName || s.name.toLowerCase() === subName.toLowerCase()) || null;
+  }, [selectedCategoryObj, selectedSubTypeFilters]);
+
+  const selectedServiceActionObj = useMemo(() => {
+    if (selectedTypeFilters.length === 0) return null;
+    const actName = selectedTypeFilters[0];
+    return apiServiceActions.find(
+      (a: any) => a._id === actName || a.serviceAction?.toLowerCase() === actName.toLowerCase() || a.name?.toLowerCase() === actName.toLowerCase()
+    ) || null;
+  }, [apiServiceActions, selectedTypeFilters]);
+
+  // Re-fetch Service Actions & Packages dynamically when selection changes
+  useEffect(() => {
+    let isCancelled = false;
+    const updateStep2Options = async () => {
+      try {
+        const categoryId = selectedCategoryObj?._id || "";
+        const subCategoryId = selectedSubCategoryObj?._id || "";
+        const serviceActionId = selectedServiceActionObj?._id || "";
+        const categoryName = selectedCategoryObj?.categoryName || "";
+        const subCategoryName = selectedSubCategoryObj?.name || "";
+
+        // 1. Fetch Service Actions: GET /api/service-action/dropdown?categoryId=...&subCategoryId=...
+        if (categoryId) {
+          const actionParams: { categoryId: string; subCategoryId?: string } = { categoryId };
+          if (subCategoryId) actionParams.subCategoryId = subCategoryId;
+          const actionsRes = await getServiceActionDropdownApi(actionParams);
+          if (!isCancelled && actionsRes && actionsRes.success && Array.isArray(actionsRes.data)) {
+            setApiServiceActions(actionsRes.data);
+            setAllServiceActionsMaster((prev) => {
+              const existingIds = new Set(prev.map((a) => a._id));
+              const newItems = actionsRes.data.filter((a: ApiServiceAction) => a._id && !existingIds.has(a._id));
+              return newItems.length > 0 ? [...prev, ...newItems] : prev;
+            });
+          }
+        }
+
+        // 2. Fetch Packages: GET /api/package?serviceActionId=...&categoryId=...&subCategoryId=...&categoryName=...&subCategoryName=...&limit=100
+        const pkgParams: any = { limit: 100 };
+        if (serviceActionId) pkgParams.serviceActionId = serviceActionId;
+        if (categoryId) pkgParams.categoryId = categoryId;
+        if (subCategoryId) pkgParams.subCategoryId = subCategoryId;
+        if (categoryName) pkgParams.categoryName = categoryName;
+        if (subCategoryName) pkgParams.subCategoryName = subCategoryName;
+
+        const pkgRes = await getPackagesApi(pkgParams);
+        if (!isCancelled && pkgRes && pkgRes.success && Array.isArray(pkgRes.data)) {
+          setApiPackages(pkgRes.data);
+        }
+      } catch (err) {
+        console.error("Error updating Step 2 API options:", err);
+      }
+    };
+
+    updateStep2Options();
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedCategoryObj, selectedSubCategoryObj, selectedServiceActionObj]);
+
+  const categoryList = useMemo(() => {
+    if (apiCategories.length > 0) {
+      return ["All", ...apiCategories.map((c) => c.categoryName)];
+    }
+    return ["All"];
+  }, [apiCategories]);
+
+  const subCategoryList = useMemo(() => {
+    if (!selectedCategoryObj || !Array.isArray(selectedCategoryObj.subCategories)) return [];
+    return selectedCategoryObj.subCategories.map((s) => s.name);
+  }, [selectedCategoryObj]);
+
+  const availableServiceCatalogItems = useMemo(() => {
+    const items: CatalogServiceItem[] = [];
+
+    if (apiPackages.length > 0) {
+      apiPackages.forEach((pkg: any) => {
+        const saObj = typeof pkg.serviceActionId === "object" ? pkg.serviceActionId : null;
+        const saName = saObj?.serviceAction || "Package Service";
+
+        let catName = "";
+        if (typeof pkg.category === "object" && pkg.category?.categoryName) {
+          catName = pkg.category.categoryName;
+        } else if (pkg.categoryName) {
+          catName = pkg.categoryName;
+        } else if (saObj?.categoryId && typeof saObj.categoryId === "object" && saObj.categoryId?.categoryName) {
+          catName = saObj.categoryId.categoryName;
+        } else if (saObj?.categoryName) {
+          catName = saObj.categoryName;
+        }
+        if (!catName) catName = selectedCategoryObj?.categoryName || "Packages";
+
+        let subName = "";
+        if (typeof pkg.subCategory === "object" && pkg.subCategory?.name) {
+          subName = pkg.subCategory.name;
+        } else if (pkg.subCategoryName) {
+          subName = pkg.subCategoryName;
+        } else if (saObj?.subCategoryId && typeof saObj.subCategoryId === "object" && saObj.subCategoryId?.name) {
+          subName = saObj.subCategoryId.name;
+        }
+
+        const rawPkgImg = pkg.imageUrl || pkg.thumbnailUrl || pkg.image || pkg.iconUrl || pkg.icon;
+        const formattedPkgImg = formatImageUrl(rawPkgImg);
+        items.push({
+          id: pkg._id,
+          category: catName,
+          subType: subName || undefined,
+          type: saName,
+          title: pkg.packageName || pkg.title || "Package Service",
+          price: Number(pkg.price) || Number(pkg.originalPrice) || 499,
+          image: formattedPkgImg || "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80",
+          desc: pkg.description || pkg.subtitle || "Complete service package",
+        });
+      });
+    }
+
+    if (apiServiceActions.length > 0) {
+      apiServiceActions.forEach((act: any) => {
+        const catName = typeof act.categoryId === "object" ? act.categoryId?.categoryName : (act.categoryName || selectedCategoryObj?.categoryName || "General Service");
+        const subName = typeof act.subCategoryId === "object" ? act.subCategoryId?.name : (act.subCategoryName || "");
+        const rawActImg = act.imageUrl || act.thumbnailUrl || act.image || act.iconUrl || act.icon;
+        const formattedActImg = formatImageUrl(rawActImg);
+        items.push({
+          id: act._id,
+          category: catName || "General Service",
+          subType: subName || undefined,
+          type: (act.serviceAction as any) || "Service Action",
+          title: act.serviceAction || act.name || "Service Action",
+          price: Number(act.price) || Number(act.originalPrice) || 499,
+          image: formattedActImg || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&auto=format&fit=crop&q=80",
+          desc: act.description || `${act.serviceAction || "Service"} action`,
+        });
+      });
+    }
+
+    return items;
+  }, [apiPackages, apiServiceActions, selectedCategoryObj]);
+
+  const availablePincodeZones = useMemo(() => {
+    if (apiLocalities.length > 0) {
+      return apiLocalities.map((loc) => ({
+        id: loc._id,
+        pincode: loc.pincode,
+        area: loc.localityName,
+        label: `${loc.pincode} - ${loc.localityName}`,
+      }));
+    }
+    return [];
+  }, [apiLocalities]);
+
+  const toggleServiceSelection = (item: CatalogServiceItem) => {
+    const isSelected = selectedServices.some((s) => s.id === item.id) || selectedServiceActionIds.includes(item.id);
+    if (isSelected) {
+      setSelectedServices(selectedServices.filter((s) => s.id !== item.id));
+      setSelectedServiceActionIds(selectedServiceActionIds.filter((id) => id !== item.id));
+    } else {
+      setSelectedServices([...selectedServices, item]);
+      if (!selectedServiceActionIds.includes(item.id)) {
+        setSelectedServiceActionIds([...selectedServiceActionIds, item.id]);
+      }
+    }
+  };
+
+  const togglePincodeSelection = (zone: { id: string; pincode: string; area: string; label: string }) => {
+    const isSelected = selectedServicePincodeIds.includes(zone.id) || coverageZones.some((z) => z.includes(zone.pincode));
+    if (isSelected) {
+      setSelectedServicePincodeIds(selectedServicePincodeIds.filter((id) => id !== zone.id));
+      setCoverageZones(coverageZones.filter((z) => !z.includes(zone.pincode)));
+    } else {
+      if (zone.id && !zone.id.startsWith("mock-")) {
+        setSelectedServicePincodeIds([...selectedServicePincodeIds, zone.id]);
+      }
+      if (!coverageZones.some((z) => z.includes(zone.pincode))) {
+        setCoverageZones([...coverageZones, zone.label]);
+      }
+    }
   };
 
   const [role, setRole] = useState("AC Technician");
@@ -392,9 +636,17 @@ function TechnicianFormContent() {
   const [guarantorRelation, setGuarantorRelation] = useState("Brother");
   const [guarantorPhone, setGuarantorPhone] = useState("");
   const [guarantorPhoneVerified, setGuarantorPhoneVerified] = useState(false);
+  const [guarantorOtp, setGuarantorOtp] = useState("");
+  const [showGuarantorOtpInput, setShowGuarantorOtpInput] = useState(false);
+  const [guarantorVerificationToken, setGuarantorVerificationToken] = useState("");
+
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+  const [isSendingGuarantorOtp, setIsSendingGuarantorOtp] = useState(false);
+  const [isVerifyingGuarantorOtp, setIsVerifyingGuarantorOtp] = useState(false);
 
   // Police Clearance Certificate
-  const [policeThanaName, setPoliceThanaName] = useState("Sigra Police Station");
+  const [policeThanaName, setPoliceThanaName] = useState("");
   const [policeCertificateNumber, setPoliceCertificateNumber] = useState("");
   const [policeDocUploaded, setPoliceDocUploaded] = useState(false);
   const [policeVerified, setPoliceVerified] = useState(false);
@@ -403,75 +655,195 @@ function TechnicianFormContent() {
   const [submitStatus, setSubmitStatus] = useState<"Active" | "Pending">("Active");
   const [successMessage, setSuccessMessage] = useState(false);
 
-  // Load existing partner data if editing!
+  // Load existing partner data from API when editing
   useEffect(() => {
-    if (editId) {
-      const existingTech = initialTechnicians.find((t) => t.id === editId) || initialTechnicians[0];
-      if (existingTech) {
-        setName(existingTech.name);
-        setPhone(existingTech.phone ? existingTech.phone.replace(/\D/g, "").slice(0, 10) : "9839122401");
-        setPhoneVerified(true);
-        setEmail(`${existingTech.name.toLowerCase().replace(/\s+/g, ".")}@gmail.com`);
-        setAddress("House 14/A, Sigra Chauraha, Varanasi, Uttar Pradesh - 221002");
-
-        setBankName("HDFC Bank (Sigra Branch)");
-        setBankAccountNumber("50100299182711");
-        setIfscCode("HDFC0001827");
-        setUpiId(`${existingTech.name.toLowerCase().replace(/\s+/g, ".")}@okhdfcbank`);
-
-        setRole(existingTech.role || "Master HVAC Specialist");
-        setExperience("5+ Years Senior Specialist");
-        setCommissionRate("25");
-
-        setAadhaarNumber("982341029831");
-        setAadhaarVerified(true);
-        setAadhaarDocUploaded(true);
-
-        setGuarantorName("Suresh Chandra Yadav");
-        setGuarantorRelation("Brother");
-        setGuarantorPhone("9415000000");
-        setGuarantorPhoneVerified(true);
-
-        setPhotoDocUploaded(true);
-        setPassportPhotoPreview("https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=300&auto=format&fit=crop&q=80");
-        setAdditionalDocsList([
-          { id: "doc-1", type: "PAN Card", name: "Partner_PAN_Card_Copy.pdf" },
-          { id: "doc-2", type: "Driving License", name: "Partner_Driving_License_Front_Back.pdf" },
-        ]);
-
-        setPoliceThanaName("Sigra Police Station");
-        setPoliceCertificateNumber("UP-VAR-POL-2026-9812");
-        setPoliceDocUploaded(true);
-        setPoliceVerified(true);
-      }
+    if (!editId) {
+      setIsEditLoading(false);
+      return;
     }
+
+    let isMounted = true;
+    setIsEditLoading(true);
+    const fetchPartnerDetails = async () => {
+      try {
+        const res = await getPartnerByIdApi(editId);
+        if (isMounted && res && res.success !== false && res.data) {
+          const tech = res.data;
+          if (tech.name) setName(tech.name);
+          if (tech.mobile) {
+            setPhone(tech.mobile.replace(/\D/g, "").slice(-10));
+            setPhoneVerified(true);
+          }
+          if (tech.email) setEmail(tech.email);
+          if (tech.residentialAddress || tech.address) setAddress(tech.residentialAddress || tech.address);
+
+          if (tech.designation || tech.role) setRole(tech.designation || tech.role);
+          if (tech.commissionRate !== undefined) setCommissionRate(String(tech.commissionRate));
+
+          // Bank details
+          if (tech.bankDetails) {
+            if (tech.bankDetails.bankName) setBankName(tech.bankDetails.bankName);
+            if (tech.bankDetails.accountNumber) setBankAccountNumber(tech.bankDetails.accountNumber);
+            if (tech.bankDetails.ifscCode) setIfscCode(tech.bankDetails.ifscCode);
+            if (tech.bankDetails.upiId) setUpiId(tech.bankDetails.upiId);
+          }
+
+          // KYC & Documents
+          if (tech.kyc) {
+            if (tech.kyc.aadhaarNumber) {
+              setAadhaarNumber(tech.kyc.aadhaarNumber);
+              setAadhaarVerified(true);
+            }
+            if (tech.kyc.verificationDocumentType) {
+              const docTypeDisplay: Record<string, string> = {
+                pan_card: "PAN Card",
+                driving_license: "Driving License",
+                police_clearance_certificate: "Police Clearance",
+              };
+              setSelectedDocType(docTypeDisplay[tech.kyc.verificationDocumentType] || tech.kyc.verificationDocumentType);
+            }
+            if (tech.kyc.passportPhotoUrl) {
+              setPassportPhotoPreview(tech.kyc.passportPhotoUrl);
+              setPhotoDocUploaded(true);
+            }
+          }
+
+          // Guarantor details
+          if (tech.guarantor) {
+            if (tech.guarantor.name) setGuarantorName(tech.guarantor.name);
+            if (tech.guarantor.relation) setGuarantorRelation(tech.guarantor.relation);
+            if (tech.guarantor.mobile) {
+              setGuarantorPhone(tech.guarantor.mobile.replace(/\D/g, "").slice(-10));
+              setGuarantorPhoneVerified(Boolean(tech.guarantor.mobileVerified));
+            }
+          }
+
+          // Service Actions prefilling
+          if (Array.isArray(tech.serviceActions) && tech.serviceActions.length > 0) {
+            const actIds = tech.serviceActions.map((sa: any) => (typeof sa === "object" ? sa._id : sa)).filter(Boolean);
+            setSelectedServiceActionIds(actIds);
+
+            const actNames = tech.serviceActions.map((sa: any) => (typeof sa === "object" ? sa.serviceAction || sa.name : "")).filter(Boolean);
+            if (actNames.length > 0) {
+              setSelectedTypeFilters(actNames);
+            }
+          }
+
+          // Service Pincodes & Locations prefilling
+          if (Array.isArray(tech.servicePincodes) && tech.servicePincodes.length > 0) {
+            const locIds = tech.servicePincodes.map((sp: any) => (typeof sp === "object" ? sp._id : sp)).filter(Boolean);
+            setSelectedServicePincodeIds(locIds);
+
+            const zoneLabels = tech.servicePincodes.map((sp: any) => {
+              if (typeof sp === "object" && sp.pincode) {
+                return sp.localityName ? `${sp.pincode} - ${sp.localityName}` : sp.pincode;
+              }
+              return String(sp);
+            });
+            setCoverageZones(zoneLabels);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching partner details for edit:", err);
+      } finally {
+        if (isMounted) setIsEditLoading(false);
+      }
+    };
+
+    fetchPartnerDetails();
+    return () => {
+      isMounted = false;
+    };
   }, [editId]);
 
-  // Verification Handlers
-  const handleVerifyPhone = () => {
-    if (!phone) return alert("Please enter mobile number first.");
-    setShowPhoneOtpInput(true);
-  };
-
-  const handleConfirmPhoneOtp = () => {
-    if (phoneOtp.length >= 4) {
-      setPhoneVerified(true);
-      setShowPhoneOtpInput(false);
-    } else {
-      alert("Please enter 4-digit OTP.");
+  // Verification Handlers via Backend OTP APIs
+  const handleVerifyPhone = async () => {
+    if (!phone.trim()) return toast.error("Phone Required", "Please enter mobile number first.");
+    setIsSendingPhoneOtp(true);
+    try {
+      const res = await sendPartnerMobileOtpApi(phone.trim().replace(/\D/g, "").slice(-10));
+      if (res && res.success !== false) {
+        setShowPhoneOtpInput(true);
+        toast.success("OTP Sent", res.message || "OTP sent successfully to partner mobile.");
+      } else {
+        toast.error("Failed to Send OTP", res?.message || "Failed to send partner mobile OTP.");
+      }
+    } catch (err) {
+      console.error("sendPartnerMobileOtpApi error:", err);
+      toast.error("Error", "Error sending mobile OTP.");
+    } finally {
+      setIsSendingPhoneOtp(false);
     }
   };
 
-  const handleVerifyGuarantorPhone = () => {
-    if (!guarantorPhone) return alert("Please enter guarantor mobile number.");
-    setGuarantorPhoneVerified(true);
+  const handleConfirmPhoneOtp = async () => {
+    if (phoneOtp.trim().length < 4) return toast.error("Invalid OTP", "Please enter valid OTP.");
+    setIsVerifyingPhoneOtp(true);
+    try {
+      const res = await verifyPartnerMobileOtpApi(phone.trim().replace(/\D/g, "").slice(-10), phoneOtp.trim());
+      if (res && res.success !== false) {
+        setPhoneVerified(true);
+        setShowPhoneOtpInput(false);
+        const tokenVal = res.mobileVerificationToken || res.data?.mobileVerificationToken || res.token || res.data?.token || "";
+        if (tokenVal) setMobileVerificationToken(tokenVal);
+        toast.success("Verified!", res.message || "Partner mobile number verified successfully!");
+      } else {
+        toast.error("Verification Failed", res?.message || "Invalid OTP.");
+      }
+    } catch (err) {
+      console.error("verifyPartnerMobileOtpApi error:", err);
+      toast.error("Error", "Error verifying OTP.");
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+    }
+  };
+
+  const handleVerifyGuarantorPhone = async () => {
+    if (!guarantorPhone.trim()) return toast.error("Guarantor Phone Required", "Please enter guarantor mobile number.");
+    setIsSendingGuarantorOtp(true);
+    try {
+      const res = await sendGuarantorMobileOtpApi(guarantorPhone.trim().replace(/\D/g, "").slice(-10));
+      if (res && res.success !== false) {
+        setShowGuarantorOtpInput(true);
+        toast.success("OTP Sent", res.message || "OTP sent successfully to guarantor mobile.");
+      } else {
+        toast.error("Failed to Send OTP", res?.message || "Failed to send guarantor OTP.");
+      }
+    } catch (err) {
+      console.error("sendGuarantorMobileOtpApi error:", err);
+      toast.error("Error", "Error sending guarantor OTP.");
+    } finally {
+      setIsSendingGuarantorOtp(false);
+    }
+  };
+
+  const handleConfirmGuarantorPhoneOtp = async () => {
+    if (guarantorOtp.trim().length < 4) return toast.error("Invalid OTP", "Please enter valid OTP.");
+    setIsVerifyingGuarantorOtp(true);
+    try {
+      const res = await verifyGuarantorMobileOtpApi(guarantorPhone.trim().replace(/\D/g, "").slice(-10), guarantorOtp.trim());
+      if (res && res.success !== false) {
+        setGuarantorPhoneVerified(true);
+        setShowGuarantorOtpInput(false);
+        const tokenVal = res.guarantorVerificationToken || res.data?.guarantorVerificationToken || res.token || res.data?.token || "";
+        if (tokenVal) setGuarantorVerificationToken(tokenVal);
+        toast.success("Verified!", res.message || "Guarantor mobile number verified successfully!");
+      } else {
+        toast.error("Verification Failed", res?.message || "Invalid guarantor OTP.");
+      }
+    } catch (err) {
+      console.error("verifyGuarantorMobileOtpApi error:", err);
+      toast.error("Error", "Error verifying guarantor OTP.");
+    } finally {
+      setIsVerifyingGuarantorOtp(false);
+    }
   };
 
   // Step Navigation Handlers
   const handleStep1Submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return alert("Please enter Partner Name.");
-    if (!phone.trim()) return alert("Please enter Mobile Number.");
+    if (!name.trim()) return toast.error("Name Required", "Please enter Partner Name.");
+    if (!phone.trim()) return toast.error("Phone Required", "Please enter Mobile Number.");
     setCurrentStep(2);
   };
 
@@ -485,16 +857,186 @@ function TechnicianFormContent() {
     setCurrentStep(4);
   };
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+
+    try {
+      // 1. Resolve and validate Service Actions against MongoDB ServiceAction _ids
+      const masterActions = allServiceActionsMaster.length > 0 ? allServiceActionsMaster : apiServiceActions;
+      const validActionMap = new Map<string, ApiServiceAction>();
+      masterActions.forEach((a) => {
+        if (a && a._id) validActionMap.set(a._id, a);
+      });
+      apiServiceActions.forEach((a) => {
+        if (a && a._id) validActionMap.set(a._id, a);
+      });
+
+      // Package _id -> ServiceAction _id lookup
+      const packageToServiceActionIdMap = new Map<string, string>();
+      apiPackages.forEach((pkg: any) => {
+        if (!pkg || !pkg._id) return;
+        const saObj = pkg.serviceActionId;
+        const saId = typeof saObj === "object" ? saObj?._id : (typeof saObj === "string" ? saObj : "");
+        if (saId && validActionMap.has(saId)) {
+          packageToServiceActionIdMap.set(pkg._id, saId);
+        }
+      });
+
+      const candidateActionIdsSet = new Set<string>();
+
+      // Check selectedServiceActionIds (strictly user-selected service items)
+      selectedServiceActionIds.forEach((id) => {
+        if (validActionMap.has(id)) {
+          candidateActionIdsSet.add(id);
+        } else if (packageToServiceActionIdMap.has(id)) {
+          candidateActionIdsSet.add(packageToServiceActionIdMap.get(id)!);
+        }
+      });
+
+      // Check selectedServices array (strictly user-selected catalog items)
+      selectedServices.forEach((srv) => {
+        if (validActionMap.has(srv.id)) {
+          candidateActionIdsSet.add(srv.id);
+        } else if (packageToServiceActionIdMap.has(srv.id)) {
+          candidateActionIdsSet.add(packageToServiceActionIdMap.get(srv.id)!);
+        } else {
+          const matched = masterActions.find(
+            (a) =>
+              (a.serviceAction && (a.serviceAction.toLowerCase() === srv.title.toLowerCase() || a.serviceAction.toLowerCase() === srv.type.toLowerCase())) ||
+              (a.name && (a.name.toLowerCase() === srv.title.toLowerCase() || a.name.toLowerCase() === srv.type.toLowerCase()))
+          );
+          if (matched) candidateActionIdsSet.add(matched._id);
+        }
+      });
+
+      let actionIds = Array.from(candidateActionIdsSet).filter((id) => validActionMap.has(id));
+      if (actionIds.length === 0 && masterActions.length > 0) {
+        actionIds = [masterActions[0]._id];
+      }
+
+      // 2. Resolve and validate Locations / Pincodes against MongoDB Locality _ids
+      const masterLocalities = allLocalitiesMaster.length > 0 ? allLocalitiesMaster : apiLocalities;
+      const validLocalityMap = new Map<string, ApiLocality>();
+      masterLocalities.forEach((l) => {
+        if (l && l._id) validLocalityMap.set(l._id, l);
+      });
+      apiLocalities.forEach((l) => {
+        if (l && l._id) validLocalityMap.set(l._id, l);
+      });
+
+      const candidatePincodeIdsSet = new Set<string>();
+
+      // Check selectedServicePincodeIds (strictly user-selected pincodes)
+      selectedServicePincodeIds.forEach((id) => {
+        if (validLocalityMap.has(id)) {
+          candidatePincodeIdsSet.add(id);
+        }
+      });
+
+      // Check coverageZones labels (strictly user-selected coverage zone labels)
+      coverageZones.forEach((zoneStr) => {
+        if (validLocalityMap.has(zoneStr)) {
+          candidatePincodeIdsSet.add(zoneStr);
+        } else {
+          const matched = masterLocalities.find(
+            (loc) =>
+              loc._id === zoneStr ||
+              zoneStr.includes(loc.pincode) ||
+              loc.pincode === zoneStr.trim() ||
+              (loc.localityName && zoneStr.toLowerCase().includes(loc.localityName.toLowerCase()))
+          );
+          if (matched) candidatePincodeIdsSet.add(matched._id);
+        }
+      });
+
+      let pincodeIds = Array.from(candidatePincodeIdsSet).filter((id) => validLocalityMap.has(id));
+      if (pincodeIds.length === 0 && masterLocalities.length > 0) {
+        pincodeIds = [masterLocalities[0]._id];
+      }
+
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("mobile", phone.trim().replace(/\D/g, "").slice(-10));
+      if (mobileVerificationToken) {
+        formData.append("mobileVerificationToken", mobileVerificationToken);
+      }
+      formData.append("email", email.trim());
+      formData.append("residentialAddress", address.trim());
+      formData.append("password", "Partner@123");
+      formData.append("designation", role || "Technician");
+      formData.append("commissionRate", String(commissionRate || 25));
+
+      formData.append("bankDetails", JSON.stringify({
+        bankName: bankName.trim(),
+        branchName: "Main Branch",
+        accountNumber: bankAccountNumber.trim(),
+        ifscCode: ifscCode.trim(),
+        upiId: upiId.trim(),
+      }));
+
+      formData.append("serviceActions", JSON.stringify(actionIds));
+      formData.append("servicePincodes", JSON.stringify(pincodeIds));
+      formData.append("kyc", JSON.stringify({
+        aadhaarNumber: aadhaarNumber.trim().replace(/\D/g, ""),
+      }));
+
+      formData.append("guarantor", JSON.stringify({
+        name: guarantorName.trim(),
+        relation: guarantorRelation || "Brother",
+        mobile: guarantorPhone.trim().replace(/\D/g, "").slice(-10),
+        mobileVerified: Boolean(guarantorPhoneVerified),
+      }));
+
+      if (guarantorVerificationToken) {
+        formData.append("guarantorVerificationToken", guarantorVerificationToken);
+      }
+
+      const docTypeMapping: Record<string, string> = {
+        "PAN Card": "pan_card",
+        "Driving License": "driving_license",
+        "Police Clearance": "police_clearance_certificate",
+      };
+
+      if (aadhaarFileInputRef.current?.files?.[0]) {
+        formData.append("aadhaarFront", aadhaarFileInputRef.current.files[0]);
+      }
+      if (aadhaarFileInputRef.current?.files?.[1]) {
+        formData.append("aadhaarBack", aadhaarFileInputRef.current.files[1]);
+      }
+      if (photoFileInputRef.current?.files?.[0]) {
+        formData.append("passportPhoto", photoFileInputRef.current.files[0]);
+      }
+      if (docTypeFileInputRef.current?.files?.[0]) {
+        formData.append("verificationDocumentType", docTypeMapping[selectedDocType] || "pan_card");
+        formData.append("verificationDocument", docTypeFileInputRef.current.files[0]);
+      }
+
+      let res;
+      if (isEditing && editId) {
+        res = await updatePartnerApi(editId, formData);
+      } else {
+        res = await createPartnerApi(formData);
+      }
+
+      if (res && res.success !== false) {
+        setSuccessMessage(true);
+        toast.success(
+          isEditing ? "Partner Updated!" : "Partner Created!",
+          res.message || (isEditing ? "Partner updated successfully." : "Partner registered & activated successfully.")
+        );
+        setTimeout(() => {
+          router.push("/technicians");
+        }, 1200);
+      } else {
+        toast.error("Submission Failed", res?.message || "Failed to create/update partner.");
+      }
+    } catch (err) {
+      console.error("Error creating partner:", err);
+      toast.error("Error", "Failed to submit partner form.");
+    } finally {
       setIsSubmitting(false);
-      setSuccessMessage(true);
-      setTimeout(() => {
-        router.push("/technicians");
-      }, 1200);
-    }, 600);
+    }
   };
 
   return (
@@ -534,6 +1076,20 @@ function TechnicianFormContent() {
           </p>
         </div>
       </div>
+
+      {isEditLoading ? (
+        <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6 shadow-sm animate-pulse">
+          <div className="h-8 bg-slate-200 dark:bg-slate-800 rounded-xl w-1/3" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl w-full" />
+            <div className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl w-full" />
+            <div className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl w-full" />
+            <div className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl w-full" />
+          </div>
+          <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full" />
+        </div>
+      ) : (
+        <>
 
       {/* SUCCESS BANNER */}
       {successMessage && (
@@ -718,8 +1274,8 @@ function TechnicianFormContent() {
                   <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center gap-2 mt-2">
                     <input
                       type="text"
-                      maxLength={4}
-                      placeholder="Enter 4-digit OTP"
+                      maxLength={6}
+                      placeholder="Enter OTP"
                       value={phoneOtp}
                       onChange={(e) => setPhoneOtp(e.target.value)}
                       className="w-32 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none"
@@ -898,6 +1454,7 @@ function TechnicianFormContent() {
                         onClick={() => {
                           setSelectedCategoryFilter("All");
                           setSelectedSubTypeFilters([]);
+                          setSelectedTypeFilters([]);
                           setCategorySearchQuery("");
                           toggleDropdown("category");
                         }}
@@ -922,7 +1479,7 @@ function TechnicianFormContent() {
 
                   {isCategoryDropdownOpen && (
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-30 max-h-48 overflow-y-auto p-1.5 space-y-1">
-                      {["All", "AC Repair & Service", "Water Purifier (RO)", "Electrician & Wiring", "Plumbing & Sanitary", "Appliance Repair"]
+                      {categoryList
                         .filter((cat) => cat.toLowerCase().includes(categorySearchQuery.toLowerCase()))
                         .map((cat) => (
                           <button
@@ -931,6 +1488,7 @@ function TechnicianFormContent() {
                             onClick={() => {
                               setSelectedCategoryFilter(cat);
                               setSelectedSubTypeFilters([]);
+                              setSelectedTypeFilters([]);
                               setCategorySearchQuery("");
                               setIsCategoryDropdownOpen(false);
                             }}
@@ -966,38 +1524,41 @@ function TechnicianFormContent() {
                     <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
                     <input
                       type="text"
-                      disabled={selectedCategoryFilter === "All"}
+                      disabled={selectedCategoryFilter === "All" || subCategoryList.length === 0}
                       placeholder={
                         selectedCategoryFilter === "All"
                           ? "Select Category First..."
+                          : subCategoryList.length === 0
+                          ? "No Subcategories (Service Actions loaded)"
                           : selectedSubTypeFilters.length === 0
-                          ? `Search System Type (${CATEGORY_SUB_TYPES[selectedCategoryFilter]?.[0] || "Split AC"})...`
+                          ? `Search System Type (${subCategoryList[0] || "Split AC"})...`
                           : `${selectedSubTypeFilters.length} System Types Selected`
                       }
                       value={isSubTypeDropdownOpen ? subTypeSearchQuery : (subTypeSearchQuery || selectedSubTypeFilters.join(", "))}
                       onChange={(e) => {
-                        if (selectedCategoryFilter === "All") return;
+                        if (selectedCategoryFilter === "All" || subCategoryList.length === 0) return;
                         setSubTypeSearchQuery(e.target.value);
                         if (!isSubTypeDropdownOpen) toggleDropdown("subType");
                       }}
                       onFocus={() => {
-                        if (selectedCategoryFilter === "All") return;
+                        if (selectedCategoryFilter === "All" || subCategoryList.length === 0) return;
                         setSubTypeSearchQuery("");
                         toggleDropdown("subType");
                       }}
                       className={`w-full h-11 pl-10 pr-10 rounded-xl border text-xs font-bold transition-all outline-none ${
-                        selectedCategoryFilter === "All"
+                        selectedCategoryFilter === "All" || subCategoryList.length === 0
                           ? "bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-400 cursor-not-allowed opacity-60"
                           : selectedSubTypeFilters.length > 0 && !isSubTypeDropdownOpen
                           ? "border-brand-500 bg-brand-50/30 dark:bg-brand-950/20 text-brand-900 dark:text-brand-300 cursor-pointer font-extrabold"
                           : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:border-brand-500"
                       }`}
                     />
-                    {selectedCategoryFilter !== "All" && (selectedSubTypeFilters.length > 0 || subTypeSearchQuery) ? (
+                    {selectedCategoryFilter !== "All" && subCategoryList.length > 0 && (selectedSubTypeFilters.length > 0 || subTypeSearchQuery) ? (
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedSubTypeFilters([]);
+                          setSelectedTypeFilters([]);
                           setSubTypeSearchQuery("");
                           toggleDropdown("subType");
                         }}
@@ -1009,24 +1570,27 @@ function TechnicianFormContent() {
                     ) : (
                       <button
                         type="button"
-                        disabled={selectedCategoryFilter === "All"}
+                        disabled={selectedCategoryFilter === "All" || subCategoryList.length === 0}
                         onClick={() => {
-                          if (selectedCategoryFilter === "All") return;
+                          if (selectedCategoryFilter === "All" || subCategoryList.length === 0) return;
                           setSubTypeSearchQuery("");
                           toggleDropdown("subType");
                         }}
-                        className={`absolute right-3.5 text-slate-400 ${selectedCategoryFilter === "All" ? "cursor-not-allowed opacity-50" : "hover:text-slate-600 cursor-pointer"}`}
+                        className={`absolute right-3.5 text-slate-400 ${selectedCategoryFilter === "All" || subCategoryList.length === 0 ? "cursor-not-allowed opacity-50" : "hover:text-slate-600 cursor-pointer"}`}
                       >
                         <ChevronDown className="w-4 h-4" />
                       </button>
                     )}
                   </div>
 
-                  {isSubTypeDropdownOpen && selectedCategoryFilter !== "All" && (
+                  {isSubTypeDropdownOpen && selectedCategoryFilter !== "All" && subCategoryList.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-30 max-h-56 overflow-y-auto p-1.5 space-y-1">
                       <button
                         type="button"
-                        onClick={() => setSelectedSubTypeFilters([])}
+                        onClick={() => {
+                          setSelectedSubTypeFilters([]);
+                          setSelectedTypeFilters([]);
+                        }}
                         className={`w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-between cursor-pointer ${
                           selectedSubTypeFilters.length === 0
                             ? "bg-brand-600 text-white"
@@ -1037,7 +1601,7 @@ function TechnicianFormContent() {
                         {selectedSubTypeFilters.length === 0 && <Check className="w-4 h-4" />}
                       </button>
 
-                      {(CATEGORY_SUB_TYPES[selectedCategoryFilter] || [])
+                      {subCategoryList
                         .filter((sub) => sub.toLowerCase().includes(subTypeSearchQuery.toLowerCase()))
                         .map((sub) => {
                           const isSelected = selectedSubTypeFilters.includes(sub);
@@ -1046,6 +1610,7 @@ function TechnicianFormContent() {
                               key={sub}
                               type="button"
                               onClick={() => {
+                                setSelectedTypeFilters([]);
                                 if (isSelected) {
                                   setSelectedSubTypeFilters(selectedSubTypeFilters.filter((s) => s !== sub));
                                 } else {
@@ -1146,19 +1711,23 @@ function TechnicianFormContent() {
                         {selectedTypeFilters.length === 0 && <Check className="w-4 h-4" />}
                       </button>
 
-                      {["Repair & Troubleshooting", "Servicing & Deep Cleaning", "Installation", "Uninstallation", "Maintenance & AMC"]
-                        .filter((t) => t.toLowerCase().includes(typeSearchQuery.toLowerCase()))
-                        .map((type) => {
-                          const isSelected = selectedTypeFilters.includes(type);
+                      {apiServiceActions
+                        .map((act: any) => ({
+                          id: act._id,
+                          name: act.serviceAction || act.name || "Service Action",
+                        }))
+                        .filter((act) => act.name.toLowerCase().includes(typeSearchQuery.toLowerCase()))
+                        .map((act) => {
+                          const isSelected = selectedTypeFilters.includes(act.name) || selectedTypeFilters.includes(act.id);
                           return (
                             <button
-                              key={type}
+                              key={act.id}
                               type="button"
                               onClick={() => {
                                 if (isSelected) {
-                                  setSelectedTypeFilters(selectedTypeFilters.filter((t) => t !== type));
+                                  setSelectedTypeFilters(selectedTypeFilters.filter((t) => t !== act.name && t !== act.id));
                                 } else {
-                                  setSelectedTypeFilters([...selectedTypeFilters, type]);
+                                  setSelectedTypeFilters([...selectedTypeFilters, act.name]);
                                 }
                               }}
                               className={`w-full text-left px-3 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center justify-between cursor-pointer ${
@@ -1171,7 +1740,7 @@ function TechnicianFormContent() {
                                 <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${isSelected ? "border-white bg-white text-brand-600" : "border-slate-300 dark:border-slate-600"}`}>
                                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                                 </div>
-                                <span>{type}</span>
+                                <span>{act.name}</span>
                               </div>
                               <span className="text-[10px] opacity-80">{isSelected ? "Selected" : "+ Select"}</span>
                             </button>
@@ -1236,8 +1805,8 @@ function TechnicianFormContent() {
                 {/* Floating Searchable Services Dropdown List with Thumbnail Images */}
                 {isServiceDropdownOpen && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-40 max-h-80 overflow-y-auto p-2 space-y-1.5">
-                    {MASTER_SERVICE_CATALOG.filter((item) => {
-                      if (selectedCategoryFilter !== "All" && item.category !== selectedCategoryFilter) return false;
+                    {availableServiceCatalogItems.filter((item) => {
+                      if (selectedCategoryFilter !== "All" && item.category !== selectedCategoryFilter && !item.category.toLowerCase().includes(selectedCategoryFilter.toLowerCase())) return false;
                       if (selectedSubTypeFilters.length > 0 && item.subType && !selectedSubTypeFilters.includes(item.subType)) return false;
                       if (selectedTypeFilters.length > 0) {
                         const matchesAction = selectedTypeFilters.some((act) => {
@@ -1257,18 +1826,12 @@ function TechnicianFormContent() {
                         item.desc.toLowerCase().includes(q)
                       );
                     }).map((item) => {
-                      const isSelected = selectedServices.some((s) => s.id === item.id);
+                      const isSelected = selectedServices.some((s) => s.id === item.id) || selectedServiceActionIds.includes(item.id);
 
                       return (
                         <div
                           key={item.id}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedServices(selectedServices.filter((s) => s.id !== item.id));
-                            } else {
-                              setSelectedServices([...selectedServices, item]);
-                            }
-                          }}
+                          onClick={() => toggleServiceSelection(item)}
                           className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 border ${
                             isSelected
                               ? "bg-brand-50 dark:bg-brand-950/60 border-brand-300 dark:border-brand-800"
@@ -1279,6 +1842,9 @@ function TechnicianFormContent() {
                             <img
                               src={item.image}
                               alt={item.title}
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
+                              }}
                               className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-xs shrink-0"
                             />
                             <div className="min-w-0">
@@ -1327,6 +1893,87 @@ function TechnicianFormContent() {
               </div>
             </div>
 
+            {/* Visual Grid of Service Actions & Packages */}
+            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-brand-600" />
+                  <span>Available Service Actions & Packages ({availableServiceCatalogItems.length} items)</span>
+                </label>
+                <span className="text-[10px] font-bold text-slate-400">
+                  Click any card to select/deselect
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto p-1">
+                {availableServiceCatalogItems
+                  .filter((item) => {
+                    if (selectedCategoryFilter !== "All") {
+                      const f = selectedCategoryFilter.toLowerCase().trim();
+                      const c = item.category.toLowerCase().trim();
+                      if (!c.includes(f) && !f.includes(c)) return false;
+                    }
+                    if (selectedSubTypeFilters.length > 0 && item.subType && !selectedSubTypeFilters.includes(item.subType)) return false;
+                    if (selectedTypeFilters.length > 0) {
+                      const matchesAction = selectedTypeFilters.some((act) => {
+                        if (act === "Installation") return item.title.toLowerCase().includes("installation") || item.type.includes("Installation");
+                        if (act === "Uninstallation") return item.title.toLowerCase().includes("uninstallation") || item.title.toLowerCase().includes("dismantling");
+                        return item.type === act;
+                      });
+                      if (!matchesAction) return false;
+                    }
+                    return true;
+                  })
+                  .map((item) => {
+                    const isSelected = selectedServices.some((s) => s.id === item.id) || selectedServiceActionIds.includes(item.id);
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => toggleServiceSelection(item)}
+                        className={`p-3 rounded-2xl transition-all cursor-pointer flex items-center justify-between gap-3 border ${
+                          isSelected
+                            ? "bg-brand-50/80 dark:bg-brand-950/60 border-brand-400 dark:border-brand-700 shadow-xs"
+                            : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-brand-300"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
+                            }}
+                            className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
+                              {item.title}
+                            </h5>
+                            <p className="text-[10px] text-slate-500 font-semibold truncate">
+                              {item.category} • <span className="text-brand-600 dark:text-brand-400">{item.type}</span>
+                            </p>
+                            <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400">
+                              ₹{item.price.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={`px-2.5 py-1 rounded-xl text-[11px] font-extrabold shrink-0 transition-all ${
+                            isSelected
+                              ? "bg-brand-600 text-white shadow-xs"
+                              : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600"
+                          }`}
+                        >
+                          {isSelected ? "✓ Selected" : "+ Add"}
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
             {/* 4. SELECTED SERVICES SHOWN AT THE BOTTOM */}
             {selectedServices.length > 0 && (
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 pt-3">
@@ -1337,7 +1984,10 @@ function TechnicianFormContent() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setSelectedServices([])}
+                    onClick={() => {
+                      setSelectedServices([]);
+                      setSelectedServiceActionIds([]);
+                    }}
                     className="text-[11px] font-bold text-slate-500 hover:text-slate-700 hover:underline"
                   >
                     Clear All
@@ -1354,6 +2004,9 @@ function TechnicianFormContent() {
                         <img
                           src={srv.image}
                           alt={srv.title}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
+                          }}
                           className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0"
                         />
                         <div className="min-w-0">
@@ -1368,7 +2021,7 @@ function TechnicianFormContent() {
 
                       <button
                         type="button"
-                        onClick={() => setSelectedServices(selectedServices.filter((s) => s.id !== srv.id))}
+                        onClick={() => toggleServiceSelection(srv)}
                         className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0"
                         title="Remove Service"
                       >
@@ -1400,6 +2053,127 @@ function TechnicianFormContent() {
               </button>
             </div>
 
+            {/* Searchable Multi-Select Locality & Pincode Dropdown */}
+            <div ref={pincodeRef} className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
+                  Select Locality & Pincode *
+                </label>
+                <span className="text-[10px] font-extrabold text-brand-600 dark:text-brand-400">
+                  {coverageZones.length} Locations Selected
+                </span>
+              </div>
+
+              <div className="relative">
+                <div className="relative flex items-center">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder={
+                      coverageZones.length === 0
+                        ? "Search & select locality or pincode (e.g. 221002 - Sigra, Lanka)..."
+                        : `${coverageZones.length} Locations Selected`
+                    }
+                    value={isPincodeDropdownOpen ? pincodeSearchQuery : (pincodeSearchQuery || (coverageZones.length > 0 ? `${coverageZones.length} Locations Selected` : ""))}
+                    onChange={(e) => {
+                      setPincodeSearchQuery(e.target.value);
+                      if (!isPincodeDropdownOpen) toggleDropdown("pincode");
+                    }}
+                    onFocus={() => {
+                      setPincodeSearchQuery("");
+                      toggleDropdown("pincode");
+                    }}
+                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500 shadow-2xs"
+                  />
+                  {pincodeSearchQuery || isPincodeDropdownOpen ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPincodeSearchQuery("");
+                        setIsPincodeDropdownOpen(false);
+                      }}
+                      className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPincodeSearchQuery("");
+                        toggleDropdown("pincode");
+                      }}
+                      className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Floating Searchable API Locality Dropdown */}
+                {isPincodeDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-40 max-h-72 overflow-y-auto p-2 space-y-1">
+                    {availablePincodeZones.filter((zone) => {
+                      if (!pincodeSearchQuery.trim()) return true;
+                      const q = pincodeSearchQuery.toLowerCase();
+                      return (
+                        zone.pincode.toLowerCase().includes(q) ||
+                        zone.area.toLowerCase().includes(q) ||
+                        zone.label.toLowerCase().includes(q)
+                      );
+                    }).map((zone) => {
+                      const isChecked = selectedServicePincodeIds.includes(zone.id) || coverageZones.some((z) => z.includes(zone.pincode));
+
+                      return (
+                        <div
+                          key={zone.id || zone.pincode}
+                          onClick={() => togglePincodeSelection(zone)}
+                          className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 border ${
+                            isChecked
+                              ? "bg-brand-50 dark:bg-brand-950/60 border-brand-300 dark:border-brand-800"
+                              : "bg-slate-50/60 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80 hover:bg-slate-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 font-mono font-black text-xs flex items-center justify-center shrink-0 border border-brand-200 dark:border-brand-800">
+                              {zone.pincode}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
+                                {zone.area}
+                              </h4>
+                              <p className="text-[10px] text-slate-500 font-semibold truncate">
+                                Locality Pincode: {zone.pincode}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0">
+                            <span
+                              className={`px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1 ${
+                                isChecked
+                                  ? "bg-brand-600 text-white shadow-xs"
+                                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                              }`}
+                            >
+                              {isChecked ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Selected</span>
+                                </>
+                              ) : (
+                                <span>+ Select</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Multi-Select Pincode Grid (Includes All Added Pincodes) */}
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1412,59 +2186,34 @@ function TechnicianFormContent() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {(() => {
-                  // Combine default VARANASI_PINCODE_ZONES + any custom added pincodes from coverageZones
-                  const customPincodeZones = coverageZones
-                    .filter((z) => {
-                      const pinPart = z.split(" - ")[0];
-                      return !VARANASI_PINCODE_ZONES.some((v) => v.pincode === pinPart);
-                    })
-                    .map((z) => {
-                      const parts = z.split(" - ");
-                      return {
-                        pincode: parts[0],
-                        area: parts[1] || "Varanasi Area",
-                      };
-                    });
+                {availablePincodeZones.map((zone) => {
+                  const isChecked = selectedServicePincodeIds.includes(zone.id) || coverageZones.some((z) => z.includes(zone.pincode));
 
-                  const combinedZones = [...VARANASI_PINCODE_ZONES, ...customPincodeZones];
-
-                  return combinedZones.map((zone) => {
-                    const zoneLabel = `${zone.pincode} - ${zone.area}`;
-                    const isChecked = coverageZones.some((z) => z.includes(zone.pincode));
-
-                    return (
-                      <button
-                        key={zone.pincode}
-                        type="button"
-                        onClick={() => {
-                          if (isChecked) {
-                            setCoverageZones(coverageZones.filter((z) => !z.includes(zone.pincode)));
-                          } else {
-                            setCoverageZones([...coverageZones, zoneLabel]);
-                          }
-                        }}
-                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between text-xs font-semibold ${
-                          isChecked
-                            ? "bg-brand-50 dark:bg-brand-950/40 border-brand-300 dark:border-brand-800 text-slate-900 dark:text-white"
-                            : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                  return (
+                    <button
+                      key={zone.id || zone.pincode}
+                      type="button"
+                      onClick={() => togglePincodeSelection(zone)}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between text-xs font-semibold ${
+                        isChecked
+                          ? "bg-brand-50 dark:bg-brand-950/40 border-brand-300 dark:border-brand-800 text-slate-900 dark:text-white"
+                          : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                      }`}
+                    >
+                      <div>
+                        <span className="font-mono font-extrabold text-brand-600 block">{zone.pincode}</span>
+                        <span className="text-[10px] text-slate-500 line-clamp-1">{zone.area}</span>
+                      </div>
+                      <span
+                        className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
+                          isChecked ? "bg-brand-600 text-white" : "border border-slate-300 dark:border-slate-600"
                         }`}
                       >
-                        <div>
-                          <span className="font-mono font-extrabold text-brand-600 block">{zone.pincode}</span>
-                          <span className="text-[10px] text-slate-500 line-clamp-1">{zone.area}</span>
-                        </div>
-                        <span
-                          className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
-                            isChecked ? "bg-brand-600 text-white" : "border border-slate-300 dark:border-slate-600"
-                          }`}
-                        >
-                          {isChecked ? "✓" : ""}
-                        </span>
-                      </button>
-                    );
-                  });
-                })()}
+                        {isChecked ? "✓" : ""}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1537,6 +2286,33 @@ function TechnicianFormContent() {
 
                     {/* Dialog Body (STRICTLY 2 INPUT FIELDS FOR ADDING LOCATION) */}
                     <div className="p-6 space-y-4 text-xs">
+                      {/* Select from Locality Dropdown */}
+                      {apiLocalities.length > 0 && (
+                        <div>
+                          <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                            Select Locality & Pincode
+                          </label>
+                          <select
+                            onChange={(e) => {
+                              const selectedId = e.target.value;
+                              const found = apiLocalities.find((l) => l._id === selectedId);
+                              if (found) {
+                                setModalCustomPincode(found.pincode || "");
+                                setModalCustomArea(found.localityName || "");
+                              }
+                            }}
+                            className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs outline-none focus:border-brand-500 transition-all"
+                          >
+                            <option value="">-- Choose from Localities ({apiLocalities.length}) --</option>
+                            {apiLocalities.map((loc) => (
+                              <option key={loc._id} value={loc._id}>
+                                {loc.pincode} - {loc.localityName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
                       {/* Input 1: Pincode */}
                       <div>
                         <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
@@ -1818,10 +2594,11 @@ function TechnicianFormContent() {
                   {!guarantorPhoneVerified ? (
                     <button
                       type="button"
+                      disabled={isSendingGuarantorOtp}
                       onClick={handleVerifyGuarantorPhone}
                       className="h-11 px-4 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 font-extrabold text-xs border border-brand-200 dark:border-brand-800 whitespace-nowrap transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-2xs"
                     >
-                      Verify OTP
+                      {isSendingGuarantorOtp ? "Sending..." : "Verify OTP"}
                     </button>
                   ) : (
                     <span className="h-11 px-3 rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-xs border border-emerald-200 shrink-0 flex items-center gap-1">
@@ -1829,6 +2606,27 @@ function TechnicianFormContent() {
                     </span>
                   )}
                 </div>
+
+                {showGuarantorOtpInput && (
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="Enter OTP"
+                      value={guarantorOtp}
+                      onChange={(e) => setGuarantorOtp(e.target.value)}
+                      className="w-32 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none"
+                    />
+                    <button
+                      type="button"
+                      disabled={isVerifyingGuarantorOtp}
+                      onClick={handleConfirmGuarantorPhoneOtp}
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-900 dark:hover:bg-amber-800 text-amber-900 dark:text-amber-200 font-extrabold text-xs border border-amber-300 dark:border-amber-700 transition-colors cursor-pointer"
+                    >
+                      {isVerifyingGuarantorOtp ? "Verifying..." : "Submit OTP"}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2164,7 +2962,14 @@ function TechnicianFormContent() {
                         key={srv.id}
                         className="pl-1.5 pr-3 py-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-extrabold flex items-center gap-1.5 shadow-2xs"
                       >
-                        <img src={srv.image} alt={srv.title} className="w-5 h-5 rounded-md object-cover" />
+                        <img
+                          src={srv.image}
+                          alt={srv.title}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
+                          }}
+                          className="w-5 h-5 rounded-md object-cover"
+                        />
                         <span>{srv.title} ({srv.type} • ₹{srv.price})</span>
                       </span>
                     ))}
@@ -2284,6 +3089,8 @@ function TechnicianFormContent() {
             </div>
           </div>
         </form>
+      )}
+      </>
       )}
     </div>
   );

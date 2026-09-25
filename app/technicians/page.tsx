@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { initialTechnicians, Technician } from "@/lib/mockData";
+import { getPartnersApi, ApiPartner } from "@/lib/api";
 import {
   Star,
   CheckCircle2,
@@ -72,8 +73,80 @@ function checkDateInRange(dateStr: string, startDate?: string, endDate?: string)
   return true;
 }
 
+function mapApiPartnerToTechnician(item: any): Technician {
+  const pincodeObj = Array.isArray(item.servicePincodes) && item.servicePincodes.length > 0 ? item.servicePincodes[0] : null;
+  const serviceActionObj = Array.isArray(item.serviceActions) && item.serviceActions.length > 0 ? item.serviceActions[0] : null;
+
+  const localityName = item.locality || (typeof pincodeObj === "object" ? pincodeObj?.localityName : "") || "Sigra";
+  const pincodeStr = item.pincode || (typeof pincodeObj === "object" ? pincodeObj?.pincode : "") || "221002";
+
+  let categoryName = item.category || "";
+  if (!categoryName && typeof serviceActionObj === "object" && serviceActionObj?.serviceAction) {
+    categoryName = serviceActionObj.serviceAction;
+  }
+  if (!categoryName) categoryName = "General Maintenance";
+
+  const aadhaarNum = item.kyc?.aadhaarNumber;
+  const isAadhaarVerified = !!(aadhaarNum || item.aadhaarVerified);
+  const isPoliceVerified = item.policeVerified !== undefined ? item.policeVerified : (item.onboardingStatus === "active" || item.status === "active");
+
+  return {
+    id: item._id || item.partnerId || "",
+    name: item.name || "Partner",
+    avatar: item.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name || "Partner")}`,
+    role: item.designation || "Technician",
+    category: categoryName,
+    locality: localityName,
+    pincode: pincodeStr,
+    phone: item.mobile || item.phone || "",
+    rating: item.rating || 4.9,
+    totalJobs: item.totalJobs || 0,
+    aadhaarVerified: isAadhaarVerified,
+    policeVerified: isPoliceVerified,
+    bondedInsurance: true,
+    status: item.status === "active" ? (item.isAvailable !== false ? "Available" : "Offline") : "Absent",
+    joiningDate: item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "2026",
+    lastCompletedJob: item.lastCompletedJob,
+    totalEarnings: item.totalEarnings || 0,
+    commissionPaid: item.commissionPaid || 0,
+    pendingPayout: item.pendingPayout || 0,
+    lastPayoutDate: item.lastPayoutDate || "14 Aug 2026",
+    payoutProofUrl: item.payoutProofUrl,
+    bankAccountName: item.bankDetails?.accountName || item.bankAccountName || item.name,
+    bankAccountNumber: item.bankDetails?.accountNumber || item.bankAccountNumber || "",
+    ifscCode: item.bankDetails?.ifscCode || item.ifscCode || "",
+    upiId: item.bankDetails?.upiId || item.upiId || "",
+  };
+}
+
+function TableShimmerRows() {
+  return (
+    <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-sm animate-pulse">
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl w-72" />
+        <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-32" />
+      </div>
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 dark:border-slate-800/60">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+            <div className="space-y-1.5">
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-36" />
+              <div className="h-3 bg-slate-100 dark:bg-slate-800/60 rounded-md w-24" />
+            </div>
+          </div>
+          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-md w-20" />
+          <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-md w-24" />
+          <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function TechniciansPage() {
-  const [techs, setTechs] = useState<Technician[]>(initialTechnicians);
+  const [techs, setTechs] = useState<Technician[]>([]);
+  const [isLoadingApi, setIsLoadingApi] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<"partner" | "map" | "settlement">("partner");
   const [settlementStartDate, setSettlementStartDate] = useState<string>("");
   const [settlementEndDate, setSettlementEndDate] = useState<string>("");
@@ -82,6 +155,28 @@ export default function TechniciansPage() {
   const [gstRate, setGstRate] = useState<number>(18);
   const [proofUrl, setProofUrl] = useState("");
   const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
+
+  const fetchPartners = useCallback(async () => {
+    setIsLoadingApi(true);
+    try {
+      const res = await getPartnersApi();
+      if (res && res.success !== false && Array.isArray(res.data)) {
+        const mapped = res.data.map(mapApiPartnerToTechnician);
+        setTechs(mapped);
+      } else {
+        setTechs([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch partners:", err);
+      setTechs([]);
+    } finally {
+      setIsLoadingApi(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPartners();
+  }, [fetchPartners]);
 
   // Full Partner Onboarding Form States (Aadhaar, Guarantor, Police Thana)
   const [partnerName, setPartnerName] = useState("");
@@ -882,7 +977,9 @@ export default function TechniciansPage() {
         )}
       </div>
 
-      {activeTab === "partner" ? (
+      {isLoadingApi ? (
+        <TableShimmerRows />
+      ) : activeTab === "partner" ? (
         <DataTable
           columns={partnerColumns}
           data={techs}

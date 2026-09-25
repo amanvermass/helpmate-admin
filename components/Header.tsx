@@ -255,7 +255,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
         {/* Global Search Results Popup */}
         {isSearchOpen && searchQuery.trim().length > 0 && (
           <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden z-50 max-h-[75vh] overflow-y-auto animate-in fade-in duration-150 p-3 space-y-4">
-            
+
             {/* Header info */}
             <div className="flex items-center justify-between px-2 pb-2 border-b border-slate-100 dark:border-slate-800 text-xs">
               <span className="font-extrabold text-slate-400 uppercase text-[10px] tracking-wider">
@@ -449,7 +449,7 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
             className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
             <MapPin className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
-            <span>{selectedZone}</span>
+            <span>{typeof selectedZone === "string" ? selectedZone : (selectedZone as any)?.name || "All Varanasi"}</span>
             <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
           </button>
 
@@ -532,17 +532,16 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
                   >
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                          n.jobStatus === "Assigned"
+                        className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${n.jobStatus === "Assigned"
                             ? "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300 border-sky-200 dark:border-sky-800"
                             : n.jobStatus === "En Route"
-                            ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800"
-                            : n.jobStatus === "In Progress"
-                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800"
-                            : n.jobStatus === "Completed"
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                            : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800"
-                        }`}
+                              ? "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                              : n.jobStatus === "In Progress"
+                                ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                                : n.jobStatus === "Completed"
+                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                  : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                          }`}
                       >
                         {n.jobStatus || "ORDER UPDATE"}
                       </span>
@@ -582,8 +581,8 @@ export function Header({ onOpenMobileSidebar }: HeaderProps) {
           >
             <div
               className={`w-7 sm:w-8 h-7 sm:h-8 rounded-xl ${isPartner
-                  ? "bg-gradient-to-tr from-emerald-600 to-teal-600"
-                  : "bg-gradient-to-tr from-brand-600 to-purple-600"
+                ? "bg-gradient-to-tr from-emerald-600 to-teal-600"
+                : "bg-gradient-to-tr from-brand-600 to-purple-600"
                 } flex items-center justify-center font-bold text-white text-xs shadow-xs`}
             >
               {isPartner ? "RY" : "AV"}

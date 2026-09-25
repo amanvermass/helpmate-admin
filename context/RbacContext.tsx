@@ -12,12 +12,12 @@ export type RoleType =
   | "Support Agent"
   | "Service Partner";
 
-const o   = { view: false, create: false, edit: false, delete: false };
-const r   = { view: true,  create: false, edit: false, delete: false };
-const rw  = { view: true,  create: false, edit: true,  delete: false };
-const rc  = { view: true,  create: true,  edit: false, delete: false };
-const rcw = { view: true,  create: true,  edit: true,  delete: false };
-const rwd = { view: true,  create: true,  edit: true,  delete: true  };
+const o = { view: false, create: false, edit: false, delete: false };
+const r = { view: true, create: false, edit: false, delete: false };
+const rw = { view: true, create: false, edit: true, delete: false };
+const rc = { view: true, create: true, edit: false, delete: false };
+const rcw = { view: true, create: true, edit: true, delete: false };
+const rwd = { view: true, create: true, edit: true, delete: true };
 
 const rolePermissionsMap: Record<RoleType, UserPermissions> = {
   "Super Admin": {
@@ -94,11 +94,41 @@ export function RbacProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserManagementItem>(initialUsers[0]);
 
   useEffect(() => {
-    const savedUserId = localStorage.getItem("helpmate_active_user_id");
-    if (savedUserId) {
-      const found = initialUsers.find((u) => u.id === savedUserId);
-      if (found) setCurrentUser(found);
-    }
+    const checkAdminAuth = async () => {
+      const savedUserId = localStorage.getItem("helpmate_active_user_id");
+      if (savedUserId) {
+        const found = initialUsers.find((u) => u.id === savedUserId);
+        if (found) setCurrentUser(found);
+      }
+
+      const token = localStorage.getItem("helpmate_admin_token");
+      if (token) {
+        try {
+          const { getAdminMeApi } = await import("@/lib/api");
+          const meRes = await getAdminMeApi();
+          if (meRes && meRes.success && meRes.data) {
+            const admin = meRes.data;
+            const rawRole = typeof admin.role === "string" ? admin.role : (admin.role?.name || "Super Admin");
+            const targetRole: RoleType = (rawRole === "admin" || rawRole === "Super Admin") ? "Super Admin" : (rawRole as RoleType) || "Super Admin";
+            const userItem: UserManagementItem = {
+              id: String(admin._id || admin.id || admin.adminId || "admin-01"),
+              name: typeof admin.name === "string" ? admin.name : "Super Admin",
+              email: typeof admin.email === "string" ? admin.email : "admin@helpmate.com",
+              role: targetRole,
+              phone: typeof admin.mobile === "string" ? admin.mobile : "+91 98390 12345",
+              status: admin.status === "inactive" ? "Suspended" : "Active",
+              lastLogin: "Just now",
+              permissions: rolePermissionsMap[targetRole] || rolePermissionsMap["Super Admin"],
+            };
+            setCurrentUser(userItem);
+          }
+        } catch (err) {
+          console.error("Failed to verify admin profile:", err);
+        }
+      }
+    };
+
+    checkAdminAuth();
   }, []);
 
   const handleSetCurrentUser = (user: UserManagementItem) => {

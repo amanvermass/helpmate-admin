@@ -215,9 +215,18 @@ export function DataTable<T extends Record<string, any>>({
     }
   };
 
+  const getRowId = (row: T, fallbackIndex?: number): string => {
+    if (!row) return fallbackIndex !== undefined ? `row-${fallbackIndex}` : "unknown";
+    const val = row[idField] ?? row._id ?? row.id ?? row.key;
+    if (val !== undefined && val !== null && String(val) !== "undefined" && String(val) !== "") {
+      return String(val);
+    }
+    return fallbackIndex !== undefined ? `row-${fallbackIndex}` : `row-${Math.random()}`;
+  };
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedIds(new Set(paginatedData.map((row) => String(row[idField]))));
+      setSelectedIds(new Set(paginatedData.map((row, idx) => getRowId(row, idx))));
     } else {
       setSelectedIds(new Set());
     }
@@ -251,23 +260,23 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const handleSoftDeleteRow = (row: T) => {
-    const targetId = String(row[idField]);
+    const targetId = getRowId(row);
     setDeletedTrash([row, ...deletedTrash]);
-    setData(data.filter((r) => String(r[idField]) !== targetId));
+    setData(data.filter((r) => getRowId(r) !== targetId));
     if (onRowDelete) onRowDelete(row);
     setDeletingRow(null);
   };
 
   const handleRestoreRow = (row: T) => {
-    const targetId = String(row[idField]);
-    setDeletedTrash(deletedTrash.filter((r) => String(r[idField]) !== targetId));
+    const targetId = getRowId(row);
+    setDeletedTrash(deletedTrash.filter((r) => getRowId(r) !== targetId));
     setData([row, ...data]);
   };
 
   const handleBulkSoftDelete = () => {
-    const toDelete = data.filter((row) => selectedIds.has(String(row[idField])));
+    const toDelete = data.filter((row) => selectedIds.has(getRowId(row)));
     setDeletedTrash([...toDelete, ...deletedTrash]);
-    setData(data.filter((row) => !selectedIds.has(String(row[idField]))));
+    setData(data.filter((row) => !selectedIds.has(getRowId(row))));
     setSelectedIds(new Set());
     setIsBulkDeleteModalOpen(false);
   };
@@ -275,7 +284,7 @@ export function DataTable<T extends Record<string, any>>({
   const handleBulkStatusChange = (newStatus: string) => {
     setData(
       data.map((row) => {
-        if (selectedIds.has(String(row[idField]))) {
+        if (selectedIds.has(getRowId(row))) {
           return { ...row, [statusField]: newStatus };
         }
         return row;
@@ -286,13 +295,14 @@ export function DataTable<T extends Record<string, any>>({
   };
 
   const handleDuplicateRow = (row: T) => {
-    const cloned = { ...row, [idField]: `${String(row[idField])}-copy-${Date.now()}` };
+    const keyToUse = row[idField] !== undefined ? idField : row._id !== undefined ? "_id" : "id";
+    const cloned = { ...row, [keyToUse]: `${getRowId(row)}-copy-${Date.now()}` };
     setData([cloned, ...data]);
   };
 
   const isAllSelected =
     paginatedData.length > 0 &&
-    paginatedData.every((row) => selectedIds.has(String(row[idField])));
+    paginatedData.every((row, idx) => selectedIds.has(getRowId(row, idx)));
 
   const hasTopBar = !!(title || onAddClick);
 
@@ -443,7 +453,7 @@ export function DataTable<T extends Record<string, any>>({
             </div>
           ) : (
             paginatedData.map((row, rowIndex) => {
-              const idStr = String(row[idField]);
+              const idStr = getRowId(row, rowIndex);
               const isSelected = selectedIds.has(idStr);
               const globalRowIndex = (currentPage - 1) * pageSize + rowIndex + 1;
 
@@ -470,7 +480,7 @@ export function DataTable<T extends Record<string, any>>({
                         className="w-4 h-4 rounded border-slate-300 text-brand-500 cursor-pointer"
                       />
                       <span className="font-mono font-black text-brand-600 dark:text-brand-400 text-xs">
-                        {row[idField] || `#${globalRowIndex}`}
+                        {row[idField] || row._id || row.id || `#${globalRowIndex}`}
                       </span>
                     </div>
 
@@ -657,7 +667,7 @@ export function DataTable<T extends Record<string, any>>({
                 </tr>
               ) : (
                 paginatedData.map((row, rowIndex) => {
-                  const idStr = String(row[idField]);
+                  const idStr = getRowId(row, rowIndex);
                   const isSelected = selectedIds.has(idStr);
                   const globalRowIndex = (currentPage - 1) * pageSize + rowIndex + 1;
 

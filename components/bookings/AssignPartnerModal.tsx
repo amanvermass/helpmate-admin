@@ -38,18 +38,22 @@ export function AssignPartnerModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTechIds, setSelectedTechIds] = useState<string[]>([]);
   const [partnerListFromApi, setPartnerListFromApi] = useState<ApiPartner[]>([]);
+  const [isLoadingPartners, setIsLoadingPartners] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
 
-  // Fetch partners from Backend API if available
+  // Fetch partners from Backend API
   React.useEffect(() => {
     async function fetchPartners() {
+      setIsLoadingPartners(true);
       try {
         const res = await getPartnerDropdownApi();
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        if (res && res.success && Array.isArray(res.data)) {
           setPartnerListFromApi(res.data);
         }
       } catch (err) {
         console.error("Failed to fetch partner dropdown API:", err);
+      } finally {
+        setIsLoadingPartners(false);
       }
     }
     if (isOpen) {
@@ -59,57 +63,55 @@ export function AssignPartnerModal({
 
   // Initialize selectedTechIds when modal opens
   React.useEffect(() => {
-    if (booking) {
-      const match = initialTechnicians.find(
-        (t) => t.id === booking.technicianId || t.name === booking.technicianName
+    if (booking && partnerListFromApi.length > 0) {
+      const match = partnerListFromApi.find(
+        (p) => p._id === booking.technicianId || p.name === booking.technicianName
       );
-      setSelectedTechIds(match ? [match.id] : booking.technicianId ? [booking.technicianId] : []);
+      setSelectedTechIds(match ? [match._id] : booking.technicianId ? [booking.technicianId] : []);
       setSearchQuery("");
     }
-  }, [booking]);
+  }, [booking, partnerListFromApi]);
 
   if (!isOpen || !booking) return null;
 
   const isReassign = Boolean(booking.technicianName);
 
-  // Combine initialTechnicians and partnerListFromApi
-  const apiTechsMapped: Technician[] = partnerListFromApi.map((p, idx) => ({
-    id: p._id || `api-partner-${idx}`,
-    name: p.name || "Partner",
-    avatar: "",
-    role: p.category || "Service Expert",
-    category: p.category || "General",
-    locality: p.locality || "Varanasi",
-    pincode: "221001",
-    phone: p.mobile || "",
-    rating: p.rating || 4.9,
-    totalJobs: p.totalJobs || 120,
-    aadhaarVerified: true,
-    policeVerified: true,
-    bondedInsurance: true,
-    status: "Available",
-    joiningDate: "01 Jan 2024",
-    lastCompletedJob: p.lastCompletedJob || {
-      title: "Split AC Servicing",
-      bookingId: `BK-VNS-${1040 + idx}`,
-      completedAt: idx % 2 === 0 ? "Today, 11:00 AM" : "Yesterday, 03:20 PM",
-    },
-    totalEarnings: 150000,
-    commissionPaid: 37500,
-    pendingPayout: 5000,
-    lastPayoutDate: "01 Sep 2026",
-  }));
-
-  // Combine lists, eliminating duplicate IDs
-  const allPartnersMap = new Map<string, Technician>();
-  initialTechnicians.forEach((t) => allPartnersMap.set(t.id, t));
-  apiTechsMapped.forEach((t) => {
-    if (!allPartnersMap.has(t.id)) {
-      allPartnersMap.set(t.id, t);
+  // Map real backend partners strictly from API response
+  const apiTechsMapped: Technician[] = partnerListFromApi.map((p, idx) => {
+    let localityStr = p.locality || "Varanasi";
+    if (Array.isArray(p.servicePincodes) && p.servicePincodes.length > 0) {
+      const firstLoc = p.servicePincodes[0];
+      if (firstLoc && typeof firstLoc === "object" && firstLoc.localityName) {
+        localityStr = `${firstLoc.localityName}${firstLoc.pincode ? ` (${firstLoc.pincode})` : ""}`;
+      }
     }
+
+    return {
+      id: p._id || `api-partner-${idx}`,
+      name: p.name || "Partner",
+      avatar: "",
+      role: p.designation || p.category || "Service Specialist",
+      category: p.designation || p.category || "General Service",
+      locality: localityStr,
+      pincode: "221001",
+      phone: p.mobile || "",
+      rating: p.rating || 4.9,
+      totalJobs: p.totalJobs || 0,
+      aadhaarVerified: true,
+      policeVerified: true,
+      bondedInsurance: true,
+      status: p.status === "inactive" ? "Offline" : "Available",
+      joiningDate: "01 Jan 2024",
+      lastCompletedJob: p.lastCompletedJob || undefined,
+      totalEarnings: 0,
+      commissionPaid: 0,
+      pendingPayout: 0,
+      lastPayoutDate: "",
+    };
   });
 
-  const allPartnersList = Array.from(allPartnersMap.values());
+  // Use ONLY real API partner data when available!
+  const allPartnersList: Technician[] = partnerListFromApi.length > 0 ? apiTechsMapped : [];
 
   const filteredTechs = allPartnersList.filter((t) => {
     if (!searchQuery.trim()) return true;
@@ -144,8 +146,10 @@ export function AssignPartnerModal({
   const handleAssignTech = async (tech: Technician) => {
     setIsAssigning(true);
     try {
-      if (booking.id && booking.id.length === 24) {
-        await assignPartnerToBookingApi(booking.id, tech.id);
+      const targetBookingId = (booking as any)?._id || booking?.id;
+      const targetTechId = (tech as any)?._id || tech?.id;
+      if (targetBookingId && targetTechId) {
+        await assignPartnerToBookingApi(targetBookingId, targetTechId);
       }
     } catch (err) {
       console.error("assignPartnerToBookingApi error:", err);
@@ -182,8 +186,10 @@ export function AssignPartnerModal({
       const primaryTech = selectedTechs[0];
       if (primaryTech) {
         try {
-          if (booking.id && booking.id.length === 24) {
-            await assignPartnerToBookingApi(booking.id, primaryTech.id);
+          const targetBookingId = (booking as any)?._id || booking?.id;
+          const targetTechId = (primaryTech as any)?._id || primaryTech?.id;
+          if (targetBookingId && targetTechId) {
+            await assignPartnerToBookingApi(targetBookingId, targetTechId);
           }
         } catch (err) {
           console.error("assignPartnerToBookingApi error:", err);
@@ -214,8 +220,13 @@ export function AssignPartnerModal({
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
                   {isReassign ? "Reassign Partner" : "Assign Partner"}
                 </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Booking <span className="font-bold text-slate-900 dark:text-white">{booking.id}</span> • {booking.locality}
+                <p className="text-xs text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
+                  <span>Booking ID:</span>
+                  <span className="font-mono font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-md border border-brand-200 dark:border-brand-800">
+                    {booking.bookingNumber || booking.jobId || booking.id}
+                  </span>
+                  <span>•</span>
+                  <span>{booking.locality}</span>
                 </p>
               </div>
             </div>
@@ -229,11 +240,16 @@ export function AssignPartnerModal({
           </div>
 
           {/* Booking Summary Card */}
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-extrabold text-slate-900 dark:text-white truncate">
-                {booking.serviceTitle}
-              </span>
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/80 text-xs space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono font-black text-xs text-brand-700 dark:text-brand-300 bg-brand-100/70 dark:bg-brand-950/80 px-2.5 py-0.5 rounded-lg border border-brand-200 dark:border-brand-800 shrink-0">
+                  {booking.bookingNumber || booking.jobId || booking.id}
+                </span>
+                <span className="font-extrabold text-slate-900 dark:text-white truncate">
+                  {booking.serviceTitle}
+                </span>
+              </div>
               {booking.technicianName && (
                 <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 flex items-center gap-1 shrink-0">
                   <UserCheck className="w-3 h-3" />
@@ -290,21 +306,19 @@ export function AssignPartnerModal({
 
           {/* Partner List */}
           <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-            {filteredTechs.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-500">
-                No matching partners found.
+            {isLoadingPartners ? (
+              <div className="text-center py-8 text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+                <span>Loading partners from API...</span>
+              </div>
+            ) : filteredTechs.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-500 font-medium">
+                No matching partners found from API.
               </div>
             ) : (
               filteredTechs.map((t) => {
                 const isSelected = selectedTechIds.includes(t.id);
                 const isCurrentlyAssigned = booking.technicianId === t.id || booking.technicianName === t.name;
-
-                const lastJobTitle = t.lastCompletedJob?.title || "Split AC Servicing";
-                const lastJobBookingId = t.lastCompletedJob?.bookingId || `BK-VNS-${8800 + (t.id ? t.id.length * 10 : 20)}`;
-                let lastJobTime = t.lastCompletedJob?.completedAt;
-                if (!lastJobTime || lastJobTime.toLowerCase().includes("recently")) {
-                  lastJobTime = "Yesterday, 04:30 PM";
-                }
 
                 return (
                   <div
@@ -351,7 +365,9 @@ export function AssignPartnerModal({
                             <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
                             {t.rating}
                           </span>
-                          <span className="text-[10px] text-slate-400 block font-medium">{t.totalJobs} jobs</span>
+                          {t.totalJobs > 0 && (
+                            <span className="text-[10px] text-slate-400 block font-medium">{t.totalJobs} jobs</span>
+                          )}
                         </div>
 
                         {/* Direct Row Assign Button */}
@@ -373,14 +389,16 @@ export function AssignPartnerModal({
                       </div>
                     </div>
 
-                    {/* Last Completed Job Display */}
-                    <div className="text-[11px] text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
-                      <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="truncate">
-                        Last Completed Job: <strong className="text-slate-800 dark:text-slate-200 font-bold">{lastJobTitle}</strong>
-                        {lastJobBookingId ? ` (${lastJobBookingId} • ${lastJobTime})` : ` • ${lastJobTime}`}
-                      </span>
-                    </div>
+                    {/* Last Completed Job Display (Only if real job data exists) */}
+                    {t.lastCompletedJob && t.lastCompletedJob.title && (
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
+                        <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">
+                          Last Completed Job: <strong className="text-slate-800 dark:text-slate-200 font-bold">{t.lastCompletedJob.title}</strong>
+                          {t.lastCompletedJob.bookingId ? ` (${t.lastCompletedJob.bookingId})` : ""}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })

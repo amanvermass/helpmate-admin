@@ -53,10 +53,10 @@ export function mapApiBooking(b: any): Booking {
   const createdByStr = b.handledBy?.name
     ? b.handledBy.name
     : isOnline
-    ? "Customer Online"
-    : originStr === "admin"
-    ? "Super Admin (HQ)"
-    : b.origin || "Customer Online";
+      ? "Customer Online"
+      : originStr === "admin"
+        ? "Super Admin (HQ)"
+        : b.origin || "Customer Online";
 
   const rawWorkingDate = b.workingDate ? b.workingDate.split("T")[0] : "";
   const formattedWorkingDate = rawWorkingDate
@@ -115,8 +115,15 @@ export function mapApiBooking(b: any): Booking {
     .filter(Boolean)
     .join(", ") || "Varanasi, UP";
 
+  const rawCallingDateStr = b.callingDate || b.workingDate || b.createdAt || "";
+  const rawTimestampVal = rawCallingDateStr ? new Date(rawCallingDateStr).getTime() : 0;
+  const rawBookingNumVal = parseInt((b.bookingNumber || "").replace(/\D/g, ""), 10) || 0;
+
   return {
     id: b._id || b.bookingNumber,
+    rawId: b._id || b.bookingNumber || "",
+    rawTimestamp: rawTimestampVal,
+    rawBookingNumber: rawBookingNumVal,
     jobId: bookingIdDisplay,
     bookingNumber: b.bookingNumber || bookingIdDisplay,
     customerId: b.customer?.customerId || b.customer?._id,
@@ -446,9 +453,13 @@ function BookingsPageContent() {
 
     // Sort list so newest / current booking is on TOP!
     return [...list].sort((a, b) => {
-      const numA = parseInt(a.id.replace(/\D/g, ""), 10) || 0;
-      const numB = parseInt(b.id.replace(/\D/g, ""), 10) || 0;
-      return numB - numA;
+      if (a.rawTimestamp && b.rawTimestamp && a.rawTimestamp !== b.rawTimestamp) {
+        return b.rawTimestamp - a.rawTimestamp;
+      }
+      if (a.rawBookingNumber && b.rawBookingNumber && a.rawBookingNumber !== b.rawBookingNumber) {
+        return b.rawBookingNumber - a.rawBookingNumber;
+      }
+      return (b.rawId || b.id).localeCompare(a.rawId || a.id);
     });
   }, [categoryBookings, cardFilter, activeStatusFilter, channelFilter]);
 
@@ -472,8 +483,8 @@ function BookingsPageContent() {
             ? "Assigned"
             : b.status
           : broadcastOffers && broadcastOffers.length > 0
-          ? "Assigned"
-          : "Pending",
+            ? "Assigned"
+            : "Pending",
         technicianName: technician ? technician.name : broadcastOffers?.[0]?.technicianName,
         technicianId: technician ? technician.id : broadcastOffers?.[0]?.technicianId,
         broadcastOffers: broadcastOffers || b.broadcastOffers,
@@ -519,12 +530,12 @@ function BookingsPageContent() {
       bookings.map((b) =>
         b.id === bookingId
           ? {
-              ...b,
-              basePrice: updatedQuote,
-              totalAmount: Math.round(updatedQuote * 1.18 + 49),
-              inspectionRemarks: remarks,
-              status: "Customer Approval Pending",
-            }
+            ...b,
+            basePrice: updatedQuote,
+            totalAmount: Math.round(updatedQuote * 1.18 + 49),
+            inspectionRemarks: remarks,
+            status: "Customer Approval Pending",
+          }
           : b
       )
     );
@@ -541,15 +552,15 @@ function BookingsPageContent() {
       prev.map((b) =>
         b.id === bookingId
           ? {
-              ...b,
-              isOtpVerified: true,
-              status: "Completed",
-              completedAddOns: addOns || b.completedAddOns,
-              addOnsBaseTotal: addOnsBaseTotal ?? b.addOnsBaseTotal,
-              addOnsGstTotal: addOnsGstTotal ?? b.addOnsGstTotal,
-              addOnsFinalTotal: addOnsFinalTotal ?? b.addOnsFinalTotal,
-              totalAmount: b.totalAmount + (addOnsFinalTotal || 0),
-            }
+            ...b,
+            isOtpVerified: true,
+            status: "Completed",
+            completedAddOns: addOns || b.completedAddOns,
+            addOnsBaseTotal: addOnsBaseTotal ?? b.addOnsBaseTotal,
+            addOnsGstTotal: addOnsGstTotal ?? b.addOnsGstTotal,
+            addOnsFinalTotal: addOnsFinalTotal ?? b.addOnsFinalTotal,
+            totalAmount: b.totalAmount + (addOnsFinalTotal || 0),
+          }
           : b
       )
     );
@@ -597,11 +608,10 @@ function BookingsPageContent() {
           const isOnline = isOnlineBooking(row);
           return (
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
-                isOnline
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold ${isOnline
                   ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300"
                   : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
-              }`}
+                }`}
             >
               {isOnline ? <Globe className="w-3 h-3 text-purple-600" /> : <Building2 className="w-3 h-3 text-slate-500" />}
               <span>{isOnline ? "Online" : "Manual"}</span>
@@ -789,15 +799,14 @@ function BookingsPageContent() {
         header: "Booking Status",
         accessor: (row) => (
           <span
-            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 ${
-              row.status === "Completed"
+            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 ${row.status === "Completed"
                 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
                 : row.status === "In Progress" || row.status === "Assigned"
-                ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
-                : row.status === "Cancelled"
-                ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
-                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
-            }`}
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
+                  : row.status === "Cancelled"
+                    ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
+                    : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
+              }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-current" />
             <span>{row.status}</span>
@@ -820,39 +829,39 @@ function BookingsPageContent() {
             actions={
               isOfficeAdmin
                 ? [
-                    {
-                      label: "View Details",
-                      icon: Eye,
-                      href: `/bookings/${row.id}${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ""}`,
-                    },
-                  ]
+                  {
+                    label: "View Details",
+                    icon: Eye,
+                    href: `/bookings/${row.id}${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ""}`,
+                  },
+                ]
                 : [
-                    {
-                      label: row.technicianName ? "Reassign Partner" : "Assign Partner",
-                      icon: UserPlus,
-                      onClick: () => setAssignBooking(row),
-                    },
-                    {
-                      label: "Reschedule",
-                      icon: CalendarCheck,
-                      onClick: () => setReschedulingBooking(row),
-                    },
-                    {
-                      label: "Invoice",
-                      icon: FileText,
-                      href: `/billing/${row.id}`,
-                    },
-                    {
-                      label: "View",
-                      icon: Eye,
-                      href: `/bookings/${row.id}${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ""}`,
-                    },
-                    {
-                      label: "Edit",
-                      icon: Edit2,
-                      onClick: () => setEditingBooking(row),
-                    },
-                  ]
+                  {
+                    label: row.technicianName ? "Reassign Partner" : "Assign Partner",
+                    icon: UserPlus,
+                    onClick: () => setAssignBooking(row),
+                  },
+                  {
+                    label: "Reschedule",
+                    icon: CalendarCheck,
+                    onClick: () => setReschedulingBooking(row),
+                  },
+                  {
+                    label: "Invoice",
+                    icon: FileText,
+                    href: `/billing/${row.id}`,
+                  },
+                  {
+                    label: "View",
+                    icon: Eye,
+                    href: `/bookings/${row.id}${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ""}`,
+                  },
+                  {
+                    label: "Edit",
+                    icon: Edit2,
+                    onClick: () => setEditingBooking(row),
+                  },
+                ]
             }
           />
         ),
@@ -971,12 +980,12 @@ function BookingsPageContent() {
                       {cat.name.toLowerCase().includes("ac")
                         ? "Split & window AC power jet wash, gas recharge, and PCB repair."
                         : cat.name.toLowerCase().includes("electr")
-                        ? "Short circuit testing, MCB box upgrade, wiring, and fan install."
-                        : cat.name.toLowerCase().includes("plumb")
-                        ? "Tap leak repair, motor fitting, overhead tank descaling & drain unclog."
-                        : cat.name.toLowerCase().includes("clean")
-                        ? "Full home deep scrubbing, sofa shampoo, kitchen chimney degrease."
-                        : "On-demand home services & professional maintenance orders."}
+                          ? "Short circuit testing, MCB box upgrade, wiring, and fan install."
+                          : cat.name.toLowerCase().includes("plumb")
+                            ? "Tap leak repair, motor fitting, overhead tank descaling & drain unclog."
+                            : cat.name.toLowerCase().includes("clean")
+                              ? "Full home deep scrubbing, sofa shampoo, kitchen chimney degrease."
+                              : "On-demand home services & professional maintenance orders."}
                     </p>
                   </div>
 
@@ -1057,11 +1066,10 @@ function BookingsPageContent() {
                 setCardFilter("ALL");
                 setActiveStatusFilter("All");
               }}
-              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
-                cardFilter === "ALL"
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "ALL"
                   ? "bg-indigo-500/10 dark:bg-indigo-950/40 border-2 border-indigo-500 shadow-md scale-[1.01]"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:shadow-sm"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Total Bookings</span>
@@ -1077,11 +1085,10 @@ function BookingsPageContent() {
             <button
               type="button"
               onClick={() => setCardFilter(cardFilter === "UNASSIGNED" ? "ALL" : "UNASSIGNED")}
-              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
-                cardFilter === "UNASSIGNED"
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "UNASSIGNED"
                   ? "bg-amber-500/10 dark:bg-amber-950/40 border-2 border-amber-500 shadow-md scale-[1.01]"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:shadow-sm"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Waiting Partner</span>
@@ -1097,11 +1104,10 @@ function BookingsPageContent() {
             <button
               type="button"
               onClick={() => setCardFilter(cardFilter === "IN_PROGRESS" ? "ALL" : "IN_PROGRESS")}
-              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
-                cardFilter === "IN_PROGRESS"
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "IN_PROGRESS"
                   ? "bg-blue-500/10 dark:bg-blue-950/40 border-2 border-blue-500 shadow-md scale-[1.01]"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 hover:shadow-sm"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">In Progress</span>
@@ -1117,11 +1123,10 @@ function BookingsPageContent() {
             <button
               type="button"
               onClick={() => setCardFilter(cardFilter === "COMPLETED" ? "ALL" : "COMPLETED")}
-              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
-                cardFilter === "COMPLETED"
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "COMPLETED"
                   ? "bg-emerald-500/10 dark:bg-emerald-950/40 border-2 border-emerald-500 shadow-md scale-[1.01]"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:shadow-sm"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Completed Jobs</span>
@@ -1137,11 +1142,10 @@ function BookingsPageContent() {
             <button
               type="button"
               onClick={() => setCardFilter(cardFilter === "CANCELLED" ? "ALL" : "CANCELLED")}
-              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${
-                cardFilter === "CANCELLED"
+              className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "CANCELLED"
                   ? "bg-rose-500/10 dark:bg-rose-950/40 border-2 border-rose-500 shadow-md scale-[1.01]"
                   : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-rose-400 hover:shadow-sm"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">Cancelled Jobs</span>
@@ -1164,11 +1168,10 @@ function BookingsPageContent() {
                 <button
                   type="button"
                   onClick={() => setChannelFilter("ALL")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    channelFilter === "ALL"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${channelFilter === "ALL"
                       ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   All Origins
                 </button>
@@ -1176,11 +1179,10 @@ function BookingsPageContent() {
                 <button
                   type="button"
                   onClick={() => setChannelFilter("ONLINE")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                    channelFilter === "ONLINE"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${channelFilter === "ONLINE"
                       ? "bg-purple-600 text-white shadow-xs font-extrabold"
                       : "text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/60"
-                  }`}
+                    }`}
                 >
                   <Globe className="w-3.5 h-3.5" />
                   <span>Online Booking ({categoryBookings.filter(isOnlineBooking).length})</span>
@@ -1189,11 +1191,10 @@ function BookingsPageContent() {
                 <button
                   type="button"
                   onClick={() => setChannelFilter("MANUAL")}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                    channelFilter === "MANUAL"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${channelFilter === "MANUAL"
                       ? "bg-slate-800 text-white shadow-xs font-extrabold"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
+                    }`}
                 >
                   <Building2 className="w-3.5 h-3.5" />
                   <span>Manual Booking ({categoryBookings.filter((b) => !isOnlineBooking(b)).length})</span>

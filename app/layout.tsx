@@ -4,6 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { RbacProvider } from "@/context/RbacContext";
 
+import { ToastContainer } from "@/components/Toast";
+
 export const metadata: Metadata = {
   title: "HelpMate Admin Panel | Enterprise On-Demand Services Varanasi",
   description: "Enterprise management panel for HelpMate home care services in Varanasi. Real-time booking assignment, service CMS, partner verification, and customer CRM.",
@@ -20,6 +22,7 @@ export default function RootLayout({
         <ThemeProvider>
           <RbacProvider>
             <AppShell>{children}</AppShell>
+            <ToastContainer />
           </RbacProvider>
         </ThemeProvider>
       </body>

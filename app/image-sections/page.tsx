@@ -41,6 +41,7 @@ import {
   updateWebsiteZoneApi,
   deleteWebsiteZoneApi,
   ApiWebsiteZone,
+  formatImageUrl,
 } from "@/lib/api";
 
 interface ZoneCard {
@@ -120,7 +121,7 @@ const initialZones: ZoneCard[] = [
     name: "Lanka",
     city: "Varanasi",
     proCount: 120,
-    imageUrl: "/bhu-gate.png",
+    imageUrl: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80",
     isActive: true,
     areas: [
       "Assi Ghat",
@@ -146,7 +147,7 @@ const initialZones: ZoneCard[] = [
     name: "Godowlia",
     city: "Varanasi",
     proCount: 90,
-    imageUrl: "/godowlia-crossing.png",
+    imageUrl: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800&auto=format&fit=crop&q=80",
     isActive: true,
     areas: ["Godowlia", "Dashashwamedh", "Chowk", "Thatheri Bazar", "Kashi Vishwanath", "Bangali Tola", "Madanpura"],
     sortOrder: 2,
@@ -156,7 +157,7 @@ const initialZones: ZoneCard[] = [
     name: "Cantonment",
     city: "Varanasi",
     proCount: 150,
-    imageUrl: "/cantt-station.png",
+    imageUrl: "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&auto=format&fit=crop&q=80",
     isActive: true,
     areas: ["Cantonment", "Nadesar", "Sigra", "Mahmoorganj", "Mint House", "Varuna Bridge", "Vidyapeeth"],
     sortOrder: 3,
@@ -166,7 +167,7 @@ const initialZones: ZoneCard[] = [
     name: "Sigra",
     city: "Varanasi",
     proCount: 110,
-    imageUrl: "/sigra-crossing.png",
+    imageUrl: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&auto=format&fit=crop&q=80",
     isActive: true,
     areas: ["Sigra", "Rath Yatra", "IP Mall Road", "Lallapura", "Siddhgiribagh"],
     sortOrder: 4,
@@ -176,7 +177,7 @@ const initialZones: ZoneCard[] = [
     name: "Sarnath",
     city: "Varanasi",
     proCount: 80,
-    imageUrl: "/sarnath-temple.jpg",
+    imageUrl: "https://images.unsplash.com/photo-1609949279531-cf48d64bed89?w=800&auto=format&fit=crop&q=80",
     isActive: true,
     areas: ["Sarnath", "Dhamek Stupa", "Ashoka Pillar Area", "Mavaiya", "Hiramanpur"],
     sortOrder: 5,
@@ -186,7 +187,7 @@ const initialZones: ZoneCard[] = [
     name: "Pandeypur",
     city: "Varanasi",
     proCount: 70,
-    imageUrl: "/pandeypur-flyover.png",
+    imageUrl: "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?w=800&auto=format&fit=crop&q=80",
     isActive: true,
     areas: ["Pandeypur", "Azamgarh Road", "Paharia", "Premchand Nagar", "Khajuri"],
     sortOrder: 6,
@@ -314,7 +315,7 @@ export default function ImageSectionsPage() {
           name: item.zoneName,
           city: item.city,
           proCount: item.proCount || 0,
-          imageUrl: item.imageUrl || "/bhu-gate.png",
+          imageUrl: formatImageUrl(item.imageUrl) || "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80",
           isActive: item.status ?? true,
           areas: item.areasCovered || [],
           sortOrder: item.sortOrder ?? index + 1,
@@ -355,7 +356,7 @@ export default function ImageSectionsPage() {
             discountPercentage,
             price: String(price),
             originalPrice: String(originalPrice),
-            imageUrl: pkg?.imageUrl || pkg?.thumbnailUrl || "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&auto=format&fit=crop&q=80",
+            imageUrl: formatImageUrl(pkg?.imageUrl || pkg?.thumbnailUrl) || "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&auto=format&fit=crop&q=80",
             bookCtaText: "Book Now →",
             bookCtaLink: "/services",
             isActive: item.status ?? true,
@@ -707,7 +708,14 @@ export default function ImageSectionsPage() {
                 {filteredZones.map((zone) => (
                   <div key={zone.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${zone.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 dark:border-slate-700 opacity-60"}`}>
                     <div className="relative h-40 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                      <img src={zone.imageUrl} alt={zone.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "/bhu-gate.png"; }} />
+                      <img
+                        src={formatImageUrl(zone.imageUrl) || "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80"}
+                        alt={zone.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80";
+                        }}
+                      />
                       <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${zone.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{zone.isActive ? "LIVE" : "HIDDEN"}</div>
                       <div className="absolute top-2 left-2 bg-black/50 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1"><GripVertical className="w-2.5 h-2.5" />#{zone.sortOrder}</div>
                     </div>
@@ -841,7 +849,14 @@ export default function ImageSectionsPage() {
                 {filteredTrending.map((item) => (
                   <div key={item.id} className={`rounded-2xl border overflow-hidden bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all ${item.isActive ? "border-slate-200 dark:border-slate-700" : "border-dashed border-slate-300 dark:border-slate-700 opacity-60"}`}>
                     <div className="relative h-36 bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                      <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80"; }} />
+                      <img
+                        src={formatImageUrl(item.imageUrl) || "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80"}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=600&q=80";
+                        }}
+                      />
                       <div className="absolute top-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-full">{item.discountPercentage}</div>
                       <div className={`absolute top-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full ${item.isActive ? "bg-emerald-500 text-white" : "bg-slate-500 text-white"}`}>{item.isActive ? "LIVE" : "HIDDEN"}</div>
                     </div>
@@ -892,7 +907,14 @@ export default function ImageSectionsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-800">
               <div className="relative h-52 bg-slate-200">
-                <img src={previewZone.imageUrl} alt={previewZone.name} className="w-full h-full object-cover" />
+                <img
+                  src={formatImageUrl(previewZone.imageUrl) || "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80"}
+                  alt={previewZone.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80";
+                  }}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                 <button type="button" onClick={() => setPreviewZone(null)} className="absolute top-3 right-3 bg-black/40 text-white rounded-full p-1.5 cursor-pointer hover:bg-black/60 transition-colors"><X className="w-4 h-4" /></button>
               </div>
@@ -930,7 +952,14 @@ export default function ImageSectionsPage() {
                 <div>
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Package Image URL *</label>
                   <input type="url" placeholder="https://..." value={trendingModal.data.imageUrl || ""} onChange={(e) => setTrendingModal({ ...trendingModal, data: { ...trendingModal.data, imageUrl: e.target.value } })} className={inputCls} />
-                  {trendingModal.data.imageUrl && <img src={trendingModal.data.imageUrl} alt="preview" className="mt-2 w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+                  {trendingModal.data.imageUrl && (
+                    <img
+                      src={formatImageUrl(trendingModal.data.imageUrl)}
+                      alt="preview"
+                      className="mt-2 w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -1028,7 +1057,14 @@ export default function ImageSectionsPage() {
                     </label>
                     <input type="text" placeholder="Or paste image URL (https://...)" value={zoneModal.data.imageUrl || ""} onChange={(e) => setZoneModal({ ...zoneModal, data: { ...zoneModal.data, imageUrl: e.target.value } })} className={inputCls} />
                   </div>
-                  {zoneModal.data.imageUrl && <img src={zoneModal.data.imageUrl} alt="preview" className="mt-2 w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+                  {zoneModal.data.imageUrl && (
+                    <img
+                      src={formatImageUrl(zoneModal.data.imageUrl)}
+                      alt="preview"
+                      className="mt-2 w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -1146,9 +1182,12 @@ export default function ImageSectionsPage() {
                       >
                         <div className="flex items-center gap-3.5">
                           <img
-                            src={catItem.imageUrl || catItem.thumbnailUrl || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80"}
+                            src={formatImageUrl(catItem.imageUrl || catItem.thumbnailUrl) || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80"}
                             alt={catItem.packageName}
                             className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=300&auto=format&fit=crop&q=80";
+                            }}
                           />
                           <div>
                             <div className="flex items-center gap-2">

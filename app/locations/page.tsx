@@ -3,21 +3,26 @@
 import { useState, useEffect } from "react";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
-import { varanasiLocalities, VaranasiLocality } from "@/lib/mockData";
 import {
   getCitiesApi,
   addCityApi,
   updateCityApi,
   deleteCityApi,
+  getLocalitiesApi,
+  addLocalityApi,
+  updateLocalityApi,
+  deleteLocalityApi,
   ApiCity,
+  ApiLocality,
 } from "@/lib/api";
+import { toast } from "@/components/Toast";
+import { ShimmerRow } from "@/components/ShimmerLoader";
 import {
   Building2,
   Plus,
   CheckCircle2,
   MapPin,
   Users,
-  Activity,
   X,
   Edit,
   Trash2,
@@ -28,13 +33,29 @@ import {
 import { Portal } from "@/components/Portal";
 
 export default function LocationsPage() {
-  const [localities, setLocalities] = useState<VaranasiLocality[]>(varanasiLocalities);
+  // Locality State
+  const [localities, setLocalities] = useState<ApiLocality[]>([]);
+  const [isLocalitiesLoading, setIsLocalitiesLoading] = useState(false);
+  const [localitySearch, setLocalitySearch] = useState("");
   const [activeTab, setActiveTab] = useState<"pincodes" | "cities">("pincodes");
-  const [isAddOpen, setIsAddOpen] = useState(false);
 
-  // Localities Pincodes State
-  const [name, setName] = useState("");
-  const [pincode, setPincode] = useState("");
+  const [localityModal, setLocalityModal] = useState<{
+    open: boolean;
+    mode: "add" | "edit";
+    data: Partial<ApiLocality>;
+  }>({
+    open: false,
+    mode: "add",
+    data: {},
+  });
+
+  const [deleteLocalityModal, setDeleteLocalityModal] = useState<{
+    open: boolean;
+    locality: ApiLocality | null;
+  }>({
+    open: false,
+    locality: null,
+  });
 
   // Cities Backend State
   const [cities, setCities] = useState<ApiCity[]>([]);
@@ -57,6 +78,28 @@ export default function LocationsPage() {
     city: null,
   });
 
+  const fetchLocalities = async () => {
+    setIsLocalitiesLoading(true);
+    try {
+      const res = await getLocalitiesApi({ forceRefresh: true });
+      if (res && res.success) {
+        const rawLocalities = res.data?.localities || (Array.isArray(res.data) ? res.data : (res.localities || []));
+        if (Array.isArray(rawLocalities)) {
+          setLocalities(rawLocalities);
+        } else {
+          setLocalities([]);
+        }
+      } else {
+        setLocalities([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch localities:", err);
+      toast.error("Failed to fetch localities.");
+    } finally {
+      setIsLocalitiesLoading(false);
+    }
+  };
+
   const fetchCities = async () => {
     setIsCitiesLoading(true);
     try {
@@ -72,14 +115,93 @@ export default function LocationsPage() {
   };
 
   useEffect(() => {
+    fetchLocalities();
     fetchCities();
   }, []);
+
+  const handleSaveLocality = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const d = localityModal.data;
+    if (!d.localityName?.trim() || !d.pincode?.trim()) {
+      toast.error("Locality Name and Pincode are required.");
+      return;
+    }
+
+    try {
+      if (localityModal.mode === "add") {
+        const res = await addLocalityApi({
+          localityName: d.localityName.trim(),
+          pincode: d.pincode.trim(),
+          status: d.status ?? true,
+        });
+
+        if (res && res.success) {
+          toast.success("Locality added successfully!");
+          await fetchLocalities();
+          setLocalityModal({ open: false, mode: "add", data: {} });
+        } else {
+          toast.error(res?.message || "Failed to add locality.");
+        }
+      } else {
+        if (!d._id) return;
+        const res = await updateLocalityApi(d._id, {
+          localityName: d.localityName.trim(),
+          pincode: d.pincode.trim(),
+          status: d.status ?? true,
+        });
+
+        if (res && res.success) {
+          toast.success("Locality updated successfully!");
+          await fetchLocalities();
+          setLocalityModal({ open: false, mode: "add", data: {} });
+        } else {
+          toast.error(res?.message || "Failed to update locality.");
+        }
+      }
+    } catch (err) {
+      console.error("Locality save error:", err);
+      toast.error("An error occurred while saving locality.");
+    }
+  };
+
+  const handleToggleLocalityStatus = async (locality: ApiLocality) => {
+    try {
+      const newStatus = locality.status === false ? true : false;
+      const res = await updateLocalityApi(locality._id, { status: newStatus });
+      if (res && res.success) {
+        toast.success(`Locality status updated to ${newStatus ? "Active" : "Inactive"}`);
+        await fetchLocalities();
+      } else {
+        toast.error(res?.message || "Failed to update locality status.");
+      }
+    } catch (err) {
+      console.error("Locality status toggle error:", err);
+      toast.error("An error occurred while updating status.");
+    }
+  };
+
+  const handleConfirmDeleteLocality = async () => {
+    if (!deleteLocalityModal.locality) return;
+    try {
+      const res = await deleteLocalityApi(deleteLocalityModal.locality._id);
+      if (res && res.success) {
+        toast.success("Locality deleted successfully!");
+        await fetchLocalities();
+        setDeleteLocalityModal({ open: false, locality: null });
+      } else {
+        toast.error(res?.message || "Failed to delete locality.");
+      }
+    } catch (err) {
+      console.error("Locality delete error:", err);
+      toast.error("An error occurred while deleting locality.");
+    }
+  };
 
   const handleSaveCity = async (e: React.FormEvent) => {
     e.preventDefault();
     const d = cityModal.data;
     if (!d.cityName?.trim() || !d.stateName?.trim()) {
-      alert("City Name and State Name are required.");
+      toast.error("City Name and State Name are required.");
       return;
     }
 
@@ -92,10 +214,11 @@ export default function LocationsPage() {
         });
 
         if (res && res.success) {
+          toast.success("City added successfully!");
           await fetchCities();
           setCityModal({ open: false, mode: "add", data: {} });
         } else {
-          alert(res?.message || "Failed to add city.");
+          toast.error(res?.message || "Failed to add city.");
         }
       } else {
         if (!d._id) return;
@@ -106,27 +229,32 @@ export default function LocationsPage() {
         });
 
         if (res && res.success) {
+          toast.success("City updated successfully!");
           await fetchCities();
           setCityModal({ open: false, mode: "add", data: {} });
         } else {
-          alert(res?.message || "Failed to update city.");
+          toast.error(res?.message || "Failed to update city.");
         }
       }
     } catch (err) {
       console.error("City save error:", err);
+      toast.error("An error occurred while saving city.");
     }
   };
 
   const handleToggleCityStatus = async (city: ApiCity) => {
     try {
-      const res = await updateCityApi(city._id, { status: !city.status });
+      const newStatus = !city.status;
+      const res = await updateCityApi(city._id, { status: newStatus });
       if (res && res.success) {
+        toast.success(`City status updated to ${newStatus ? "Active" : "Inactive"}`);
         await fetchCities();
       } else {
-        alert(res?.message || "Failed to update city status.");
+        toast.error(res?.message || "Failed to update city status.");
       }
     } catch (err) {
       console.error("City status toggle error:", err);
+      toast.error("An error occurred while updating status.");
     }
   };
 
@@ -135,56 +263,83 @@ export default function LocationsPage() {
     try {
       const res = await deleteCityApi(deleteCityModal.city._id);
       if (res && res.success) {
+        toast.success("City deleted successfully!");
         await fetchCities();
         setDeleteCityModal({ open: false, city: null });
       } else {
-        alert(res?.message || "Failed to delete city.");
+        toast.error(res?.message || "Failed to delete city.");
       }
     } catch (err) {
       console.error("City delete error:", err);
+      toast.error("An error occurred while deleting city.");
     }
   };
 
-  const pincodeColumns: Column<VaranasiLocality>[] = [
-    { key: "name", header: "Locality / Zone Name", sortable: true },
-    { key: "pincode", header: "Pincode", sortable: true },
+  const pincodeColumns: Column<ApiLocality>[] = [
     {
-      key: "status",
-      header: "Demand Status",
+      key: "localityName",
+      header: "Locality / Zone Name",
       accessor: (row) => (
-        <span
-          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-            row.status === "High Demand"
-              ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
-              : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-          }`}
-        >
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      key: "activeTechs",
-      header: "Assigned Technicians",
-      accessor: (row) => (
-        <span className="font-bold text-slate-900 dark:text-white">{row.activeTechs} Active</span>
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-brand-600 shrink-0" />
+          <span className="font-black text-slate-900 dark:text-white">{row.localityName}</span>
+        </div>
       ),
       sortable: true,
     },
     {
-      key: "isServiceable",
-      header: "Serviceability",
+      key: "pincode",
+      header: "Pincode",
+      accessor: (row) => (
+        <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          {row.pincode}
+        </span>
+      ),
+      sortable: true,
+    },
+    {
+      key: "status",
+      header: "Operational Status",
       accessor: (row) => (
         <span
-          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-            row.isServiceable
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-              : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+            row.status !== false
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+              : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
           }`}
         >
           <CheckCircle2 className="w-3 h-3" />
-          {row.isServiceable ? "Serviceable" : "Unserviceable"}
+          {row.status !== false ? "Active Operations" : "Inactive"}
         </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      sticky: "right",
+      accessor: (row) => (
+        <RowActionMenu
+          actions={[
+            {
+              label: row.status !== false ? "Set Inactive" : "Set Active",
+              icon: CheckCircle2,
+              onClick: () => handleToggleLocalityStatus(row),
+            },
+            {
+              label: "Edit Locality",
+              icon: Edit,
+              onClick: () =>
+                setLocalityModal({ open: true, mode: "edit", data: row }),
+            },
+            {
+              label: "Delete Locality",
+              icon: Trash2,
+              onClick: () =>
+                setDeleteLocalityModal({ open: true, locality: row }),
+              danger: true,
+            },
+          ]}
+        />
       ),
     },
   ];
@@ -258,31 +413,18 @@ export default function LocationsPage() {
     },
   ];
 
-  const handleAddLocation = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !pincode) return;
-
-    const newItem: VaranasiLocality = {
-      id: `loc-${Date.now()}`,
-      name,
-      pincode,
-      status: "Normal",
-      activeBookings: 0,
-      activeTechs: 0,
-      isServiceable: true,
-    };
-
-    setLocalities([newItem, ...localities]);
-    setName("");
-    setPincode("");
-    setIsAddOpen(false);
-  };
+  const filteredLocalities = localities.filter(
+    (l) =>
+      !localitySearch ||
+      l.localityName?.toLowerCase().includes(localitySearch.toLowerCase()) ||
+      l.pincode?.includes(localitySearch)
+  );
 
   const filteredCities = cities.filter(
     (c) =>
       !citySearch ||
-      c.cityName.toLowerCase().includes(citySearch.toLowerCase()) ||
-      c.stateName.toLowerCase().includes(citySearch.toLowerCase())
+      c.cityName?.toLowerCase().includes(citySearch.toLowerCase()) ||
+      c.stateName?.toLowerCase().includes(citySearch.toLowerCase())
   );
 
   return (
@@ -302,7 +444,13 @@ export default function LocationsPage() {
         {activeTab === "pincodes" ? (
           <button
             type="button"
-            onClick={() => setIsAddOpen(true)}
+            onClick={() =>
+              setLocalityModal({
+                open: true,
+                mode: "add",
+                data: { localityName: "", pincode: "", status: true },
+              })
+            }
             className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
@@ -361,7 +509,7 @@ export default function LocationsPage() {
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
-            <span>Cities & States (API)</span>
+            <span>Cities & States</span>
             <span
               className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
                 activeTab === "cities"
@@ -374,7 +522,18 @@ export default function LocationsPage() {
           </button>
         </div>
 
-        {activeTab === "cities" && (
+        {activeTab === "pincodes" ? (
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search locality or pincode..."
+              value={localitySearch}
+              onChange={(e) => setLocalitySearch(e.target.value)}
+              className="pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 w-56"
+            />
+          </div>
+        ) : (
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -414,13 +573,13 @@ export default function LocationsPage() {
 
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase">Deployed Techs</span>
+            <span className="text-xs font-bold text-slate-400 uppercase">Active Localities</span>
             <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200">
               <Users className="w-5 h-5" />
             </div>
           </div>
           <span className="text-2xl font-black text-emerald-600">
-            {localities.reduce((sum, l) => sum + (l.activeTechs || 0), 0)} Engineers
+            {localities.filter((l) => l.status !== false).length} Active
           </span>
         </div>
 
@@ -439,78 +598,163 @@ export default function LocationsPage() {
 
       {/* MAIN TAB CONTENT */}
       {activeTab === "pincodes" ? (
-        <DataTable columns={pincodeColumns} data={localities} />
+        <div className="space-y-4">
+          {isLocalitiesLoading ? (
+            <ShimmerRow count={6} />
+          ) : (
+            <DataTable columns={pincodeColumns} data={filteredLocalities} idField="_id" />
+          )}
+        </div>
       ) : (
         <div className="space-y-4">
           {isCitiesLoading ? (
-            <div className="flex items-center justify-center py-16 text-slate-500">
-              <Loader2 className="w-6 h-6 animate-spin mr-2 text-brand-600" />
-              <span className="text-xs font-bold">Loading cities from backend...</span>
-            </div>
+            <ShimmerRow count={6} />
           ) : (
-            <DataTable columns={cityColumns} data={filteredCities} />
+            <DataTable columns={cityColumns} data={filteredCities} idField="_id" />
           )}
         </div>
       )}
 
-      {/* Add Pincode Zone Slide-Over Drawer */}
-      {isAddOpen && (
+      {/* ADD / EDIT LOCALITY MODAL */}
+      {localityModal.open && (
         <Portal>
-          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex justify-end outline-none">
-            <div className="absolute inset-0" onClick={() => setIsAddOpen(false)} />
-            <form
-              onSubmit={handleAddLocation}
-              className="relative z-10 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 p-6 max-w-md w-full h-full flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300 outline-none"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">Add New Pincode Zone</h3>
-                  <button type="button" onClick={() => setIsAddOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
-                    <X className="w-5 h-5" />
-                  </button>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-brand-600" />
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                    {localityModal.mode === "add" ? "Add New Locality" : "Edit Locality"}
+                  </h3>
                 </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">Locality / Zone Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Lanka Bhabha Road"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:border-brand-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">Pincode *</label>
-                  <input
-                    type="text"
-                    required
-                    value={pincode}
-                    onChange={(e) => setPincode(e.target.value)}
-                    placeholder="221005"
-                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-xs outline-none focus:border-brand-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setIsAddOpen(false)}
+                  onClick={() => setLocalityModal({ open: false, mode: "add", data: {} })}
+                  className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveLocality} className="p-6 space-y-4">
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">
+                    Locality / Zone Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={localityModal.data.localityName || ""}
+                    onChange={(e) =>
+                      setLocalityModal({
+                        ...localityModal,
+                        data: { ...localityModal.data, localityName: e.target.value },
+                      })
+                    }
+                    placeholder="e.g. Akhri, Sigra, Lanka"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-none focus:border-brand-500 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1 text-xs">
+                    Pincode *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={localityModal.data.pincode || ""}
+                    onChange={(e) =>
+                      setLocalityModal({
+                        ...localityModal,
+                        data: { ...localityModal.data, pincode: e.target.value },
+                      })
+                    }
+                    placeholder="e.g. 221011, 221002"
+                    className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono text-xs outline-none focus:border-brand-500 font-semibold"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="locality-status"
+                    checked={localityModal.data.status ?? true}
+                    onChange={(e) =>
+                      setLocalityModal({
+                        ...localityModal,
+                        data: { ...localityModal.data, status: e.target.checked },
+                      })
+                    }
+                    className="w-4 h-4 rounded accent-brand-600 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="locality-status"
+                    className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                  >
+                    Active Operations (Serviceable)
+                  </label>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setLocalityModal({ open: false, mode: "add", data: {} })}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux cursor-pointer transition-colors"
+                  >
+                    {localityModal.mode === "add" ? "Add Locality" : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* DELETE LOCALITY CONFIRMATION MODAL */}
+      {deleteLocalityModal.open && deleteLocalityModal.locality && (
+        <Portal>
+          <div className="fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-4 border border-slate-200 dark:border-slate-800 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200 dark:border-rose-800">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-black text-slate-900 dark:text-white text-base">
+                  Delete Locality?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Are you sure you want to delete{" "}
+                  <strong className="text-slate-800 dark:text-slate-200">
+                    "{deleteLocalityModal.locality.localityName}"
+                  </strong>
+                  ?
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteLocalityModal({ open: false, locality: null })}
                   className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux cursor-pointer transition-colors"
+                  type="button"
+                  onClick={handleConfirmDeleteLocality}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs shadow-lux cursor-pointer transition-colors"
                 >
-                  Save Locality
+                  Delete Locality
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </Portal>
       )}
@@ -634,7 +878,7 @@ export default function LocationsPage() {
                   <strong className="text-slate-800 dark:text-slate-200">
                     "{deleteCityModal.city.cityName}"
                   </strong>
-                  ? This will set its operational status to inactive.
+                  ?
                 </p>
               </div>
 
@@ -661,3 +905,4 @@ export default function LocationsPage() {
     </div>
   );
 }
+

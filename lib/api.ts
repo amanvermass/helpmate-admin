@@ -39,13 +39,46 @@ export function getAuthHeaders(extraHeaders: Record<string, string> = {}, isForm
   return headers;
 }
 
+export function handleGlobalLogout() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("helpmate_admin_token");
+    localStorage.removeItem("helpmate_admin_user");
+    localStorage.removeItem("helpmate_admin_session");
+    localStorage.removeItem("helpmate_active_user_id");
+    clearApiCache();
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
+}
+
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = getAuthHeaders(options.headers as Record<string, string>, isFormData);
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  if (response.status === 401) {
+    handleGlobalLogout();
+  }
+
+  return response;
+}
+
+export async function getAdminMeApi() {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/me`);
+    if (res.status === 401 || res.status === 403) {
+      handleGlobalLogout();
+      return { success: false, message: "Token expired", isUnauthorized: true };
+    }
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("getAdminMeApi error:", error);
+    return { success: false, message: "Failed to fetch admin profile." };
+  }
 }
 
 export async function safeJsonResponse(res: Response): Promise<any> {
@@ -112,24 +145,105 @@ export interface ApiLocality {
 }
 
 export async function getLocalitiesApi(params?: { search?: string; limit?: number; forceRefresh?: boolean }) {
-  const cacheKey = `getLocalitiesApi:${JSON.stringify(params || {})}`;
-  if (!params?.forceRefresh && apiCache.has(cacheKey)) {
-    return apiCache.get(cacheKey);
-  }
-  try {
-    const query = new URLSearchParams();
-    if (params?.search) query.append("search", params.search);
-    query.append("limit", String(params?.limit || 100));
+  const query = new URLSearchParams();
+  if (params?.search) query.append("search", params.search);
+  if (params?.limit) query.append("limit", params.limit.toString());
+  const queryString = query.toString();
 
-    const res = await fetch(`${API_BASE_URL}/locality?${query.toString()}`);
-    const data = await res.json();
+  const cacheKey = `getLocalitiesApi:${queryString}`;
+  const cached = getFromCache(cacheKey, params?.forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/locality${queryString ? `?${queryString}` : ""}`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false && Array.isArray(data.data) && data.data.length > 0) {
+      apiCache.set(cacheKey, data);
+      return data;
+    }
+  } catch (error) {
+    console.error("getLocalitiesApi error:", error);
+  }
+
+  // Fallback to /locality/dropdown
+  try {
+    const fallbackRes = await authFetch(`${API_BASE_URL}/locality/dropdown`);
+    const fallbackData = await safeJsonResponse(fallbackRes);
+    if (fallbackData && fallbackData.success !== false) {
+      apiCache.set(cacheKey, fallbackData);
+      return fallbackData;
+    }
+  } catch (err) {
+    console.error("getLocalitiesApi fallback error:", err);
+  }
+
+  return { success: false, message: "Failed to fetch localities." };
+}
+
+export async function getLocalityDropdownApi(params?: { forceRefresh?: boolean }) {
+  const cacheKey = `getLocalityDropdownApi`;
+  const cached = getFromCache(cacheKey, params?.forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/locality/dropdown`);
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
     return data;
   } catch (error) {
-    console.error("getLocalitiesApi error:", error);
-    return { success: false, message: "Failed to fetch localities." };
+    console.error("getLocalityDropdownApi error:", error);
+    return { success: false, message: "Failed to fetch locality dropdown." };
+  }
+}
+
+export async function addLocalityApi(payload: { localityName: string; pincode: string; status?: boolean }) {
+  clearApiCache("getLocalitiesApi");
+  clearApiCache("getLocalityDropdownApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/locality`, {
+      method: "POST",
+      body: JSON.stringify({
+        localityName: payload.localityName,
+        pincode: payload.pincode,
+        status: payload.status ?? true,
+      }),
+    });
+    const data = await safeJsonResponse(res);
+    return data;
+  } catch (error) {
+    console.error("addLocalityApi error:", error);
+    return { success: false, message: "Failed to add locality." };
+  }
+}
+
+export async function updateLocalityApi(id: string, payload: { localityName?: string; pincode?: string; status?: boolean }) {
+  clearApiCache("getLocalitiesApi");
+  clearApiCache("getLocalityDropdownApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/locality/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    const data = await safeJsonResponse(res);
+    return data;
+  } catch (error) {
+    console.error("updateLocalityApi error:", error);
+    return { success: false, message: "Failed to update locality." };
+  }
+}
+
+export async function deleteLocalityApi(id: string) {
+  clearApiCache("getLocalitiesApi");
+  clearApiCache("getLocalityDropdownApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/locality/${id}`, {
+      method: "DELETE",
+    });
+    const data = await safeJsonResponse(res);
+    return data;
+  } catch (error) {
+    console.error("deleteLocalityApi error:", error);
+    return { success: false, message: "Failed to delete locality." };
   }
 }
 
@@ -749,12 +863,50 @@ export async function getServiceActionsApi(
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/service-actions${queryString}`);
-    const data = await safeJsonResponse(res);
-    if (data && data.success !== false) {
-      apiCache.set(cacheKey, data);
+    if (categoryId) {
+      const res = await authFetch(`${API_BASE_URL}/service-action/dropdown${queryString}`);
+      const data = await safeJsonResponse(res);
+      if (data && data.success !== false) {
+        apiCache.set(cacheKey, data);
+        return data;
+      }
     }
-    return data;
+
+    const catRes = await getCategoriesApi();
+    if (catRes && catRes.success && Array.isArray(catRes.data) && catRes.data.length > 0) {
+      const allActionPromises = catRes.data.map((cat: any) =>
+        authFetch(`${API_BASE_URL}/service-action/dropdown?categoryId=${cat._id}`)
+          .then((r) => safeJsonResponse(r))
+          .catch(() => null)
+      );
+      const actionResults = await Promise.all(allActionPromises);
+      const combined: any[] = [];
+      const seenIds = new Set<string>();
+
+      actionResults.forEach((res, idx) => {
+        const cat = catRes.data[idx];
+        if (res && res.success && Array.isArray(res.data)) {
+          res.data.forEach((act: any) => {
+            if (!seenIds.has(act._id)) {
+              seenIds.add(act._id);
+              combined.push({
+                ...act,
+                categoryId: cat,
+                categoryName: cat.categoryName,
+              });
+            }
+          });
+        }
+      });
+
+      const result = { success: true, message: "Service actions fetched successfully.", data: combined };
+      if (combined.length > 0) {
+        apiCache.set(cacheKey, result);
+      }
+      return result;
+    }
+
+    return { success: true, data: [] };
   } catch (error) {
     console.error("getServiceActionsApi error:", error);
     return { success: false, message: "Failed to fetch service actions." };
@@ -770,7 +922,7 @@ export async function getServiceActionDropdownApi(params?: { categoryId?: string
     if (params?.categoryId) query.append("categoryId", params.categoryId);
     if (params?.subCategoryId) query.append("subCategoryId", params.subCategoryId);
 
-    const res = await authFetch(`${API_BASE_URL}/service-actions/dropdown?${query.toString()}`);
+    const res = await authFetch(`${API_BASE_URL}/service-action/dropdown?${query.toString()}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1669,12 +1821,16 @@ export async function deleteCustomerAddressApi(id: string) {
 
 export interface ApiPartner {
   _id: string;
-  partnerId: string;
+  partnerId?: string;
   name: string;
   mobile: string;
+  designation?: string;
   rating?: number;
   category?: string;
   locality?: string;
+  servicePincodes?: any[];
+  serviceActions?: any[];
+  status?: string;
   totalJobs?: number;
   lastCompletedJob?: {
     title: string;
@@ -1683,14 +1839,46 @@ export interface ApiPartner {
   };
 }
 
+export interface GetPartnersParams {
+  search?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export async function getPartnersApi(params?: GetPartnersParams, forceRefresh?: boolean) {
+  const query = new URLSearchParams();
+  if (params?.search) query.append("search", params.search);
+  if (params?.status) query.append("status", params.status);
+  if (params?.page) query.append("page", params.page.toString());
+  if (params?.limit) query.append("limit", params.limit.toString());
+
+  const queryString = query.toString();
+  const cacheKey = `getPartnersApi_${queryString}`;
+  if (!forceRefresh && apiCache.has(cacheKey)) {
+    return apiCache.get(cacheKey);
+  }
+  try {
+    const res = await authFetch(`${API_BASE_URL}/partner${queryString ? `?${queryString}` : ""}`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getPartnersApi error:", error);
+    return { success: false, message: "Failed to fetch partners." };
+  }
+}
+
 export async function getPartnerDropdownApi(forceRefresh?: boolean) {
   const cacheKey = `getPartnerDropdownApi`;
   if (!forceRefresh && apiCache.has(cacheKey)) {
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await fetch(`${API_BASE_URL}/partner/dropdown`);
-    const data = await res.json();
+    const res = await authFetch(`${API_BASE_URL}/partner/dropdown`);
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -1701,18 +1889,262 @@ export async function getPartnerDropdownApi(forceRefresh?: boolean) {
   }
 }
 
+export async function getPartnerByIdApi(id: string, forceRefresh?: boolean) {
+  const cacheKey = `getPartnerByIdApi_${id}`;
+  if (!forceRefresh && apiCache.has(cacheKey)) {
+    return apiCache.get(cacheKey);
+  }
+  try {
+    const res = await authFetch(`${API_BASE_URL}/partner/${id}`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false && data.data && !Array.isArray(data.data)) {
+      apiCache.set(cacheKey, data);
+      return data;
+    }
+  } catch (error) {
+    console.error("getPartnerByIdApi single fetch error:", error);
+  }
+
+  // Fallback to searching inside getPartnersApi list
+  try {
+    const allRes = await getPartnersApi({ limit: 100 }, forceRefresh);
+    if (allRes && allRes.success !== false && Array.isArray(allRes.data)) {
+      const found = allRes.data.find((p: any) => p._id === id || p.partnerId === id);
+      if (found) {
+        const result = { success: true, data: found };
+        apiCache.set(cacheKey, result);
+        return result;
+      }
+    }
+  } catch (err) {
+    console.error("getPartnerByIdApi fallback error:", err);
+  }
+
+  return { success: false, message: "Partner not found." };
+}
+
 export async function assignPartnerToBookingApi(bookingId: string, partnerId: string) {
   clearApiCache("getBookingsApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/booking/${bookingId}`, {
+    const res = await authFetch(`${API_BASE_URL}/booking/${bookingId}/assign-partner`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ partnerId }),
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("assignPartnerToBookingApi error:", error);
     return { success: false, message: "Failed to assign partner to booking." };
+  }
+}
+
+export interface CreatePartnerPayload {
+  name: string;
+  mobile: string;
+  mobileVerificationToken?: string;
+  email?: string;
+  residentialAddress?: string;
+  password?: string;
+  bankDetails?: {
+    bankName?: string;
+    branchName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    upiId?: string;
+  } | string;
+  serviceActions?: string[] | string;
+  servicePincodes?: string[] | string;
+  designation?: string;
+  commissionRate?: number | string;
+  kyc?: {
+    aadhaarNumber?: string;
+  } | string;
+  guarantor?: {
+    name?: string;
+    relation?: string;
+    mobile?: string;
+    mobileVerified?: boolean;
+  } | string;
+  guarantorVerificationToken?: string;
+  verificationDocumentType?: string;
+  aadhaarFront?: File | Blob | null;
+  aadhaarBack?: File | Blob | null;
+  passportPhoto?: File | Blob | null;
+  verificationDocument?: File | Blob | null;
+}
+
+// ─── PARTNER & GUARANTOR OTP VERIFICATION APIS ───
+
+export async function sendPartnerMobileOtpApi(mobile: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/partner/send-mobile-verification-otp`, {
+      method: "POST",
+      body: JSON.stringify({ mobile }),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("sendPartnerMobileOtpApi error:", error);
+    return { success: false, message: "Failed to send partner mobile OTP." };
+  }
+}
+
+export async function verifyPartnerMobileOtpApi(mobile: string, otp: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/partner/verify-mobile`, {
+      method: "POST",
+      body: JSON.stringify({ mobile, otp }),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("verifyPartnerMobileOtpApi error:", error);
+    return { success: false, message: "Failed to verify partner mobile OTP." };
+  }
+}
+
+export async function sendGuarantorMobileOtpApi(mobile: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/partner/send-guarantor-verification-otp`, {
+      method: "POST",
+      body: JSON.stringify({ mobile }),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("sendGuarantorMobileOtpApi error:", error);
+    return { success: false, message: "Failed to send guarantor mobile OTP." };
+  }
+}
+
+export async function verifyGuarantorMobileOtpApi(mobile: string, otp: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/partner/verify-guarantor-mobile`, {
+      method: "POST",
+      body: JSON.stringify({ mobile, otp }),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("verifyGuarantorMobileOtpApi error:", error);
+    return { success: false, message: "Failed to verify guarantor mobile OTP." };
+  }
+}
+
+export async function createPartnerApi(payload: CreatePartnerPayload | FormData) {
+  clearApiCache("getPartner");
+  clearApiCache("getPartners");
+  clearApiCache("getPartnerDropdownApi");
+  try {
+    let bodyData: FormData | string;
+
+    if (typeof FormData !== "undefined" && payload instanceof FormData) {
+      bodyData = payload;
+    } else {
+      const data = payload as CreatePartnerPayload;
+      const formData = new FormData();
+
+      if (data.name) formData.append("name", data.name);
+      if (data.mobile) formData.append("mobile", data.mobile);
+      if (data.mobileVerificationToken) formData.append("mobileVerificationToken", data.mobileVerificationToken);
+      if (data.email) formData.append("email", data.email);
+      if (data.residentialAddress) formData.append("residentialAddress", data.residentialAddress);
+      if (data.password) formData.append("password", data.password);
+      if (data.designation) formData.append("designation", data.designation);
+      if (data.commissionRate !== undefined) formData.append("commissionRate", String(data.commissionRate));
+
+      if (data.bankDetails) {
+        formData.append("bankDetails", typeof data.bankDetails === "string" ? data.bankDetails : JSON.stringify(data.bankDetails));
+      }
+      if (data.serviceActions) {
+        formData.append("serviceActions", typeof data.serviceActions === "string" ? data.serviceActions : JSON.stringify(data.serviceActions));
+      }
+      if (data.servicePincodes) {
+        formData.append("servicePincodes", typeof data.servicePincodes === "string" ? data.servicePincodes : JSON.stringify(data.servicePincodes));
+      }
+      if (data.kyc) {
+        formData.append("kyc", typeof data.kyc === "string" ? data.kyc : JSON.stringify(data.kyc));
+      }
+      if (data.guarantor) {
+        formData.append("guarantor", typeof data.guarantor === "string" ? data.guarantor : JSON.stringify(data.guarantor));
+      }
+      if (data.guarantorVerificationToken) formData.append("guarantorVerificationToken", data.guarantorVerificationToken);
+
+      if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
+      if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
+      if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
+      if (data.verificationDocumentType && data.verificationDocument) {
+        formData.append("verificationDocumentType", data.verificationDocumentType);
+        formData.append("verificationDocument", data.verificationDocument);
+      }
+
+      bodyData = formData;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/partner`, {
+      method: "POST",
+      body: bodyData,
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("createPartnerApi error:", error);
+    return { success: false, message: "Failed to create partner." };
+  }
+}
+
+export async function updatePartnerApi(id: string, payload: Partial<CreatePartnerPayload> | FormData) {
+  clearApiCache("getPartner");
+  clearApiCache("getPartners");
+  clearApiCache("getPartnerDropdownApi");
+  try {
+    let bodyData: FormData | string;
+
+    if (typeof FormData !== "undefined" && payload instanceof FormData) {
+      bodyData = payload;
+    } else {
+      const data = payload as Partial<CreatePartnerPayload>;
+      const formData = new FormData();
+
+      if (data.name) formData.append("name", data.name);
+      if (data.mobile) formData.append("mobile", data.mobile);
+      if (data.mobileVerificationToken) formData.append("mobileVerificationToken", data.mobileVerificationToken);
+      if (data.email) formData.append("email", data.email);
+      if (data.residentialAddress) formData.append("residentialAddress", data.residentialAddress);
+      if (data.password) formData.append("password", data.password);
+      if (data.designation) formData.append("designation", data.designation);
+      if (data.commissionRate !== undefined) formData.append("commissionRate", String(data.commissionRate));
+
+      if (data.bankDetails) {
+        formData.append("bankDetails", typeof data.bankDetails === "string" ? data.bankDetails : JSON.stringify(data.bankDetails));
+      }
+      if (data.serviceActions) {
+        formData.append("serviceActions", typeof data.serviceActions === "string" ? data.serviceActions : JSON.stringify(data.serviceActions));
+      }
+      if (data.servicePincodes) {
+        formData.append("servicePincodes", typeof data.servicePincodes === "string" ? data.servicePincodes : JSON.stringify(data.servicePincodes));
+      }
+      if (data.kyc) {
+        formData.append("kyc", typeof data.kyc === "string" ? data.kyc : JSON.stringify(data.kyc));
+      }
+      if (data.guarantor) {
+        formData.append("guarantor", typeof data.guarantor === "string" ? data.guarantor : JSON.stringify(data.guarantor));
+      }
+      if (data.guarantorVerificationToken) formData.append("guarantorVerificationToken", data.guarantorVerificationToken);
+
+      if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
+      if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
+      if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
+      if (data.verificationDocumentType && data.verificationDocument) {
+        formData.append("verificationDocumentType", data.verificationDocumentType);
+        formData.append("verificationDocument", data.verificationDocument);
+      }
+
+      bodyData = formData;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/partner/${id}`, {
+      method: "PUT",
+      body: bodyData,
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("updatePartnerApi error:", error);
+    return { success: false, message: "Failed to update partner." };
   }
 }
 
@@ -1981,5 +2413,188 @@ export async function deleteWebsiteZoneApi(id: string) {
     return { success: false, message: "Failed to delete website zone." };
   }
 }
+
+// ─── ADMIN REVIEWS APIs ───
+export interface ApiAdminReview {
+  _id: string;
+  booking?: {
+    id?: string;
+    bookingNumber?: string;
+    status?: string;
+  };
+  customer?: {
+    id?: string;
+    name?: string;
+    mobile?: string;
+    customerCode?: string;
+  };
+  package?: {
+    id?: string;
+    name?: string;
+    price?: number;
+  };
+  partner?: {
+    id?: string;
+    name?: string;
+  };
+  service?: {
+    name?: string;
+  };
+  rating: number;
+  review?: string;
+  video?: {
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    duration?: string;
+  } | null;
+  isPublished: boolean;
+  publishedAt?: string;
+  moderation?: {
+    status?: string;
+    note?: string;
+  };
+  officialResponse?: string;
+  isEdited?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export async function getAdminReviewsApi(params?: {
+  search?: string;
+  rating?: number | string;
+  status?: string;
+  isPublished?: boolean | string;
+  page?: number;
+  limit?: number;
+  forceRefresh?: boolean;
+}) {
+  const cacheKey = `getAdminReviewsApi:${JSON.stringify(params || {})}`;
+  const cached = getFromCache(cacheKey, params?.forceRefresh);
+  if (cached) return cached;
+
+  const query = new URLSearchParams();
+  if (params?.search) query.append("search", params.search);
+  if (params?.rating && params.rating !== "All") query.append("rating", String(params.rating));
+  if (params?.status && params.status !== "All") query.append("status", params.status);
+  if (params?.isPublished !== undefined && params.isPublished !== "All") {
+    query.append("isPublished", String(params.isPublished));
+  }
+  if (params?.page) query.append("page", String(params.page));
+  if (params?.limit) query.append("limit", String(params.limit));
+
+  const queryString = query.toString() ? `?${query.toString()}` : "";
+
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/reviews${queryString}`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getAdminReviewsApi error:", error);
+    return { success: false, message: "Failed to fetch admin reviews." };
+  }
+}
+
+export async function moderateAdminReviewApi(reviewId: string, action: "approve" | "hide") {
+  clearApiCache("getAdminReviewsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/reviews/${reviewId}/moderate`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("moderateAdminReviewApi error:", error);
+    return { success: false, message: "Failed to update review status." };
+  }
+}
+
+export async function updateAdminReviewResponseApi(reviewId: string, response: string) {
+  clearApiCache("getAdminReviewsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/reviews/${reviewId}/response`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ response }),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("updateAdminReviewResponseApi error:", error);
+    return { success: false, message: "Failed to update official response." };
+  }
+}
+
+export interface ApiAdminReviewDetails {
+  _id: string;
+  booking?: {
+    id?: string;
+    bookingNumber?: string;
+    status?: string;
+    bookingSource?: string;
+    bookingDate?: string;
+    timeSlot?: string;
+  };
+  customer?: {
+    id?: string;
+    name?: string;
+    mobile?: string;
+    email?: string;
+    customerCode?: string;
+  };
+  package?: {
+    id?: string;
+    name?: string;
+    price?: number;
+    originalPrice?: number;
+    duration?: number;
+  };
+  service?: {
+    category?: string;
+    subCategory?: string;
+    serviceAction?: string;
+  };
+  partner?: {
+    id?: string;
+    name?: string;
+    assignedAt?: string;
+  };
+  rating: number;
+  review?: string;
+  video?: {
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    duration?: string;
+  } | null;
+  moderation?: {
+    status?: string;
+    note?: string;
+    isPublished?: boolean;
+    publishedAt?: string;
+    publishedBy?: { id?: string; name?: string; email?: string } | null;
+  };
+  officialResponse?: {
+    message?: string;
+    respondedAt?: string;
+    respondedBy?: { id?: string; name?: string; email?: string } | null;
+  };
+  isEdited?: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export async function getAdminReviewDetailsApi(reviewId: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/reviews/${reviewId}`);
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("getAdminReviewDetailsApi error:", error);
+    return { success: false, message: "Failed to fetch review details." };
+  }
+}
+
+
 
 

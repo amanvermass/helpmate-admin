@@ -346,6 +346,9 @@ export interface Booking {
   jobId?: string; // Unique Job Tracking Code e.g. HM-JOB-8821
   bookingNumber?: string;
   customerId?: string;
+  rawTimestamp?: number;
+  rawBookingNumber?: number;
+  rawId?: string;
   broadcastOffers?: BroadcastPartnerOffer[];
   customerName: string;
   customerPhone: string;
