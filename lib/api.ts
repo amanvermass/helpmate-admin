@@ -32,7 +32,7 @@ export function getAuthHeaders(extraHeaders: Record<string, string> = {}, isForm
   }
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("helpmate_admin_token");
-    if (token) {
+    if (token && !headers["Authorization"] && !headers["authorization"]) {
       headers["Authorization"] = `Bearer ${token}`;
     }
   }
@@ -1518,7 +1518,7 @@ export interface ApiCustomerDropdownItem {
   email?: string;
 }
 
-export async function getCustomerDropdownApi(params?: { search?: string; forceRefresh?: boolean }) {
+export async function getCustomerDropdownApi(params?: { search?: string; forceRefresh?: boolean; token?: string }) {
   const cacheKey = `getCustomerDropdownApi:${JSON.stringify(params || {})}`;
   if (!params?.forceRefresh && apiCache.has(cacheKey)) {
     return apiCache.get(cacheKey);
@@ -1528,8 +1528,15 @@ export async function getCustomerDropdownApi(params?: { search?: string; forceRe
     if (params?.search) query.append("search", params.search);
     query.append("limit", "100");
 
-    const res = await fetch(`${API_BASE_URL}/api/admin/customer/dropdown?${query.toString()}`);
-    const data = await res.json();
+    const reqHeaders: Record<string, string> = {};
+    if (params?.token) {
+      reqHeaders["Authorization"] = params.token.startsWith("Bearer ") ? params.token : `Bearer ${params.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/admin/customer/dropdown?${query.toString()}`, {
+      headers: reqHeaders,
+    });
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -1557,11 +1564,16 @@ export interface ApiCreateCustomerPayload {
   };
 }
 
-export async function createCustomerApi(payload: ApiCreateCustomerPayload) {
+export async function createCustomerApi(payload: ApiCreateCustomerPayload & { token?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/admin/customer`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/admin/customer`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify({
         fullName: payload.fullName,
         mobile: payload.mobile,
@@ -1579,7 +1591,7 @@ export async function createCustomerApi(payload: ApiCreateCustomerPayload) {
         },
       }),
     });
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.clear();
     }
@@ -1623,6 +1635,7 @@ export async function getAdminCustomersApi(params?: {
   search?: string;
   status?: boolean;
   forceRefresh?: boolean;
+  token?: string;
 }) {
   const cacheKey = `getAdminCustomersApi:${JSON.stringify(params || {})}`;
   if (!params?.forceRefresh && apiCache.has(cacheKey)) {
@@ -1635,8 +1648,15 @@ export async function getAdminCustomersApi(params?: {
     if (params?.search) query.append("search", params.search);
     if (params?.status !== undefined) query.append("status", String(params.status));
 
-    const res = await fetch(`${API_BASE_URL}/api/admin/customer?${query.toString()}`);
-    const data = await res.json();
+    const reqHeaders: Record<string, string> = {};
+    if (params?.token) {
+      reqHeaders["Authorization"] = params.token.startsWith("Bearer ") ? params.token : `Bearer ${params.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/admin/customer?${query.toString()}`, {
+      headers: reqHeaders,
+    });
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -1647,14 +1667,19 @@ export async function getAdminCustomersApi(params?: {
   }
 }
 
-export async function updateCustomerApi(id: string, payload: ApiCreateCustomerPayload & { status?: boolean }) {
+export async function updateCustomerApi(id: string, payload: ApiCreateCustomerPayload & { status?: boolean; token?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/admin/customer/${id}`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/admin/customer/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.clear();
     }
@@ -1665,12 +1690,18 @@ export async function updateCustomerApi(id: string, payload: ApiCreateCustomerPa
   }
 }
 
-export async function deleteCustomerApi(id: string) {
+export async function deleteCustomerApi(id: string, token?: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/admin/customer/${id}`, {
+    const reqHeaders: Record<string, string> = {};
+    if (token) {
+      reqHeaders["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/admin/customer/${id}`, {
       method: "DELETE",
+      headers: reqHeaders,
     });
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.clear();
     }
@@ -1683,64 +1714,86 @@ export async function deleteCustomerApi(id: string) {
 
 
 
-export async function sendBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string }) {
+export async function sendBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string; token?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/booking/customer/send-otp`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/booking/customer/send-otp`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (!res.ok && payload.mobile) {
       // Fallback to customer auth send-otp
-      return await sendCustomerOtpApi({ mobile: payload.mobile });
+      return await sendCustomerOtpApi({ mobile: payload.mobile, token: payload.token });
     }
     return data;
   } catch (error) {
     console.error("sendBookingCustomerOtpApi error:", error);
     if (payload.mobile) {
-      return await sendCustomerOtpApi({ mobile: payload.mobile });
+      return await sendCustomerOtpApi({ mobile: payload.mobile, token: payload.token });
     }
     return { success: false, message: "Failed to send OTP." };
   }
 }
 
-export async function verifyBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string; otp: string }) {
+export async function verifyBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string; otp: string; token?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/booking/customer/verify-otp`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/booking/customer/verify-otp`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify(payload),
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("verifyBookingCustomerOtpApi error:", error);
     return { success: false, message: "Failed to verify OTP." };
   }
 }
 
-export async function sendCustomerOtpApi(payload: { mobile: string; customerId?: string }) {
+export async function sendCustomerOtpApi(payload: { mobile: string; customerId?: string; token?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/customer/auth/send-otp`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/customer/auth/send-otp`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify(payload),
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("sendCustomerOtpApi error:", error);
     return { success: false, message: "Failed to send OTP." };
   }
 }
 
-export async function getCustomerTrustStatusApi(customerId: string, forceRefresh?: boolean) {
+export async function getCustomerTrustStatusApi(customerId: string, forceRefresh?: boolean, token?: string) {
   const cacheKey = `getCustomerTrustStatusApi:${customerId}`;
   if (!forceRefresh && apiCache.has(cacheKey)) {
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await fetch(`${API_BASE_URL}/api/customer-trust/${customerId}`);
-    const data = await res.json();
+    const reqHeaders: Record<string, string> = {};
+    if (token) {
+      reqHeaders["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/customer-trust/${customerId}`, {
+      headers: reqHeaders,
+    });
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -1766,29 +1819,41 @@ export interface ApiCustomerAddressPayload {
   isPrimary?: boolean;
 }
 
-export async function createCustomerAddressApi(payload: ApiCustomerAddressPayload) {
+export async function createCustomerAddressApi(payload: ApiCustomerAddressPayload & { token?: string }) {
   clearApiCache("getCustomerAddressesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/api/customer-address`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/customer-address`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify(payload),
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("createCustomerAddressApi error:", error);
     return { success: false, message: "Failed to save customer address." };
   }
 }
 
-export async function getCustomerAddressesApi(customerId: string, forceRefresh?: boolean) {
+export async function getCustomerAddressesApi(customerId: string, forceRefresh?: boolean, token?: string) {
   const cacheKey = `getCustomerAddressesApi:${customerId}`;
   if (!forceRefresh && apiCache.has(cacheKey)) {
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await fetch(`${API_BASE_URL}/api/customer-address/${customerId}`);
-    const data = await res.json();
+    const reqHeaders: Record<string, string> = {};
+    if (token) {
+      reqHeaders["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/customer-address/${customerId}`, {
+      headers: reqHeaders,
+    });
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -1799,28 +1864,39 @@ export async function getCustomerAddressesApi(customerId: string, forceRefresh?:
   }
 }
 
-export async function updateCustomerAddressApi(id: string, payload: Partial<ApiCustomerAddressPayload>) {
+export async function updateCustomerAddressApi(id: string, payload: Partial<ApiCustomerAddressPayload> & { token?: string }) {
   clearApiCache("getCustomerAddressesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/api/customer-address/${id}`, {
+    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    if (payload?.token) {
+      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/customer-address/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: reqHeaders,
       body: JSON.stringify(payload),
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("updateCustomerAddressApi error:", error);
     return { success: false, message: "Failed to update customer address." };
   }
 }
 
-export async function deleteCustomerAddressApi(id: string) {
+export async function deleteCustomerAddressApi(id: string, token?: string) {
   clearApiCache("getCustomerAddressesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/api/customer-address/${id}`, {
+    const reqHeaders: Record<string, string> = {};
+    if (token) {
+      reqHeaders["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
+
+    const res = await authFetch(`${API_BASE_URL}/api/customer-address/${id}`, {
       method: "DELETE",
+      headers: reqHeaders,
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("deleteCustomerAddressApi error:", error);
     return { success: false, message: "Failed to delete customer address." };
