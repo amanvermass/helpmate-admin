@@ -1015,11 +1015,13 @@ export function BookingWizardModal({
     const targetCatId = targetCatObj?.id || selectedCategory;
     const targetCatName = targetCatObj?.categoryName || selectedCategory;
 
-    const targetSubObj = allSubCats.find(
-      (sc) => sc.id === selectedType || sc.name.toLowerCase().trim() === selectedType.toLowerCase().trim()
-    );
-    const targetSubId = targetSubObj?.id || selectedType;
-    const targetSubName = targetSubObj?.name || selectedType;
+    const targetSubObj = selectedType
+      ? allSubCats.find(
+          (sc) => sc.id === selectedType || sc.name.toLowerCase().trim() === selectedType.toLowerCase().trim()
+        )
+      : undefined;
+    const targetSubId = selectedType ? (targetSubObj?.id || selectedType) : undefined;
+    const targetSubName = selectedType ? (targetSubObj?.name || selectedType) : undefined;
 
     // Primary: Packages from /api/package (apiPackages)
     if (Array.isArray(apiPackages) && apiPackages.length > 0) {
@@ -1054,7 +1056,7 @@ export function BookingWizardModal({
               subCategory: scName || targetSubName || "",
               actionName: actName || "Package",
               categoryId: cId || targetCatId,
-              subCategoryId: scId || targetSubId,
+              subCategoryId: scId || targetSubId || undefined,
               rawServiceId: actId || pId,
               packageId: pId,
               addons: pkg.addons || [],
@@ -1090,7 +1092,7 @@ export function BookingWizardModal({
               subCategory: targetSubName || "",
               actionName: act.serviceAction || actName || "Package",
               categoryId: targetCatId,
-              subCategoryId: targetSubId,
+              subCategoryId: targetSubId || undefined,
               rawServiceId: actId,
               packageId: actPkgId,
               addons: act.addons || [],
@@ -1332,15 +1334,15 @@ export function BookingWizardModal({
 
       const subCatId = (s.subCategoryId && s.subCategoryId.length === 24)
         ? s.subCategoryId
-        : (allSubCatsForApi.find((sc) => safeStr(sc.name).toLowerCase() === safeStr(selectedType).toLowerCase())?.id || "65f1a2b3c4d5e6f7a8b9c0d2");
+        : (selectedType ? (allSubCatsForApi.find((sc) => safeStr(sc.name).toLowerCase() === safeStr(selectedType).toLowerCase())?.id) : undefined);
 
       const actId = (s.serviceActionId && s.serviceActionId.length === 24)
         ? s.serviceActionId
-        : ((s.rawServiceId && s.rawServiceId.length === 24) ? s.rawServiceId : ((s.id && s.id.length === 24) ? s.id : "6aa11e12e5fe5adbc60be3d9"));
+        : ((s.rawServiceId && s.rawServiceId.length === 24) ? s.rawServiceId : ((s.id && s.id.length === 24) ? s.id : undefined));
 
       const pkgId = (s.packageId && s.packageId.length === 24)
         ? s.packageId
-        : ((s.id && s.id.length === 24) ? s.id : "6aa128c8f01984ec5fd1626f");
+        : ((s.id && s.id.length === 24) ? s.id : undefined);
 
       const selectedAddonsPayload = Array.isArray(s.addons)
         ? s.addons.map((a: any) => ({
@@ -1349,14 +1351,23 @@ export function BookingWizardModal({
           })).filter((item: any) => item.addonId && item.addonId.length === 24)
         : [];
 
-      return {
+      const itemPayload: any = {
         categoryId: catId,
-        subCategoryId: subCatId,
-        serviceActionId: actId,
-        packageId: pkgId,
         quantity: s.quantity || 1,
         selectedAddons: selectedAddonsPayload,
       };
+
+      if (subCatId && subCatId.length === 24) {
+        itemPayload.subCategoryId = subCatId;
+      }
+      if (actId && actId.length === 24) {
+        itemPayload.serviceActionId = actId;
+      }
+      if (pkgId && pkgId.length === 24) {
+        itemPayload.packageId = pkgId;
+      }
+
+      return itemPayload;
     });
 
     const formattedTime = formatTimeSlotForApi(timeSlot);
