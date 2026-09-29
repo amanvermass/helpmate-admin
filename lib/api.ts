@@ -11,7 +11,7 @@ export interface ApiAdmin {
 
 export async function adminLoginApi(payload: { identifier: string; password: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/login`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -69,7 +69,7 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 
 export async function getAdminMeApi() {
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/me`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/me`);
     if (res.status === 401 || res.status === 403) {
       handleGlobalLogout();
       return { success: false, message: "Token expired", isUnauthorized: true };
@@ -154,7 +154,7 @@ export async function getLocalitiesApi(params?: { search?: string; limit?: numbe
   const cached = getFromCache(cacheKey, params?.forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/locality${queryString ? `?${queryString}` : ""}`);
+    const res = await authFetch(`${API_BASE_URL}/api/locality${queryString ? `?${queryString}` : ""}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false && Array.isArray(data.data) && data.data.length > 0) {
       apiCache.set(cacheKey, data);
@@ -166,7 +166,7 @@ export async function getLocalitiesApi(params?: { search?: string; limit?: numbe
 
   // Fallback to /locality/dropdown
   try {
-    const fallbackRes = await authFetch(`${API_BASE_URL}/locality/dropdown`);
+    const fallbackRes = await authFetch(`${API_BASE_URL}/api/locality/dropdown`);
     const fallbackData = await safeJsonResponse(fallbackRes);
     if (fallbackData && fallbackData.success !== false) {
       apiCache.set(cacheKey, fallbackData);
@@ -184,7 +184,7 @@ export async function getLocalityDropdownApi(params?: { forceRefresh?: boolean }
   const cached = getFromCache(cacheKey, params?.forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/locality/dropdown`);
+    const res = await authFetch(`${API_BASE_URL}/api/locality/dropdown`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -200,7 +200,7 @@ export async function addLocalityApi(payload: { localityName: string; pincode: s
   clearApiCache("getLocalitiesApi");
   clearApiCache("getLocalityDropdownApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/locality`, {
+    const res = await authFetch(`${API_BASE_URL}/api/locality`, {
       method: "POST",
       body: JSON.stringify({
         localityName: payload.localityName,
@@ -220,7 +220,7 @@ export async function updateLocalityApi(id: string, payload: { localityName?: st
   clearApiCache("getLocalitiesApi");
   clearApiCache("getLocalityDropdownApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/locality/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/locality/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });
@@ -236,7 +236,7 @@ export async function deleteLocalityApi(id: string) {
   clearApiCache("getLocalitiesApi");
   clearApiCache("getLocalityDropdownApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/locality/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/locality/${id}`, {
       method: "DELETE",
     });
     const data = await safeJsonResponse(res);
@@ -336,7 +336,7 @@ export async function getCategoriesApi(params?: { search?: string; status?: stri
     if (params?.page) query.append("page", String(params.page));
     query.append("limit", String(params?.limit || 100));
 
-    const res = await fetch(`${API_BASE_URL}/category?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/api/category?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -353,7 +353,7 @@ export async function getCategoryDropdownApi(forceRefresh?: boolean) {
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
   try {
-    const res = await fetch(`${API_BASE_URL}/category/dropdown`);
+    const res = await fetch(`${API_BASE_URL}/api/category/dropdown`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -413,7 +413,7 @@ export async function createCategoryApi(
       body = formData;
     }
 
-    const res = await authFetch(`${API_BASE_URL}/category`, {
+    const res = await authFetch(`${API_BASE_URL}/api/category`, {
       method: "POST",
       body,
     });
@@ -473,7 +473,7 @@ export async function updateCategoryApi(
       body = formData;
     }
 
-    const res = await authFetch(`${API_BASE_URL}/category/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/category/${id}`, {
       method: "PUT",
       body,
     });
@@ -488,7 +488,7 @@ export async function deleteCategoryApi(id: string) {
   clearApiCache("getCategoriesApi");
   clearApiCache("getCategoryDropdownApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/category/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/category/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -502,7 +502,7 @@ export async function toggleCategoryStatusApi(id: string, status?: boolean) {
   clearApiCache("getCategoriesApi");
   clearApiCache("getCategoryDropdownApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/category/${id}/status`, {
+    const res = await fetch(`${API_BASE_URL}/api/category/${id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -537,7 +537,7 @@ export async function getServicesApi(params?: {
     if (params?.serviceAction) query.append("serviceAction", params.serviceAction);
     query.append("limit", String(params?.limit || 100));
 
-    const res = await fetch(`${API_BASE_URL}/service?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/api/service?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -568,7 +568,7 @@ export async function getServicesByActionApi(params?: {
     if (params?.subcategory) query.append("subcategory", params.subcategory);
     if (params?.serviceAction) query.append("serviceAction", params.serviceAction);
 
-    const res = await fetch(`${API_BASE_URL}/service/by-action?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/api/service/by-action?${query.toString()}`);
     return await res.json();
   } catch (error) {
     console.error("getServicesByActionApi error:", error);
@@ -595,7 +595,7 @@ export async function createServiceApi(payload: {
 }) {
   invalidateCatalogCache();
   try {
-    const res = await fetch(`${API_BASE_URL}/service`, {
+    const res = await fetch(`${API_BASE_URL}/api/service`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -629,7 +629,7 @@ export async function updateServiceApi(
 ) {
   invalidateCatalogCache();
   try {
-    const res = await fetch(`${API_BASE_URL}/service/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/service/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -644,7 +644,7 @@ export async function updateServiceApi(
 export async function deleteServiceApi(id: string) {
   invalidateCatalogCache();
   try {
-    const res = await fetch(`${API_BASE_URL}/service/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/service/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -657,7 +657,7 @@ export async function deleteServiceApi(id: string) {
 export async function toggleServiceStatusApi(id: string, status?: boolean) {
   invalidateCatalogCache();
   try {
-    const res = await fetch(`${API_BASE_URL}/service/${id}/status`, {
+    const res = await fetch(`${API_BASE_URL}/api/service/${id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -681,7 +681,7 @@ export async function getAddonsApi(params?: { search?: string; category?: string
     if (params?.category) query.append("category", params.category);
     if (params?.status) query.append("status", params.status);
 
-    const res = await authFetch(`${API_BASE_URL}/addon?${query.toString()}`);
+    const res = await authFetch(`${API_BASE_URL}/api/addon?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -702,7 +702,7 @@ export async function getAddonDropdownApi(params?: { categoryId?: string; subCat
     if (params?.categoryId) query.append("categoryId", params.categoryId);
     if (params?.subCategoryId) query.append("subCategoryId", params.subCategoryId);
 
-    const res = await authFetch(`${API_BASE_URL}/addon/dropdown?${query.toString()}`);
+    const res = await authFetch(`/api/addon/dropdown?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -733,7 +733,7 @@ export async function createAddonApi(payload: {
       addonName: payload.addonName || payload.title,
       title: payload.title || payload.addonName,
     };
-    const res = await authFetch(`${API_BASE_URL}/addon`, {
+    const res = await authFetch(`${API_BASE_URL}/api/addon`, {
       method: "POST",
       body: JSON.stringify(bodyPayload),
     });
@@ -770,7 +770,7 @@ export async function updateAddonApi(
         }
         : {}),
     };
-    const res = await authFetch(`${API_BASE_URL}/addon/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/addon/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });
@@ -784,7 +784,7 @@ export async function updateAddonApi(
 export async function deleteAddonApi(id: string) {
   clearApiCache("getAddonsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/addon/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/addon/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -797,7 +797,7 @@ export async function deleteAddonApi(id: string) {
 export async function toggleAddonStatusApi(id: string, status?: boolean) {
   clearApiCache("getAddonsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/addon/${id}/status`, {
+    const res = await authFetch(`${API_BASE_URL}/api/addon/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     });
@@ -864,7 +864,7 @@ export async function getServiceActionsApi(
   if (cached) return cached;
   try {
     if (categoryId) {
-      const res = await authFetch(`${API_BASE_URL}/service-action/dropdown${queryString}`);
+      const res = await authFetch(`${API_BASE_URL}/api/service-action/dropdown${queryString}`);
       const data = await safeJsonResponse(res);
       if (data && data.success !== false) {
         apiCache.set(cacheKey, data);
@@ -875,7 +875,7 @@ export async function getServiceActionsApi(
     const catRes = await getCategoriesApi();
     if (catRes && catRes.success && Array.isArray(catRes.data) && catRes.data.length > 0) {
       const allActionPromises = catRes.data.map((cat: any) =>
-        authFetch(`${API_BASE_URL}/service-action/dropdown?categoryId=${cat._id}`)
+        authFetch(`${API_BASE_URL}/api/service-action/dropdown?categoryId=${cat._id}`)
           .then((r) => safeJsonResponse(r))
           .catch(() => null)
       );
@@ -922,7 +922,7 @@ export async function getServiceActionDropdownApi(params?: { categoryId?: string
     if (params?.categoryId) query.append("categoryId", params.categoryId);
     if (params?.subCategoryId) query.append("subCategoryId", params.subCategoryId);
 
-    const res = await authFetch(`${API_BASE_URL}/service-action/dropdown?${query.toString()}`);
+    const res = await authFetch(`${API_BASE_URL}/api/service-action/dropdown?${query.toString()}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -951,7 +951,7 @@ export async function createServiceActionApi(payload: {
     if (payload.subCategoryId) {
       bodyPayload.subCategoryId = payload.subCategoryId;
     }
-    const res = await authFetch(`${API_BASE_URL}/service-actions`, {
+    const res = await authFetch(`${API_BASE_URL}/api/service-actions`, {
       method: "POST",
       body: JSON.stringify(bodyPayload),
     });
@@ -969,7 +969,7 @@ export async function updateServiceActionApi(id: string, payload: { categoryId?:
     if (bodyPayload.subCategoryId === "" || bodyPayload.subCategoryId === undefined) {
       delete bodyPayload.subCategoryId;
     }
-    const res = await authFetch(`${API_BASE_URL}/service-action/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/service-action/${id}`, {
       method: "PUT",
       body: JSON.stringify(bodyPayload),
     });
@@ -983,7 +983,7 @@ export async function updateServiceActionApi(id: string, payload: { categoryId?:
 export async function deleteServiceActionApi(id: string) {
   clearApiCache("getServiceActionsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/service-action/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/service-action/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -1026,7 +1026,7 @@ export async function getPackagesApi(params?: {
     if (params?.subcategory) query.append("subcategory", params.subcategory);
     query.append("limit", String(params?.limit || 100));
 
-    const res = await authFetch(`${API_BASE_URL}/package?${query.toString()}`);
+    const res = await authFetch(`${API_BASE_URL}/api/package?${query.toString()}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1062,7 +1062,7 @@ export async function getPackageDropdownApi(params?: string | {
       if (params.category) query.append("category", params.category);
       if (params.subcategory) query.append("subcategory", params.subcategory);
     }
-    const res = await authFetch(`${API_BASE_URL}/package/dropdown?${query.toString()}`);
+    const res = await authFetch(`${API_BASE_URL}/api/package/dropdown?${query.toString()}`);
     return await safeJsonResponse(res);
   } catch (error) {
     console.error("getPackageDropdownApi error:", error);
@@ -1245,7 +1245,7 @@ export async function createPackageApi(
       bodyData = formData;
     }
 
-    const res = await authFetch(`${API_BASE_URL}/package`, {
+    const res = await authFetch(`${API_BASE_URL}/api/package`, {
       method: "POST",
       body: bodyData,
     });
@@ -1342,7 +1342,7 @@ export async function updatePackageApi(
         bodyData = JSON.stringify(cleanedPayload);
       }
     }
-    const res = await authFetch(`${API_BASE_URL}/package/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/package/${id}`, {
       method: "PATCH",
       body: bodyData,
     });
@@ -1356,7 +1356,7 @@ export async function updatePackageApi(
 export async function deletePackageApi(id: string) {
   clearApiCache("getPackagesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/package/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/package/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -1396,7 +1396,7 @@ export interface ApiCreateBookingPayload {
 export async function createBookingApi(payload: ApiCreateBookingPayload) {
   clearApiCache("getBookingsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/booking`, {
+    const res = await authFetch(`${API_BASE_URL}/api/booking`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -1438,7 +1438,7 @@ export async function getBookingCategoriesApi(forceRefresh?: boolean) {
   if (cached) return cached;
 
   try {
-    const res = await authFetch(`${API_BASE_URL}/booking/categories`);
+    const res = await authFetch(`${API_BASE_URL}/api/booking/categories`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1463,7 +1463,7 @@ export async function getBookingsApi(params?: { categoryId?: string; search?: st
     if (params?.page) query.append("page", String(params.page));
     query.append("limit", String(params?.limit || 100));
 
-    const res = await authFetch(`${API_BASE_URL}/booking?${query.toString()}`);
+    const res = await authFetch(`${API_BASE_URL}/api/booking?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1477,7 +1477,7 @@ export async function getBookingsApi(params?: { categoryId?: string; search?: st
 
 export async function getBookingDetailsApi(id: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/booking/${id}`);
+    const res = await fetch(`${API_BASE_URL}/api/booking/${id}`);
     return await res.json();
   } catch (error) {
     console.error("getBookingDetailsApi error:", error);
@@ -1496,7 +1496,7 @@ export interface ApiUpdateBookingPayload {
 export async function updateBookingApi(id: string, payload: ApiUpdateBookingPayload) {
   clearApiCache("getBookingsApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/booking/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/booking/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1528,7 +1528,7 @@ export async function getCustomerDropdownApi(params?: { search?: string; forceRe
     if (params?.search) query.append("search", params.search);
     query.append("limit", "100");
 
-    const res = await fetch(`${API_BASE_URL}/admin/customer/dropdown?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/api/admin/customer/dropdown?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1559,7 +1559,7 @@ export interface ApiCreateCustomerPayload {
 
 export async function createCustomerApi(payload: ApiCreateCustomerPayload) {
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/customer`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/customer`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1635,7 +1635,7 @@ export async function getAdminCustomersApi(params?: {
     if (params?.search) query.append("search", params.search);
     if (params?.status !== undefined) query.append("status", String(params.status));
 
-    const res = await fetch(`${API_BASE_URL}/admin/customer?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/api/admin/customer?${query.toString()}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1649,7 +1649,7 @@ export async function getAdminCustomersApi(params?: {
 
 export async function updateCustomerApi(id: string, payload: ApiCreateCustomerPayload & { status?: boolean }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/customer/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/customer/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1667,7 +1667,7 @@ export async function updateCustomerApi(id: string, payload: ApiCreateCustomerPa
 
 export async function deleteCustomerApi(id: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/admin/customer/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/customer/${id}`, {
       method: "DELETE",
     });
     const data = await res.json();
@@ -1685,7 +1685,7 @@ export async function deleteCustomerApi(id: string) {
 
 export async function sendBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/booking/customer/send-otp`, {
+    const res = await fetch(`${API_BASE_URL}/api/booking/customer/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1707,7 +1707,7 @@ export async function sendBookingCustomerOtpApi(payload: { customerId?: string; 
 
 export async function verifyBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string; otp: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/booking/customer/verify-otp`, {
+    const res = await fetch(`${API_BASE_URL}/api/booking/customer/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1721,7 +1721,7 @@ export async function verifyBookingCustomerOtpApi(payload: { customerId?: string
 
 export async function sendCustomerOtpApi(payload: { mobile: string; customerId?: string }) {
   try {
-    const res = await fetch(`${API_BASE_URL}/customer/auth/send-otp`, {
+    const res = await fetch(`${API_BASE_URL}/api/customer/auth/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1739,7 +1739,7 @@ export async function getCustomerTrustStatusApi(customerId: string, forceRefresh
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await fetch(`${API_BASE_URL}/customer-trust/${customerId}`);
+    const res = await fetch(`${API_BASE_URL}/api/customer-trust/${customerId}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1769,7 +1769,7 @@ export interface ApiCustomerAddressPayload {
 export async function createCustomerAddressApi(payload: ApiCustomerAddressPayload) {
   clearApiCache("getCustomerAddressesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/customer-address`, {
+    const res = await fetch(`${API_BASE_URL}/api/customer-address`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1787,7 +1787,7 @@ export async function getCustomerAddressesApi(customerId: string, forceRefresh?:
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await fetch(`${API_BASE_URL}/customer-address/${customerId}`);
+    const res = await fetch(`${API_BASE_URL}/api/customer-address/${customerId}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1802,7 +1802,7 @@ export async function getCustomerAddressesApi(customerId: string, forceRefresh?:
 export async function updateCustomerAddressApi(id: string, payload: Partial<ApiCustomerAddressPayload>) {
   clearApiCache("getCustomerAddressesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/customer-address/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/customer-address/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -1817,7 +1817,7 @@ export async function updateCustomerAddressApi(id: string, payload: Partial<ApiC
 export async function deleteCustomerAddressApi(id: string) {
   clearApiCache("getCustomerAddressesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/customer-address/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/customer-address/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -1869,7 +1869,7 @@ export async function getPartnersApi(params?: GetPartnersParams, forceRefresh?: 
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner${queryString ? `?${queryString}` : ""}`);
+    const res = await authFetch(`${API_BASE_URL}/api/partner${queryString ? `?${queryString}` : ""}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1887,7 +1887,7 @@ export async function getPartnerDropdownApi(forceRefresh?: boolean) {
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner/dropdown`);
+    const res = await authFetch(`${API_BASE_URL}/api/partner/dropdown`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -1905,7 +1905,7 @@ export async function getPartnerByIdApi(id: string, forceRefresh?: boolean) {
     return apiCache.get(cacheKey);
   }
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner/${id}`);
+    const res = await authFetch(`${API_BASE_URL}/api/partner/${id}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false && data.data && !Array.isArray(data.data)) {
       apiCache.set(cacheKey, data);
@@ -1936,7 +1936,7 @@ export async function getPartnerByIdApi(id: string, forceRefresh?: boolean) {
 export async function assignPartnerToBookingApi(bookingId: string, partnerId: string) {
   clearApiCache("getBookingsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/booking/${bookingId}/assign-partner`, {
+    const res = await authFetch(`${API_BASE_URL}/api/booking/${bookingId}/assign-partner`, {
       method: "PUT",
       body: JSON.stringify({ partnerId }),
     });
@@ -1986,7 +1986,7 @@ export interface CreatePartnerPayload {
 
 export async function sendPartnerMobileOtpApi(mobile: string) {
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner/send-mobile-verification-otp`, {
+    const res = await authFetch(`${API_BASE_URL}/api/partner/send-mobile-verification-otp`, {
       method: "POST",
       body: JSON.stringify({ mobile }),
     });
@@ -1999,7 +1999,7 @@ export async function sendPartnerMobileOtpApi(mobile: string) {
 
 export async function verifyPartnerMobileOtpApi(mobile: string, otp: string) {
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner/verify-mobile`, {
+    const res = await authFetch(`${API_BASE_URL}/api/partner/verify-mobile`, {
       method: "POST",
       body: JSON.stringify({ mobile, otp }),
     });
@@ -2012,7 +2012,7 @@ export async function verifyPartnerMobileOtpApi(mobile: string, otp: string) {
 
 export async function sendGuarantorMobileOtpApi(mobile: string) {
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner/send-guarantor-verification-otp`, {
+    const res = await authFetch(`${API_BASE_URL}/api/partner/send-guarantor-verification-otp`, {
       method: "POST",
       body: JSON.stringify({ mobile }),
     });
@@ -2025,7 +2025,7 @@ export async function sendGuarantorMobileOtpApi(mobile: string) {
 
 export async function verifyGuarantorMobileOtpApi(mobile: string, otp: string) {
   try {
-    const res = await authFetch(`${API_BASE_URL}/partner/verify-guarantor-mobile`, {
+    const res = await authFetch(`${API_BASE_URL}/api/partner/verify-guarantor-mobile`, {
       method: "POST",
       body: JSON.stringify({ mobile, otp }),
     });
@@ -2086,7 +2086,7 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
       bodyData = formData;
     }
 
-    const res = await authFetch(`${API_BASE_URL}/partner`, {
+    const res = await authFetch(`${API_BASE_URL}/api/partner`, {
       method: "POST",
       body: bodyData,
     });
@@ -2147,7 +2147,7 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
       bodyData = formData;
     }
 
-    const res = await authFetch(`${API_BASE_URL}/partner/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/partner/${id}`, {
       method: "PUT",
       body: bodyData,
     });
@@ -2203,7 +2203,7 @@ export async function getAdminTrendingPackagesApi(forceRefresh?: boolean) {
   if (cached) return cached;
 
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/trending`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/trending`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2223,7 +2223,7 @@ export async function getTrendingCatalogPackagesApi(params?: { search?: string; 
 
   const queryString = query.toString() ? `?${query.toString()}` : "";
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/trending/catalog${queryString}`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/trending/catalog${queryString}`);
     return await res.json();
   } catch (error) {
     console.error("getTrendingCatalogPackagesApi error:", error);
@@ -2234,7 +2234,7 @@ export async function getTrendingCatalogPackagesApi(params?: { search?: string; 
 export async function addTrendingPackageApi(packageId: string) {
   clearApiCache("getAdminTrendingPackagesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/trending`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/trending`, {
       method: "POST",
       body: JSON.stringify({ packageId }),
     });
@@ -2248,7 +2248,7 @@ export async function addTrendingPackageApi(packageId: string) {
 export async function removeTrendingPackageApi(packageId: string) {
   clearApiCache("getAdminTrendingPackagesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/trending/${packageId}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/trending/${packageId}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -2280,7 +2280,7 @@ export async function getCitiesApi(params?: { status?: boolean; search?: string;
   if (cached) return cached;
 
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/cities${queryString}`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/cities${queryString}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2294,7 +2294,7 @@ export async function getCitiesApi(params?: { status?: boolean; search?: string;
 
 export async function getCityDetailsApi(id: string) {
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/cities/${id}`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/cities/${id}`);
     return await res.json();
   } catch (error) {
     console.error("getCityDetailsApi error:", error);
@@ -2305,7 +2305,7 @@ export async function getCityDetailsApi(id: string) {
 export async function addCityApi(payload: { cityName: string; stateName: string; status?: boolean }) {
   clearApiCache("getCitiesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/cities`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/cities`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -2319,7 +2319,7 @@ export async function addCityApi(payload: { cityName: string; stateName: string;
 export async function updateCityApi(id: string, payload: { cityName?: string; stateName?: string; status?: boolean }) {
   clearApiCache("getCitiesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/cities/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/cities/${id}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
@@ -2333,7 +2333,7 @@ export async function updateCityApi(id: string, payload: { cityName?: string; st
 export async function deleteCityApi(id: string) {
   clearApiCache("getCitiesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/cities/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/cities/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -2371,7 +2371,7 @@ export async function getWebsiteZonesApi(params?: { search?: string; city?: stri
   const queryString = query.toString() ? `?${query.toString()}` : "";
 
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/zones${queryString}`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/zones${queryString}`);
     const data = await res.json();
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2386,7 +2386,7 @@ export async function getWebsiteZonesApi(params?: { search?: string; city?: stri
 export async function addWebsiteZoneApi(formData: FormData) {
   clearApiCache("getWebsiteZonesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/zones`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/zones`, {
       method: "POST",
       body: formData,
     });
@@ -2400,7 +2400,7 @@ export async function addWebsiteZoneApi(formData: FormData) {
 export async function updateWebsiteZoneApi(id: string, formData: FormData) {
   clearApiCache("getWebsiteZonesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/zones/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/zones/${id}`, {
       method: "PATCH",
       body: formData,
     });
@@ -2414,7 +2414,7 @@ export async function updateWebsiteZoneApi(id: string, formData: FormData) {
 export async function deleteWebsiteZoneApi(id: string) {
   clearApiCache("getWebsiteZonesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/website/zones/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/website/zones/${id}`, {
       method: "DELETE",
     });
     return await res.json();
@@ -2499,7 +2499,7 @@ export async function getAdminReviewsApi(params?: {
   const queryString = query.toString() ? `?${query.toString()}` : "";
 
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/reviews${queryString}`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/reviews${queryString}`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2514,7 +2514,7 @@ export async function getAdminReviewsApi(params?: {
 export async function moderateAdminReviewApi(reviewId: string, action: "approve" | "hide") {
   clearApiCache("getAdminReviewsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/reviews/${reviewId}/moderate`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}/moderate`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
@@ -2529,7 +2529,7 @@ export async function moderateAdminReviewApi(reviewId: string, action: "approve"
 export async function updateAdminReviewResponseApi(reviewId: string, response: string) {
   clearApiCache("getAdminReviewsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/reviews/${reviewId}/response`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}/response`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ response }),
@@ -2601,7 +2601,7 @@ export interface ApiAdminReviewDetails {
 
 export async function getAdminReviewDetailsApi(reviewId: string) {
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/reviews/${reviewId}`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}`);
     return await safeJsonResponse(res);
   } catch (error) {
     console.error("getAdminReviewDetailsApi error:", error);
@@ -2624,7 +2624,7 @@ export async function getPlatformSettingsApi(forceRefresh?: boolean) {
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/settings/platform`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/settings/platform`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2639,7 +2639,7 @@ export async function getPlatformSettingsApi(forceRefresh?: boolean) {
 export async function updatePlatformSettingsApi(payload: { platformConvenienceFee?: number; gstRate?: number }) {
   clearApiCache("getPlatformSettingsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/settings/platform`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/settings/platform`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2667,7 +2667,7 @@ export async function getRolesApi(forceRefresh?: boolean) {
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/roles`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/roles`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2682,7 +2682,7 @@ export async function getRolesApi(forceRefresh?: boolean) {
 export async function createRoleApi(payload: { name: string; permissions?: string[] }) {
   clearApiCache("getRolesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/roles`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/roles`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2697,7 +2697,7 @@ export async function createRoleApi(payload: { name: string; permissions?: strin
 export async function updateRoleApi(id: string, payload: { name?: string; permissions?: string[]; status?: string }) {
   clearApiCache("getRolesApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/roles/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/roles/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2726,7 +2726,7 @@ export async function getPermissionsApi(forceRefresh?: boolean) {
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/permissions`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin/permissions`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2741,7 +2741,7 @@ export async function getPermissionsApi(forceRefresh?: boolean) {
 export async function createPermissionApi(payload: { name: string; code?: string; module: string; action: string; status?: string }) {
   clearApiCache("getPermissionsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/permissions`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/permissions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2756,7 +2756,7 @@ export async function createPermissionApi(payload: { name: string; code?: string
 export async function updatePermissionApi(id: string, payload: { name?: string; code?: string; module?: string; action?: string; status?: string }) {
   clearApiCache("getPermissionsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/permissions/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/permissions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2771,7 +2771,7 @@ export async function updatePermissionApi(id: string, payload: { name?: string; 
 export async function deletePermissionApi(id: string) {
   clearApiCache("getPermissionsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/permissions/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/permissions/${id}`, {
       method: "DELETE",
     });
     return await safeJsonResponse(res);
@@ -2798,7 +2798,7 @@ export async function getAdminsApi(forceRefresh?: boolean) {
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin`);
+    const res = await authFetch(`${API_BASE_URL}/api/admin`);
     const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
@@ -2813,7 +2813,7 @@ export async function getAdminsApi(forceRefresh?: boolean) {
 export async function createAdminApi(payload: { name: string; email: string; password?: string; role: string; status?: string }) {
   clearApiCache("getAdminsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/create-admins`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/create-admins`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2828,7 +2828,7 @@ export async function createAdminApi(payload: { name: string; email: string; pas
 export async function updateAdminApi(id: string, payload: { name?: string; email?: string; password?: string; role?: string; status?: string }) {
   clearApiCache("getAdminsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -2843,7 +2843,7 @@ export async function updateAdminApi(id: string, payload: { name?: string; email
 export async function deleteAdminApi(id: string) {
   clearApiCache("getAdminsApi");
   try {
-    const res = await authFetch(`${API_BASE_URL}/admin/${id}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/${id}`, {
       method: "DELETE",
     });
     return await safeJsonResponse(res);
