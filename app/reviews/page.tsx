@@ -207,7 +207,7 @@ export default function ReviewsPage() {
     if (typeof videoObj === "string") return videoObj;
     const directUrl = videoObj.videoUrl || videoObj.url;
     if (directUrl) return directUrl;
-    if (videoObj.objectName) return `http://localhost:5000/uploads/${videoObj.objectName}`;
+    if (videoObj.objectName) return `https://helpmate-api.kvtmedia.com/uploads/${videoObj.objectName}`;
     return "";
   };
 

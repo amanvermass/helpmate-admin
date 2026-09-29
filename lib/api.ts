@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5005/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://helpmate-api.kvtmedia.com/api";
 
 export interface ApiAdmin {
   _id: string;
@@ -1101,19 +1101,29 @@ export function formatImageUrl(imgUrl?: string): string {
   // 3. Convert backslashes (Windows paths like uploads\image.png) to forward slashes
   trimmed = trimmed.replace(/\\/g, "/");
 
-  // 4. Handle backend API media URLs via same-origin Next.js proxy rewrite
+  // 4. Proxy /api/media/ and /uploads/ URLs via same-origin Next.js rewrite to bypass CORS
   if (trimmed.includes("/api/media/")) {
-    const mediaIdx = trimmed.indexOf("/api/media/");
-    trimmed = trimmed.substring(mediaIdx);
-  } else if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-    const backendOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+    const idx = trimmed.indexOf("/api/media/");
+    return trimmed.substring(idx);
+  }
+
+  if (trimmed.includes("/uploads/")) {
+    const idx = trimmed.indexOf("/uploads/");
+    return trimmed.substring(idx);
+  }
+
+  // 5. Convert any localhost or 127.0.0.1 domain to production
+  trimmed = trimmed.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/gi, "https://helpmate-api.kvtmedia.com");
+
+  // 6. Handle relative URLs by prepending production API base
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
     if (!trimmed.startsWith("/")) {
       trimmed = `/${trimmed}`;
     }
-    trimmed = `${backendOrigin}${trimmed}`;
+    trimmed = `https://helpmate-api.kvtmedia.com${trimmed}`;
   }
 
-  // 5. Safely encode space characters and unescaped symbols
+  // 7. Safely encode space characters and unescaped symbols
   try {
     return encodeURI(decodeURI(trimmed));
   } catch {
