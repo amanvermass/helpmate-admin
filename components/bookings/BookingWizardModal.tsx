@@ -895,17 +895,19 @@ export function BookingWizardModal({
   // Dynamic fetch of Service Actions by Category ID and Subcategory ID
   React.useEffect(() => {
     if (!isOpen) return;
-    if (selectedCategory && selectedType) {
+    if (selectedCategory) {
       const targetCatObj = apiCategories.find(
         (c) => c.id === selectedCategory || c.categoryName.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
       );
       const targetCatId = targetCatObj?.id || selectedCategory;
 
       const allSubCats = apiCategories.flatMap((c) => c.subCategories || []);
-      const targetSubObj = allSubCats.find(
-        (sc) => sc.id === selectedType || sc.name.toLowerCase().trim() === selectedType.toLowerCase().trim()
-      );
-      const targetSubId = targetSubObj?.id || selectedType;
+      const targetSubObj = selectedType
+        ? allSubCats.find(
+            (sc) => sc.id === selectedType || sc.name.toLowerCase().trim() === selectedType.toLowerCase().trim()
+          )
+        : undefined;
+      const targetSubId = targetSubObj?.id || (selectedType ? selectedType : undefined);
 
       getServiceActionDropdownApi({
         categoryId: targetCatId,
@@ -924,9 +926,9 @@ export function BookingWizardModal({
     }
   }, [selectedCategory, selectedType, apiCategories, isOpen]);
 
-  // Cascading Service Action Options for Selected Category + Subcategory from /api/service-actions/dropdown
+  // Cascading Service Action Options for Selected Category from /api/service-actions/dropdown
   const serviceActionOptions = React.useMemo(() => {
-    if (!selectedCategory || !selectedType) return [];
+    if (!selectedCategory) return [];
     const map = new Map<string, { value: string; label: string }>();
 
     apiServiceActions.forEach((act: any) => {
@@ -939,7 +941,7 @@ export function BookingWizardModal({
     });
 
     return Array.from(map.values());
-  }, [selectedCategory, selectedType, apiServiceActions]);
+  }, [selectedCategory, apiServiceActions]);
 
   // Auto-select Service Action if exactly 1 service action exists for selected subcategory
   React.useEffect(() => {
@@ -962,7 +964,7 @@ export function BookingWizardModal({
   // Dynamic fetch of Packages by Service Action ID (and Category/Subcategory ID)
   React.useEffect(() => {
     if (!isOpen) return;
-    if (selectedCategory && selectedType && selectedActionFilter) {
+    if (selectedCategory && selectedActionFilter) {
       const targetCatObj = apiCategories.find(
         (c) => c.id === selectedCategory || c.categoryName.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
       );
@@ -970,11 +972,13 @@ export function BookingWizardModal({
       const targetCatName = targetCatObj?.categoryName || selectedCategory;
 
       const allSubCats = apiCategories.flatMap((c) => c.subCategories || []);
-      const targetSubObj = allSubCats.find(
-        (sc) => sc.id === selectedType || sc.name.toLowerCase().trim() === selectedType.toLowerCase().trim()
-      );
-      const targetSubId = targetSubObj?.id || selectedType;
-      const targetSubName = targetSubObj?.name || selectedType;
+      const targetSubObj = selectedType
+        ? allSubCats.find(
+            (sc) => sc.id === selectedType || sc.name.toLowerCase().trim() === selectedType.toLowerCase().trim()
+          )
+        : undefined;
+      const targetSubId = targetSubObj?.id || (selectedType ? selectedType : undefined);
+      const targetSubName = targetSubObj?.name || (selectedType ? selectedType : undefined);
 
       getPackagesApi({
         serviceActionId: selectedActionFilter,
@@ -997,9 +1001,9 @@ export function BookingWizardModal({
     }
   }, [selectedCategory, selectedType, selectedActionFilter, apiCategories, isOpen]);
 
-  // Available Packages filtered strictly by selected Category, Subcategory, and Service Action
+  // Available Packages filtered strictly by selected Category and Service Action
   const availablePackages: ServicePackageItem[] = React.useMemo(() => {
-    if (!selectedCategory || !selectedType || !selectedActionFilter) return [];
+    if (!selectedCategory || !selectedActionFilter) return [];
     const pkgs: ServicePackageItem[] = [];
     const seenIds = new Set<string>();
     const allSubCats = apiCategories.flatMap((c) => c.subCategories || []);
@@ -2361,11 +2365,11 @@ export function BookingWizardModal({
                       options={[
                         {
                           value: "",
-                          label: selectedType
-                            ? "Select Service Action..."
-                            : selectedCategory
-                              ? "Select Subcategory first"
-                              : "Select Category first",
+                          label: selectedCategory
+                            ? serviceActionOptions.length > 0
+                              ? "Select Service Action..."
+                              : "No service actions found for category"
+                            : "Select Category first",
                         },
                         ...serviceActionOptions,
                       ]}

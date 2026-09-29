@@ -2445,7 +2445,11 @@ export interface ApiAdminReview {
   video?: {
     videoUrl?: string;
     thumbnailUrl?: string;
-    duration?: string;
+    duration?: string | number;
+    objectName?: string;
+    originalName?: string;
+    mimeType?: string;
+    size?: number;
   } | null;
   isPublished: boolean;
   publishedAt?: string;
@@ -2594,6 +2598,254 @@ export async function getAdminReviewDetailsApi(reviewId: string) {
     return { success: false, message: "Failed to fetch review details." };
   }
 }
+
+// ─── PLATFORM FEE & GST SETTINGS APIs ───
+export interface ApiPlatformSettings {
+  id?: string;
+  _id?: string;
+  platformConvenienceFee: number;
+  gstRate: number;
+  updatedBy?: { _id?: string; name?: string; email?: string } | null;
+  updatedAt?: string;
+}
+
+export async function getPlatformSettingsApi(forceRefresh?: boolean) {
+  const cacheKey = "getPlatformSettingsApi";
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/settings/platform`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getPlatformSettingsApi error:", error);
+    return { success: false, message: "Failed to fetch platform settings." };
+  }
+}
+
+export async function updatePlatformSettingsApi(payload: { platformConvenienceFee?: number; gstRate?: number }) {
+  clearApiCache("getPlatformSettingsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/settings/platform`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("updatePlatformSettingsApi error:", error);
+    return { success: false, message: "Failed to update platform settings." };
+  }
+}
+
+// ─── ADMIN ROLES APIs ───
+export interface ApiRole {
+  _id: string;
+  name: string;
+  code?: string;
+  permissions?: (string | { _id: string; name?: string; code?: string; module?: string; action?: string })[];
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getRolesApi(forceRefresh?: boolean) {
+  const cacheKey = "getRolesApi";
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/roles`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getRolesApi error:", error);
+    return { success: false, message: "Failed to fetch admin roles." };
+  }
+}
+
+export async function createRoleApi(payload: { name: string; permissions?: string[] }) {
+  clearApiCache("getRolesApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/roles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("createRoleApi error:", error);
+    return { success: false, message: "Failed to create role." };
+  }
+}
+
+export async function updateRoleApi(id: string, payload: { name?: string; permissions?: string[]; status?: string }) {
+  clearApiCache("getRolesApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/roles/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("updateRoleApi error:", error);
+    return { success: false, message: "Failed to update role." };
+  }
+}
+
+// ─── ADMIN PERMISSIONS APIs ───
+export interface ApiPermission {
+  _id: string;
+  name: string;
+  code: string;
+  module: string;
+  action: "view" | "create" | "edit" | "delete";
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getPermissionsApi(forceRefresh?: boolean) {
+  const cacheKey = "getPermissionsApi";
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/permissions`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getPermissionsApi error:", error);
+    return { success: false, message: "Failed to fetch permissions." };
+  }
+}
+
+export async function createPermissionApi(payload: { name: string; code?: string; module: string; action: string; status?: string }) {
+  clearApiCache("getPermissionsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/permissions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("createPermissionApi error:", error);
+    return { success: false, message: "Failed to create permission." };
+  }
+}
+
+export async function updatePermissionApi(id: string, payload: { name?: string; code?: string; module?: string; action?: string; status?: string }) {
+  clearApiCache("getPermissionsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/permissions/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("updatePermissionApi error:", error);
+    return { success: false, message: "Failed to update permission." };
+  }
+}
+
+export async function deletePermissionApi(id: string) {
+  clearApiCache("getPermissionsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/permissions/${id}`, {
+      method: "DELETE",
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("deletePermissionApi error:", error);
+    return { success: false, message: "Failed to delete permission." };
+  }
+}
+
+// ─── ADMIN USERS / STAFF APIs ───
+export interface ApiAdminUserItem {
+  _id: string;
+  adminId?: string;
+  name: string;
+  email: string;
+  role?: string | ApiRole | { _id: string; name: string };
+  status?: "active" | "inactive" | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getAdminsApi(forceRefresh?: boolean) {
+  const cacheKey = "getAdminsApi";
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getAdminsApi error:", error);
+    return { success: false, message: "Failed to fetch admin users." };
+  }
+}
+
+export async function createAdminApi(payload: { name: string; email: string; password?: string; role: string; status?: string }) {
+  clearApiCache("getAdminsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/create-admins`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("createAdminApi error:", error);
+    return { success: false, message: "Failed to create admin user." };
+  }
+}
+
+export async function updateAdminApi(id: string, payload: { name?: string; email?: string; password?: string; role?: string; status?: string }) {
+  clearApiCache("getAdminsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("updateAdminApi error:", error);
+    return { success: false, message: "Failed to update admin user." };
+  }
+}
+
+export async function deleteAdminApi(id: string) {
+  clearApiCache("getAdminsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/admin/${id}`, {
+      method: "DELETE",
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("deleteAdminApi error:", error);
+    return { success: false, message: "Failed to delete admin user." };
+  }
+}
+
+
+
+
 
 
 

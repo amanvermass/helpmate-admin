@@ -192,13 +192,37 @@ export default function ReviewsPage() {
     }
   };
 
+  const hasValidVideo = (videoObj: any): boolean => {
+    if (!videoObj) return false;
+    if (typeof videoObj === "string") return videoObj.trim().length > 0;
+    if (typeof videoObj === "object") {
+      const url = videoObj.videoUrl || videoObj.url || videoObj.objectName || videoObj.originalName;
+      return typeof url === "string" && url.trim().length > 0;
+    }
+    return false;
+  };
+
+  const getVideoUrl = (videoObj: any): string => {
+    if (!videoObj) return "";
+    if (typeof videoObj === "string") return videoObj;
+    const directUrl = videoObj.videoUrl || videoObj.url;
+    if (directUrl) return directUrl;
+    if (videoObj.objectName) return `http://localhost:5000/uploads/${videoObj.objectName}`;
+    return "";
+  };
+
+  const getVideoDuration = (videoObj: any): string => {
+    if (!videoObj || !videoObj.duration) return "0:30";
+    return String(videoObj.duration);
+  };
+
   // KPIs
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)
     : "5.0";
   const approvedCount = reviews.filter((r) => r.moderation?.status === "approved" || r.isPublished).length;
   const webPublishedCount = reviews.filter((r) => r.isPublished).length;
-  const videoReviewsCount = reviews.filter((r) => !!r.video).length;
+  const videoReviewsCount = reviews.filter((r) => hasValidVideo(r.video)).length;
 
   const tableFilters = (
     <div className="flex items-center gap-2 flex-wrap">
@@ -353,10 +377,10 @@ export default function ReviewsPage() {
             <span className="text-[10px] text-slate-400 italic">No text review provided</span>
           )}
 
-          {row.video && (
+          {hasValidVideo(row.video) && (
             <div className="flex items-center gap-2 p-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/80 w-fit">
               <div className="relative w-7 h-10 rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-purple-300">
-                {row.video.thumbnailUrl ? (
+                {row.video?.thumbnailUrl ? (
                   <img src={row.video.thumbnailUrl} alt="Video Thumbnail" className="w-full h-full object-cover opacity-80" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white"><Video className="w-3 h-3" /></div>
@@ -366,7 +390,7 @@ export default function ReviewsPage() {
               <div className="text-[10px]">
                 <span className="font-black text-purple-900 dark:text-purple-200 block flex items-center gap-1">
                   <Film className="w-3 h-3 text-purple-600 shrink-0" />
-                  <span>Vertical Video (9:16) • {row.video.duration || "0:30"}</span>
+                  <span>Vertical Video (9:16) • {getVideoDuration(row.video)}</span>
                 </span>
                 <span className="text-[9px] text-purple-700 dark:text-purple-300 font-medium">Customer Video Review</span>
               </div>
@@ -675,7 +699,7 @@ export default function ReviewsPage() {
                   </div>
 
                   {/* Vertical Video Player (9:16 Aspect Ratio) */}
-                  {(modalDetails?.video || selectedReview.video) && (
+                  {hasValidVideo(modalDetails?.video || selectedReview.video) && (
                     <div className="p-4 rounded-2xl bg-gradient-to-b from-purple-900/10 to-slate-900/10 dark:from-purple-950/40 dark:to-slate-900/80 border border-purple-200 dark:border-purple-800/80 space-y-3">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-extrabold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
@@ -683,14 +707,14 @@ export default function ReviewsPage() {
                           <span>Customer Video Review (9:16 Format)</span>
                         </span>
                         <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-300">
-                          {(modalDetails?.video?.duration || selectedReview.video?.duration) || "0:30"} • Vertical 9:16
+                          {getVideoDuration(modalDetails?.video || selectedReview.video)} • Vertical 9:16
                         </span>
                       </div>
 
                       <div className="flex justify-center">
                         <div className="relative w-56 h-[340px] rounded-2xl overflow-hidden bg-black border-2 border-purple-500 shadow-xl group">
                           <video
-                            src={(modalDetails?.video?.videoUrl || selectedReview.video?.videoUrl)}
+                            src={getVideoUrl(modalDetails?.video || selectedReview.video)}
                             poster={(modalDetails?.video?.thumbnailUrl || selectedReview.video?.thumbnailUrl)}
                             controls
                             className="w-full h-full object-cover"
