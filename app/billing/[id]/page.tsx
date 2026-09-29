@@ -134,7 +134,7 @@ export default function InvoiceDetailPage() {
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-2xl bg-white border border-slate-200 dark:border-slate-700 shrink-0 shadow-xs flex items-center justify-center">
               <img
-                src="https://helpmate-theta.vercel.app/logo.png"
+                src="/logo.png"
                 alt="HelpMate Logo"
                 className="h-9 w-9 object-contain"
               />
@@ -347,7 +347,7 @@ export default function InvoiceDetailPage() {
             <div className="flex items-start gap-3">
               <div className="p-1.5 rounded-xl bg-white border border-slate-300 shrink-0 flex items-center justify-center">
                 <img
-                  src="https://helpmate-theta.vercel.app/logo.png"
+                  src="/logo.png"
                   alt="HelpMate Logo"
                   className="h-8 w-8 object-contain"
                 />

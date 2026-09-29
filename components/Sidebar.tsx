@@ -377,7 +377,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           className="flex items-center gap-2.5 group"
         >
           <img
-            src="https://helpmate-theta.vercel.app/logo.png"
+            src="/logo.png"
             alt="HelpMate Logo"
             className="h-7 w-auto object-contain group-hover:scale-105 transition-transform"
           />

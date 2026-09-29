@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Lock,
@@ -8,27 +8,19 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ShieldCheck,
   RefreshCw,
-  KeyRound,
-  Wrench,
-  UserCheck,
 } from "lucide-react";
 import { useRbac } from "@/context/RbacContext";
-import { adminLoginApi } from "@/lib/api";
+import { adminLoginApi, formatImageUrl } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const { setRole } = useRbac();
 
-  // Login Mode State: "super_admin" | "office_admin" | "partner"
-  const [loginMode, setLoginMode] = useState<"super_admin" | "office_admin" | "partner">("super_admin");
-
-  // Form State
-  const [email, setEmail] = useState("admin@helpmate.com");
-  const [password, setPassword] = useState("12345678");
+  // Clean empty form state (no prefilled values)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
 
   // Loading & Error State
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +31,7 @@ export default function LoginPage() {
     setErrorMessage("");
 
     if (!email || !password) {
-      setErrorMessage("Please enter both email/admin ID and password.");
+      setErrorMessage("Please enter both email and password.");
       return;
     }
 
@@ -50,17 +42,18 @@ export default function LoginPage() {
         password,
       });
 
-      if (res.success && res.token) {
+      if (res && res.success && res.token) {
         localStorage.setItem("helpmate_admin_token", res.token);
         if (res.admin) {
           localStorage.setItem("helpmate_admin_user", JSON.stringify(res.admin));
         }
         localStorage.setItem("helpmate_admin_session", "true");
 
-        if (loginMode === "partner" || email.toLowerCase().includes("partner") || email.toLowerCase().includes("ramesh")) {
+        const userRole = res.admin?.role?.name || res.admin?.role || "Super Admin";
+        if (typeof userRole === "string" && (userRole.toLowerCase().includes("partner") || email.toLowerCase().includes("partner"))) {
           setRole("Service Partner");
           router.push("/partner");
-        } else if (loginMode === "office_admin" || email.toLowerCase().includes("office")) {
+        } else if (typeof userRole === "string" && (userRole.toLowerCase().includes("office") || email.toLowerCase().includes("office"))) {
           setRole("Office Admin");
           router.push("/");
         } else {
@@ -68,43 +61,13 @@ export default function LoginPage() {
           router.push("/");
         }
       } else {
-        // Fallback for demo/partner accounts
-        if (loginMode === "partner" || loginMode === "office_admin" || password === "helpmate2026") {
-          localStorage.setItem("helpmate_admin_session", "true");
-          if (loginMode === "partner") {
-            setRole("Service Partner");
-            router.push("/partner");
-          } else if (loginMode === "office_admin") {
-            setRole("Office Admin");
-            router.push("/");
-          } else {
-            setRole("Super Admin");
-            router.push("/");
-          }
-        } else {
-          setErrorMessage(res.message || "Invalid credentials. Please check email or password.");
-        }
+        setErrorMessage(res?.message || "Invalid credentials. Please check email and password.");
       }
     } catch (err) {
       console.error("Login error:", err);
       setErrorMessage("Failed to connect to authentication server.");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const switchMode = (mode: "super_admin" | "office_admin" | "partner") => {
-    setLoginMode(mode);
-    setErrorMessage("");
-    if (mode === "partner") {
-      setEmail("ramesh.hvac@helpmate.in");
-      setPassword("partner2026");
-    } else if (mode === "office_admin") {
-      setEmail("office.admin@helpmate.in");
-      setPassword("office123");
-    } else {
-      setEmail("admin@helpmate.com");
-      setPassword("12345678");
     }
   };
 
@@ -119,86 +82,26 @@ export default function LoginPage() {
         <div className="text-center space-y-3 flex flex-col items-center">
           <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-sm inline-block">
             <img
-              src="https://helpmate-theta.vercel.app/logo.png"
+              src="/logo.png"
               alt="HelpMate Logo"
               className="h-12 w-auto object-contain"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
             />
           </div>
 
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">HelpMate Portal</h1>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">HelpMate Admin</h1>
             <span className="text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-600 px-2 py-0.5 rounded border border-brand-200">
               Varanasi HQ
             </span>
           </div>
 
-          <p className="text-xs text-slate-500 max-w-xs">
-            Select your account type or sign in with your ID & password.
+          <p className="text-xs text-slate-500 max-w-xs font-medium">
+            Sign in with your email address and password.
           </p>
         </div>
 
-        {/* Portal Type Switcher Tabs (Super Admin / Office Admin / Partner) */}
-        <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-200/80 rounded-2xl text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => switchMode("super_admin")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${loginMode === "super_admin"
-              ? "bg-white text-brand-600 shadow-sm font-black"
-              : "text-slate-600 hover:text-slate-900"
-              }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-brand-600" />
-            <span>Super Admin</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => switchMode("office_admin")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${loginMode === "office_admin"
-              ? "bg-white text-purple-700 shadow-sm font-black"
-              : "text-slate-600 hover:text-slate-900"
-              }`}
-          >
-            <UserCheck className="w-3.5 h-3.5 text-purple-600" />
-            <span>Office Admin</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => switchMode("partner")}
-            className={`py-2 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer ${loginMode === "partner"
-              ? "bg-white text-emerald-700 shadow-sm font-black"
-              : "text-slate-600 hover:text-slate-900"
-              }`}
-          >
-            <Wrench className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Partner</span>
-          </button>
-        </div>
-
-        {/* Login Card */}
+        {/* Standard Login Card */}
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          {/* Active Mode Info Badge */}
-          <div
-            className={`p-3 rounded-2xl text-xs font-bold flex items-center justify-between border ${loginMode === "partner"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : loginMode === "office_admin"
-                ? "bg-purple-50 text-purple-800 border-purple-200"
-                : "bg-brand-50 text-brand-800 border-brand-200"
-              }`}
-          >
-            <span>
-              {loginMode === "partner"
-                ? "🔑 Service Partner Login (Ramesh Yadav)"
-                : loginMode === "office_admin"
-                  ? "🔑 Office Admin Desk (Dashboard, Bookings, Finance & Billing)"
-                  : "🔑 Super Admin HQ (Full System Access)"}
-            </span>
-          </div>
-
           {/* Error Message Display */}
           {errorMessage && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-600 flex items-center gap-2">
@@ -207,12 +110,12 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Single Password Login Form */}
+          {/* Standard Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             {/* Email Input */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 block">
-                {loginMode === "partner" ? "Partner Email / Phone" : "Email or Admin ID"}
+                Email Address / Admin ID
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -220,7 +123,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder={loginMode === "partner" ? "ramesh.hvac@helpmate.in" : "admin@helpmate.net.in"}
+                  placeholder="name@helpmate.com"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 transition-all font-medium"
                   required
                 />
@@ -243,7 +146,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -254,23 +157,16 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-3 rounded-xl ${loginMode === "partner"
-                ? "bg-emerald-600 hover:bg-emerald-700"
-                : loginMode === "office_admin"
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : "bg-brand-600 hover:bg-brand-700"
-                } text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50`}
+              className="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-lux flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 mt-2"
             >
               {isLoading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Authenticating Credentials...</span>
+                  <span>Signing In...</span>
                 </>
               ) : (
                 <>
-                  <span>
-                    Sign In To {loginMode === "partner" ? "Partner Portal" : loginMode === "office_admin" ? "Office Admin Desk" : "Super Admin HQ"}
-                  </span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

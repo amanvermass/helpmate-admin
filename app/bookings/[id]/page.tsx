@@ -1192,7 +1192,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <div className="flex items-start gap-3">
               <div className="p-1.5 rounded-xl bg-white border border-slate-300 shrink-0 flex items-center justify-center">
                 <img
-                  src="https://helpmate-theta.vercel.app/logo.png"
+                  src="/logo.png"
                   alt="HelpMate Logo"
                   className="h-8 w-8 object-contain"
                 />
