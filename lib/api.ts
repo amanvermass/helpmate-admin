@@ -1732,7 +1732,7 @@ export async function deleteCustomerApi(id: string, token?: string) {
 
 
 
-export async function sendBookingCustomerOtpApi(payload: { customerId?: string; mobile?: string; token?: string }) {
+export async function sendBookingCustomerOtpApi(payload: { customerId: string; token?: string }) {
   try {
     const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
     if (payload?.token) {
@@ -1742,19 +1742,11 @@ export async function sendBookingCustomerOtpApi(payload: { customerId?: string; 
     const res = await authFetch(`${API_BASE_URL}/api/booking/customer/send-otp`, {
       method: "POST",
       headers: reqHeaders,
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ customerId: payload.customerId }),
     });
-    const data = await safeJsonResponse(res);
-    if (!res.ok && payload.mobile) {
-      // Fallback to customer auth send-otp
-      return await sendCustomerOtpApi({ mobile: payload.mobile, token: payload.token });
-    }
-    return data;
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("sendBookingCustomerOtpApi error:", error);
-    if (payload.mobile) {
-      return await sendCustomerOtpApi({ mobile: payload.mobile, token: payload.token });
-    }
     return { success: false, message: "Failed to send OTP." };
   }
 }
@@ -1766,10 +1758,13 @@ export async function verifyBookingCustomerOtpApi(payload: { customerId?: string
       reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
     }
 
+    const bodyObj: Record<string, string> = { otp: payload.otp };
+    if (payload.customerId) bodyObj.customerId = payload.customerId;
+
     const res = await authFetch(`${API_BASE_URL}/api/booking/customer/verify-otp`, {
       method: "POST",
       headers: reqHeaders,
-      body: JSON.stringify(payload),
+      body: JSON.stringify(bodyObj),
     });
     return await safeJsonResponse(res);
   } catch (error) {
@@ -1778,23 +1773,11 @@ export async function verifyBookingCustomerOtpApi(payload: { customerId?: string
   }
 }
 
-export async function sendCustomerOtpApi(payload: { mobile: string; customerId?: string; token?: string }) {
-  try {
-    const reqHeaders: Record<string, string> = { "Content-Type": "application/json" };
-    if (payload?.token) {
-      reqHeaders["Authorization"] = payload.token.startsWith("Bearer ") ? payload.token : `Bearer ${payload.token}`;
-    }
-
-    const res = await authFetch(`${API_BASE_URL}/api/customer/auth/send-otp`, {
-      method: "POST",
-      headers: reqHeaders,
-      body: JSON.stringify(payload),
-    });
-    return await safeJsonResponse(res);
-  } catch (error) {
-    console.error("sendCustomerOtpApi error:", error);
-    return { success: false, message: "Failed to send OTP." };
+export async function sendCustomerOtpApi(payload: { customerId?: string; mobile?: string; token?: string }) {
+  if (payload.customerId) {
+    return sendBookingCustomerOtpApi({ customerId: payload.customerId, token: payload.token });
   }
+  return { success: false, message: "Customer ID is required to send OTP." };
 }
 
 export async function getCustomerTrustStatusApi(customerId: string, forceRefresh?: boolean, token?: string) {

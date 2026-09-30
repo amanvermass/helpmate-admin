@@ -167,11 +167,7 @@ export default function CategoriesPage() {
   };
 
   const handleRemoveSubcategoryTag = (index: number) => {
-    setSubcategoriesList(subcategoriesList.filter((_, i) => i !== index));
-    if (editingSubcatIndex === index) {
-      setEditingSubcatIndex(null);
-      setEditingSubcatName("");
-    }
+    // Subcategory removal disabled per user requirement ("dont give delete option")
   };
 
   const handleStartEditSubcategory = (index: number) => {
@@ -181,8 +177,8 @@ export default function CategoriesPage() {
 
   const handleSaveSubcategoryInline = (index: number) => {
     if (!editingSubcatName.trim()) {
-      handleRemoveSubcategoryTag(index);
       setEditingSubcatIndex(null);
+      setEditingSubcatName("");
       return;
     }
     const updated = [...subcategoriesList];
@@ -273,8 +269,25 @@ export default function CategoriesPage() {
     e.preventDefault();
     if (!catName.trim()) return;
 
+    let updatedSubs = [...subcategoriesList];
+    if (editingSubcatIndex !== null && editingSubcatIndex >= 0 && editingSubcatIndex < updatedSubs.length) {
+      if (editingSubcatName.trim()) {
+        updatedSubs[editingSubcatIndex] = {
+          ...updatedSubs[editingSubcatIndex],
+          name: editingSubcatName.trim(),
+        };
+      }
+    }
+
+    if (subCategoryInput.trim()) {
+      const tag = subCategoryInput.trim();
+      if (!updatedSubs.some((s) => s.name.toLowerCase() === tag.toLowerCase())) {
+        updatedSubs.push({ name: tag });
+      }
+    }
+
     const finalSlug = slug.trim() || catName.trim().toLowerCase().replace(/\s+/g, "-");
-    const subCatsPayload = subcategoriesList
+    const subCatsPayload = updatedSubs
       .filter((item) => item.name && item.name.trim())
       .map((item) => (item._id ? { _id: item._id, name: item.name.trim() } : { name: item.name.trim() }));
 
@@ -796,12 +809,12 @@ export default function CategoriesPage() {
                                     }
                                   }}
                                   autoFocus
-                                  className="w-28 p-1 text-xs font-bold bg-transparent text-slate-900 dark:text-white outline-none"
+                                  className="min-w-[120px] max-w-[200px] p-1 text-xs font-bold bg-transparent text-slate-900 dark:text-white outline-none"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => handleSaveSubcategoryInline(idx)}
-                                  className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
+                                  className="p-1 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer"
                                   title="Save rename"
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -809,7 +822,7 @@ export default function CategoriesPage() {
                                 <button
                                   type="button"
                                   onClick={() => setEditingSubcatIndex(null)}
-                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
                                   title="Cancel"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -827,18 +840,10 @@ export default function CategoriesPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleStartEditSubcategory(idx)}
-                                  className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-300 transition-colors ml-0.5"
+                                  className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-300 transition-colors ml-0.5 cursor-pointer"
                                   title="Edit/Rename subcategory"
                                 >
                                   <Edit className="w-3 h-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveSubcategoryTag(idx)}
-                                  className="text-slate-400 hover:text-red-500 transition-colors"
-                                  title="Remove subcategory"
-                                >
-                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               </span>
                             )}

@@ -1169,23 +1169,18 @@ export function BookingWizardModal({
   };
 
   const handleSendOtp = async () => {
-    if (!customerPhone) {
-      setOtpError("Please select a customer or provide a mobile number first.");
+    if (!selectedCustomerId) {
+      setOtpError("Please select a customer first to send OTP.");
       return;
     }
     setIsSendingOtp(true);
     setOtpError("");
     setOtpMessage("");
     try {
-      let res;
-      if (selectedCustomerId && selectedCustomerId.length === 24) {
-        res = await sendBookingCustomerOtpApi({ customerId: selectedCustomerId, mobile: customerPhone });
-      } else {
-        res = await sendCustomerOtpApi({ mobile: customerPhone });
-      }
+      const res = await sendBookingCustomerOtpApi({ customerId: selectedCustomerId });
 
       if (res && (res.success || (res.message && res.message.toLowerCase().includes("sent")))) {
-        setOtpMessage(res.message || `OTP sent successfully to ${customerPhone}`);
+        setOtpMessage(res.message || `OTP sent successfully${customerPhone ? ` to ${customerPhone}` : ""}`);
       } else {
         setOtpError(res?.message || "Failed to send OTP. Please try again.");
       }
