@@ -365,6 +365,24 @@ export async function getCategoryDropdownApi(forceRefresh?: boolean) {
   }
 }
 
+export async function getSubcategoriesApi(categoryId: string, forceRefresh?: boolean) {
+  const cacheKey = `getSubcategoriesApi:${categoryId}`;
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/customer/subcategories?categoryId=${encodeURIComponent(categoryId)}`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getSubcategoriesApi error:", error);
+    return { success: false, message: "Failed to fetch subcategories." };
+  }
+}
+
+
 export async function createCategoryApi(
   payload:
     | FormData

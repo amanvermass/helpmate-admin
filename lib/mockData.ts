@@ -63,6 +63,7 @@ export interface CategoryItem {
   secondImageIconUrl?: string;
   subcategoriesCount: number;
   subcategories?: string[];
+  subCategoriesObj?: Array<{ _id?: string; name: string }>;
   servicesCount: number;
   status: "Active" | "Inactive";
   subServices?: CategorySubService[];
