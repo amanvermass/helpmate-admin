@@ -39,7 +39,9 @@ export function CustomerSearchPicker({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [localityOptions, setLocalityOptions] = useState<VaranasiLocality[]>([]);
+  const [localityOptions, setLocalityOptions] = useState<
+    { id: string; name: string; pincode: string; activeBookings?: number; activeTechs?: number; status?: any; isServiceable?: boolean }[]
+  >([]);
 
   useEffect(() => {
     async function loadLocalities() {
