@@ -205,7 +205,6 @@ export async function addLocalityApi(payload: { localityName: string; pincode: s
       body: JSON.stringify({
         localityName: payload.localityName,
         pincode: payload.pincode,
-        status: payload.status ?? true,
       }),
     });
     const data = await safeJsonResponse(res);
@@ -1523,6 +1522,19 @@ export async function updateBookingApi(id: string, payload: ApiUpdateBookingPayl
   } catch (error) {
     console.error("updateBookingApi error:", error);
     return { success: false, message: "Failed to update booking." };
+  }
+}
+
+export async function completeBookingApi(id: string) {
+  clearApiCache("getBookingsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/booking/${id}/complete`, {
+      method: "PUT",
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("completeBookingApi error:", error);
+    return { success: false, message: "Failed to complete booking." };
   }
 }
 

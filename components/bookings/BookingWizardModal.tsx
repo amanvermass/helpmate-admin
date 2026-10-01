@@ -119,7 +119,7 @@ export function BookingWizardModal({
   const [currentStep, setCurrentStep] = useState(1);
 
   // STEP 1: Customer & OTP States
-  const [customerList, setCustomerList] = useState<Customer[]>(initialCustomers);
+  const [customerList, setCustomerList] = useState<Customer[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [isLoadingCustomers, setIsLoadingCustomers] = useState<boolean>(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState<boolean>(false);
@@ -149,61 +149,33 @@ export function BookingWizardModal({
   const [isLoadingCatalog, setIsLoadingCatalog] = useState<boolean>(false);
 
   // STEP 2: Address & Location & Recipient Relationship Badges
-  const [localityList, setLocalityList] = useState(varanasiLocalities);
-  const [city, setCity] = useState("Varanasi");
-  const [locality, setLocality] = useState("Sigra");
-  const [pincode, setPincode] = useState("221002");
+  const [localityList, setLocalityList] = useState<VaranasiLocality[]>([]);
+  const [city, setCity] = useState("");
+  const [locality, setLocality] = useState("");
+  const [pincode, setPincode] = useState("");
   const [address, setAddress] = useState("");
   const [addressRecipientType, setAddressRecipientType] = useState<AddressRecipientType>("Self");
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("");
 
-  // Selected Saved Address ID (Default: addr-1)
-  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string>("addr-1");
+  // Selected Saved Address ID
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string>("");
 
   // Dynamic Saved Addresses list for selected customer
-  const [savedAddresses, setSavedAddresses] = useState([
+  const [savedAddresses, setSavedAddresses] = useState<
     {
-      id: "addr-1",
-      label: "Home (Primary)",
-      type: "Self" as AddressRecipientType,
-      recipientName: customerName || "Rajesh Agrawal",
-      recipientPhone: customerPhone || "+91 98390 12345",
-      locality: locality || "Sigra",
-      pincode: pincode || "221002",
-      address: address || "D-38/21, Sigra Central Main Road, Varanasi",
-    },
-    {
-      id: "addr-2",
-      label: "Office / Shop",
-      type: "Office / Work" as AddressRecipientType,
-      recipientName: customerName || "Rajesh Agrawal",
-      recipientPhone: customerPhone || "+91 98390 12345",
-      locality: "Sigra",
-      pincode: "221002",
-      address: "Shop 14, IP Mall Complex, Sigra, Varanasi",
-    },
-    {
-      id: "addr-3",
-      label: "Parents House",
-      type: "Family Member" as AddressRecipientType,
-      recipientName: "Rajesh Sharma (Father)",
-      recipientPhone: "+91 98765 43210",
-      locality: "Lanka",
-      pincode: "221005",
-      address: "B-12/4, Near BHU Gate, Lanka, Varanasi",
-    },
-    {
-      id: "addr-4",
-      label: "Friend's Flat",
-      type: "Friend / Neighbor" as AddressRecipientType,
-      recipientName: "Priya Verma (Friend)",
-      recipientPhone: "+91 98123 45678",
-      locality: "Godowlia",
-      pincode: "221001",
-      address: "Flat 202, Dashashwamedh Road, Godowlia, Varanasi",
-    },
-  ]);
+      id: string;
+      label: string;
+      type: AddressRecipientType;
+      recipientName: string;
+      recipientPhone: string;
+      locality: string;
+      pincode: string;
+      address: string;
+      landmark?: string;
+      isPrimary?: boolean;
+    }[]
+  >([]);
 
   const [isManagingAddresses, setIsManagingAddresses] = useState(false);
   const [editingAddressObj, setEditingAddressObj] = useState<typeof savedAddresses[0] | null>(null);
@@ -306,8 +278,8 @@ export function BookingWizardModal({
     setEditingAddressObj(null);
     setIsManagingAddresses(false);
     setSelectedSavedAddressId("new_custom");
-    setLocality(varanasiLocalities[0]?.name || "Sigra");
-    setPincode(varanasiLocalities[0]?.pincode || "221002");
+    setLocality(localityList[0]?.name || "");
+    setPincode(localityList[0]?.pincode || "");
     setAddress("");
     setAddressRecipientType("Self");
     setRecipientName("");
@@ -532,9 +504,9 @@ export function BookingWizardModal({
             id: c._id,
             name: c.fullName || c.name || "Customer",
             phone: c.mobile || c.phone || "",
-            email: c.email || `${(c.fullName || "customer").toLowerCase().replace(/\s+/g, "")}@gmail.com`,
-            locality: c.locality || "Sigra",
-            pincode: c.pincode || "221002",
+            email: c.email || "",
+            locality: c.locality || "",
+            pincode: c.pincode || "",
             address: c.address || "",
             tier: "Standard",
             totalSpend: 0,
@@ -571,8 +543,8 @@ export function BookingWizardModal({
             ) as AddressRecipientType,
             recipientName: cName || customerName || "Customer",
             recipientPhone: cPhone || customerPhone || "",
-            locality: typeof a.localityId === "object" ? (a.localityId?.localityName || a.localityId?.name || "Sigra") : "Sigra",
-            pincode: a.pincode || (typeof a.localityId === "object" ? a.localityId?.pincode : "") || "221002",
+            locality: typeof a.localityId === "object" ? (a.localityId?.localityName || a.localityId?.name || "") : "",
+            pincode: a.pincode || (typeof a.localityId === "object" ? a.localityId?.pincode : "") || "",
             address: a.serviceAddress || "",
             landmark: a.landmark || "",
             isPrimary: !!a.isPrimary,
@@ -745,11 +717,12 @@ export function BookingWizardModal({
     setIsOtpSkipped(false);
 
     // Step 2 Address
-    setSelectedSavedAddressId("addr-1");
-    setCity("Varanasi");
-    setLocality("Sigra");
-    setPincode("221002");
+    setSelectedSavedAddressId("");
+    setCity("");
+    setLocality("");
+    setPincode("");
     setAddress("");
+    setSavedAddresses([]);
     setAddressRecipientType("Self");
     setRecipientName("");
     setRecipientPhone("");
@@ -1425,13 +1398,13 @@ export function BookingWizardModal({
     const created: Booking = {
       id: generatedBookingId,
       jobId: generatedBookingId,
-      customerName: customerName || "Rajesh Kumar Agrawal",
-      customerPhone: customerPhone || "+91 98390 12345",
-      customerEmail: customerEmail || "rajesh@gmail.com",
+      customerName: customerName || "",
+      customerPhone: customerPhone || "",
+      customerEmail: customerEmail || "",
       city,
       locality,
       pincode,
-      address: address || "D-38/21, Sigra Central, Varanasi",
+      address: address || "",
       addressRecipientType,
       recipientName: addressRecipientType !== "Self" ? recipientName : undefined,
       recipientPhone: addressRecipientType !== "Self" ? recipientPhone : undefined,
@@ -2000,7 +1973,7 @@ export function BookingWizardModal({
                                     </div>
 
                                     <CustomSelect
-                                      label="Varanasi Service Locality *"
+                                      label="Service Locality *"
                                       value={editingAddressObj.locality}
                                       onChange={(val) => {
                                         const foundLoc = localityList.find((l) => l.name === val);
@@ -2249,7 +2222,7 @@ export function BookingWizardModal({
                       </div>
 
                       <CustomSelect
-                        label="Varanasi Service Locality *"
+                        label="Service Locality *"
                         value={locality}
                         onChange={(val) => {
                           setLocality(val);

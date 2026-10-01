@@ -132,7 +132,6 @@ export default function LocationsPage() {
         const res = await addLocalityApi({
           localityName: d.localityName.trim(),
           pincode: d.pincode.trim(),
-          status: d.status ?? true,
         });
 
         if (res && res.success) {
@@ -675,26 +674,7 @@ export default function LocationsPage() {
                   />
                 </div>
 
-                <div className="flex items-center gap-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="locality-status"
-                    checked={localityModal.data.status ?? true}
-                    onChange={(e) =>
-                      setLocalityModal({
-                        ...localityModal,
-                        data: { ...localityModal.data, status: e.target.checked },
-                      })
-                    }
-                    className="w-4 h-4 rounded accent-brand-600 cursor-pointer"
-                  />
-                  <label
-                    htmlFor="locality-status"
-                    className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
-                  >
-                    Active Operations (Serviceable)
-                  </label>
-                </div>
+
 
                 <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button

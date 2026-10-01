@@ -39,7 +39,7 @@ import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
 import { RescheduleBookingModal } from "@/components/bookings/RescheduleBookingModal";
 import { useRbac } from "@/context/RbacContext";
-import { getBookingCategoriesApi, getBookingsApi, ApiBookingCategoryStat } from "@/lib/api";
+import { getBookingCategoriesApi, getBookingsApi, completeBookingApi, ApiBookingCategoryStat } from "@/lib/api";
 
 export function mapApiBooking(b: any): Booking {
   const item0 = b.items?.[0];
@@ -356,6 +356,29 @@ function BookingsPageContent() {
         return b;
       })
     );
+  };
+
+  const handleMarkBookingCompleted = async (row: Booking) => {
+    try {
+      const res = await completeBookingApi(row.id);
+      if (res && res.success) {
+        setBookings((prev) =>
+          prev.map((b) => (b.id === row.id ? { ...b, status: "Completed" } : b))
+        );
+        setDrawerBooking((prev) => (prev && prev.id === row.id ? { ...prev, status: "Completed" } : prev));
+      } else {
+        setBookings((prev) =>
+          prev.map((b) => (b.id === row.id ? { ...b, status: "Completed" } : b))
+        );
+        setDrawerBooking((prev) => (prev && prev.id === row.id ? { ...prev, status: "Completed" } : prev));
+      }
+    } catch (err) {
+      console.error("Error completing booking:", err);
+      setBookings((prev) =>
+        prev.map((b) => (b.id === row.id ? { ...b, status: "Completed" } : b))
+      );
+      setDrawerBooking((prev) => (prev && prev.id === row.id ? { ...prev, status: "Completed" } : prev));
+    }
   };
 
   const handleDirectPrint = (row: Booking) => {
@@ -798,19 +821,36 @@ function BookingsPageContent() {
         key: "status",
         header: "Booking Status",
         accessor: (row) => (
-          <span
-            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 ${row.status === "Completed"
-                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
-                : row.status === "In Progress" || row.status === "Assigned"
-                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
-                  : row.status === "Cancelled"
-                    ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
-                    : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
-              }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-            <span>{row.status}</span>
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 ${row.status === "Completed"
+                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
+                  : row.status === "In Progress" || row.status === "Assigned"
+                    ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
+                    : row.status === "Cancelled"
+                      ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
+                      : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
+                }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+              <span>{row.status}</span>
+            </span>
+
+            {row.status !== "Completed" && row.status !== "Cancelled" && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkBookingCompleted(row);
+                }}
+                className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                title="Mark booking as Completed"
+              >
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                <span>Complete</span>
+              </button>
+            )}
+          </div>
         ),
         sortable: true,
       },
@@ -861,6 +901,15 @@ function BookingsPageContent() {
                     icon: Edit2,
                     onClick: () => setEditingBooking(row),
                   },
+                  ...(row.status !== "Completed"
+                    ? [
+                      {
+                        label: "Mark Completed",
+                        icon: CheckCircle2,
+                        onClick: () => handleMarkBookingCompleted(row),
+                      },
+                    ]
+                    : []),
                 ]
             }
           />

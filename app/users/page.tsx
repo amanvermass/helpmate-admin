@@ -648,24 +648,31 @@ export default function UsersPage() {
   // Handler: Create Permission (`POST /api/admin/permissions`)
   const handleCreatePermissionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!permModule.trim() || permActions.length === 0) return;
+    const effectiveModule = (
+      permModule || 
+      (permCode.trim() ? permCode.trim().split("_")[0] : "") || 
+      (permName.trim() ? permName.trim().split(" ")[0] : "") || 
+      "SYSTEM"
+    ).toUpperCase();
+
+    if (!effectiveModule || permActions.length === 0) return;
 
     try {
       const createdItems: PermissionItem[] = [];
 
       for (const act of permActions) {
         const code = permCode.trim()
-          ? (permActions.length === 1 ? permCode.trim() : `${permModule.toUpperCase()}_${act.toUpperCase()}`)
-          : `${permModule.toUpperCase()}_${act.toUpperCase()}`;
+          ? (permActions.length === 1 ? permCode.trim() : `${effectiveModule}_${act.toUpperCase()}`)
+          : `${effectiveModule}_${act.toUpperCase()}`;
 
         const name = permName.trim()
-          ? (permActions.length === 1 ? permName.trim() : `${act.charAt(0).toUpperCase() + act.slice(1)} ${permModule}`)
-          : `${act.charAt(0).toUpperCase() + act.slice(1)} ${permModule}`;
+          ? (permActions.length === 1 ? permName.trim() : `${act.charAt(0).toUpperCase() + act.slice(1)} ${effectiveModule}`)
+          : `${act.charAt(0).toUpperCase() + act.slice(1)} ${effectiveModule}`;
 
         const res = await createPermissionApi({
           name,
           code,
-          module: permModule.toUpperCase(),
+          module: effectiveModule,
           action: act as any,
           status: permStatus,
         });
@@ -716,7 +723,12 @@ export default function UsersPage() {
     if (!editPermission) return;
 
     try {
-      const targetModule = permModule.toUpperCase();
+      const targetModule = (
+        permModule || 
+        (permCode.trim() ? permCode.trim().split("_")[0] : "") || 
+        (permName.trim() ? permName.trim().split(" ")[0] : "") || 
+        "SYSTEM"
+      ).toUpperCase();
       const existingInModule = groupedPermissions[targetModule] || [];
 
       for (const act of permActions) {
@@ -1932,16 +1944,48 @@ export default function UsersPage() {
                   </div>
 
                   <div className="space-y-4 text-xs">
-                    {/* 1. Target Module Dropdown */}
-                    <CustomSelect
-                      label="Target Module *"
-                      value={permModule}
-                      onChange={handleModuleChange}
-                      options={MODULE_OPTIONS}
-                      searchable
-                    />
+                    {/* 1. Module Name / Permission Name */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Module Name / Permission Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={permName}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPermName(val);
+                          if (val.trim()) {
+                            setPermModule(val.trim().split(" ")[0].toUpperCase());
+                          }
+                        }}
+                        placeholder="e.g. Booking Pipeline"
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-emerald-500"
+                      />
+                    </div>
 
-                    {/* 2. Action Type (Multi-Select) on top right after Module */}
+                    {/* 2. Module Code / Permission Code */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Module Code / Permission Code
+                      </label>
+                      <input
+                        type="text"
+                        value={permCode}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPermCode(val);
+                          if (val.trim()) {
+                            setPermModule(val.trim().split("_")[0].toUpperCase());
+                          }
+                        }}
+                        placeholder="e.g. BOOKING_VIEW"
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase font-bold outline-none focus:border-emerald-500"
+                      />
+                    </div>
+
+                    {/* 3. Action Type (Multi-Select) */}
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center justify-between">
                         <span>Action Type (Multi-Select) *</span>
@@ -1992,35 +2036,7 @@ export default function UsersPage() {
                       </div>
                     </div>
 
-                    {/* 3. Permission Name */}
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Permission Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={permName}
-                        onChange={(e) => setPermName(e.target.value)}
-                        placeholder="e.g. View Booking Pipeline (Auto-generated if left blank)"
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold outline-none focus:border-emerald-500"
-                      />
-                    </div>
-
-                    {/* 4. Permission Code */}
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        Permission Code
-                      </label>
-                      <input
-                        type="text"
-                        value={permCode}
-                        onChange={(e) => setPermCode(e.target.value)}
-                        placeholder="e.g. BOOKING_VIEW (Auto-generated if left blank)"
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase font-bold outline-none focus:border-emerald-500"
-                      />
-                    </div>
-
-                    {/* 5. Status */}
+                    {/* 4. Status */}
                     <CustomSelect
                       label="Status"
                       value={permStatus}
@@ -2071,16 +2087,46 @@ export default function UsersPage() {
                   </div>
 
                   <div className="space-y-4 text-xs">
-                    {/* 1. Target Module Dropdown */}
-                    <CustomSelect
-                      label="Target Module *"
-                      value={permModule}
-                      onChange={handleModuleChange}
-                      options={MODULE_OPTIONS}
-                      searchable
-                    />
+                    {/* 1. Module Name / Permission Name */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Module Name / Permission Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={permName}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPermName(val);
+                          if (val.trim()) {
+                            setPermModule(val.trim().split(" ")[0].toUpperCase());
+                          }
+                        }}
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                      />
+                    </div>
 
-                    {/* 2. Action Type (Multi-Select) on top right after Module */}
+                    {/* 2. Module Code / Permission Code */}
+                    <div>
+                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        Module Code / Permission Code
+                      </label>
+                      <input
+                        type="text"
+                        value={permCode}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPermCode(val);
+                          if (val.trim()) {
+                            setPermModule(val.trim().split("_")[0].toUpperCase());
+                          }
+                        }}
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase font-bold"
+                      />
+                    </div>
+
+                    {/* 3. Action Type (Multi-Select) */}
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center justify-between">
                         <span>Action Type (Multi-Select) *</span>
@@ -2131,30 +2177,7 @@ export default function UsersPage() {
                       </div>
                     </div>
 
-                    {/* 3. Permission Name */}
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Permission Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={permName}
-                        onChange={(e) => setPermName(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                      />
-                    </div>
-
-                    {/* 4. Permission Code */}
-                    <div>
-                      <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">Permission Code</label>
-                      <input
-                        type="text"
-                        value={permCode}
-                        onChange={(e) => setPermCode(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono uppercase font-bold"
-                      />
-                    </div>
-
-                    {/* 5. Status */}
+                    {/* 4. Status */}
                     <CustomSelect
                       label="Status"
                       value={permStatus}

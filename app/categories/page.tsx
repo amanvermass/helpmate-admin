@@ -390,16 +390,7 @@ export default function CategoriesPage() {
         );
       },
     },
-    {
-      key: "servicesCount",
-      header: "Live Services Count",
-      accessor: (row) => (
-        <span className="font-extrabold text-slate-900 dark:text-white">
-          {row.servicesCount || 8} Services
-        </span>
-      ),
-      sortable: true,
-    },
+
     {
       key: "status",
       header: "Status",
@@ -431,12 +422,12 @@ export default function CategoriesPage() {
               icon: Edit,
               onClick: () => openEditDrawer(row),
             },
-            {
-              label: "Delete",
-              icon: Trash2,
-              onClick: () => handleDeleteCategory(row),
-              danger: true,
-            },
+            // {
+            //   label: "Delete",
+            //   icon: Trash2,
+            //   onClick: () => handleDeleteCategory(row),
+            //   danger: true,
+            // },
           ]}
         />
       ),
