@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, ReactNode } from "react";
-import { Customer, AddressRecipientType, varanasiLocalities } from "@/lib/mockData";
+import { Customer, AddressRecipientType, varanasiLocalities, VaranasiLocality } from "@/lib/mockData";
 import { CustomSelect } from "@/components/CustomSelect";
 import { getLocalitiesApi, createCustomerApi } from "@/lib/api";
 import {
@@ -39,7 +39,7 @@ export function CustomerSearchPicker({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [localityOptions, setLocalityOptions] = useState(varanasiLocalities);
+  const [localityOptions, setLocalityOptions] = useState<VaranasiLocality[]>([]);
 
   useEffect(() => {
     async function loadLocalities() {
@@ -72,8 +72,8 @@ export function CustomerSearchPicker({
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newLocality, setNewLocality] = useState("Sigra");
-  const [newPincode, setNewPincode] = useState("221002");
+  const [newLocality, setNewLocality] = useState("");
+  const [newPincode, setNewPincode] = useState("");
   const [newAddress, setNewAddress] = useState("");
   const [recipientType, setRecipientType] = useState<AddressRecipientType>("Self");
   const [recipientName, setRecipientName] = useState("");
@@ -363,7 +363,7 @@ export function CustomerSearchPicker({
           {/* Location & Address inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CustomSelect
-              label="Varanasi Base Locality *"
+              label="Service Locality *"
               value={newLocality}
               onChange={(val) => {
                 setNewLocality(val);
@@ -374,6 +374,7 @@ export function CustomerSearchPicker({
                 value: loc.name,
                 label: `${loc.name} (${loc.pincode})`,
               }))}
+              placeholder="Select Locality..."
             />
 
             <div>

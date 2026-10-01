@@ -209,10 +209,9 @@ export default function CustomersPage() {
     setFormAddressLabel("Home (Primary)");
     setFormRelationshipType("self");
 
-    // Default locality to first locality or empty
-    const firstLoc = localities[0];
-    setFormLocalityId(firstLoc ? firstLoc._id : "");
-    setFormPincode(firstLoc ? firstLoc.pincode : "221002");
+    // Default locality to empty so select locality placeholder is shown
+    setFormLocalityId("");
+    setFormPincode("");
     setFormServiceAddress("");
     setFormLandmark("");
     setIsDrawerOpen(true);
@@ -850,7 +849,7 @@ export default function CustomersPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <CustomSelect
-                      label="Varanasi Locality *"
+                      label="Locality *"
                       value={formLocalityId}
                       onChange={handleLocalityChange}
                       options={localities.map((loc) => ({
