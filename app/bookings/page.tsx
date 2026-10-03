@@ -84,23 +84,31 @@ export function mapApiBooking(b: any): Booking {
     };
   });
 
-  // Calculate status mapping
+  // Strictly map status from API response (b.bookingStatus || b.status)
   let status: BookingStatus = "Pending";
-  const statusStr = (b.bookingStatus || "").toLowerCase();
+  const rawStatus = b.bookingStatus || b.status || "";
+  const statusStr = rawStatus.toLowerCase().trim();
+
   if (statusStr === "completed") {
     status = "Completed";
   } else if (statusStr === "cancelled") {
     status = "Cancelled";
   } else if (statusStr === "rejected") {
     status = "Rejected";
-  } else if (statusStr === "in_progress" || statusStr === "on_the_way") {
+  } else if (statusStr === "in_progress" || statusStr === "in progress" || statusStr === "on_the_way") {
     status = "In Progress";
-  } else if (statusStr === "accepted" || statusStr === "assigned" || b.assignedPartner?.name) {
+  } else if (statusStr === "assigned") {
     status = "Assigned";
+  } else if (statusStr === "accepted" || statusStr === "partner_accepted") {
+    status = "Partner Accepted";
   } else if (statusStr === "pending") {
-    status = b.assignedPartner?.name ? "Assigned" : "Pending";
+    status = "Pending";
   } else if (statusStr === "draft") {
     status = "Draft";
+  } else if (rawStatus) {
+    status = rawStatus
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c: string) => c.toUpperCase()) as BookingStatus;
   }
 
   const basePriceVal = item0?.totalPrice || item0?.unitPrice || item0?.package?.price || b.amount || 0;
@@ -835,21 +843,6 @@ function BookingsPageContent() {
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
               <span>{row.status}</span>
             </span>
-
-            {row.status !== "Completed" && row.status !== "Cancelled" && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMarkBookingCompleted(row);
-                }}
-                className="px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors shrink-0"
-                title="Mark booking as Completed"
-              >
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                <span>Complete</span>
-              </button>
-            )}
           </div>
         ),
         sortable: true,
@@ -901,7 +894,7 @@ function BookingsPageContent() {
                     icon: Edit2,
                     onClick: () => setEditingBooking(row),
                   },
-                  ...(row.status !== "Completed"
+                  ...(row.status === "Assigned" || row.status === "In Progress"
                     ? [
                       {
                         label: "Mark Completed",

@@ -2167,10 +2167,8 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
       if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
       if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
       if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
-      if (data.verificationDocumentType && data.verificationDocument) {
-        formData.append("verificationDocumentType", data.verificationDocumentType);
-        formData.append("verificationDocument", data.verificationDocument);
-      }
+      if (data.verificationDocumentType) formData.append("verificationDocumentType", data.verificationDocumentType);
+      if (data.verificationDocument) formData.append("verificationDocument", data.verificationDocument);
 
       bodyData = formData;
     }
@@ -2228,10 +2226,8 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
       if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
       if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
       if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
-      if (data.verificationDocumentType && data.verificationDocument) {
-        formData.append("verificationDocumentType", data.verificationDocumentType);
-        formData.append("verificationDocument", data.verificationDocument);
-      }
+      if (data.verificationDocumentType) formData.append("verificationDocumentType", data.verificationDocumentType);
+      if (data.verificationDocument) formData.append("verificationDocument", data.verificationDocument);
 
       bodyData = formData;
     }
