@@ -1481,9 +1481,6 @@ export function BookingWizardModal({
         onBookingUpdated(updated);
       }
       handleClose();
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
       return;
     }
 
@@ -1548,9 +1545,6 @@ export function BookingWizardModal({
       onBookingCreated(created);
     }
     handleClose();
-    if (typeof window !== "undefined") {
-      window.location.reload();
-    }
   };
 
   // Validation for mandatory fields per step:

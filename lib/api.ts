@@ -1487,13 +1487,18 @@ export async function updatePackageApi(
   }
 }
 
-export async function deletePackageApi(id: string) {
+export async function deletePackageApi(id: string, token?: string) {
   clearApiCache("getPackagesApi");
   try {
-    const res = await fetch(`${API_BASE_URL}/api/package/${id}`, {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+    }
+    const res = await authFetch(`${API_BASE_URL}/api/package/${id}`, {
       method: "DELETE",
+      headers,
     });
-    return await res.json();
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("deletePackageApi error:", error);
     return { success: false, message: "Failed to delete package." };
@@ -1602,21 +1607,43 @@ export async function getBookingCategoriesApi(forceRefresh?: boolean) {
   }
 }
 
-export async function getBookingsApi(params?: { categoryId?: string; search?: string; status?: string; page?: number; limit?: number; forceRefresh?: boolean }) {
-  const cacheKey = `getBookingsApi:${JSON.stringify({ categoryId: params?.categoryId, search: params?.search, status: params?.status, page: params?.page, limit: params?.limit })}`;
-  if (!params?.forceRefresh && apiCache.has(cacheKey)) {
-    return apiCache.get(cacheKey);
+export async function getBookingsApi(
+  params?:
+    | { categoryId?: string; search?: string; status?: string; page?: number; limit?: number; forceRefresh?: boolean }
+    | boolean
+) {
+  let categoryId = "";
+  let search = "";
+  let status = "";
+  let page: number | undefined;
+  let limit = 100;
+  let forceRefresh = false;
+
+  if (typeof params === "boolean") {
+    forceRefresh = params;
+  } else if (params && typeof params === "object") {
+    categoryId = params.categoryId || "";
+    search = params.search || "";
+    status = params.status || "";
+    page = params.page;
+    limit = params.limit || 100;
+    forceRefresh = !!params.forceRefresh;
   }
+
+  const cacheKey = `getBookingsApi:${JSON.stringify({ categoryId, search, status, page, limit })}`;
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+
   try {
     const query = new URLSearchParams();
-    if (params?.categoryId) query.append("categoryId", params.categoryId);
-    if (params?.search) query.append("search", params.search);
-    if (params?.status) query.append("status", params.status);
-    if (params?.page) query.append("page", String(params.page));
-    query.append("limit", String(params?.limit || 100));
+    if (categoryId) query.append("categoryId", categoryId);
+    if (search) query.append("search", search);
+    if (status) query.append("status", status);
+    if (page) query.append("page", String(page));
+    query.append("limit", String(limit));
 
     const res = await authFetch(`${API_BASE_URL}/api/booking?${query.toString()}`);
-    const data = await res.json();
+    const data = await safeJsonResponse(res);
     if (data && data.success !== false) {
       apiCache.set(cacheKey, data);
     }
@@ -3158,6 +3185,36 @@ export async function deleteAdminApi(id: string) {
   } catch (error) {
     console.error("deleteAdminApi error:", error);
     return { success: false, message: "Failed to delete admin user." };
+  }
+}
+
+// ─── ADMIN INVOICE APIS ───
+export async function getAdminInvoiceApi(bookingId: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices/${bookingId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("getAdminInvoiceApi error:", error);
+    return { success: false, message: "Failed to fetch invoice." };
+  }
+}
+
+export async function getAdminInvoicePdfBlobApi(bookingId: string): Promise<Blob | null> {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices/${bookingId}/pdf`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to download PDF (${res.status})`);
+    }
+    return await res.blob();
+  } catch (error) {
+    console.error("getAdminInvoicePdfBlobApi error:", error);
+    return null;
   }
 }
 

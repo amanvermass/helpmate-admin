@@ -270,10 +270,25 @@ function BookingsPageContent() {
   const [apiCategories, setApiCategories] = useState<ApiBookingCategoryStat[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
+  const refreshBookingsFromBackend = async () => {
+    try {
+      const catRes = await getBookingCategoriesApi(true);
+      if (catRes && catRes.success && catRes.data?.categories) {
+        setApiCategories(catRes.data.categories);
+      }
+      const bookingsRes = await getBookingsApi(true);
+      if (bookingsRes && bookingsRes.success && Array.isArray(bookingsRes.data)) {
+        const mappedList: Booking[] = bookingsRes.data.map(mapApiBooking);
+        setBookings(mappedList);
+      }
+    } catch (err) {
+      console.error("Error refreshing bookings:", err);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
-      // Show loading shimmer only on initial fetch when no bookings are loaded
       if (bookings.length === 0) {
         setIsLoadingData(true);
       }
@@ -495,9 +510,10 @@ function BookingsPageContent() {
   }, [categoryBookings, cardFilter, activeStatusFilter, channelFilter]);
 
   const handleBookingCreated = (newBooking: Booking) => {
-    setBookings([newBooking, ...bookings]);
+    setBookings((prev) => [newBooking, ...prev]);
     setIsWizardOpen(false);
     setCreatedBookingToast(newBooking);
+    refreshBookingsFromBackend();
   };
 
   const handlePartnerAssigned = (
