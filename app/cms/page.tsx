@@ -24,6 +24,8 @@ import {
   getServiceActionsApi,
   getServiceActionDropdownApi,
   createServiceActionApi,
+  updateServiceActionApi,
+  deleteServiceActionApi,
   getLocalitiesApi,
   ApiCategory,
   ApiAddon,
@@ -105,6 +107,8 @@ export default function CmsPage() {
   const [actionCategoryId, setActionCategoryId] = useState<string>("");
   const [actionSubCategoryId, setActionSubCategoryId] = useState<string>("");
   const [actionFormError, setActionFormError] = useState<string>("");
+  const [deletingActionId, setDeletingActionId] = useState<string | null>(null);
+  const [deleteActionModal, setDeleteActionModal] = useState<{ open: boolean; id: string; name: string } | null>(null);
 
   // Enhanced Services state — live API data only (no manual mock data)
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -335,6 +339,39 @@ export default function CmsPage() {
     };
     loadAllData();
   }, []);
+
+  useEffect(() => {
+    if (isAddActionModalOpen) {
+      fetchServiceActionsFromBackend(actionCategoryId || undefined, actionSubCategoryId || undefined);
+    }
+  }, [isAddActionModalOpen, actionCategoryId, actionSubCategoryId]);
+
+  const confirmDeleteServiceAction = async (id: string) => {
+    if (!id) return;
+    setDeletingActionId(id);
+    try {
+      const res = await deleteServiceActionApi(id);
+      if (res && res.success !== false) {
+        toast.success("Service Action Deleted", "Service action deleted successfully.");
+        if (editingActionObj?._id === id) {
+          setEditingActionObj(null);
+          setNewActionInput("");
+          setActionCategoryId("");
+          setActionSubCategoryId("");
+        }
+        setServiceActionsList((prev) => prev.filter((a) => a !== deleteActionModal?.name));
+        await fetchServiceActionsFromBackend(actionCategoryId || undefined, actionSubCategoryId || undefined);
+        setDeleteActionModal(null);
+      } else {
+        toast.error("Delete Failed", res?.message || "Failed to delete service action.");
+      }
+    } catch (err) {
+      console.error("Error deleting service action:", err);
+      toast.error("Delete Failed", "Failed to delete service action.");
+    } finally {
+      setDeletingActionId(null);
+    }
+  };
 
   const handleDeleteService = async (serviceId: string) => {
     if (serviceId.length === 24) {
@@ -2984,28 +3021,42 @@ export default function CmsPage() {
                 }
 
                 const cleanAction = newActionInput.trim();
-                if (actionCategoryId && cleanAction) {
-                  createServiceActionApi({
+                let res;
+                if (editingActionObj) {
+                  res = await updateServiceActionApi(editingActionObj._id, {
                     categoryId: actionCategoryId,
                     subCategoryId: actionSubCategoryId || undefined,
                     serviceAction: cleanAction,
-                  }).then((res) => {
-                    if (res && res.success !== false) {
-                      fetchServiceActionsFromBackend(actionCategoryId, actionSubCategoryId || undefined);
-                    }
+                  });
+                } else {
+                  res = await createServiceActionApi({
+                    categoryId: actionCategoryId,
+                    subCategoryId: actionSubCategoryId || undefined,
+                    serviceAction: cleanAction,
                   });
                 }
-                setServiceActionsList((prev) => Array.from(new Set([cleanAction, ...prev])));
-                setSelectedServiceAction(cleanAction);
-                if (targetOfferingIndexForAction !== null) {
-                  handleUpdateOfferingRow(targetOfferingIndexForAction, "type", cleanAction);
-                }
 
-                setNewActionInput("");
-                setActionCategoryId("");
-                setActionSubCategoryId("");
-                setEditingActionObj(null);
-                setIsAddActionModalOpen(false);
+                if (res && res.success !== false) {
+                  toast.success(
+                    editingActionObj ? "Service Action Updated" : "Service Action Created",
+                    editingActionObj ? "Service action updated successfully." : "Service action created successfully."
+                  );
+                  fetchServiceActionsFromBackend(actionCategoryId, actionSubCategoryId || undefined);
+                  setServiceActionsList((prev) => Array.from(new Set([cleanAction, ...prev])));
+                  setSelectedServiceAction(cleanAction);
+                  if (targetOfferingIndexForAction !== null) {
+                    handleUpdateOfferingRow(targetOfferingIndexForAction, "type", cleanAction);
+                  }
+                  setNewActionInput("");
+                  setActionCategoryId("");
+                  setActionSubCategoryId("");
+                  setEditingActionObj(null);
+                  setIsAddActionModalOpen(false);
+                } else {
+                  const errorMsg = res?.message || "Failed to save service action.";
+                  setActionFormError(errorMsg);
+                  toast.error("Service Action Error", errorMsg);
+                }
               }}
               className="bg-white dark:bg-slate-900 p-6 rounded-3xl max-w-lg w-full space-y-5 ring-1 ring-slate-900/10 dark:ring-slate-800 shadow-2xl outline-none max-h-[90vh] overflow-y-auto text-xs animate-in zoom-in-95 duration-150"
             >
@@ -3129,56 +3180,67 @@ export default function CmsPage() {
                 </span>
                 <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                   {serviceActionsFromApi.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">No service actions found from API.</span>
+                    <span className="text-xs text-slate-400 italic block py-2 text-center">
+                      No service actions found for the selected filter.
+                    </span>
                   ) : (
-                    serviceActionsFromApi.map((act) => (
-                      <div
-                        key={act._id}
-                        className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-xs gap-2"
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-extrabold text-xs text-slate-900 dark:text-white">
-                            {act.name}
-                          </span>
-                          {act.categoryName && (
-                            <span className="px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 dark:bg-brand-950 text-[10px] font-extrabold border border-brand-200">
-                              {act.categoryName}
+                    serviceActionsFromApi.map((act) => {
+                      const actName = act.name || act.serviceAction || "Unnamed Action";
+                      const catObj = typeof act.categoryId === "object" ? act.categoryId : categoriesFromApi.find((c) => c._id === act.categoryId);
+                      const catName = act.categoryName || catObj?.categoryName || "";
+
+                      const subCatObj = typeof act.subCategoryId === "object" ? act.subCategoryId : (
+                        categoriesFromApi.flatMap((c) => c.subCategories || []).find((s: any) => String(s._id) === String(act.subCategoryId))
+                      );
+                      const subCatName = act.subCategoryName || subCatObj?.name || "";
+
+                      return (
+                        <div
+                          key={act._id}
+                          className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between shadow-xs gap-2 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                              {actName}
                             </span>
-                          )}
-                          {act.subCategoryName && (
-                            <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950 text-[10px] font-extrabold border border-purple-200">
-                              {act.subCategoryName}
-                            </span>
-                          )}
+                            {catName && (
+                              <span className="px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 dark:bg-brand-950/70 text-[10px] font-extrabold border border-brand-200 dark:border-brand-800">
+                                {catName}
+                              </span>
+                            )}
+                            {subCatName && (
+                              <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950/70 text-[10px] font-extrabold border border-purple-200 dark:border-purple-800">
+                                {subCatName}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingActionObj(act);
+                                setNewActionInput(actName);
+                                setActionCategoryId(typeof act.categoryId === "object" ? act.categoryId?._id : (act.categoryId || ""));
+                                setActionSubCategoryId(typeof act.subCategoryId === "object" ? act.subCategoryId?._id : (act.subCategoryId || ""));
+                                setActionFormError("");
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950/30 rounded-lg cursor-pointer transition-colors"
+                              title="Edit Service Action"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteActionModal({ open: true, id: act._id, name: actName })}
+                              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg cursor-pointer transition-colors"
+                              title="Delete Service Action"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingActionObj(act);
-                              setNewActionInput(act.name);
-                              setActionCategoryId(typeof act.categoryId === "object" ? act.categoryId?._id : (act.categoryId || ""));
-                              setActionSubCategoryId(typeof act.subCategoryId === "object" ? act.subCategoryId?._id : (act.subCategoryId || ""));
-                              setActionFormError("");
-                            }}
-                            className="p-1 text-slate-400 hover:text-brand-600 cursor-pointer"
-                            title="Edit Service Action"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setServiceActionsList((prev) => prev.filter((a) => a !== act.name && a !== act.serviceAction));
-                            }}
-                            className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
-                            title="Delete Service Action"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -3191,12 +3253,50 @@ export default function CmsPage() {
                     setNewActionInput("");
                     setIsAddActionModalOpen(false);
                   }}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Done
                 </button>
               </div>
             </form>
+          </div>
+        </Portal>
+      )}
+
+      {/* 4. DELETE SERVICE ACTION CONFIRMATION POPUP MODAL */}
+      {deleteActionModal?.open && (
+        <Portal>
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-4 border border-slate-200 dark:border-slate-800 text-center animate-in zoom-in-95 duration-150">
+              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/50 flex items-center justify-center mx-auto border border-red-200 dark:border-red-900">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                  Delete Service Action?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Are you sure you want to delete <strong className="text-slate-700 dark:text-slate-200">"{deleteActionModal.name}"</strong>? This will remove it from dropdowns and catalog options.
+                </p>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteActionModal(null)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deletingActionId === deleteActionModal.id}
+                  onClick={() => confirmDeleteServiceAction(deleteActionModal.id)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-md cursor-pointer transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  {deletingActionId === deleteActionModal.id ? "Deleting..." : "Delete Action"}
+                </button>
+              </div>
+            </div>
           </div>
         </Portal>
       )}

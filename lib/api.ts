@@ -1028,6 +1028,7 @@ export async function createServiceActionApi(payload: {
   status?: boolean;
 }) {
   clearApiCache("getServiceActionsApi");
+  clearApiCache("getServiceActionDropdownApi");
   try {
     const bodyPayload: any = {
       categoryId: payload.categoryId,
@@ -1049,6 +1050,7 @@ export async function createServiceActionApi(payload: {
 
 export async function updateServiceActionApi(id: string, payload: { categoryId?: string; subCategoryId?: string; name?: string; serviceAction?: string; description?: string; status?: boolean }) {
   clearApiCache("getServiceActionsApi");
+  clearApiCache("getServiceActionDropdownApi");
   try {
     const bodyPayload: any = { ...payload };
     if (bodyPayload.subCategoryId === "" || bodyPayload.subCategoryId === undefined) {
@@ -1067,6 +1069,7 @@ export async function updateServiceActionApi(id: string, payload: { categoryId?:
 
 export async function deleteServiceActionApi(id: string) {
   clearApiCache("getServiceActionsApi");
+  clearApiCache("getServiceActionDropdownApi");
   try {
     const res = await authFetch(`${API_BASE_URL}/api/service-action/${id}`, {
       method: "DELETE",
