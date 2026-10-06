@@ -8,6 +8,7 @@ import { initialBookings, initialCustomers, Booking, Customer } from "@/lib/mock
 import {
   FileText,
   Printer,
+  Download,
   CheckCircle2,
   Eye,
   Edit,
@@ -28,6 +29,7 @@ import {
 } from "lucide-react";
 import { Portal } from "@/components/Portal";
 import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
+import { getAdminInvoicePdfBlobApi } from "@/lib/api";
 
 export default function BillingPage() {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
@@ -223,9 +225,28 @@ export default function BillingPage() {
         <RowActionMenu
           actions={[
             {
-              label: "View",
+              label: "View Invoice",
               icon: Eye,
               href: `/billing/${row.id}`,
+            },
+            {
+              label: "Download PDF",
+              icon: Download,
+              onClick: async () => {
+                const blob = await getAdminInvoicePdfBlobApi(row.id);
+                if (blob) {
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${formatInvoiceNumber(row.id)}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                } else {
+                  window.open(`/billing/${row.id}`, "_self");
+                }
+              },
             },
             {
               label: "Edit",

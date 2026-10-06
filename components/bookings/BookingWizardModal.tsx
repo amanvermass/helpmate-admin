@@ -1063,7 +1063,7 @@ export function BookingWizardModal({
               description: act.subtitle || act.description || "",
               category: targetCatName || "General",
               subCategory: targetSubName || "",
-              actionName: act.serviceAction || actName || "Package",
+              actionName: act.serviceAction || actName ,
               categoryId: targetCatId,
               subCategoryId: targetSubId || undefined,
               rawServiceId: actId,
@@ -1105,17 +1105,9 @@ export function BookingWizardModal({
         ? s.packageId
         : ((s.id && s.id.length === 24) ? s.id : undefined);
 
-      const selectedAddonsPayload = Array.isArray(s.addons)
-        ? s.addons.map((a: any) => ({
-            addonId: typeof a === "string" ? a : (a._id || a.addonId || a.id),
-            quantity: typeof a === "object" && a.quantity ? a.quantity : 1,
-          })).filter((item: any) => item.addonId && item.addonId.length === 24)
-        : [];
-
       const itemPayload: any = {
         categoryId: catId,
         quantity: s.quantity || 1,
-        selectedAddons: selectedAddonsPayload,
       };
 
       if (subCatId && subCatId.length === 24) {
@@ -1402,17 +1394,9 @@ export function BookingWizardModal({
         ? s.packageId
         : ((s.id && s.id.length === 24) ? s.id : undefined);
 
-      const selectedAddonsPayload = Array.isArray(s.addons)
-        ? s.addons.map((a: any) => ({
-            addonId: typeof a === "string" ? a : (a._id || a.addonId || a.id),
-            quantity: typeof a === "object" && a.quantity ? a.quantity : 1,
-          })).filter((item: any) => item.addonId && item.addonId.length === 24)
-        : [];
-
       const itemPayload: any = {
         categoryId: catId,
         quantity: s.quantity || 1,
-        selectedAddons: selectedAddonsPayload,
       };
 
       if (subCatId && subCatId.length === 24) {

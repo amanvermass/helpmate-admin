@@ -1518,7 +1518,6 @@ export interface ApiBookingItemPayload {
   serviceActionId: string;
   packageId: string;
   quantity: number;
-  selectedAddons?: ApiSelectedAddonPayload[];
 }
 
 export interface ApiCreateBookingPayload {
