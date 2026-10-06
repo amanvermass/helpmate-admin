@@ -2260,6 +2260,25 @@ export async function verifyGuarantorMobileOtpApi(mobile: string, otp: string) {
   }
 }
 
+function attachPartnerPhotoFields(formData: FormData, photo?: any) {
+  if (!photo) return;
+  if (typeof photo === "string") {
+    if (photo.trim()) {
+      if (!formData.has("passportPhoto")) formData.append("passportPhoto", photo.trim());
+      if (!formData.has("image")) formData.append("image", photo.trim());
+      if (!formData.has("profilePhoto")) formData.append("profilePhoto", photo.trim());
+      if (!formData.has("profileImage")) formData.append("profileImage", photo.trim());
+      if (!formData.has("avatar")) formData.append("avatar", photo.trim());
+    }
+  } else {
+    if (!formData.has("passportPhoto")) formData.append("passportPhoto", photo);
+    if (!formData.has("image")) formData.append("image", photo);
+    if (!formData.has("profilePhoto")) formData.append("profilePhoto", photo);
+    if (!formData.has("profileImage")) formData.append("profileImage", photo);
+    if (!formData.has("avatar")) formData.append("avatar", photo);
+  }
+}
+
 export async function createPartnerApi(payload: CreatePartnerPayload | FormData) {
   clearApiCache("getPartner");
   clearApiCache("getPartners");
@@ -2274,8 +2293,17 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
         bodyData.delete("verificationDocumentType");
         bodyData.delete("verificationDocument");
       }
+      const existingPhoto =
+        bodyData.get("passportPhoto") ||
+        bodyData.get("image") ||
+        bodyData.get("profilePhoto") ||
+        bodyData.get("profileImage") ||
+        bodyData.get("avatar");
+      if (existingPhoto) {
+        attachPartnerPhotoFields(bodyData, existingPhoto);
+      }
     } else {
-      const data = payload as CreatePartnerPayload;
+      const data = payload as any;
       const formData = new FormData();
 
       if (data.name) formData.append("name", data.name);
@@ -2306,7 +2334,12 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
 
       if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
       if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
-      if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
+
+      const photo = data.passportPhoto || data.image || data.profilePhoto || data.profileImage || data.avatar;
+      if (photo) {
+        attachPartnerPhotoFields(formData, photo);
+      }
+
       if (data.verificationDocumentType && data.verificationDocument) {
         formData.append("verificationDocumentType", data.verificationDocumentType);
         formData.append("verificationDocument", data.verificationDocument);
@@ -2340,8 +2373,17 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
         bodyData.delete("verificationDocumentType");
         bodyData.delete("verificationDocument");
       }
+      const existingPhoto =
+        bodyData.get("passportPhoto") ||
+        bodyData.get("image") ||
+        bodyData.get("profilePhoto") ||
+        bodyData.get("profileImage") ||
+        bodyData.get("avatar");
+      if (existingPhoto) {
+        attachPartnerPhotoFields(bodyData, existingPhoto);
+      }
     } else {
-      const data = payload as Partial<CreatePartnerPayload>;
+      const data = payload as any;
       const formData = new FormData();
 
       if (data.name) formData.append("name", data.name);
@@ -2372,7 +2414,12 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
 
       if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
       if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
-      if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
+
+      const photo = data.passportPhoto || data.image || data.profilePhoto || data.profileImage || data.avatar;
+      if (photo) {
+        attachPartnerPhotoFields(formData, photo);
+      }
+
       if (data.verificationDocumentType && data.verificationDocument) {
         formData.append("verificationDocumentType", data.verificationDocumentType);
         formData.append("verificationDocument", data.verificationDocument);

@@ -588,11 +588,6 @@ export default function CmsPage() {
               onClick: () => openEditServiceDrawer(row),
             },
             {
-              label: "Duplicate Package",
-              icon: Copy,
-              onClick: () => handleDuplicateServiceItem(row),
-            },
-            {
               label: "Add-ons",
               icon: Wrench,
               onClick: () => setSelectedService(row),

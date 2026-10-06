@@ -1005,7 +1005,12 @@ function TechnicianFormContent() {
         formData.append("aadhaarBack", aadhaarFileInputRef.current.files[1]);
       }
       if (photoFileInputRef.current?.files?.[0]) {
-        formData.append("passportPhoto", photoFileInputRef.current.files[0]);
+        const photoFile = photoFileInputRef.current.files[0];
+        formData.append("passportPhoto", photoFile);
+        formData.append("image", photoFile);
+        formData.append("profilePhoto", photoFile);
+        formData.append("profileImage", photoFile);
+        formData.append("avatar", photoFile);
       }
       if (docTypeFileInputRef.current?.files?.[0]) {
         formData.append("verificationDocumentType", docTypeMapping[selectedDocType] || "pan_card");
