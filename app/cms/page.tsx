@@ -1890,8 +1890,8 @@ export default function CmsPage() {
                                       type="button"
                                       onClick={() => toggleDescriptionFormat(idx, "bold")}
                                       className={`px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${isBoldActive
-                                          ? "bg-brand-600 text-white border-brand-600 shadow-sm ring-2 ring-brand-400/30 font-black"
-                                          : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold"
+                                        ? "bg-brand-600 text-white border-brand-600 shadow-sm ring-2 ring-brand-400/30 font-black"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold"
                                         }`}
                                       title={isBoldActive ? "Remove Bold (**)" : "Apply Bold (**)"}
                                     >
@@ -1903,8 +1903,8 @@ export default function CmsPage() {
                                       type="button"
                                       onClick={() => toggleDescriptionFormat(idx, "bullet")}
                                       className={`px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer flex items-center gap-1 border ${isBulletActive
-                                          ? "bg-brand-600 text-white border-brand-600 shadow-sm ring-2 ring-brand-400/30 font-black"
-                                          : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold"
+                                        ? "bg-brand-600 text-white border-brand-600 shadow-sm ring-2 ring-brand-400/30 font-black"
+                                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 font-bold"
                                         }`}
                                       title={isBulletActive ? "Remove Pointwise (•)" : "Apply Pointwise (•)"}
                                     >

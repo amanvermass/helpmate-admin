@@ -1435,63 +1435,46 @@ export async function updatePackageApi(
         }
       }
 
-      const validBackendKeys = [
-        "serviceActionId",
-        "packageName",
-        "subtitle",
-        "description",
-        "price",
-        "originalPrice",
-        "duration",
-        "addons",
-        "status",
-      ];
+      const formData = new FormData();
+      const serviceActionId = objPayload.serviceActionId || objPayload.serviceId || "";
+      if (serviceActionId) {
+        formData.append("serviceActionId", serviceActionId);
+      }
+
+      if (objPayload.packageName || objPayload.title) {
+        formData.append("packageName", String(objPayload.packageName || objPayload.title).trim());
+      }
+
+      if (objPayload.subtitle && typeof objPayload.subtitle === "string" && objPayload.subtitle.trim()) {
+        formData.append("subtitle", objPayload.subtitle.trim());
+      }
+
+      if (objPayload.description && typeof objPayload.description === "string" && objPayload.description.trim()) {
+        formData.append("description", objPayload.description.trim());
+      }
+
+      if (objPayload.price !== undefined) {
+        formData.append("price", String(Number(objPayload.price) || 0));
+        formData.append(
+          "originalPrice",
+          String(Number(objPayload.originalPrice) || Math.round((Number(objPayload.price) || 0) * 1.3))
+        );
+      }
+
+      if (objPayload.duration !== undefined) {
+        formData.append("duration", String(Number(objPayload.duration) || 60));
+      }
+
+      const validAddonIds = ensureAddonsArray(objPayload.addons);
+      formData.append("addons", JSON.stringify(validAddonIds));
 
       if (fileBlob) {
-        const formData = new FormData();
         const mimeType = (fileBlob as any).type || "image/jpeg";
         const ext = mimeType.split("/")[1] || "jpeg";
         formData.append("image", fileBlob, `package_image.${ext}`);
-
-        Object.keys(objPayload).forEach((key) => {
-          if (validBackendKeys.includes(key) && objPayload[key] !== undefined) {
-            if (key === "subtitle" && (!objPayload[key] || !String(objPayload[key]).trim())) {
-              return;
-            }
-            if (key === "addons") {
-              return;
-            }
-            if (Array.isArray(objPayload[key])) {
-              objPayload[key].forEach((val: any) => formData.append(key, val));
-            } else {
-              formData.append(key, String(objPayload[key]));
-            }
-          }
-        });
-
-        const validAddonIds = ensureAddonsArray(objPayload.addons);
-        formData.append("addons", JSON.stringify(validAddonIds));
-        bodyData = formData;
-      } else {
-        const cleanedPayload: Record<string, any> = {};
-        for (const key of validBackendKeys) {
-          if (objPayload[key] !== undefined) {
-            if (key === "subtitle" && (!objPayload[key] || !String(objPayload[key]).trim())) {
-              continue;
-            }
-            cleanedPayload[key] = objPayload[key];
-          }
-        }
-        cleanedPayload.addons = ensureAddonsArray(objPayload.addons);
-        if (objPayload.imageUrl !== undefined) {
-          cleanedPayload.imageUrl = cleanImagePayload(objPayload.imageUrl);
-          cleanedPayload.thumbnailUrl = cleanImagePayload(objPayload.imageUrl);
-        } else if (objPayload.thumbnailUrl !== undefined) {
-          cleanedPayload.imageUrl = cleanImagePayload(objPayload.thumbnailUrl);
-          cleanedPayload.thumbnailUrl = cleanImagePayload(objPayload.thumbnailUrl);
-        }
-        bodyData = JSON.stringify(cleanedPayload);
       }
+
+      bodyData = formData;
     }
     const res = await authFetch(`${API_BASE_URL}/api/package/${id}`, {
       method: "PATCH",
