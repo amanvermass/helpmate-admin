@@ -43,8 +43,6 @@ import {
   varanasiLocalities,
   VaranasiLocality,
   initialTechnicians,
-  initialCoupons,
-  CouponItem,
   initialCustomers,
   Customer,
   SelectedServiceItem,
@@ -53,7 +51,7 @@ import {
 import { Portal } from "@/components/Portal";
 import { CustomerSearchPicker } from "@/components/CustomerSearchPicker";
 import { CustomSelect } from "@/components/CustomSelect";
-import { createBookingApi, updateBookingApi, getCustomerAddressesApi, createCustomerAddressApi, updateCustomerAddressApi, deleteCustomerAddressApi, getCustomerDropdownApi, getLocalitiesApi, sendBookingCustomerOtpApi, verifyBookingCustomerOtpApi, sendCustomerOtpApi, getCustomerTrustStatusApi, getCategoryDropdownApi, getServiceActionsApi, getServiceActionDropdownApi, getPackagesApi, getPartnerDropdownApi } from "@/lib/api";
+import { createBookingApi, updateBookingApi, calculateBookingPriceApi, getCustomerAddressesApi, createCustomerAddressApi, updateCustomerAddressApi, deleteCustomerAddressApi, getCustomerDropdownApi, getLocalitiesApi, sendBookingCustomerOtpApi, verifyBookingCustomerOtpApi, sendCustomerOtpApi, getCustomerTrustStatusApi, getCategoryDropdownApi, getServiceActionsApi, getServiceActionDropdownApi, getPackagesApi, getPartnerDropdownApi } from "@/lib/api";
 
 function safeStr(val: any): string {
   if (val === null || val === undefined) return "";
@@ -484,13 +482,16 @@ export function BookingWizardModal({
     };
   }, [isClockPickerOpen]);
 
-  // STEP 5: Payment & Coupon States
-  const [couponCode, setCouponCode] = useState("");
+  // STEP 5: Payment States
   const [discountAmount, setDiscountAmount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<
     "UPI" | "Cash on Service" | "Card" | "Helpmate Wallet" | "Online" | "Partial Payment"
   >("UPI");
   const [customerNotes, setCustomerNotes] = useState("");
+
+  // API Price Calculation State
+  const [calculatedPriceData, setCalculatedPriceData] = useState<any>(null);
+  const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
 
   // Fetch Customers from API: /api/customer/dropdown
   const fetchCustomerDropdown = React.useCallback(async (searchQuery?: string) => {
@@ -750,7 +751,6 @@ export function BookingWizardModal({
     setIsClockPickerOpen(false);
 
     // Step 5 Payment & Notes
-    setCouponCode("");
     setDiscountAmount(0);
     setPaymentMethod("UPI");
     setCustomerNotes("");
@@ -1080,13 +1080,103 @@ export function BookingWizardModal({
 
   const selectedPkgObj = selectedPackageId ? availablePackages.find((p) => p.id === selectedPackageId) || null : null;
 
-  // Calculate Subtotal Base Price from Selected Services
-  const servicePrice = selectedServicesList.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const convenienceFee = 49;
-  const grossBeforeTax = Math.max(0, servicePrice + convenienceFee - discountAmount);
-  const cgst = Math.round(grossBeforeTax * 0.09 * 100) / 100;
-  const sgst = Math.round(grossBeforeTax * 0.09 * 100) / 100;
-  const grandTotal = Math.round((grossBeforeTax + cgst + sgst) * 100) / 100;
+  // API Price Calculation Helper: POST /api/booking/calculate-price
+  const recalculatePriceFromApi = React.useCallback(async (services: SelectedServiceItem[]) => {
+    if (!services || services.length === 0) {
+      setCalculatedPriceData(null);
+      return;
+    }
+
+    const allSubCatsForApi = apiCategories.flatMap((c) => c.subCategories || []);
+    const itemsPayload = services.map((s) => {
+      const catId = (s.categoryId && s.categoryId.length === 24)
+        ? s.categoryId
+        : (apiCategories.find((c) => safeStr(c.categoryName).toLowerCase() === safeStr(s.category || selectedCategory).toLowerCase())?.id || "65f1a2b3c4d5e6f7a8b9c0d1");
+
+      const subCatId = (s.subCategoryId && s.subCategoryId.length === 24)
+        ? s.subCategoryId
+        : (selectedType ? (allSubCatsForApi.find((sc) => safeStr(sc.name).toLowerCase() === safeStr(selectedType).toLowerCase())?.id) : undefined);
+
+      const actId = (s.serviceActionId && s.serviceActionId.length === 24)
+        ? s.serviceActionId
+        : ((s.rawServiceId && s.rawServiceId.length === 24) ? s.rawServiceId : ((s.id && s.id.length === 24) ? s.id : undefined));
+
+      const pkgId = (s.packageId && s.packageId.length === 24)
+        ? s.packageId
+        : ((s.id && s.id.length === 24) ? s.id : undefined);
+
+      const selectedAddonsPayload = Array.isArray(s.addons)
+        ? s.addons.map((a: any) => ({
+            addonId: typeof a === "string" ? a : (a._id || a.addonId || a.id),
+            quantity: typeof a === "object" && a.quantity ? a.quantity : 1,
+          })).filter((item: any) => item.addonId && item.addonId.length === 24)
+        : [];
+
+      const itemPayload: any = {
+        categoryId: catId,
+        quantity: s.quantity || 1,
+        selectedAddons: selectedAddonsPayload,
+      };
+
+      if (subCatId && subCatId.length === 24) {
+        itemPayload.subCategoryId = subCatId;
+      }
+      if (actId && actId.length === 24) {
+        itemPayload.serviceActionId = actId;
+      }
+      if (pkgId && pkgId.length === 24) {
+        itemPayload.packageId = pkgId;
+      }
+
+      return itemPayload;
+    });
+
+    setIsCalculatingPrice(true);
+    try {
+      const res = await calculateBookingPriceApi({
+        items: itemsPayload,
+      });
+
+      if (res && res.success !== false && (res.data || res.grandTotal || res.totalAmount || res.subTotal || res.itemTotal || res.priceDetails)) {
+        const pData = res.data || res.priceDetails || res;
+        setCalculatedPriceData(pData);
+        if (pData.discountAmount !== undefined) {
+          setDiscountAmount(pData.discountAmount);
+        } else if (pData.discount !== undefined) {
+          setDiscountAmount(pData.discount);
+        }
+      }
+    } catch (err) {
+      console.error("recalculatePriceFromApi error:", err);
+    } finally {
+      setIsCalculatingPrice(false);
+    }
+  }, [apiCategories, selectedCategory, selectedType]);
+
+  useEffect(() => {
+    if (isOpen && selectedServicesList.length > 0) {
+      recalculatePriceFromApi(selectedServicesList);
+    } else {
+      setCalculatedPriceData(null);
+    }
+  }, [isOpen, selectedServicesList, recalculatePriceFromApi]);
+
+  // Calculate Subtotal Base Price & Taxes from Selected Services (using API result if available)
+  const pricingObj = calculatedPriceData?.pricing || calculatedPriceData?.priceDetails || calculatedPriceData;
+
+  const servicePrice = pricingObj?.sellingPrice ?? pricingObj?.mrp ?? pricingObj?.itemTotal ?? pricingObj?.subTotal ?? pricingObj?.basePrice ?? selectedServicesList.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const convenienceFee = pricingObj?.platformFee ?? pricingObj?.convenienceFee ?? 49;
+  const activeDiscountAmount = pricingObj?.discount ?? pricingObj?.discountAmount ?? discountAmount;
+  const gstRate = pricingObj?.gstRate ?? 18;
+  const totalGstAmount = pricingObj?.gst ?? (pricingObj?.cgst !== undefined && pricingObj?.sgst !== undefined ? pricingObj.cgst + pricingObj.sgst : Math.round(Math.max(0, servicePrice + convenienceFee - activeDiscountAmount) * (gstRate / 100) * 100) / 100);
+  const taxableAmount = pricingObj?.taxableAmount ?? Math.max(0, servicePrice + convenienceFee - activeDiscountAmount);
+
+  const rawCgst = pricingObj?.cgst ?? (totalGstAmount !== undefined ? totalGstAmount / 2 : undefined);
+  const rawSgst = pricingObj?.sgst ?? (totalGstAmount !== undefined ? totalGstAmount / 2 : undefined);
+
+  const cgst = rawCgst !== undefined ? Math.round(rawCgst * 100) / 100 : Math.round((totalGstAmount / 2) * 100) / 100;
+  const sgst = rawSgst !== undefined ? Math.round(rawSgst * 100) / 100 : Math.round((totalGstAmount / 2) * 100) / 100;
+  const grandTotal = pricingObj?.totalAmount ?? pricingObj?.grandTotal ?? pricingObj?.finalAmount ?? Math.round((taxableAmount + totalGstAmount) * 100) / 100;
 
   if (!isOpen) return null;
 
@@ -1361,7 +1451,6 @@ export function BookingWizardModal({
         basePrice: servicePrice || bookingToEdit.basePrice,
         convenienceFee,
         discountAmount,
-        couponCode,
         cgst,
         sgst,
         totalAmount: grandTotal,
@@ -1392,6 +1481,9 @@ export function BookingWizardModal({
         onBookingUpdated(updated);
       }
       handleClose();
+      if (typeof window !== "undefined") {
+        window.location.reload();
+      }
       return;
     }
 
@@ -1414,7 +1506,6 @@ export function BookingWizardModal({
       basePrice: servicePrice,
       convenienceFee,
       discountAmount,
-      couponCode,
       cgst,
       sgst,
       totalAmount: grandTotal,
@@ -1457,6 +1548,9 @@ export function BookingWizardModal({
       onBookingCreated(created);
     }
     handleClose();
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
   };
 
   // Validation for mandatory fields per step:
@@ -2978,40 +3072,6 @@ export function BookingWizardModal({
                   </div>
                 </div>
 
-                {/* Coupon Code Input */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
-                  <label className="font-bold text-slate-700 dark:text-slate-300 block">
-                    Apply Promo Coupon
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="e.g. VARANASI100"
-                      className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold uppercase outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (couponCode.toUpperCase() === "VARANASI100" || couponCode.toUpperCase() === "HELPMATE100") {
-                          setDiscountAmount(100);
-                        } else if (couponCode.trim()) {
-                          setDiscountAmount(50);
-                        }
-                      }}
-                      className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl cursor-pointer"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  {discountAmount > 0 && (
-                    <p className="text-[11px] text-emerald-600 font-bold">
-                      ✓ Coupon Applied! Discount: ₹{discountAmount}
-                    </p>
-                  )}
-                </div>
-
                 {/* Payment Method Selector */}
                 <div className="space-y-2 text-xs">
                   <label className="font-bold text-slate-700 dark:text-slate-300 block">
@@ -3038,21 +3098,31 @@ export function BookingWizardModal({
                 <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2 text-xs">
                   <div className="flex justify-between text-slate-300">
                     <span>Base Services Total ({selectedServicesList.length} items)</span>
-                    <span>₹{servicePrice.toLocaleString()}</span>
+                    <span className="font-bold font-mono">₹{servicePrice.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-slate-300">
-                    <span>Platform Convenience Fee</span>
-                    <span>₹{convenienceFee}</span>
+                    <span>Platform Fee</span>
+                    <span className="font-bold font-mono">₹{convenienceFee.toLocaleString()}</span>
                   </div>
-                  {discountAmount > 0 && (
+                  {activeDiscountAmount > 0 && (
                     <div className="flex justify-between text-emerald-400 font-bold">
-                      <span>Coupon Discount</span>
-                      <span>-₹{discountAmount}</span>
+                      <span>Discount</span>
+                      <span className="font-mono">-₹{activeDiscountAmount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="border-t border-slate-800 pt-2 flex justify-between font-extrabold text-sm text-white">
-                    <span>Grand Total (GST Incl.)</span>
-                    <span className="text-emerald-400 text-base">₹{grandTotal.toLocaleString()}</span>
+                  {taxableAmount !== undefined && (
+                    <div className="flex justify-between text-slate-400 text-[11px]">
+                      <span>Taxable Amount</span>
+                      <span className="font-mono">₹{taxableAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-slate-300">
+                    <span>GST Rate & Tax ({gstRate}%)</span>
+                    <span className="font-bold font-mono">₹{totalGstAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-slate-800 pt-2.5 mt-1 flex justify-between font-extrabold text-sm text-white items-center">
+                    <span>Total Amount</span>
+                    <span className="text-emerald-400 text-base font-mono">₹{grandTotal.toLocaleString()}</span>
                   </div>
                 </div>
               </div>

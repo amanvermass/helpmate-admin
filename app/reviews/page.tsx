@@ -6,10 +6,12 @@ import { DataTable, Column } from "@/components/DataTable";
 import {
   getAdminReviewsApi,
   getAdminReviewDetailsApi,
+  getAdminReviewsSummaryApi,
   moderateAdminReviewApi,
   updateAdminReviewResponseApi,
   ApiAdminReview,
   ApiAdminReviewDetails,
+  ApiAdminReviewSummary,
 } from "@/lib/api";
 import { toast } from "@/components/Toast";
 import { ShimmerRow } from "@/components/ShimmerLoader";
@@ -49,6 +51,7 @@ import { CustomSelect } from "@/components/CustomSelect";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ApiAdminReview[]>([]);
+  const [summaryData, setSummaryData] = useState<ApiAdminReviewSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters state
@@ -103,9 +106,21 @@ export default function ReviewsPage() {
     }
   }, [searchQuery, ratingFilter, statusFilter, publishedFilter, page, limit]);
 
+  const fetchSummary = useCallback(async () => {
+    try {
+      const res = await getAdminReviewsSummaryApi(true);
+      if (res && res.success && res.data) {
+        setSummaryData(res.data);
+      }
+    } catch (err) {
+      console.error("fetchSummary error:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchReviews();
-  }, [fetchReviews]);
+    fetchSummary();
+  }, [fetchReviews, fetchSummary]);
 
   // Open Manage Modal & Fetch Review Details
   const handleOpenManageModal = async (review: ApiAdminReview) => {
@@ -136,6 +151,7 @@ export default function ReviewsPage() {
       if (res && res.success) {
         toast.success(res.message || `Review ${action === "approve" ? "approved & published" : "hidden"} successfully!`);
         await fetchReviews();
+        await fetchSummary();
 
         // Refresh modal if currently inspecting this review
         if (selectedReview && selectedReview._id === reviewId) {
@@ -178,6 +194,7 @@ export default function ReviewsPage() {
       if (res && res.success) {
         toast.success(res.message || "Official response posted successfully!");
         await fetchReviews();
+        await fetchSummary();
         setSelectedReview(null);
         setModalDetails(null);
         setAdminReplyText("");
@@ -216,13 +233,24 @@ export default function ReviewsPage() {
     return String(videoObj.duration);
   };
 
-  // KPIs
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)
-    : "5.0";
-  const approvedCount = reviews.filter((r) => r.moderation?.status === "approved" || r.isPublished).length;
-  const webPublishedCount = reviews.filter((r) => r.isPublished).length;
-  const videoReviewsCount = reviews.filter((r) => hasValidVideo(r.video)).length;
+  // KPIs (from API summary /api/admin/reviews/summary)
+  const avgRating = summaryData?.averageRating !== undefined
+    ? Number(summaryData.averageRating).toFixed(1)
+    : (reviews.length > 0
+        ? (reviews.reduce((sum, r) => sum + (r.rating || 5), 0) / reviews.length).toFixed(1)
+        : "5.0");
+
+  const approvedCount = summaryData?.approvedReviews !== undefined
+    ? summaryData.approvedReviews
+    : reviews.filter((r) => r.moderation?.status === "approved" || r.isPublished).length;
+
+  const webPublishedCount = summaryData?.publishedReviews !== undefined
+    ? summaryData.publishedReviews
+    : reviews.filter((r) => r.isPublished).length;
+
+  const videoReviewsCount = summaryData?.videoReviews !== undefined
+    ? summaryData.videoReviews
+    : reviews.filter((r) => hasValidVideo(r.video)).length;
 
   const tableFilters = (
     <div className="flex items-center gap-2 flex-wrap">

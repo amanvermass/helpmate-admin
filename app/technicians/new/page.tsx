@@ -1007,8 +1007,8 @@ function TechnicianFormContent() {
       if (photoFileInputRef.current?.files?.[0]) {
         formData.append("passportPhoto", photoFileInputRef.current.files[0]);
       }
-      formData.append("verificationDocumentType", docTypeMapping[selectedDocType] || "pan_card");
       if (docTypeFileInputRef.current?.files?.[0]) {
+        formData.append("verificationDocumentType", docTypeMapping[selectedDocType] || "pan_card");
         formData.append("verificationDocument", docTypeFileInputRef.current.files[0]);
       }
 

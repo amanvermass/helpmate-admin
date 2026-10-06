@@ -23,6 +23,29 @@ export async function adminLoginApi(payload: { identifier: string; password: str
   }
 }
 
+export function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    const payload = JSON.parse(jsonPayload);
+    if (typeof payload.exp === "number") {
+      return Date.now() >= (payload.exp - 5) * 1000;
+    }
+  } catch (e) {
+    // If decoding fails, fallback to server check
+  }
+  return false;
+}
+
 export function getAuthHeaders(extraHeaders: Record<string, string> = {}, isFormData: boolean = false): Record<string, string> {
   const headers: Record<string, string> = {
     ...extraHeaders,
@@ -32,8 +55,12 @@ export function getAuthHeaders(extraHeaders: Record<string, string> = {}, isForm
   }
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("helpmate_admin_token");
-    if (token && !headers["Authorization"] && !headers["authorization"]) {
-      headers["Authorization"] = `Bearer ${token}`;
+    if (token) {
+      if (isTokenExpired(token)) {
+        handleGlobalLogout();
+      } else if (!headers["Authorization"] && !headers["authorization"]) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
     }
   }
   return headers;
@@ -53,6 +80,17 @@ export function handleGlobalLogout() {
 }
 
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("helpmate_admin_token");
+    if (token && isTokenExpired(token)) {
+      handleGlobalLogout();
+      return new Response(JSON.stringify({ success: false, message: "Token expired", isUnauthorized: true }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const headers = getAuthHeaders(options.headers as Record<string, string>, isFormData);
   const response = await fetch(url, {
@@ -60,7 +98,7 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     handleGlobalLogout();
   }
 
@@ -82,6 +120,11 @@ export async function getAdminMeApi() {
 }
 
 export async function safeJsonResponse(res: Response): Promise<any> {
+  if (res.status === 401 || res.status === 403) {
+    handleGlobalLogout();
+    return { success: false, message: "Token expired or unauthorized.", isUnauthorized: true };
+  }
+
   const contentType = res.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) {
     const text = await res.text();
@@ -89,7 +132,24 @@ export async function safeJsonResponse(res: Response): Promise<any> {
     return { success: false, message: `Server returned non-JSON response (${res.status})` };
   }
   try {
-    return await res.json();
+    const data = await res.json();
+    if (data && data.success === false && typeof data.message === "string") {
+      const msg = data.message.toLowerCase();
+      if (
+        msg.includes("jwt expired") ||
+        msg.includes("token expired") ||
+        msg.includes("token is expired") ||
+        msg.includes("jwt malformed") ||
+        msg.includes("invalid token") ||
+        msg.includes("unauthorized") ||
+        msg.includes("authentication required") ||
+        msg.includes("jwt signature") ||
+        msg.includes("session expired")
+      ) {
+        handleGlobalLogout();
+      }
+    }
+    return data;
   } catch (err) {
     console.error("[API Error] JSON parse failed:", err);
     return { success: false, message: "Failed to parse JSON response from server." };
@@ -612,10 +672,14 @@ export async function createServiceApi(payload: {
 }) {
   invalidateCatalogCache();
   try {
+    const bodyData = {
+      ...payload,
+      addons: ensureAddonsArray(payload.addons),
+    };
     const res = await fetch(`${API_BASE_URL}/api/service`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(bodyData),
     });
     return await res.json();
   } catch (error) {
@@ -646,10 +710,14 @@ export async function updateServiceApi(
 ) {
   invalidateCatalogCache();
   try {
+    const bodyData = {
+      ...payload,
+      addons: ensureAddonsArray(payload.addons),
+    };
     const res = await fetch(`${API_BASE_URL}/api/service/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(bodyData),
     });
     return await res.json();
   } catch (error) {
@@ -1148,6 +1216,37 @@ export function formatImageUrl(imgUrl?: string): string {
   }
 }
 
+export function ensureAddonsArray(rawAddons: any): string[] {
+  if (!rawAddons) return [];
+  let list: any[] = [];
+  if (Array.isArray(rawAddons)) {
+    list = rawAddons;
+  } else if (typeof rawAddons === "string") {
+    const trimmed = rawAddons.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) list = parsed;
+        else list = [trimmed];
+      } catch {
+        list = [trimmed];
+      }
+    } else if (trimmed.length > 0) {
+      list = [trimmed];
+    }
+  } else if (typeof rawAddons === "object" && rawAddons !== null) {
+    list = [rawAddons];
+  }
+
+  return list
+    .map((a: any) => {
+      if (typeof a === "string") return a.trim();
+      if (typeof a === "object" && a !== null) return String(a._id || a.id || a.addonId || "").trim();
+      return String(a || "").trim();
+    })
+    .filter((id: string) => id.length === 24);
+}
+
 export function cleanImagePayload(imgUrl?: string): string {
   if (!imgUrl) return "";
   return formatImageUrl(imgUrl);
@@ -1227,36 +1326,51 @@ export async function createPackageApi(
         formData.append("serviceActionId", serviceActionId);
       }
 
-      const formattedPackages = rawPackages.map((p: any, index: number) => {
-        let fileBlob: Blob | File | null = null;
-        if (typeof File !== "undefined" && p.imageFile instanceof File) {
-          fileBlob = p.imageFile;
-        } else {
-          const rawUri = p.imageUrl || p.thumbnailUrl || "";
-          fileBlob = dataURLtoBlob(rawUri);
-        }
+      const formattedPackages = await Promise.all(
+        rawPackages.map(async (p: any, index: number) => {
+          let fileBlob: Blob | File | null = null;
+          if (typeof File !== "undefined" && p.imageFile instanceof File) {
+            fileBlob = p.imageFile;
+          } else {
+            const rawUri = p.imageUrl || p.thumbnailUrl || "";
+            if (rawUri.startsWith("blob:") || rawUri.startsWith("http://") || rawUri.startsWith("https://")) {
+              try {
+                const res = await fetch(rawUri);
+                fileBlob = await res.blob();
+              } catch {
+                fileBlob = null;
+              }
+            } else if (rawUri.startsWith("data:")) {
+              fileBlob = dataURLtoBlob(rawUri);
+            }
+          }
 
-        if (fileBlob) {
-          const mimeType = (fileBlob as any).type || "image/jpeg";
-          const ext = mimeType.split("/")[1] || "jpeg";
-          formData.append(`package_${index}_image`, fileBlob, `package_${index}_image.${ext}`);
-        }
+          if (fileBlob) {
+            const mimeType = (fileBlob as any).type || "image/jpeg";
+            const ext = mimeType.split("/")[1] || "jpeg";
+            formData.append(`package_${index}_image`, fileBlob, `package_${index}_image.${ext}`);
+          }
 
-        const pkgItem: any = {
-          packageName: p.packageName || p.title || "",
-          description: p.description || `${p.packageName || "Service"} package`,
-          price: Number(p.price) || 0,
-          originalPrice: Number(p.originalPrice) || Math.round((Number(p.price) || 0) * 1.3),
-          duration: Number(p.duration) || 60,
-          addons: p.addons || [],
-        };
+          const pkgItem: any = {
+            packageName: p.packageName || p.title || "",
+            description: p.description || `${p.packageName || "Service"} package`,
+            price: Number(p.price) || 0,
+            originalPrice: Number(p.originalPrice) || Math.round((Number(p.price) || 0) * 1.3),
+            duration: Number(p.duration) || 60,
+            addons: Array.isArray(p.addons)
+              ? p.addons.filter((id: any) => typeof id === "string" && id.length === 24)
+              : [],
+            imageUrl: cleanImagePayload(p.imageUrl || p.thumbnailUrl || ""),
+            thumbnailUrl: cleanImagePayload(p.thumbnailUrl || p.imageUrl || ""),
+          };
 
-        if (p.subtitle && typeof p.subtitle === "string" && p.subtitle.trim()) {
-          pkgItem.subtitle = p.subtitle.trim();
-        }
+          if (p.subtitle && typeof p.subtitle === "string" && p.subtitle.trim()) {
+            pkgItem.subtitle = p.subtitle.trim();
+          }
 
-        return pkgItem;
-      });
+          return pkgItem;
+        })
+      );
 
       formData.append("packages", JSON.stringify(formattedPackages));
       bodyData = formData;
@@ -1309,7 +1423,16 @@ export async function updatePackageApi(
         fileBlob = objPayload.imageFile;
       } else {
         const rawUri = objPayload.imageUrl || objPayload.thumbnailUrl || "";
-        fileBlob = dataURLtoBlob(rawUri);
+        if (rawUri.startsWith("blob:") || rawUri.startsWith("http://") || rawUri.startsWith("https://")) {
+          try {
+            const res = await fetch(rawUri);
+            fileBlob = await res.blob();
+          } catch {
+            fileBlob = null;
+          }
+        } else if (rawUri.startsWith("data:")) {
+          fileBlob = dataURLtoBlob(rawUri);
+        }
       }
 
       const validBackendKeys = [
@@ -1335,13 +1458,19 @@ export async function updatePackageApi(
             if (key === "subtitle" && (!objPayload[key] || !String(objPayload[key]).trim())) {
               return;
             }
+            if (key === "addons") {
+              return;
+            }
             if (Array.isArray(objPayload[key])) {
-              objPayload[key].forEach((val: any) => formData.append("addons", val));
+              objPayload[key].forEach((val: any) => formData.append(key, val));
             } else {
               formData.append(key, String(objPayload[key]));
             }
           }
         });
+
+        const validAddonIds = ensureAddonsArray(objPayload.addons);
+        formData.append("addons", JSON.stringify(validAddonIds));
         bodyData = formData;
       } else {
         const cleanedPayload: Record<string, any> = {};
@@ -1353,8 +1482,13 @@ export async function updatePackageApi(
             cleanedPayload[key] = objPayload[key];
           }
         }
-        if (objPayload.imageUrl) {
+        cleanedPayload.addons = ensureAddonsArray(objPayload.addons);
+        if (objPayload.imageUrl !== undefined) {
           cleanedPayload.imageUrl = cleanImagePayload(objPayload.imageUrl);
+          cleanedPayload.thumbnailUrl = cleanImagePayload(objPayload.imageUrl);
+        } else if (objPayload.thumbnailUrl !== undefined) {
+          cleanedPayload.imageUrl = cleanImagePayload(objPayload.thumbnailUrl);
+          cleanedPayload.thumbnailUrl = cleanImagePayload(objPayload.thumbnailUrl);
         }
         bodyData = JSON.stringify(cleanedPayload);
       }
@@ -1421,6 +1555,24 @@ export async function createBookingApi(payload: ApiCreateBookingPayload) {
   } catch (error) {
     console.error("createBookingApi error:", error);
     return { success: false, message: "Failed to create booking." };
+  }
+}
+
+export interface ApiCalculatePricePayload {
+  items: ApiBookingItemPayload[];
+  couponCode?: string;
+}
+
+export async function calculateBookingPriceApi(payload: ApiCalculatePricePayload) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/booking/calculate-price`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("calculateBookingPriceApi error:", error);
+    return { success: false, message: "Failed to calculate booking price." };
   }
 }
 
@@ -2134,6 +2286,11 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
 
     if (typeof FormData !== "undefined" && payload instanceof FormData) {
       bodyData = payload;
+      const doc = bodyData.get("verificationDocument");
+      if (!doc || (doc instanceof File && doc.size === 0)) {
+        bodyData.delete("verificationDocumentType");
+        bodyData.delete("verificationDocument");
+      }
     } else {
       const data = payload as CreatePartnerPayload;
       const formData = new FormData();
@@ -2167,8 +2324,10 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
       if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
       if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
       if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
-      if (data.verificationDocumentType) formData.append("verificationDocumentType", data.verificationDocumentType);
-      if (data.verificationDocument) formData.append("verificationDocument", data.verificationDocument);
+      if (data.verificationDocumentType && data.verificationDocument) {
+        formData.append("verificationDocumentType", data.verificationDocumentType);
+        formData.append("verificationDocument", data.verificationDocument);
+      }
 
       bodyData = formData;
     }
@@ -2193,6 +2352,11 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
 
     if (typeof FormData !== "undefined" && payload instanceof FormData) {
       bodyData = payload;
+      const doc = bodyData.get("verificationDocument");
+      if (!doc || (doc instanceof File && doc.size === 0)) {
+        bodyData.delete("verificationDocumentType");
+        bodyData.delete("verificationDocument");
+      }
     } else {
       const data = payload as Partial<CreatePartnerPayload>;
       const formData = new FormData();
@@ -2226,8 +2390,10 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
       if (data.aadhaarFront) formData.append("aadhaarFront", data.aadhaarFront);
       if (data.aadhaarBack) formData.append("aadhaarBack", data.aadhaarBack);
       if (data.passportPhoto) formData.append("passportPhoto", data.passportPhoto);
-      if (data.verificationDocumentType) formData.append("verificationDocumentType", data.verificationDocumentType);
-      if (data.verificationDocument) formData.append("verificationDocument", data.verificationDocument);
+      if (data.verificationDocumentType && data.verificationDocument) {
+        formData.append("verificationDocumentType", data.verificationDocumentType);
+        formData.append("verificationDocument", data.verificationDocument);
+      }
 
       bodyData = formData;
     }
@@ -2598,6 +2764,7 @@ export async function getAdminReviewsApi(params?: {
 
 export async function moderateAdminReviewApi(reviewId: string, action: "approve" | "hide") {
   clearApiCache("getAdminReviewsApi");
+  clearApiCache("getAdminReviewsSummaryApi");
   try {
     const res = await authFetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}/moderate`, {
       method: "PUT",
@@ -2613,6 +2780,7 @@ export async function moderateAdminReviewApi(reviewId: string, action: "approve"
 
 export async function updateAdminReviewResponseApi(reviewId: string, response: string) {
   clearApiCache("getAdminReviewsApi");
+  clearApiCache("getAdminReviewsSummaryApi");
   try {
     const res = await authFetch(`${API_BASE_URL}/api/admin/reviews/${reviewId}/response`, {
       method: "PUT",
@@ -2623,6 +2791,31 @@ export async function updateAdminReviewResponseApi(reviewId: string, response: s
   } catch (error) {
     console.error("updateAdminReviewResponseApi error:", error);
     return { success: false, message: "Failed to update official response." };
+  }
+}
+
+export interface ApiAdminReviewSummary {
+  averageRating: number;
+  publishedReviews: number;
+  videoReviews: number;
+  approvedReviews: number;
+}
+
+export async function getAdminReviewsSummaryApi(forceRefresh?: boolean) {
+  const cacheKey = `getAdminReviewsSummaryApi`;
+  const cached = getFromCache(cacheKey, forceRefresh);
+  if (cached) return cached;
+
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/reviews/summary`);
+    const data = await safeJsonResponse(res);
+    if (data && data.success !== false) {
+      apiCache.set(cacheKey, data);
+    }
+    return data;
+  } catch (error) {
+    console.error("getAdminReviewsSummaryApi error:", error);
+    return { success: false, message: "Failed to fetch admin reviews summary." };
   }
 }
 

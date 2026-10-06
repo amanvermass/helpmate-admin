@@ -167,7 +167,7 @@ export default function CategoriesPage() {
   };
 
   const handleRemoveSubcategoryTag = (index: number) => {
-    // Subcategory removal disabled per user requirement ("dont give delete option")
+    setSubcategoriesList((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleStartEditSubcategory = (index: number) => {
@@ -397,8 +397,8 @@ export default function CategoriesPage() {
       accessor: (row) => (
         <span
           className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${row.status === "Active"
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
             }`}
         >
           {row.status}
@@ -464,8 +464,8 @@ export default function CategoriesPage() {
           type="button"
           onClick={() => setActiveCategoryTab("masterTable")}
           className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${activeCategoryTab === "masterTable"
-              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
+            : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
         >
           <Sliders className="w-4 h-4 text-brand-600" />
@@ -476,8 +476,8 @@ export default function CategoriesPage() {
           type="button"
           onClick={() => setActiveCategoryTab("serviceIcons")}
           className={`px-5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer ${activeCategoryTab === "serviceIcons"
-              ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
-              : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
+            : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
             }`}
         >
           <ImageIcon className="w-4 h-4 text-purple-600" />
@@ -696,18 +696,14 @@ export default function CategoriesPage() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (re) => {
-                                setPrimaryIconUrl(re.target?.result as string);
-                              };
-                              reader.readAsDataURL(file);
+                              setPrimaryIconUrl(URL.createObjectURL(file));
                             }
                           }}
                         />
                       </label>
                       <input
-                        type="url"
-                        value={primaryIconUrl}
+                        type="text"
+                        value={primaryIconUrl.startsWith("blob:") || primaryIconUrl.startsWith("data:") ? "[Uploaded Icon File]" : primaryIconUrl}
                         onChange={(e) => setPrimaryIconUrl(e.target.value)}
                         placeholder="Icon image URL..."
                         className="flex-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-[10px] outline-none"
@@ -725,18 +721,7 @@ export default function CategoriesPage() {
                       <Layers className="w-4 h-4 text-purple-600" />
                       Category Subcategories
                     </span>
-                    {editingCategory && editingCategory.id && editingCategory.id.length === 24 && (
-                      <button
-                        type="button"
-                        onClick={() => fetchSubcategoriesForCategory(editingCategory.id)}
-                        disabled={isSubcategoryLoading}
-                        className="px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-200 text-[10px] font-bold hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors flex items-center gap-1.5 cursor-pointer border border-purple-300 dark:border-purple-700"
-                        title="Fetch fresh subcategories from subcategory API"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${isSubcategoryLoading ? "animate-spin" : ""}`} />
-                        <span>Sync via API</span>
-                      </button>
-                    )}
+
                   </div>
 
                   <div className="space-y-1.5">
@@ -763,7 +748,7 @@ export default function CategoriesPage() {
                         className="px-3.5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs shadow-xs flex items-center gap-1 cursor-pointer shrink-0"
                       >
                         <Plus className="w-4 h-4" />
-                        Add Tag
+                        Add
                       </button>
                     </div>
                   </div>
@@ -823,11 +808,7 @@ export default function CategoriesPage() {
                               <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-800 text-purple-900 dark:text-purple-200 font-extrabold text-xs flex items-center gap-1.5 shadow-xs group">
                                 <Layers className="w-3 h-3 text-purple-500" />
                                 <span>{item.name}</span>
-                                {item._id && (
-                                  <span className="text-[9px] font-mono text-purple-400/80 bg-purple-100 dark:bg-purple-950 px-1 rounded">
-                                    API
-                                  </span>
-                                )}
+
                                 <button
                                   type="button"
                                   onClick={() => handleStartEditSubcategory(idx)}
@@ -835,6 +816,14 @@ export default function CategoriesPage() {
                                   title="Edit/Rename subcategory"
                                 >
                                   <Edit className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSubcategoryTag(idx)}
+                                  className="text-slate-400 hover:text-red-500 transition-colors ml-0.5 cursor-pointer"
+                                  title="Remove subcategory"
+                                >
+                                  <Trash2 className="w-3 h-3" />
                                 </button>
                               </span>
                             )}

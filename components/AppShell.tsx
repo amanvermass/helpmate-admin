@@ -5,11 +5,31 @@ import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 
+import { isTokenExpired, handleGlobalLogout } from "@/lib/api";
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Check token expiration immediately & periodically on protected routes
+  useEffect(() => {
+    if (pathname === "/login") return;
+
+    const checkTokenState = () => {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("helpmate_admin_token");
+        if (!token || isTokenExpired(token)) {
+          handleGlobalLogout();
+        }
+      }
+    };
+
+    checkTokenState();
+    const interval = setInterval(checkTokenState, 3000);
+    return () => clearInterval(interval);
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {

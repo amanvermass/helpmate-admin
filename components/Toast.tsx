@@ -65,11 +65,11 @@ export function ToastContainer({ toasts: propsToasts, onDismiss }: { toasts?: To
 
   return (
     <Portal>
-      <div className="fixed bottom-6 right-6 z-[99999] flex flex-col gap-3 max-w-sm w-full select-none pointer-events-none">
+      <div className="fixed top-6 right-6 z-[99999] flex flex-col gap-3 max-w-sm w-full select-none pointer-events-none">
         {activeToasts.map((t) => (
           <div
             key={t.id}
-            className={`p-4 rounded-2xl border shadow-2xl flex items-start gap-3 transition-all animate-in slide-in-from-bottom-5 duration-200 pointer-events-auto backdrop-blur-md ${
+            className={`p-4 rounded-2xl border shadow-2xl flex items-start gap-3 transition-all animate-in slide-in-from-top-5 duration-200 pointer-events-auto backdrop-blur-md ${
               t.type === "success"
                 ? "bg-emerald-600/95 dark:bg-emerald-950/95 text-white border-emerald-500/40 shadow-emerald-600/20"
                 : t.type === "error"
