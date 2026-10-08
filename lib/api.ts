@@ -1126,6 +1126,16 @@ export async function getPackagesApi(params?: {
   }
 }
 
+export async function getPackageByIdApi(id: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/customer/packages/${id}`);
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("getPackageByIdApi error:", error);
+    return { success: false, message: "Failed to fetch package details." };
+  }
+}
+
 export async function getPackageDropdownApi(params?: string | {
   serviceId?: string;
   serviceAction?: string;
@@ -1288,6 +1298,8 @@ export async function createPackageApi(
         imageUrl?: string;
         thumbnailUrl?: string;
         addons?: string[];
+        includeInPackage?: string[];
+        excludeFromPackage?: string[];
       }>;
       serviceId?: string;
       categoryId?: string;
@@ -1302,6 +1314,8 @@ export async function createPackageApi(
       thumbnailUrl?: string;
       imageUrl?: string;
       addons?: string[];
+      includeInPackage?: string[];
+      excludeFromPackage?: string[];
       status?: boolean;
     }
 ) {
@@ -1365,6 +1379,18 @@ export async function createPackageApi(
               : [],
             imageUrl: cleanImagePayload(p.imageUrl || p.thumbnailUrl || ""),
             thumbnailUrl: cleanImagePayload(p.thumbnailUrl || p.imageUrl || ""),
+            includeInPackage: Array.isArray(p.includeInPackage)
+              ? p.includeInPackage
+                .filter((item: any) => typeof item === "string")
+                .map((item: string) => item.trim().replace(/^[•-]\s*/, "").trim())
+                .filter(Boolean)
+              : [],
+            excludeFromPackage: Array.isArray(p.excludeFromPackage)
+              ? p.excludeFromPackage
+                .filter((item: any) => typeof item === "string")
+                .map((item: string) => item.trim().replace(/^[•-]\s*/, "").trim())
+                .filter(Boolean)
+              : [],
           };
 
           if (p.subtitle && typeof p.subtitle === "string" && p.subtitle.trim()) {
@@ -1410,6 +1436,8 @@ export async function updatePackageApi(
       imageUrl?: string;
       imageFile?: File;
       addons?: string[];
+      includeInPackage?: string[];
+      excludeFromPackage?: string[];
       status?: boolean;
     }
 ) {
@@ -1466,6 +1494,22 @@ export async function updatePackageApi(
 
       if (objPayload.duration !== undefined) {
         formData.append("duration", String(Number(objPayload.duration) || 60));
+      }
+
+      if (Array.isArray(objPayload.includeInPackage)) {
+        const includedPoints = objPayload.includeInPackage
+          .filter((item: any) => typeof item === "string")
+          .map((item: string) => item.trim().replace(/^[•-]\s*/, "").trim())
+          .filter(Boolean);
+        formData.append("includeInPackage", JSON.stringify(includedPoints));
+      }
+
+      if (Array.isArray(objPayload.excludeFromPackage)) {
+        const excludedPoints = objPayload.excludeFromPackage
+          .filter((item: any) => typeof item === "string")
+          .map((item: string) => item.trim().replace(/^[•-]\s*/, "").trim())
+          .filter(Boolean);
+        formData.append("excludeFromPackage", JSON.stringify(excludedPoints));
       }
 
       const validAddonIds = ensureAddonsArray(objPayload.addons);
@@ -3219,11 +3263,6 @@ export async function getAdminInvoicePdfBlobApi(bookingId: string): Promise<Blob
     return null;
   }
 }
-
-
-
-
-
 
 
 

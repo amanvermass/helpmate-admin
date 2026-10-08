@@ -28,6 +28,8 @@ export interface ServiceItem {
   title: string;
   subtitle: string;
   description?: string;
+  includeInPackage?: string[];
+  excludeFromPackage?: string[];
   price: number;
   originalPrice: number;
   duration: string;
@@ -2722,5 +2724,4 @@ export const initialLeadItems: LeadCRMItem[] = [
     ],
   },
 ];
-
 

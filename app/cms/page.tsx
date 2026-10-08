@@ -9,6 +9,7 @@ import { toast } from "@/components/Toast";
 import { ServiceItem, ServiceAddon, VaranasiLocality } from "@/lib/mockData";
 import {
   getPackagesApi,
+  getPackageByIdApi,
   createPackageApi,
   updatePackageApi,
   deletePackageApi,
@@ -51,14 +52,51 @@ function safeStr(val: any): string {
   return "";
 }
 
+function safeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const point = item as Record<string, unknown>;
+          return [point.text, point.value, point.name, point.title].find(
+            (candidate): candidate is string => typeof candidate === "string"
+          ) || "";
+        }
+        return "";
+      })
+      .filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      return Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === "string")
+        : [value];
+    } catch {
+      return [value];
+    }
+  }
+  return [];
+}
+
+function cleanPackagePoints(items: string[] = []): string[] {
+  return items
+    .map((item) => item.trim().replace(/^[•-]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 interface ServiceOfferingRow {
   id: string;
   title: string;
   subtitle?: string;
   type?: string;
   price: number;
+  originalPrice?: number;
   duration: string;
   description?: string;
+  includeInPackage?: string[];
+  excludeFromPackage?: string[];
   thumbnailUrl?: string;
   imageFile?: File;
   addonIds?: string[];
@@ -137,6 +175,9 @@ export default function CmsPage() {
         });
 
         const mapped: ServiceItem[] = validOffers.map((s: any) => {
+          const nestedPackage = s.package && typeof s.package === "object" ? s.package : {};
+          const includePoints = s.includeInPackage ?? nestedPackage.includeInPackage;
+          const excludePoints = s.excludeFromPackage ?? nestedPackage.excludeFromPackage;
           const actObj = typeof s.serviceActionId === "object" && s.serviceActionId !== null ? s.serviceActionId : (typeof s.serviceAction === "object" && s.serviceAction !== null ? s.serviceAction : null);
 
           // Extract category & subcategory IDs stored in serviceActionId reference
@@ -203,6 +244,8 @@ export default function CmsPage() {
             description: descriptionVal,
             price: priceVal,
             originalPrice: origPriceVal,
+            includeInPackage: safeStringArray(includePoints),
+            excludeFromPackage: safeStringArray(excludePoints),
             duration: durationVal,
             rating: 5.0,
             reviewsCount: 1,
@@ -966,8 +1009,11 @@ export default function CmsPage() {
         title: "",
         subtitle: "",
         price: 699,
+        originalPrice: undefined,
         duration: "45 mins",
         description: "",
+        includeInPackage: ["• "],
+        excludeFromPackage: ["• "],
         addonIds: [],
       },
     ]);
@@ -977,6 +1023,60 @@ export default function CmsPage() {
     const updated = [...serviceOfferings];
     updated[index] = { ...updated[index], [field]: value };
     setServiceOfferings(updated);
+  };
+
+  const handlePackageListEnter = (
+    event: React.KeyboardEvent<HTMLTextAreaElement>,
+    index: number,
+    field: "includeInPackage" | "excludeFromPackage"
+  ) => {
+    if (event.key !== "Enter" || event.shiftKey) return;
+
+    event.preventDefault();
+    const textarea = event.currentTarget;
+    const value = textarea.value;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const insertion = value.length === 0 ? "• " : "\n• ";
+    const updatedValue = `${value.slice(0, start)}${insertion}${value.slice(end)}`;
+    const updatedItems = updatedValue.split("\n");
+
+    handleUpdateOfferingRow(index, field, updatedItems);
+    window.requestAnimationFrame(() => {
+      const caretPosition = start + insertion.length;
+      textarea.setSelectionRange(caretPosition, caretPosition);
+    });
+  };
+
+  const handlePackageListChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+    index: number,
+    field: "includeInPackage" | "excludeFromPackage"
+  ) => {
+    const textarea = event.currentTarget;
+    const input = textarea.value;
+    const caret = textarea.selectionStart;
+    const lines = input.split("\n");
+    let caretAdjustment = 0;
+    let lineStart = 0;
+
+    const updatedItems = lines.map((line) => {
+      const needsBullet = line.trim().length > 0 && !/^[•-]\s*/.test(line);
+      if (needsBullet && lineStart <= caret) caretAdjustment += 2;
+      const updatedLine = needsBullet ? `• ${line}` : line;
+      lineStart += line.length + 1;
+      return updatedLine;
+    });
+
+    if (input.length === 0) updatedItems[0] = "• ";
+    handleUpdateOfferingRow(index, field, updatedItems);
+
+    if (caretAdjustment > 0) {
+      window.requestAnimationFrame(() => {
+        const nextCaret = caret + caretAdjustment;
+        textarea.setSelectionRange(nextCaret, nextCaret);
+      });
+    }
   };
 
   const handleRemoveOfferingRow = (index: number) => {
@@ -1064,8 +1164,11 @@ export default function CmsPage() {
         title: "",
         subtitle: "",
         price: 699,
+        originalPrice: undefined,
         duration: "45 mins",
         description: "",
+        includeInPackage: ["• "],
+        excludeFromPackage: ["• "],
         thumbnailUrl: "",
         addonIds: [],
       },
@@ -1073,7 +1176,22 @@ export default function CmsPage() {
     setIsAddServiceOpen(true);
   };
 
-  const openEditServiceDrawer = (item: ServiceItem) => {
+  const openEditServiceDrawer = async (item: ServiceItem) => {
+    let packageDetails: Record<string, any> = {};
+    if (item.id.length === 24) {
+      const packageRes = await getPackageByIdApi(item.id);
+      const responseData = packageRes?.data;
+      const detail = packageRes?.package
+        || responseData?.package
+        || responseData?.data?.package
+        || responseData?.data
+        || responseData;
+      if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+        packageDetails = detail;
+      }
+    }
+    const packageValues: Record<string, unknown> = { ...item, ...packageDetails };
+
     fetchServiceActionsFromBackend();
     fetchCategoriesFromBackend();
     fetchAddonsFromBackend();
@@ -1121,27 +1239,34 @@ export default function CmsPage() {
     fetchServiceActionsFromBackend(catIdToUse, subCatIdToUse);
 
     // Prefill Addons & Package Image
-    const extractedAddonIds = Array.isArray(item.addons)
-      ? item.addons.map((a: any) => (typeof a === "string" ? a : (a.id || a._id))).filter(Boolean)
+    const extractedAddonIds = Array.isArray(packageValues.addons)
+      ? packageValues.addons.map((a: any) => (typeof a === "string" ? a : (a.id || a._id))).filter(Boolean)
       : [];
 
-    const packageImage = item.thumbnailUrl || (item as any).imageUrl || "";
+    const packageImage = safeStr(packageValues.thumbnailUrl) || safeStr(packageValues.imageUrl);
+    const includedItems = safeStringArray(packageValues.includeInPackage);
+    const excludedItems = safeStringArray(packageValues.excludeFromPackage);
 
     setServiceOfferings([
       {
         id: item.id,
-        title: item.title,
-        subtitle: item.subtitle || "",
-        price: item.price,
-        duration: item.duration,
-        description: item.description || item.subtitle || "",
+        title: safeStr(packageValues.packageName) || item.title,
+        subtitle: safeStr(packageValues.subtitle),
+        price: Number(packageValues.price ?? item.price),
+        originalPrice: Number(packageValues.originalPrice ?? item.originalPrice),
+        duration: typeof packageValues.duration === "number"
+          ? `${packageValues.duration} mins`
+          : safeStr(packageValues.duration) || item.duration,
+        description: safeStr(packageValues.description) || item.description || item.subtitle || "",
+        includeInPackage: includedItems.length ? includedItems : ["• "],
+        excludeFromPackage: excludedItems.length ? excludedItems : ["• "],
         thumbnailUrl: packageImage,
         addonIds: extractedAddonIds,
       },
     ]);
 
-    if (Array.isArray(item.addons)) {
-      const extraAddons: ServiceAddon[] = item.addons
+    if (Array.isArray(packageValues.addons)) {
+      const extraAddons: ServiceAddon[] = packageValues.addons
         .filter((a: any) => typeof a === "object" && a !== null && (a.id || a._id))
         .map((a: any) => ({
           id: a._id || a.id,
@@ -1270,7 +1395,9 @@ export default function CmsPage() {
           if (firstOff.description && firstOff.description.trim()) form.append("description", firstOff.description.trim());
           form.append("price", String(firstOff.price));
           form.append("duration", String(parseInt(String(firstOff.duration)) || 45));
-          form.append("originalPrice", String(Math.round((firstOff.price || 699) * 1.3)));
+          form.append("originalPrice", String(firstOff.originalPrice || Math.round((firstOff.price || 699) * 1.3)));
+          form.append("includeInPackage", JSON.stringify(cleanPackagePoints(firstOff.includeInPackage)));
+          form.append("excludeFromPackage", JSON.stringify(cleanPackagePoints(firstOff.excludeFromPackage)));
           if (packageAddonIds.length > 0) {
             packageAddonIds.forEach((addonId) => form.append("addons", addonId));
           } else {
@@ -1289,7 +1416,9 @@ export default function CmsPage() {
             description: firstOff.description && firstOff.description.trim() ? firstOff.description.trim() : undefined,
             price: firstOff.price,
             duration: parseInt(String(firstOff.duration)) || 45,
-            originalPrice: Math.round((firstOff.price || 699) * 1.3),
+            originalPrice: firstOff.originalPrice || Math.round((firstOff.price || 699) * 1.3),
+            includeInPackage: cleanPackagePoints(firstOff.includeInPackage),
+            excludeFromPackage: cleanPackagePoints(firstOff.excludeFromPackage),
             imageUrl: firstOff.thumbnailUrl || "",
             thumbnailUrl: firstOff.thumbnailUrl || "",
             addons: packageAddonIds,
@@ -1311,7 +1440,9 @@ export default function CmsPage() {
             subtitle: off.subtitle && off.subtitle.trim() ? off.subtitle.trim() : undefined,
             description: off.description && off.description.trim() ? off.description.trim() : `${off.title} service`,
             price: off.price,
-            originalPrice: Math.round((off.price || 699) * 1.3),
+            originalPrice: off.originalPrice || Math.round((off.price || 699) * 1.3),
+            includeInPackage: cleanPackagePoints(off.includeInPackage),
+            excludeFromPackage: cleanPackagePoints(off.excludeFromPackage),
             duration: parseInt(String(off.duration)) || 45,
             imageUrl: off.thumbnailUrl || "",
             thumbnailUrl: off.thumbnailUrl || "",
@@ -1348,7 +1479,9 @@ export default function CmsPage() {
         subtitle: off.subtitle && off.subtitle.trim() ? off.subtitle.trim() : undefined,
         description: off.description && off.description.trim() ? off.description.trim() : `${off.title} service`,
         price: off.price,
-        originalPrice: Math.round((off.price || 699) * 1.3),
+        originalPrice: off.originalPrice || Math.round((off.price || 699) * 1.3),
+        includeInPackage: cleanPackagePoints(off.includeInPackage),
+        excludeFromPackage: cleanPackagePoints(off.excludeFromPackage),
         duration: parseInt(String(off.duration)) || 45,
         imageUrl: off.thumbnailUrl || "",
         thumbnailUrl: off.thumbnailUrl || "",
@@ -1844,7 +1977,7 @@ export default function CmsPage() {
                           </div>
 
                           {/* 1. Package Name & 2. Price */}
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                             {/* 1. Package Name */}
                             <div className="sm:col-span-2">
                               <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
@@ -1872,6 +2005,19 @@ export default function CmsPage() {
                                 placeholder="699"
                                 className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 text-xs"
                                 required
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
+                                Original Price (₹)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={off.originalPrice ?? ""}
+                                onChange={(e) => handleUpdateOfferingRow(idx, "originalPrice", e.target.value ? Number(e.target.value) : undefined)}
+                                placeholder={String(Math.round((off.price || 699) * 1.3))}
+                                className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold outline-none focus:border-brand-500 text-xs"
                               />
                             </div>
                           </div>
@@ -1967,6 +2113,49 @@ export default function CmsPage() {
                               </div>
                             );
                           })()}
+
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/60 space-y-2">
+                              <label className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                Included in package
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={(off.includeInPackage?.length ? off.includeInPackage : ["• "]).join("\n")}
+                                onFocus={(e) => {
+                                  if (e.currentTarget.value === "• " && e.currentTarget.selectionStart < 2) {
+                                    e.currentTarget.setSelectionRange(2, 2);
+                                  }
+                                }}
+                                onKeyDown={(e) => handlePackageListEnter(e, idx, "includeInPackage")}
+                                onChange={(e) => handlePackageListChange(e, idx, "includeInPackage")}
+                                placeholder={"Complete professional diagnostics & inspection\nBackground verified local experts\nPost-service quality assurance"}
+                                className="w-full p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/70 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none focus:border-emerald-500 text-xs resize-y"
+                              />
+                              <span className="text-[10px] text-emerald-700/70 dark:text-emerald-400/70">Enter one included benefit per line.</span>
+                            </div>
+                            <div className="p-3 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/60 space-y-2">
+                              <label className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-rose-700 dark:text-rose-400">
+                                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                                Excluded from package
+                              </label>
+                              <textarea
+                                rows={3}
+                                value={(off.excludeFromPackage?.length ? off.excludeFromPackage : ["• "]).join("\n")}
+                                onFocus={(e) => {
+                                  if (e.currentTarget.value === "• " && e.currentTarget.selectionStart < 2) {
+                                    e.currentTarget.setSelectionRange(2, 2);
+                                  }
+                                }}
+                                onKeyDown={(e) => handlePackageListEnter(e, idx, "excludeFromPackage")}
+                                onChange={(e) => handlePackageListChange(e, idx, "excludeFromPackage")}
+                                placeholder={"Spare parts and replacement hardware costs\nMajor masonry or structural modifications"}
+                                className="w-full p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-white/80 dark:bg-slate-900 text-slate-900 dark:text-white font-medium outline-none focus:border-rose-500 text-xs resize-y"
+                              />
+                              <span className="text-[10px] text-rose-700/70 dark:text-rose-400/70">Enter one exclusion per line.</span>
+                            </div>
+                          </div>
 
                           {/* COMBINED ROW: PACKAGE IMAGE & SPARE PART ADD-ONS DROPDOWN IN SAME LINE */}
                           <div className="pt-2.5 border-t border-slate-100 dark:border-slate-700/60 space-y-2.5">
