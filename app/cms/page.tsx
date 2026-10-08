@@ -156,7 +156,11 @@ export default function CmsPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchServicesFromBackend = async (catsList?: ApiCategory[]) => {
-    setIsLoading(true);
+    // Keep the table mounted during background refreshes so its search and
+    // pagination state survive package edits.
+    if (services.length === 0) {
+      setIsLoading(true);
+    }
     try {
       const catsToUse = (catsList && catsList.length > 0) ? catsList : categoriesFromApi;
       const pkgRes = await getPackagesApi({ limit: 100, forceRefresh: true });
