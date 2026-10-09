@@ -49,10 +49,13 @@ import {
 import { Portal } from "@/components/Portal";
 import { CustomSelect } from "@/components/CustomSelect";
 
+import { getStoredModuleData, setCachedModuleData, isModuleCacheFresh } from "@/lib/moduleCache";
+
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState<ApiAdminReview[]>([]);
+  const initialCached = getStoredModuleData<ApiAdminReview[]>("reviews");
+  const [reviews, setReviews] = useState<ApiAdminReview[]>(() => initialCached || []);
   const [summaryData, setSummaryData] = useState<ApiAdminReviewSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !initialCached || initialCached.length === 0);
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,8 +76,14 @@ export default function ReviewsPage() {
   const [limit, setLimit] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
 
-  const fetchReviews = useCallback(async () => {
-    setIsLoading(true);
+  const fetchReviews = useCallback(async (force: boolean = false) => {
+    if (!force && isModuleCacheFresh("reviews", 30000) && reviews.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+    if (reviews.length === 0) {
+      setIsLoading(true);
+    }
     try {
       const res = await getAdminReviewsApi({
         search: searchQuery.trim() || undefined,
@@ -83,11 +92,11 @@ export default function ReviewsPage() {
         isPublished: publishedFilter !== "All" ? publishedFilter : undefined,
         page,
         limit,
-        forceRefresh: true,
       });
 
       if (res && res.success && Array.isArray(res.data)) {
         setReviews(res.data);
+        setCachedModuleData("reviews", res.data);
         if (res.pagination) {
           setTotalCount(res.pagination.total || res.data.length);
         } else {

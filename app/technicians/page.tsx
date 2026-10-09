@@ -144,9 +144,12 @@ function TableShimmerRows() {
   );
 }
 
+import { getStoredModuleData, setCachedModuleData, isModuleCacheFresh } from "@/lib/moduleCache";
+
 export default function TechniciansPage() {
-  const [techs, setTechs] = useState<Technician[]>([]);
-  const [isLoadingApi, setIsLoadingApi] = useState<boolean>(true);
+  const initialCached = getStoredModuleData<Technician[]>("technicians");
+  const [techs, setTechs] = useState<Technician[]>(() => initialCached || []);
+  const [isLoadingApi, setIsLoadingApi] = useState<boolean>(() => !initialCached || initialCached.length === 0);
   const [activeTab, setActiveTab] = useState<"partner" | "map" | "settlement">("partner");
   const [settlementStartDate, setSettlementStartDate] = useState<string>("");
   const [settlementEndDate, setSettlementEndDate] = useState<string>("");
@@ -156,23 +159,27 @@ export default function TechniciansPage() {
   const [proofUrl, setProofUrl] = useState("");
   const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
 
-  const fetchPartners = useCallback(async () => {
-    setIsLoadingApi(true);
+  const fetchPartners = useCallback(async (force: boolean = false) => {
+    if (!force && isModuleCacheFresh("technicians", 30000) && techs.length > 0) {
+      setIsLoadingApi(false);
+      return;
+    }
+    if (techs.length === 0) {
+      setIsLoadingApi(true);
+    }
     try {
       const res = await getPartnersApi();
       if (res && res.success !== false && Array.isArray(res.data)) {
         const mapped = res.data.map(mapApiPartnerToTechnician);
         setTechs(mapped);
-      } else {
-        setTechs([]);
+        setCachedModuleData("technicians", mapped);
       }
     } catch (err) {
       console.error("Failed to fetch partners:", err);
-      setTechs([]);
     } finally {
       setIsLoadingApi(false);
     }
-  }, []);
+  }, [techs.length]);
 
   useEffect(() => {
     fetchPartners();

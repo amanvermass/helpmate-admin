@@ -41,7 +41,7 @@ export function TableImage({
       <img
         src={formattedUrl}
         alt={alt}
-        loading="lazy"
+        loading="eager"
         decoding="async"
         referrerPolicy="no-referrer"
         className={className}

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { ComingSoonOverlay } from "@/components/ComingSoonOverlay";
+import { isComingSoonPath } from "@/lib/comingSoonConfig";
 
 import { isTokenExpired, handleGlobalLogout } from "@/lib/api";
 
@@ -50,6 +52,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <main className="min-h-screen bg-slate-50 dark:bg-slate-950">{children}</main>;
   }
 
+  const isComingSoon = isComingSoonPath(pathname);
+
   return (
     <div className="h-screen flex overflow-hidden antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <Sidebar
@@ -58,8 +62,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <Header onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full relative min-h-full">
           {children}
+          {isComingSoon && <ComingSoonOverlay path={pathname} />}
         </main>
       </div>
     </div>

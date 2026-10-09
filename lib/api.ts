@@ -156,10 +156,45 @@ export async function safeJsonResponse(res: Response): Promise<any> {
   }
 }
 
-// ─── IN-MEMORY API RESPONSE CACHE ───
-const apiCache = new Map<string, any>();
+// ─── IN-MEMORY API RESPONSE CACHE WITH 30-SECOND TTL COOLDOWN ───
+const rawApiCache = new Map<string, { timestamp: number; data: any }>();
 
-function getFromCache(cacheKey: string, forceRefresh?: boolean) {
+const apiCache = {
+  has(key: string) {
+    if (!rawApiCache.has(key)) return false;
+    const entry = rawApiCache.get(key);
+    if (entry && Date.now() - entry.timestamp < 30000) {
+      return true;
+    }
+    rawApiCache.delete(key);
+    return false;
+  },
+  get(key: string) {
+    if (!rawApiCache.has(key)) return undefined;
+    const entry = rawApiCache.get(key);
+    if (entry && Date.now() - entry.timestamp < 30000) {
+      return entry.data;
+    }
+    rawApiCache.delete(key);
+    return undefined;
+  },
+  set(key: string, data: any) {
+    if (data && data.success !== false) {
+      rawApiCache.set(key, { timestamp: Date.now(), data });
+    }
+  },
+  delete(key: string) {
+    return rawApiCache.delete(key);
+  },
+  clear() {
+    rawApiCache.clear();
+  },
+  keys() {
+    return rawApiCache.keys();
+  },
+};
+
+function getFromCache(cacheKey: string, forceRefresh?: boolean, maxAgeMs: number = 30000) {
   if (forceRefresh) {
     apiCache.delete(cacheKey);
     return null;
@@ -999,13 +1034,21 @@ export async function getServiceActionsApi(
 }
 
 export async function getServiceActionDropdownApi(params?: { categoryId?: string; subCategoryId?: string; forceRefresh?: boolean }) {
-  const cacheKey = `getServiceActionDropdownApi:${JSON.stringify({ categoryId: params?.categoryId, subCategoryId: params?.subCategoryId })}`;
+  const cleanCatId = (params?.categoryId || "").trim();
+  const cleanSubCatId = (params?.subCategoryId || "").trim();
+
+  if (!cleanCatId && !cleanSubCatId) {
+    return getServiceActionsApi(params?.forceRefresh);
+  }
+
+  const cacheKey = `getServiceActionDropdownApi:${JSON.stringify({ categoryId: cleanCatId, subCategoryId: cleanSubCatId })}`;
   const cached = getFromCache(cacheKey, params?.forceRefresh);
   if (cached) return cached;
+
   try {
     const query = new URLSearchParams();
-    if (params?.categoryId) query.append("categoryId", params.categoryId);
-    if (params?.subCategoryId) query.append("subCategoryId", params.subCategoryId);
+    if (cleanCatId) query.append("categoryId", cleanCatId);
+    if (cleanSubCatId) query.append("subCategoryId", cleanSubCatId);
 
     const res = await authFetch(`${API_BASE_URL}/api/service-action/dropdown?${query.toString()}`);
     const data = await safeJsonResponse(res);
@@ -1074,10 +1117,18 @@ export async function deleteServiceActionApi(id: string) {
     const res = await authFetch(`${API_BASE_URL}/api/service-action/${id}`, {
       method: "DELETE",
     });
-    return await res.json();
-  } catch (error) {
+    const data = await safeJsonResponse(res);
+    if (!res.ok) {
+      return {
+        success: false,
+        message: data?.message || data?.error || data?.detail || `Failed to delete service action (${res.status}).`,
+        ...data,
+      };
+    }
+    return data;
+  } catch (error: any) {
     console.error("deleteServiceActionApi error:", error);
-    return { success: false, message: "Failed to delete service action." };
+    return { success: false, message: error?.message || "Failed to delete service action." };
   }
 }
 
@@ -1655,12 +1706,13 @@ export async function getBookingCategoriesApi(forceRefresh?: boolean) {
 
 export async function getBookingsApi(
   params?:
-    | { categoryId?: string; search?: string; status?: string; page?: number; limit?: number; forceRefresh?: boolean }
+    | { categoryId?: string; search?: string; status?: string; bookingType?: string; page?: number; limit?: number; forceRefresh?: boolean }
     | boolean
 ) {
   let categoryId = "";
   let search = "";
   let status = "";
+  let bookingType = "";
   let page: number | undefined;
   let limit = 100;
   let forceRefresh = false;
@@ -1671,12 +1723,13 @@ export async function getBookingsApi(
     categoryId = params.categoryId || "";
     search = params.search || "";
     status = params.status || "";
+    bookingType = params.bookingType || "";
     page = params.page;
     limit = params.limit || 100;
     forceRefresh = !!params.forceRefresh;
   }
 
-  const cacheKey = `getBookingsApi:${JSON.stringify({ categoryId, search, status, page, limit })}`;
+  const cacheKey = `getBookingsApi:${JSON.stringify({ categoryId, search, status, bookingType, page, limit })}`;
   const cached = getFromCache(cacheKey, forceRefresh);
   if (cached) return cached;
 
@@ -1685,6 +1738,7 @@ export async function getBookingsApi(
     if (categoryId) query.append("categoryId", categoryId);
     if (search) query.append("search", search);
     if (status) query.append("status", status);
+    if (bookingType) query.append("bookingType", bookingType);
     if (page) query.append("page", String(page));
     query.append("limit", String(limit));
 

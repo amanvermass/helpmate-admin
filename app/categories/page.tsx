@@ -49,39 +49,30 @@ function CategoryIconDisplay({ iconUrl, name, sizeClassName = "w-full h-full" }:
   );
 }
 
+import { getCachedModuleData, getStoredModuleData, setCachedModuleData, isModuleCacheFresh } from "@/lib/moduleCache";
+
 export default function CategoriesPage() {
   // Tab State: "masterTable" is 1st tab & default active
   const [activeCategoryTab, setActiveCategoryTab] = useState<"masterTable" | "serviceIcons">("masterTable");
 
-  const [categories, setCategories] = useState<CategoryItem[]>(() => {
-    // Base catalog list initialized with fallback media API paths
-    const baseList: CategoryItem[] = [
-      { id: "cat-1", name: "Air Conditioner", slug: "ac", icon: "Wrench", subcategoriesCount: 4, subcategories: ["Split AC", "Window AC", "Cassette AC", "Inverter AC"], servicesCount: 12, status: "Active" },
-      { id: "cat-2", name: "Appliances", slug: "appliances", icon: "Tv", subcategoriesCount: 3, subcategories: ["Refrigerator Repair", "Washing Machine", "Microwave & Oven"], servicesCount: 10, status: "Active" },
-      { id: "cat-3", name: "Cleaning", slug: "cleaning", icon: "Sparkles", subcategoriesCount: 5, subcategories: ["Full House Deep Clean", "Kitchen Degreasing", "Bathroom Hydro Scrub"], servicesCount: 18, status: "Active" },
-      { id: "cat-4", name: "Plumbing", slug: "plumbing", icon: "Droplets", subcategoriesCount: 3, subcategories: ["Tap & Mixer", "Toilet & Tank", "Drain Unclogging"], servicesCount: 8, status: "Active" },
-      { id: "cat-5", name: "Electrician", slug: "electrician", icon: "Zap", subcategoriesCount: 3, subcategories: ["MCB & Switchboard", "Wiring & Fuse", "Fan & Chandelier"], servicesCount: 10, status: "Active" },
-      { id: "cat-6", name: "Carpenter", slug: "carpenter", icon: "Hammer", subcategoriesCount: 4, subcategories: ["Door Lock Repair", "Furniture Assembly", "Wooden Almirah Fitting"], servicesCount: 7, status: "Active" },
-      { id: "cat-7", name: "Painting", slug: "painting", icon: "Paintbrush", subcategoriesCount: 3, subcategories: ["Full House Painting", "Waterproofing", "Wall Texture & Stencil"], servicesCount: 6, status: "Active" },
-      { id: "cat-8", name: "Pest Control", slug: "pest-control", icon: "Bug", subcategoriesCount: 3, subcategories: ["Cockroach Control", "Termite Treatment", "Bedbug Removal"], servicesCount: 5, status: "Active" },
-    ];
-
-    return baseList.map((c) => ({
-      ...c,
-      iconUrl: c.iconUrl || (c.id && c.id.length === 24 ? `/api/media/category/${c.id}/icon` : ""),
-      subCategoriesObj: c.subcategories ? c.subcategories.map((name) => ({ name })) : [],
-    }));
-  });
-
-  // Loading state for Shimmer Loader
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const initialCached = getStoredModuleData<CategoryItem[]>("categories");
+  const [categories, setCategories] = useState<CategoryItem[]>(() => initialCached || []);
+  const [isLoading, setIsLoading] = useState<boolean>(() => !initialCached || initialCached.length === 0);
 
   // Fetch Categories from Backend API
-  const fetchCategoriesFromBackend = async () => {
-    setIsLoading(true);
+  const fetchCategoriesFromBackend = async (force: boolean = false) => {
+    // If cache is fresh (< 30s) and not forced, DO NOT CALL API AT ALL!
+    if (!force && isModuleCacheFresh("categories", 30000) && categories.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (categories.length === 0) {
+      setIsLoading(true);
+    }
     try {
       const res = await getCategoriesApi();
-      if (res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+      if (res && res.success !== false && res.data && Array.isArray(res.data)) {
         const mapped: CategoryItem[] = res.data.map((c: ApiCategory) => {
           const apiIcon = c.iconUrl || (c as any).icon || (c._id ? `/api/media/category/${c._id}/icon` : "");
           return {
@@ -98,7 +89,10 @@ export default function CategoriesPage() {
           };
         });
         setCategories(mapped);
+        setCachedModuleData("categories", mapped);
       }
+    } catch (err) {
+      console.error("fetchCategoriesFromBackend error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -503,6 +497,7 @@ export default function CategoriesPage() {
               columns={catColumns}
               data={categories}
               searchPlaceholder="Search category title or slug..."
+              disableDelete={true}
             />
           )}
         </div>
@@ -575,15 +570,6 @@ export default function CategoriesPage() {
                     >
                       <Edit className="w-3.5 h-3.5" />
                       <span>Edit</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(cat)}
-                      className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:border-rose-300 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                      title="Delete Category"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

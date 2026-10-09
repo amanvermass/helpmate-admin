@@ -65,10 +65,13 @@ export interface CustomerRow {
   raw: ApiAdminCustomerItem;
 }
 
+import { getStoredModuleData, setCachedModuleData, isModuleCacheFresh } from "@/lib/moduleCache";
+
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<CustomerRow[]>([]);
+  const initialCached = getStoredModuleData<CustomerRow[]>("customers");
+  const [customers, setCustomers] = useState<CustomerRow[]>(() => initialCached || []);
   const [localities, setLocalities] = useState<ApiLocality[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialCached || initialCached.length === 0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Filters & Search
@@ -121,14 +124,19 @@ export default function CustomersPage() {
   }, []);
 
   // Fetch Customers from Backend API
-  const fetchCustomers = useCallback(async () => {
-    setLoading(true);
+  const fetchCustomers = useCallback(async (force: boolean = false) => {
+    if (!force && isModuleCacheFresh("customers", 30000) && customers.length > 0) {
+      setLoading(false);
+      return;
+    }
+    if (customers.length === 0) {
+      setLoading(true);
+    }
     setErrorMsg(null);
     try {
       const res = await getAdminCustomersApi({
         search: searchQuery || undefined,
         limit: 100,
-        forceRefresh: true,
       });
 
       if (res && res.success !== false) {
@@ -177,6 +185,8 @@ export default function CustomersPage() {
         });
 
         setCustomers(formatted);
+        setCachedModuleData("customers", formatted);
+      
       } else {
         setErrorMsg(res?.message || "Failed to load customers from server.");
       }
@@ -510,7 +520,7 @@ export default function CustomersPage() {
           </div>
           <button
             type="button"
-            onClick={fetchCustomers}
+            onClick={() => fetchCustomers(true)}
             className="px-3 py-1 bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-bold hover:bg-rose-100 flex items-center gap-1 cursor-pointer"
           >
             <RefreshCw className="w-3 h-3" /> Retry
@@ -639,7 +649,7 @@ export default function CustomersPage() {
 
           <button
             type="button"
-            onClick={fetchCustomers}
+            onClick={() => fetchCustomers(true)}
             className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
             title="Refresh List"
           >

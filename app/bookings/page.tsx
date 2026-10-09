@@ -258,28 +258,65 @@ function TableShimmer() {
   );
 }
 
+import { getStoredModuleData, setCachedModuleData, isModuleCacheFresh } from "@/lib/moduleCache";
+
 function BookingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams?.get("category");
+  const bookingTypeParam = searchParams?.get("bookingType");
+  const statusParam = searchParams?.get("status");
   const selectedCategory = categoryParam || null;
   const { role } = useRbac();
   const isOfficeAdmin = role === "Office Admin";
 
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [apiCategories, setApiCategories] = useState<ApiBookingCategoryStat[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  const cacheKey = `bookings:${bookingTypeParam || ""}:${statusParam || ""}`;
+  const initialCachedBookings = getStoredModuleData<Booking[]>(cacheKey) || getStoredModuleData<Booking[]>("bookings");
+  const initialCachedCats = getStoredModuleData<ApiBookingCategoryStat[]>("booking_categories");
+  const [bookings, setBookings] = useState<Booking[]>(() => initialCachedBookings || []);
+  const [apiCategories, setApiCategories] = useState<ApiBookingCategoryStat[]>(() => initialCachedCats || []);
+  const [isLoadingData, setIsLoadingData] = useState(() => !initialCachedBookings || initialCachedBookings.length === 0);
+
+  const updateBookingFilters = (newType?: string | null, newStatus?: string | null) => {
+    const params = new URLSearchParams();
+    if (categoryParam) {
+      params.set("category", categoryParam);
+    }
+    if (newType) {
+      params.set("bookingType", newType);
+    }
+    if (newStatus) {
+      params.set("status", newStatus);
+    }
+    const queryStr = params.toString();
+    router.push(`/bookings${queryStr ? `?${queryStr}` : ""}`);
+  };
 
   const refreshBookingsFromBackend = async () => {
     try {
       const catRes = await getBookingCategoriesApi(true);
-      if (catRes && catRes.success && catRes.data?.categories) {
-        setApiCategories(catRes.data.categories);
+      const rawCatList = Array.isArray(catRes?.data?.categories)
+        ? catRes.data.categories
+        : Array.isArray(catRes?.categories)
+        ? catRes.categories
+        : Array.isArray(catRes?.data)
+        ? catRes.data
+        : [];
+      if (rawCatList.length > 0) {
+        setApiCategories(rawCatList);
+        setCachedModuleData("booking_categories", rawCatList);
       }
-      const bookingsRes = await getBookingsApi(true);
+
+      const bookingsRes = await getBookingsApi({
+        bookingType: bookingTypeParam || undefined,
+        status: statusParam || undefined,
+        forceRefresh: true,
+      });
       if (bookingsRes && bookingsRes.success && Array.isArray(bookingsRes.data)) {
         const mappedList: Booking[] = bookingsRes.data.map(mapApiBooking);
         setBookings(mappedList);
+        setCachedModuleData(cacheKey, mappedList);
+        setCachedModuleData("bookings", mappedList);
       }
     } catch (err) {
       console.error("Error refreshing bookings:", err);
@@ -289,22 +326,43 @@ function BookingsPageContent() {
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
+      try {
+        const catRes = await getBookingCategoriesApi();
+        const rawCatList = Array.isArray(catRes?.data?.categories)
+          ? catRes.data.categories
+          : Array.isArray(catRes?.categories)
+          ? catRes.categories
+          : Array.isArray(catRes?.data)
+          ? catRes.data
+          : [];
+        if (isMounted && rawCatList.length > 0) {
+          setApiCategories(rawCatList);
+          setCachedModuleData("booking_categories", rawCatList);
+        }
+      } catch (err) {
+        console.error("Error loading categories:", err);
+      }
+
+      if (isModuleCacheFresh(cacheKey, 30000) && bookings.length > 0) {
+        setIsLoadingData(false);
+        return;
+      }
       if (bookings.length === 0) {
         setIsLoadingData(true);
       }
       try {
-        const catRes = await getBookingCategoriesApi();
-        if (isMounted && catRes && catRes.success && catRes.data?.categories) {
-          setApiCategories(catRes.data.categories);
-        }
-
-        const bookingsRes = await getBookingsApi();
+        const bookingsRes = await getBookingsApi({
+          bookingType: bookingTypeParam || undefined,
+          status: statusParam || undefined,
+        });
         if (isMounted && bookingsRes && bookingsRes.success && Array.isArray(bookingsRes.data)) {
           const mappedList: Booking[] = bookingsRes.data.map(mapApiBooking);
           setBookings(mappedList);
+          setCachedModuleData(cacheKey, mappedList);
+          setCachedModuleData("bookings", mappedList);
         }
       } catch (err) {
-        console.error("Error loading categories or bookings:", err);
+        console.error("Error loading bookings:", err);
       } finally {
         if (isMounted) setIsLoadingData(false);
       }
@@ -314,11 +372,33 @@ function BookingsPageContent() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [bookingTypeParam, statusParam, categoryParam]);
 
   const [activeStatusFilter, setActiveStatusFilter] = useState<string>("All");
   const [cardFilter, setCardFilter] = useState<"ALL" | "UNASSIGNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED">("ALL");
   const [channelFilter, setChannelFilter] = useState<"ALL" | "ONLINE" | "MANUAL">("ALL");
+
+  useEffect(() => {
+    if (bookingTypeParam === "manual") {
+      setChannelFilter("MANUAL");
+    } else if (bookingTypeParam === "online") {
+      setChannelFilter("ONLINE");
+    } else {
+      setChannelFilter("ALL");
+    }
+
+    if (statusParam === "pending") {
+      setCardFilter("UNASSIGNED");
+    } else if (statusParam === "partner_assigned") {
+      setCardFilter("IN_PROGRESS");
+    } else if (statusParam === "completed") {
+      setCardFilter("COMPLETED");
+    } else if (statusParam === "cancelled") {
+      setCardFilter("CANCELLED");
+    } else {
+      setCardFilter("ALL");
+    }
+  }, [bookingTypeParam, statusParam]);
 
   const isOnlineBooking = (b: Booking) => {
     if (b.createdBy) {
@@ -434,17 +514,33 @@ function BookingsPageContent() {
     return bookings;
   }, [bookings, isOfficeAdmin]);
 
-  // Compute Category Level Statistics dynamically
+  // Compute Category Level Statistics dynamically by merging API Categories + Live Bookings
   const categoryStatsList = useMemo(() => {
     const catMap: Record<
       string,
-      { count: number; unassigned: number; inProgress: number; completed: number; cancelled: number }
+      { name: string; count: number; unassigned: number; inProgress: number; completed: number; cancelled: number }
     > = {};
 
+    // 1. Initialize from API Categories
+    apiCategories.forEach((apiCat: any) => {
+      const name = apiCat.categoryName || apiCat.name || "Category";
+      if (name && name !== "All Service Categories") {
+        catMap[name] = {
+          name,
+          count: apiCat.totalBookings || 0,
+          unassigned: apiCat.openBookings || 0,
+          inProgress: apiCat.activeBookings || 0,
+          completed: apiCat.completedBookings || 0,
+          cancelled: apiCat.cancelledBookings || 0,
+        };
+      }
+    });
+
+    // 2. Merge live calculated stats from current bookings
     roleFilteredBookings.forEach((b) => {
       const cat = b.category || "General";
       if (!catMap[cat]) {
-        catMap[cat] = { count: 0, unassigned: 0, inProgress: 0, completed: 0, cancelled: 0 };
+        catMap[cat] = { name: cat, count: 0, unassigned: 0, inProgress: 0, completed: 0, cancelled: 0 };
       }
       catMap[cat].count++;
       if (!b.technicianName) catMap[cat].unassigned++;
@@ -453,11 +549,8 @@ function BookingsPageContent() {
       if (b.status === "Cancelled" || b.status === "Rejected") catMap[cat].cancelled++;
     });
 
-    return Object.entries(catMap).map(([name, stats]) => ({
-      name,
-      ...stats,
-    }));
-  }, [roleFilteredBookings]);
+    return Object.values(catMap);
+  }, [apiCategories, roleFilteredBookings]);
 
   // 1. Filter by selected category
   const categoryBookings = useMemo(() => {
@@ -656,8 +749,8 @@ function BookingsPageContent() {
           return (
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold ${isOnline
-                  ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300"
-                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
+                ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300"
+                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300"
                 }`}
             >
               {isOnline ? <Globe className="w-3 h-3 text-purple-600" /> : <Building2 className="w-3 h-3 text-slate-500" />}
@@ -848,12 +941,12 @@ function BookingsPageContent() {
           <div className="flex items-center gap-1.5">
             <span
               className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1 ${row.status === "Completed"
-                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
-                  : row.status === "In Progress" || row.status === "Assigned"
-                    ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
-                    : row.status === "Cancelled"
-                      ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
-                      : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
+                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300"
+                : row.status === "In Progress" || row.status === "Assigned"
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300"
+                  : row.status === "Cancelled"
+                    ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300"
+                    : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300"
                 }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
@@ -929,11 +1022,13 @@ function BookingsPageContent() {
     return baseCols;
   }, [isOfficeAdmin, selectedCategory, router]);
 
+  const showTableView = Boolean(selectedCategory || bookingTypeParam || statusParam);
+
   return (
     <div className="space-y-6">
       {isLoadingData ? (
-        !selectedCategory ? <CategoryCardsShimmer /> : <TableShimmer />
-      ) : !selectedCategory ? (
+        !showTableView ? <CategoryCardsShimmer /> : <TableShimmer />
+      ) : !showTableView ? (
         /* ─── VIEW 1: CATEGORY SELECTION HUB (ONLY CATEGORIES SHOWN) ─── */
         <div className="space-y-6 animate-in fade-in duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -1094,13 +1189,13 @@ function BookingsPageContent() {
                 <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <Calendar className="w-6 h-6 text-brand-600" />
                   <span>
-                    {selectedCategory === "All" ? "All Bookings Directory" : `${selectedCategory} Operations Directory`}
+                    {!selectedCategory || selectedCategory === "All" ? "All Bookings Directory" : `${selectedCategory} Operations Directory`}
                   </span>
                 </h1>
               </div>
 
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Managing live dispatch, partner assignments, and order tracking for {selectedCategory === "All" ? "all categories" : selectedCategory}.
+                Managing live dispatch, partner assignments, and order tracking for {!selectedCategory || selectedCategory === "All" ? "all categories" : selectedCategory}.
               </p>
             </div>
 
@@ -1123,10 +1218,11 @@ function BookingsPageContent() {
               onClick={() => {
                 setCardFilter("ALL");
                 setActiveStatusFilter("All");
+                updateBookingFilters("", "");
               }}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "ALL"
-                  ? "bg-indigo-500/10 dark:bg-indigo-950/40 border-2 border-indigo-500 shadow-md scale-[1.01]"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:shadow-sm"
+                ? "bg-indigo-500/10 dark:bg-indigo-950/40 border-2 border-indigo-500 shadow-md scale-[1.01]"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:shadow-sm"
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -1142,10 +1238,13 @@ function BookingsPageContent() {
 
             <button
               type="button"
-              onClick={() => setCardFilter(cardFilter === "UNASSIGNED" ? "ALL" : "UNASSIGNED")}
+              onClick={() => {
+                const nextStatus = statusParam === "pending" ? "" : "pending";
+                updateBookingFilters(undefined, nextStatus);
+              }}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "UNASSIGNED"
-                  ? "bg-amber-500/10 dark:bg-amber-950/40 border-2 border-amber-500 shadow-md scale-[1.01]"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:shadow-sm"
+                ? "bg-amber-500/10 dark:bg-amber-950/40 border-2 border-amber-500 shadow-md scale-[1.01]"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:shadow-sm"
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -1161,10 +1260,13 @@ function BookingsPageContent() {
 
             <button
               type="button"
-              onClick={() => setCardFilter(cardFilter === "IN_PROGRESS" ? "ALL" : "IN_PROGRESS")}
+              onClick={() => {
+                const nextStatus = statusParam === "partner_assigned" ? "" : "partner_assigned";
+                updateBookingFilters(undefined, nextStatus);
+              }}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "IN_PROGRESS"
-                  ? "bg-blue-500/10 dark:bg-blue-950/40 border-2 border-blue-500 shadow-md scale-[1.01]"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 hover:shadow-sm"
+                ? "bg-blue-500/10 dark:bg-blue-950/40 border-2 border-blue-500 shadow-md scale-[1.01]"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 hover:shadow-sm"
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -1180,10 +1282,13 @@ function BookingsPageContent() {
 
             <button
               type="button"
-              onClick={() => setCardFilter(cardFilter === "COMPLETED" ? "ALL" : "COMPLETED")}
+              onClick={() => {
+                const nextStatus = statusParam === "completed" ? "" : "completed";
+                updateBookingFilters(undefined, nextStatus);
+              }}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "COMPLETED"
-                  ? "bg-emerald-500/10 dark:bg-emerald-950/40 border-2 border-emerald-500 shadow-md scale-[1.01]"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:shadow-sm"
+                ? "bg-emerald-500/10 dark:bg-emerald-950/40 border-2 border-emerald-500 shadow-md scale-[1.01]"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:shadow-sm"
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -1199,10 +1304,13 @@ function BookingsPageContent() {
 
             <button
               type="button"
-              onClick={() => setCardFilter(cardFilter === "CANCELLED" ? "ALL" : "CANCELLED")}
+              onClick={() => {
+                const nextStatus = statusParam === "cancelled" ? "" : "cancelled";
+                updateBookingFilters(undefined, nextStatus);
+              }}
               className={`p-4 rounded-2xl text-left transition-all cursor-pointer ${cardFilter === "CANCELLED"
-                  ? "bg-rose-500/10 dark:bg-rose-950/40 border-2 border-rose-500 shadow-md scale-[1.01]"
-                  : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-rose-400 hover:shadow-sm"
+                ? "bg-rose-500/10 dark:bg-rose-950/40 border-2 border-rose-500 shadow-md scale-[1.01]"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-rose-400 hover:shadow-sm"
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -1225,10 +1333,10 @@ function BookingsPageContent() {
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
                 <button
                   type="button"
-                  onClick={() => setChannelFilter("ALL")}
+                  onClick={() => updateBookingFilters("", undefined)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${channelFilter === "ALL"
-                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-extrabold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
                 >
                   All Origins
@@ -1236,10 +1344,10 @@ function BookingsPageContent() {
 
                 <button
                   type="button"
-                  onClick={() => setChannelFilter("ONLINE")}
+                  onClick={() => updateBookingFilters(bookingTypeParam === "online" ? "" : "online", undefined)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${channelFilter === "ONLINE"
-                      ? "bg-purple-600 text-white shadow-xs font-extrabold"
-                      : "text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/60"
+                    ? "bg-purple-600 text-white shadow-xs font-extrabold"
+                    : "text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/60"
                     }`}
                 >
                   <Globe className="w-3.5 h-3.5" />
@@ -1248,10 +1356,10 @@ function BookingsPageContent() {
 
                 <button
                   type="button"
-                  onClick={() => setChannelFilter("MANUAL")}
+                  onClick={() => updateBookingFilters(bookingTypeParam === "manual" ? "" : "manual", undefined)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${channelFilter === "MANUAL"
-                      ? "bg-slate-800 text-white shadow-xs font-extrabold"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    ? "bg-slate-800 text-white shadow-xs font-extrabold"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                     }`}
                 >
                   <Building2 className="w-3.5 h-3.5" />

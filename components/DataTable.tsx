@@ -55,6 +55,7 @@ export interface DataTableProps<T extends Record<string, any>> {
   idField?: string;
   hideActionsColumn?: boolean;
   extraFilters?: React.ReactNode;
+  disableDelete?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -72,6 +73,7 @@ export function DataTable<T extends Record<string, any>>({
   idField = "id",
   hideActionsColumn = false,
   extraFilters,
+  disableDelete = false,
 }: DataTableProps<T>) {
   const hasDefaultActionsColumn =
     !hideActionsColumn &&
@@ -431,13 +433,16 @@ export function DataTable<T extends Record<string, any>>({
                 >
                   Change Status
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setIsBulkDeleteModalOpen(true)}
-                  className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {!disableDelete && (
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkDeleteModalOpen(true)}
+                    className="p-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 cursor-pointer"
+                    title="Bulk Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -553,12 +558,16 @@ export function DataTable<T extends Record<string, any>>({
                                 icon: Copy,
                                 onClick: () => handleDuplicateRow(row),
                               },
-                              {
-                                label: "Delete",
-                                icon: Trash2,
-                                onClick: () => setDeletingRow(row),
-                                danger: true,
-                              },
+                              ...(!disableDelete
+                                ? [
+                                    {
+                                      label: "Delete",
+                                      icon: Trash2,
+                                      onClick: () => setDeletingRow(row),
+                                      danger: true,
+                                    },
+                                  ]
+                                : []),
                             ]}
                           />
                         ) : null}
@@ -764,12 +773,16 @@ export function DataTable<T extends Record<string, any>>({
                                 icon: Copy,
                                 onClick: () => handleDuplicateRow(row),
                               },
-                              {
-                                label: "Delete",
-                                icon: Trash2,
-                                onClick: () => setDeletingRow(row),
-                                danger: true,
-                              },
+                              ...(!disableDelete
+                                ? [
+                                    {
+                                      label: "Delete",
+                                      icon: Trash2,
+                                      onClick: () => setDeletingRow(row),
+                                      danger: true,
+                                    },
+                                  ]
+                                : []),
                             ]}
                           />
                         </td>

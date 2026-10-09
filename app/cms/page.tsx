@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { getStoredModuleData, setCachedModuleData, isModuleCacheFresh } from "@/lib/moduleCache";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableImage } from "@/components/TableImage";
@@ -133,12 +134,18 @@ export default function CmsPage() {
   const [subCatInputForModal, setSubCatInputForModal] = useState<string>("");
 
   // API Data State
-  const [categoriesFromApi, setCategoriesFromApi] = useState<ApiCategory[]>([]);
-  const [serviceActionsFromApi, setServiceActionsFromApi] = useState<ApiServiceAction[]>([]);
+  const initialCachedCats = getStoredModuleData<ApiCategory[]>("cms_categories_api") || [];
+  const initialCachedActions = getStoredModuleData<ApiServiceAction[]>("cms_service_actions") || [];
+
+  const [categoriesFromApi, setCategoriesFromApi] = useState<ApiCategory[]>(() => initialCachedCats);
+  const [serviceActionsFromApi, setServiceActionsFromApi] = useState<ApiServiceAction[]>(() => initialCachedActions);
   const [editingActionObj, setEditingActionObj] = useState<ApiServiceAction | null>(null);
 
   // Add Service Action Modal State
-  const [serviceActionsList, setServiceActionsList] = useState<string[]>([]);
+  const [serviceActionsList, setServiceActionsList] = useState<string[]>(() => {
+    const names = initialCachedActions.map((a: any) => a.serviceAction || a.name || "").filter(Boolean);
+    return Array.from(new Set(names));
+  });
   const [isAddActionModalOpen, setIsAddActionModalOpen] = useState<boolean>(false);
   const [newActionInput, setNewActionInput] = useState<string>("");
   const [targetOfferingIndexForAction, setTargetOfferingIndexForAction] = useState<number | null>(null);
@@ -149,13 +156,18 @@ export default function CmsPage() {
   const [deleteActionModal, setDeleteActionModal] = useState<{ open: boolean; id: string; name: string } | null>(null);
 
   // Enhanced Services state — live API data only (no manual mock data)
-  const [services, setServices] = useState<ServiceItem[]>([]);
+  const initialCachedServices = getStoredModuleData<ServiceItem[]>("cms_services");
+  const [services, setServices] = useState<ServiceItem[]>(() => initialCachedServices || []);
   const [addons, setAddons] = useState<ServiceAddon[]>([]);
   const [localities, setLocalities] = useState<VaranasiLocality[]>([]);
   const [activeTab, setActiveTab] = useState<"services" | "addons" | "pincodes">("services");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => !initialCachedServices || initialCachedServices.length === 0);
 
-  const fetchServicesFromBackend = async (catsList?: ApiCategory[]) => {
+  const fetchServicesFromBackend = async (catsList?: ApiCategory[], force: boolean = false) => {
+    if (!force && isModuleCacheFresh("cms_services", 30000) && services.length > 0) {
+      setIsLoading(false);
+      return;
+    }
     // Keep the table mounted during background refreshes so its search and
     // pagination state survive package edits.
     if (services.length === 0) {
@@ -163,7 +175,7 @@ export default function CmsPage() {
     }
     try {
       const catsToUse = (catsList && catsList.length > 0) ? catsList : categoriesFromApi;
-      const pkgRes = await getPackagesApi({ limit: 100, forceRefresh: true });
+      const pkgRes = await getPackagesApi({ limit: 100 });
       const rawPkgList = pkgRes?.data?.packages || (Array.isArray(pkgRes?.data) ? pkgRes.data : (Array.isArray(pkgRes) ? pkgRes : []));
 
       let rawList = rawPkgList;
@@ -264,6 +276,7 @@ export default function CmsPage() {
           };
         });
         setServices(mapped);
+        setCachedModuleData("cms_services", mapped);
       }
     } catch (err) {
       console.error("fetchServicesFromBackend error:", err);
@@ -311,11 +324,15 @@ export default function CmsPage() {
     }
   };
 
-  const fetchCategoriesFromBackend = async (): Promise<ApiCategory[]> => {
+  const fetchCategoriesFromBackend = async (force: boolean = false): Promise<ApiCategory[]> => {
+    if (!force && isModuleCacheFresh("cms_categories_api", 30000) && categoriesFromApi.length > 0) {
+      return categoriesFromApi;
+    }
     try {
       const res = await getCategoriesApi();
       if (res.success && Array.isArray(res.data) && res.data.length > 0) {
         setCategoriesFromApi(res.data);
+        setCachedModuleData("cms_categories_api", res.data);
         const newMap: Record<string, string[]> = {};
         res.data.forEach((cat: ApiCategory) => {
           newMap[cat.categoryName] = (cat.subCategories || []).map((sub: any) => sub.name);
@@ -326,32 +343,33 @@ export default function CmsPage() {
     } catch (e) {
       console.error("fetchCategoriesFromBackend error:", e);
     }
-    return [];
+    return categoriesFromApi;
   };
 
-  const fetchServiceActionsFromBackend = async (catId?: string, subCatId?: string) => {
+  const fetchServiceActionsFromBackend = async (catId?: string, subCatId?: string, force: boolean = false) => {
+    if (!force && !catId && !subCatId && isModuleCacheFresh("cms_service_actions", 30000) && serviceActionsFromApi.length > 0) {
+      return;
+    }
     try {
       let res;
       if (catId && subCatId) {
-        res = await getServiceActionDropdownApi({ categoryId: catId, subCategoryId: subCatId, forceRefresh: true });
+        res = await getServiceActionDropdownApi({ categoryId: catId, subCategoryId: subCatId });
       } else if (catId) {
-        res = await getServiceActionDropdownApi({ categoryId: catId, forceRefresh: true });
+        res = await getServiceActionDropdownApi({ categoryId: catId });
       } else {
-        res = await getServiceActionsApi(true);
+        res = await getServiceActionsApi();
       }
       const rawList = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
       if (res && res.success !== false) {
         setServiceActionsFromApi(rawList);
         const names = rawList.map((a: any) => a.serviceAction || a.name || "").filter(Boolean);
         setServiceActionsList(Array.from(new Set(names)));
-      } else {
-        setServiceActionsFromApi([]);
-        setServiceActionsList([]);
+        if (!catId && !subCatId) {
+          setCachedModuleData("cms_service_actions", rawList);
+        }
       }
     } catch (e) {
       console.error("fetchServiceActionsFromBackend error:", e);
-      setServiceActionsFromApi([]);
-      setServiceActionsList([]);
     }
   };
 
@@ -388,8 +406,8 @@ export default function CmsPage() {
   }, []);
 
   useEffect(() => {
-    if (isAddActionModalOpen) {
-      fetchServiceActionsFromBackend(actionCategoryId || undefined, actionSubCategoryId || undefined);
+    if (isAddActionModalOpen && actionCategoryId) {
+      fetchServiceActionsFromBackend(actionCategoryId, actionSubCategoryId || undefined);
     }
   }, [isAddActionModalOpen, actionCategoryId, actionSubCategoryId]);
 
@@ -399,7 +417,7 @@ export default function CmsPage() {
     try {
       const res = await deleteServiceActionApi(id);
       if (res && res.success !== false) {
-        toast.success("Service Action Deleted", "Service action deleted successfully.");
+        toast.success("Service Action Deleted", res?.message || "Service action deleted successfully.");
         if (editingActionObj?._id === id) {
           setEditingActionObj(null);
           setNewActionInput("");
@@ -408,15 +426,17 @@ export default function CmsPage() {
         }
         setServiceActionsList((prev) => prev.filter((a) => a !== deleteActionModal?.name));
         await fetchServiceActionsFromBackend(actionCategoryId || undefined, actionSubCategoryId || undefined);
-        setDeleteActionModal(null);
       } else {
-        toast.error("Delete Failed", res?.message || "Failed to delete service action.");
+        const errorMsg = res?.message || res?.error || res?.details || "Failed to delete service action.";
+        toast.error("Delete Failed", errorMsg);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error deleting service action:", err);
-      toast.error("Delete Failed", "Failed to delete service action.");
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to delete service action.";
+      toast.error("Delete Failed", errorMsg);
     } finally {
       setDeletingActionId(null);
+      setDeleteActionModal(null);
     }
   };
 
@@ -1352,7 +1372,7 @@ export default function CmsPage() {
     let actionIdToUse = matchedActionObj?._id || (selectedServiceAction?.length === 24 ? selectedServiceAction : undefined);
 
     if (!actionIdToUse && selectedServiceAction && catIdToUse) {
-      const dropRes = await getServiceActionDropdownApi({ categoryId: catIdToUse, subCategoryId: subCatIdToUse || undefined, forceRefresh: true });
+      const dropRes = await getServiceActionDropdownApi({ categoryId: catIdToUse, subCategoryId: subCatIdToUse || undefined });
       const dropList = Array.isArray(dropRes?.data) ? dropRes.data : [];
       const foundInDrop = dropList.find(
         (act: any) =>
@@ -1371,7 +1391,7 @@ export default function CmsPage() {
         if (createActRes?.success && createActRes?.data?._id) {
           actionIdToUse = createActRes.data._id;
         } else {
-          const retryDrop = await getServiceActionDropdownApi({ categoryId: catIdToUse, subCategoryId: subCatIdToUse || undefined, forceRefresh: true });
+          const retryDrop = await getServiceActionDropdownApi({ categoryId: catIdToUse, subCategoryId: subCatIdToUse || undefined });
           const retryList = Array.isArray(retryDrop?.data) ? retryDrop.data : [];
           const retryFound = retryList.find(
             (act: any) =>
