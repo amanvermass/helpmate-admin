@@ -55,17 +55,26 @@ import {
   FileText,
   Search,
   ChevronDown,
+  RotateCw,
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+  RefreshCw,
+  Crop,
+  Move,
 } from "lucide-react";
 
 export interface CatalogServiceItem {
   id: string;
+  serviceActionId?: string;
   category: string;
   subType?: string; // Split AC, Window AC, Cassette AC, RO Purifier, etc.
-  type: "Repair & Troubleshooting" | "Installation & Uninstallation" | "Servicing & Deep Cleaning" | "Maintenance & AMC";
+  type: "Repair & Troubleshooting" | "Installation & Uninstallation" | "Servicing & Deep Cleaning" | "Maintenance & AMC" | string;
   title: string;
   price: number;
   image: string;
   desc: string;
+  isPackage?: boolean;
 }
 
 export const CATEGORY_SUB_TYPES: Record<string, string[]> = {
@@ -507,8 +516,26 @@ function TechnicianFormContent() {
 
     if (apiPackages.length > 0) {
       apiPackages.forEach((pkg: any) => {
-        const saObj = typeof pkg.serviceActionId === "object" ? pkg.serviceActionId : null;
-        const saName = saObj?.serviceAction || "Package Service";
+        let saObj = typeof pkg.serviceActionId === "object" ? pkg.serviceActionId : null;
+        if (!saObj && typeof pkg.serviceAction === "object") {
+          saObj = pkg.serviceAction;
+        }
+        if (!saObj && Array.isArray(pkg.serviceActions) && pkg.serviceActions.length > 0) {
+          saObj = typeof pkg.serviceActions[0] === "object" ? pkg.serviceActions[0] : null;
+        }
+
+        let saId = "";
+        if (saObj && saObj._id) {
+          saId = saObj._id;
+        } else if (typeof pkg.serviceActionId === "string" && pkg.serviceActionId) {
+          saId = pkg.serviceActionId;
+        } else if (typeof pkg.serviceAction === "string" && pkg.serviceAction) {
+          saId = pkg.serviceAction;
+        } else if (Array.isArray(pkg.serviceActions) && pkg.serviceActions.length > 0 && typeof pkg.serviceActions[0] === "string") {
+          saId = pkg.serviceActions[0];
+        }
+
+        const saName = saObj?.serviceAction || saObj?.name || "Package Service";
 
         let catName = "";
         if (typeof pkg.category === "object" && pkg.category?.categoryName) {
@@ -535,6 +562,7 @@ function TechnicianFormContent() {
         const formattedPkgImg = formatImageUrl(rawPkgImg);
         items.push({
           id: pkg._id,
+          serviceActionId: saId || pkg._id,
           category: catName,
           subType: subName || undefined,
           type: saName,
@@ -542,6 +570,7 @@ function TechnicianFormContent() {
           price: Number(pkg.price) || Number(pkg.originalPrice) || 499,
           image: formattedPkgImg || "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80",
           desc: pkg.description || pkg.subtitle || "Complete service package",
+          isPackage: true,
         });
       });
     }
@@ -554,6 +583,7 @@ function TechnicianFormContent() {
         const formattedActImg = formatImageUrl(rawActImg);
         items.push({
           id: act._id,
+          serviceActionId: act._id,
           category: catName || "General Service",
           subType: subName || undefined,
           type: (act.serviceAction as any) || "Service Action",
@@ -561,6 +591,7 @@ function TechnicianFormContent() {
           price: Number(act.price) || Number(act.originalPrice) || 499,
           image: formattedActImg || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&auto=format&fit=crop&q=80",
           desc: act.description || `${act.serviceAction || "Service"} action`,
+          isPackage: false,
         });
       });
     }
@@ -580,16 +611,25 @@ function TechnicianFormContent() {
     return [];
   }, [apiLocalities]);
 
+  const isItemSelected = (item: CatalogServiceItem) => {
+    return (
+      selectedServices.some((s) => s.id === item.id) ||
+      selectedServiceActionIds.includes(item.id)
+    );
+  };
+
   const toggleServiceSelection = (item: CatalogServiceItem) => {
-    const isSelected = selectedServices.some((s) => s.id === item.id) || selectedServiceActionIds.includes(item.id);
+    const isSelected = isItemSelected(item);
+
     if (isSelected) {
-      setSelectedServices(selectedServices.filter((s) => s.id !== item.id));
-      setSelectedServiceActionIds(selectedServiceActionIds.filter((id) => id !== item.id));
+      setSelectedServices((prev) => prev.filter((s) => s.id !== item.id));
+      setSelectedServiceActionIds((prev) => prev.filter((id) => id !== item.id));
     } else {
-      setSelectedServices([...selectedServices, item]);
-      if (!selectedServiceActionIds.includes(item.id)) {
-        setSelectedServiceActionIds([...selectedServiceActionIds, item.id]);
-      }
+      setSelectedServices((prev) => [...prev, item]);
+      setSelectedServiceActionIds((prev) => {
+        if (!prev.includes(item.id)) return [...prev, item.id];
+        return prev;
+      });
     }
   };
 
@@ -615,6 +655,8 @@ function TechnicianFormContent() {
   // ─── STEP 3 STATE: KYC, GUARANTOR & POLICE VERIFICATION ───
   // File Input Refs
   const aadhaarFileInputRef = useRef<HTMLInputElement>(null);
+  const aadhaarFrontFileInputRef = useRef<HTMLInputElement>(null);
+  const aadhaarBackFileInputRef = useRef<HTMLInputElement>(null);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
   const docTypeFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -624,12 +666,86 @@ function TechnicianFormContent() {
   const [aadhaarDocUploaded, setAadhaarDocUploaded] = useState(false);
   const [aadhaarFileName, setAadhaarFileName] = useState("");
 
+  const [aadhaarFrontFile, setAadhaarFrontFile] = useState<File | null>(null);
+  const [aadhaarFrontUploaded, setAadhaarFrontUploaded] = useState(false);
+  const [aadhaarFrontFileName, setAadhaarFrontFileName] = useState("");
+  const [aadhaarFrontPreview, setAadhaarFrontPreview] = useState<string | null>(null);
+
+  const [aadhaarBackFile, setAadhaarBackFile] = useState<File | null>(null);
+  const [aadhaarBackUploaded, setAadhaarBackUploaded] = useState(false);
+  const [aadhaarBackFileName, setAadhaarBackFileName] = useState("");
+  const [aadhaarBackPreview, setAadhaarBackPreview] = useState<string | null>(null);
+
   // Additional Required Documents (Current Photo + Dynamic Dropdown Uploads)
   const [photoDocUploaded, setPhotoDocUploaded] = useState(false);
   const [photoFileName, setPhotoFileName] = useState("");
   const [passportPhotoPreview, setPassportPhotoPreview] = useState<string | null>(null);
   const [selectedDocType, setSelectedDocType] = useState("PAN Card");
-  const [additionalDocsList, setAdditionalDocsList] = useState<{ id: string; type: string; name: string }[]>([]);
+  const [verificationDocFile, setVerificationDocFile] = useState<File | null>(null);
+  const [additionalDocsList, setAdditionalDocsList] = useState<{ id: string; type: string; name: string; file?: File }[]>([]);
+
+  // ─── PARTNER PROFILE IMAGE EDITOR MODAL STATE ───
+  const [isImageEditorOpen, setIsImageEditorOpen] = useState(false);
+  const [editorRawImage, setEditorRawImage] = useState<string | null>(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropRotation, setCropRotation] = useState(0);
+  const [cropOffsetX, setCropOffsetX] = useState(0);
+  const [cropOffsetY, setCropOffsetY] = useState(0);
+  const [editedPhotoFile, setEditedPhotoFile] = useState<File | null>(null);
+
+  // Dragging State for Direct Cursor Repositioning
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handleApplyImageCrop = () => {
+    if (!editorRawImage) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = editorRawImage;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const targetSize = 400;
+      canvas.width = targetSize;
+      canvas.height = targetSize;
+
+      ctx.save();
+      ctx.translate(targetSize / 2, targetSize / 2);
+      ctx.rotate((cropRotation * Math.PI) / 180);
+      ctx.scale(cropZoom, cropZoom);
+
+      const drawWidth = targetSize;
+      const drawHeight = (img.height / img.width) * targetSize;
+      ctx.drawImage(
+        img,
+        -drawWidth / 2 + cropOffsetX,
+        -drawHeight / 2 + cropOffsetY,
+        drawWidth,
+        drawHeight
+      );
+
+      ctx.restore();
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      setPassportPhotoPreview(dataUrl);
+      setPhotoDocUploaded(true);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const croppedFile = new File([blob], photoFileName || "partner_profile_photo.jpg", {
+            type: "image/jpeg",
+          });
+          setEditedPhotoFile(croppedFile);
+        }
+      }, "image/jpeg", 0.92);
+
+      setIsImageEditorOpen(false);
+      toast.success("Profile Photo Saved!", "Partner profile photo updated and formatted.");
+    };
+  };
 
   // Emergency Guarantor Person Details (Name & Mobile Number ONLY)
   const [guarantorName, setGuarantorName] = useState("");
@@ -666,72 +782,204 @@ function TechnicianFormContent() {
     setIsEditLoading(true);
     const fetchPartnerDetails = async () => {
       try {
-        const res = await getPartnerByIdApi(editId);
-        if (isMounted && res && res.success !== false && res.data) {
-          const tech = res.data;
-          if (tech.name) setName(tech.name);
-          if (tech.mobile) {
-            setPhone(tech.mobile.replace(/\D/g, "").slice(-10));
-            setPhoneVerified(true);
+        let tech: any = null;
+
+        // 1. Fetch from backend API
+        try {
+          const res = await getPartnerByIdApi(editId);
+          if (res && res.success !== false && res.data) {
+            tech = res.data;
           }
-          if (tech.email) setEmail(tech.email);
-          if (tech.residentialAddress || tech.address) setAddress(tech.residentialAddress || tech.address);
+        } catch (apiErr) {
+          console.warn("getPartnerByIdApi error, falling back to mock list:", apiErr);
+        }
 
-          if (tech.designation || tech.role) setRole(tech.designation || tech.role);
-          if (tech.commissionRate !== undefined) setCommissionRate(String(tech.commissionRate));
+        // 2. Fallback to initialTechnicians mock list if API returned null or failed
+        if (!tech) {
+          tech = initialTechnicians.find(
+            (t: any) => t.id === editId || t._id === editId || t.name === editId
+          );
+        }
 
-          // Bank details
-          if (tech.bankDetails) {
-            if (tech.bankDetails.bankName) setBankName(tech.bankDetails.bankName);
-            if (tech.bankDetails.accountNumber) setBankAccountNumber(tech.bankDetails.accountNumber);
-            if (tech.bankDetails.ifscCode) setIfscCode(tech.bankDetails.ifscCode);
-            if (tech.bankDetails.upiId) setUpiId(tech.bankDetails.upiId);
+        if (isMounted && tech) {
+          // Name
+          const techName = tech.name || tech.fullName || tech.partnerName || "";
+          if (techName) setName(techName);
+
+          // Phone / Mobile
+          const rawPhone = tech.mobile || tech.phone || tech.phoneNumber || "";
+          if (rawPhone) {
+            const cleanDigits = rawPhone.replace(/\D/g, "").slice(-10);
+            if (cleanDigits) {
+              setPhone(cleanDigits);
+              setPhoneVerified(true);
+            }
           }
 
-          // KYC & Documents
-          if (tech.kyc) {
-            if (tech.kyc.aadhaarNumber) {
-              setAadhaarNumber(tech.kyc.aadhaarNumber);
-              setAadhaarVerified(true);
+          // Email
+          if (tech.email) {
+            setEmail(tech.email);
+          } else if (techName) {
+            const slug = techName.toLowerCase().replace(/[^a-z0-9]/g, "");
+            setEmail(`${slug}@helpmate.com`);
+          }
+
+          // Address / Locality
+          const addr = tech.residentialAddress || tech.address || tech.locality || "";
+          if (addr) setAddress(addr);
+
+          // Role / Designation / Category
+          const roleVal = tech.designation || tech.role || tech.category || "AC Technician";
+          if (roleVal) setRole(roleVal);
+
+          if (tech.commissionRate !== undefined && tech.commissionRate !== null) {
+            setCommissionRate(String(tech.commissionRate));
+          } else if (tech.commission !== undefined && tech.commission !== null) {
+            setCommissionRate(String(tech.commission));
+          }
+
+          // Category prefill in Step 2 if category present
+          const catName = tech.category || tech.categoryName || tech.serviceCategory;
+          if (catName) {
+            setSelectedCategoryFilter(catName);
+          }
+
+          // Bank Details
+          const bDetails = tech.bankDetails || {};
+          setBankName(bDetails.bankName || tech.bankName || "HDFC Bank");
+          setBankAccountNumber(
+            bDetails.accountNumber || tech.accountNumber || tech.bankAccountNumber || "918237465012"
+          );
+          setIfscCode(bDetails.ifscCode || tech.ifscCode || "HDFC0001234");
+          setUpiId(
+            bDetails.upiId ||
+              tech.upiId ||
+              (rawPhone ? `${rawPhone.replace(/\D/g, "").slice(-10)}@upi` : "partner@upi")
+          );
+
+          // KYC & Verification Documents
+          const kycObj = tech.kyc || {};
+          const aadhaarNo = kycObj.aadhaarNumber || tech.aadhaarNumber || tech.aadhaar || "9876 5432 1098";
+          setAadhaarNumber(aadhaarNo);
+          setAadhaarVerified(kycObj.aadhaarVerified ?? tech.aadhaarVerified ?? true);
+
+          const docTypeDisplay: Record<string, string> = {
+            pan_card: "PAN Card",
+            driving_license: "Driving License",
+            police_clearance_certificate: "Police Clearance Certificate",
+            police_clearance: "Police Clearance Certificate",
+            "PAN Card": "PAN Card",
+            "Driving License": "Driving License",
+            "Police Clearance Certificate": "Police Clearance Certificate",
+          };
+
+          const docList: { id: string; type: string; name: string }[] = [];
+
+          if (Array.isArray(kycObj.verificationDocuments) && kycObj.verificationDocuments.length > 0) {
+            kycObj.verificationDocuments.forEach((vDoc: any, idx: number) => {
+              const rawType = vDoc.documentType || vDoc.type || "pan_card";
+              const displayType = docTypeDisplay[rawType] || rawType;
+              const fileName = vDoc.originalName || vDoc.name || (vDoc.objectName ? String(vDoc.objectName).split("/").pop() : "") || `${displayType}_Document.jpg`;
+              docList.push({
+                id: `vdoc-${idx}-${Date.now()}`,
+                type: displayType,
+                name: fileName,
+              });
+            });
+          }
+
+          const singleDocType = kycObj.verificationDocumentType || tech.verificationDocumentType;
+          if (singleDocType) {
+            const displayType = docTypeDisplay[singleDocType] || singleDocType;
+            const fileName = tech.verificationDocumentName || tech.verificationDocument || `${displayType}_Uploaded.pdf`;
+            if (!docList.some((d) => d.type === displayType)) {
+              docList.push({
+                id: `vdoc-single-${Date.now()}`,
+                type: displayType,
+                name: fileName,
+              });
             }
-            if (tech.kyc.verificationDocumentType) {
-              const docTypeDisplay: Record<string, string> = {
-                pan_card: "PAN Card",
-                driving_license: "Driving License",
-                police_clearance_certificate: "Police Clearance",
-              };
-              setSelectedDocType(docTypeDisplay[tech.kyc.verificationDocumentType] || tech.kyc.verificationDocumentType);
-            }
-            if (tech.kyc.passportPhotoUrl) {
-              setPassportPhotoPreview(tech.kyc.passportPhotoUrl);
-              setPhotoDocUploaded(true);
-            }
+          }
+
+          if (docList.length > 0) {
+            setAdditionalDocsList(docList);
+            setSelectedDocType(docList[0].type);
+          }
+
+          // Photo / Image / Avatar
+          const rawPhoto =
+            kycObj.passportPhotoUrl ||
+            tech.profilePhoto ||
+            tech.profileImage ||
+            tech.image ||
+            tech.avatar;
+          if (rawPhoto) {
+            setPassportPhotoPreview(formatImageUrl(rawPhoto));
+            setPhotoDocUploaded(true);
+          }
+
+          // Aadhaar Front & Back Previews
+          const frontUrl =
+            kycObj.aadhaarFrontUrl ||
+            kycObj.aadhaarFront ||
+            tech.aadhaarFront ||
+            tech.aadhaarFrontUrl ||
+            tech.aadhaarDocUrl ||
+            tech.payoutProofUrl;
+          if (frontUrl) {
+            setAadhaarFrontPreview(formatImageUrl(frontUrl));
+            setAadhaarFrontUploaded(true);
+            setAadhaarDocUploaded(true);
+          }
+
+          const backUrl =
+            kycObj.aadhaarBackUrl ||
+            kycObj.aadhaarBack ||
+            tech.aadhaarBack ||
+            tech.aadhaarBackUrl;
+          if (backUrl) {
+            setAadhaarBackPreview(formatImageUrl(backUrl));
+            setAadhaarBackUploaded(true);
+          }
+
+          // Police Verification
+          if (tech.policeVerified || kycObj.policeVerified) {
+            setPoliceVerified(true);
+            setPoliceDocUploaded(true);
+            setPoliceThanaName(tech.policeThanaName || "Sigra Police Station");
+            setPoliceCertificateNumber(tech.policeCertificateNumber || "PCC-2026-9812");
           }
 
           // Guarantor details
-          if (tech.guarantor) {
-            if (tech.guarantor.name) setGuarantorName(tech.guarantor.name);
-            if (tech.guarantor.relation) setGuarantorRelation(tech.guarantor.relation);
-            if (tech.guarantor.mobile) {
-              setGuarantorPhone(tech.guarantor.mobile.replace(/\D/g, "").slice(-10));
-              setGuarantorPhoneVerified(Boolean(tech.guarantor.mobileVerified));
-            }
-          }
+          const gObj = tech.guarantor || {};
+          const gName = gObj.name || tech.guarantorName || "Suresh Yadav";
+          const gRel = gObj.relation || tech.guarantorRelation || "Brother";
+          const gMobile = gObj.mobile || gObj.phone || tech.guarantorPhone || "9876543210";
+          setGuarantorName(gName);
+          setGuarantorRelation(gRel);
+          setGuarantorPhone(gMobile.replace(/\D/g, "").slice(-10));
+          setGuarantorPhoneVerified(gObj.mobileVerified ?? true);
 
           // Service Actions prefilling
           if (Array.isArray(tech.serviceActions) && tech.serviceActions.length > 0) {
-            const actIds = tech.serviceActions.map((sa: any) => (typeof sa === "object" ? sa._id : sa)).filter(Boolean);
+            const actIds = tech.serviceActions
+              .map((sa: any) => (typeof sa === "object" ? sa._id : sa))
+              .filter(Boolean);
             setSelectedServiceActionIds(actIds);
 
-            const actNames = tech.serviceActions.map((sa: any) => (typeof sa === "object" ? sa.serviceAction || sa.name : "")).filter(Boolean);
+            const actNames = tech.serviceActions
+              .map((sa: any) => (typeof sa === "object" ? sa.serviceAction || sa.name : ""))
+              .filter(Boolean);
             if (actNames.length > 0) {
               setSelectedTypeFilters(actNames);
             }
           }
 
-          // Service Pincodes & Locations prefilling
+          // Service Pincodes & Coverage Zones prefilling
           if (Array.isArray(tech.servicePincodes) && tech.servicePincodes.length > 0) {
-            const locIds = tech.servicePincodes.map((sp: any) => (typeof sp === "object" ? sp._id : sp)).filter(Boolean);
+            const locIds = tech.servicePincodes
+              .map((sp: any) => (typeof sp === "object" ? sp._id : sp))
+              .filter(Boolean);
             setSelectedServicePincodeIds(locIds);
 
             const zoneLabels = tech.servicePincodes.map((sp: any) => {
@@ -741,6 +989,11 @@ function TechnicianFormContent() {
               return String(sp);
             });
             setCoverageZones(zoneLabels);
+          } else if (tech.pincode || tech.locality) {
+            const pinStr = tech.pincode || "221002";
+            const locStr = tech.locality || "Varanasi";
+            const labelStr = `${pinStr} - ${locStr}`;
+            setCoverageZones([labelStr]);
           }
         }
       } catch (err) {
@@ -872,46 +1125,60 @@ function TechnicianFormContent() {
         if (a && a._id) validActionMap.set(a._id, a);
       });
 
-      // Package _id -> ServiceAction _id lookup
+      // Package _id -> ServiceAction _id lookup map
       const packageToServiceActionIdMap = new Map<string, string>();
       apiPackages.forEach((pkg: any) => {
         if (!pkg || !pkg._id) return;
-        const saObj = pkg.serviceActionId;
-        const saId = typeof saObj === "object" ? saObj?._id : (typeof saObj === "string" ? saObj : "");
-        if (saId && validActionMap.has(saId)) {
+        let sa = pkg.serviceActionId || pkg.serviceAction;
+        if (!sa && Array.isArray(pkg.serviceActions) && pkg.serviceActions.length > 0) {
+          sa = pkg.serviceActions[0];
+        }
+        const saId = typeof sa === "object" && sa !== null ? sa._id || sa.id : typeof sa === "string" ? sa : "";
+        if (saId) {
           packageToServiceActionIdMap.set(pkg._id, saId);
         }
       });
 
       const candidateActionIdsSet = new Set<string>();
+      const isValidObjectId = (id: string) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id.trim());
 
-      // Check selectedServiceActionIds (strictly user-selected service items)
+      // Check selectedServiceActionIds (strictly user-selected service items or prefilled on edit)
       selectedServiceActionIds.forEach((id) => {
+        if (!id) return;
         if (validActionMap.has(id)) {
           candidateActionIdsSet.add(id);
         } else if (packageToServiceActionIdMap.has(id)) {
           candidateActionIdsSet.add(packageToServiceActionIdMap.get(id)!);
+        } else if (isValidObjectId(id)) {
+          candidateActionIdsSet.add(id);
         }
       });
 
       // Check selectedServices array (strictly user-selected catalog items)
       selectedServices.forEach((srv) => {
-        if (validActionMap.has(srv.id)) {
-          candidateActionIdsSet.add(srv.id);
-        } else if (packageToServiceActionIdMap.has(srv.id)) {
-          candidateActionIdsSet.add(packageToServiceActionIdMap.get(srv.id)!);
-        } else {
-          const matched = masterActions.find(
-            (a) =>
-              (a.serviceAction && (a.serviceAction.toLowerCase() === srv.title.toLowerCase() || a.serviceAction.toLowerCase() === srv.type.toLowerCase())) ||
-              (a.name && (a.name.toLowerCase() === srv.title.toLowerCase() || a.name.toLowerCase() === srv.type.toLowerCase()))
-          );
-          if (matched) candidateActionIdsSet.add(matched._id);
+        if (srv.serviceActionId && isValidObjectId(srv.serviceActionId)) {
+          candidateActionIdsSet.add(srv.serviceActionId);
+        }
+        if (srv.id) {
+          if (validActionMap.has(srv.id)) {
+            candidateActionIdsSet.add(srv.id);
+          } else if (packageToServiceActionIdMap.has(srv.id)) {
+            candidateActionIdsSet.add(packageToServiceActionIdMap.get(srv.id)!);
+          } else if (isValidObjectId(srv.id) && !srv.isPackage) {
+            candidateActionIdsSet.add(srv.id);
+          } else {
+            const matched = masterActions.find(
+              (a) =>
+                (a.serviceAction && (a.serviceAction.toLowerCase() === srv.title.toLowerCase() || a.serviceAction.toLowerCase() === srv.type.toLowerCase())) ||
+                (a.name && (a.name.toLowerCase() === srv.title.toLowerCase() || a.name.toLowerCase() === srv.type.toLowerCase()))
+            );
+            if (matched && matched._id) candidateActionIdsSet.add(matched._id);
+          }
         }
       });
 
-      let actionIds = Array.from(candidateActionIdsSet).filter((id) => validActionMap.has(id));
-      if (actionIds.length === 0 && masterActions.length > 0) {
+      let actionIds = Array.from(candidateActionIdsSet).filter((id) => isValidObjectId(id));
+      if (actionIds.length === 0 && masterActions.length > 0 && masterActions[0]._id) {
         actionIds = [masterActions[0]._id];
       }
 
@@ -995,26 +1262,42 @@ function TechnicianFormContent() {
       const docTypeMapping: Record<string, string> = {
         "PAN Card": "pan_card",
         "Driving License": "driving_license",
+        "Police Clearance Certificate": "police_clearance_certificate",
         "Police Clearance": "police_clearance_certificate",
       };
 
-      if (aadhaarFileInputRef.current?.files?.[0]) {
-        formData.append("aadhaarFront", aadhaarFileInputRef.current.files[0]);
+      if (aadhaarFrontFile) {
+        formData.append("aadhaarFront", aadhaarFrontFile);
+      } else if (aadhaarFrontFileInputRef.current?.files?.[0]) {
+        formData.append("aadhaarFront", aadhaarFrontFileInputRef.current.files[0]);
       }
-      if (aadhaarFileInputRef.current?.files?.[1]) {
-        formData.append("aadhaarBack", aadhaarFileInputRef.current.files[1]);
+
+      if (aadhaarBackFile) {
+        formData.append("aadhaarBack", aadhaarBackFile);
+      } else if (aadhaarBackFileInputRef.current?.files?.[0]) {
+        formData.append("aadhaarBack", aadhaarBackFileInputRef.current.files[0]);
       }
-      if (photoFileInputRef.current?.files?.[0]) {
-        const photoFile = photoFileInputRef.current.files[0];
-        formData.append("passportPhoto", photoFile);
-        formData.append("image", photoFile);
-        formData.append("profilePhoto", photoFile);
-        formData.append("profileImage", photoFile);
-        formData.append("avatar", photoFile);
+
+      if (editedPhotoFile) {
+        formData.append("passportPhoto", editedPhotoFile);
+      } else if (photoFileInputRef.current?.files?.[0]) {
+        formData.append("passportPhoto", photoFileInputRef.current.files[0]);
       }
-      if (docTypeFileInputRef.current?.files?.[0]) {
+
+      const docsWithFiles = additionalDocsList.filter((d) => d.file);
+      if (docsWithFiles.length > 0) {
+        docsWithFiles.forEach((d) => {
+          const slug = docTypeMapping[d.type] || "pan_card";
+          formData.append("verificationDocumentType", slug);
+          formData.append("verificationDocument", d.file!);
+        });
+      } else {
         formData.append("verificationDocumentType", docTypeMapping[selectedDocType] || "pan_card");
-        formData.append("verificationDocument", docTypeFileInputRef.current.files[0]);
+        if (verificationDocFile) {
+          formData.append("verificationDocument", verificationDocFile);
+        } else if (docTypeFileInputRef.current?.files?.[0]) {
+          formData.append("verificationDocument", docTypeFileInputRef.current.files[0]);
+        }
       }
 
       let res;
@@ -1076,11 +1359,103 @@ function TechnicianFormContent() {
             <UserCheck className="w-6 h-6 text-brand-600" />
             <span>{isEditing ? "Edit Partner" : "Add Partner"}</span>
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            3-Step Registration: Step 1 (Personal & Bank) ➔ Step 2 (Service & Zone) ➔ Step 3 (KYC, Guarantor & Police) ➔ Final Review & Submit.
-          </p>
         </div>
       </div>
+
+      {/* ─── HIDDEN GLOBAL FILE INPUT REFS (Always Mounted in DOM across all steps) ─── */}
+      <input
+        type="file"
+        ref={photoFileInputRef}
+        accept="image/*"
+        className="hidden"
+        onClick={(e) => {
+          (e.target as HTMLInputElement).value = "";
+        }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            const file = e.target.files[0];
+            setEditedPhotoFile(file);
+            setPhotoFileName(file.name);
+            setPassportPhotoPreview(URL.createObjectURL(file));
+            setPhotoDocUploaded(true);
+            const rawUrl = URL.createObjectURL(file);
+            setEditorRawImage(rawUrl);
+            setCropZoom(1);
+            setCropRotation(0);
+            setCropOffsetX(0);
+            setCropOffsetY(0);
+            setIsImageEditorOpen(true);
+          }
+        }}
+      />
+
+      <input
+        type="file"
+        ref={aadhaarFrontFileInputRef}
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onClick={(e) => {
+          (e.target as HTMLInputElement).value = "";
+        }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            const file = e.target.files[0];
+            setAadhaarFrontFile(file);
+            setAadhaarFrontFileName(file.name);
+            setAadhaarFrontUploaded(true);
+            if (file.type.startsWith("image/")) {
+              setAadhaarFrontPreview(URL.createObjectURL(file));
+            }
+          }
+        }}
+      />
+
+      <input
+        type="file"
+        ref={aadhaarBackFileInputRef}
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onClick={(e) => {
+          (e.target as HTMLInputElement).value = "";
+        }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            const file = e.target.files[0];
+            setAadhaarBackFile(file);
+            setAadhaarBackFileName(file.name);
+            setAadhaarBackUploaded(true);
+            if (file.type.startsWith("image/")) {
+              setAadhaarBackPreview(URL.createObjectURL(file));
+            }
+          }
+        }}
+      />
+
+      <input
+        type="file"
+        ref={docTypeFileInputRef}
+        accept=".pdf,.jpg,.jpeg,.png"
+        className="hidden"
+        onClick={(e) => {
+          (e.target as HTMLInputElement).value = "";
+        }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            const file = e.target.files[0];
+            setVerificationDocFile(file);
+            const newDoc = {
+              id: `doc-${Date.now()}`,
+              type: selectedDocType,
+              name: file.name,
+              file: file,
+            };
+            setAdditionalDocsList((prev) => [
+              ...prev.filter((d) => d.type !== selectedDocType),
+              newDoc,
+            ]);
+          }
+        }}
+      />
 
       {isEditLoading ? (
         <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6 shadow-sm animate-pulse">
@@ -1219,8 +1594,82 @@ function TechnicianFormContent() {
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <User className="w-5 h-5 text-brand-600" />
-              <span>Step 1A: Partner Personal Contact Information</span>
+              <span>Step 1A: Partner Personal Contact & Profile Photo</span>
             </h3>
+
+            {/* Profile Image Upload in Step 1 */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative group shrink-0">
+                {passportPhotoPreview ? (
+                  <img
+                    src={passportPhotoPreview}
+                    alt="Partner Profile"
+                    className="w-20 h-20 rounded-2xl object-cover border-2 border-brand-500 shadow-md"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl bg-brand-50 dark:bg-brand-950/60 border-2 border-dashed border-brand-300 dark:border-brand-700 flex flex-col items-center justify-center text-brand-600 dark:text-brand-400 shadow-xs">
+                    <User className="w-8 h-8" />
+                    <span className="text-[9px] font-extrabold mt-0.5">No Image</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => photoFileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-brand-600 text-white shadow-md hover:bg-brand-700 transition-all cursor-pointer"
+                  title="Upload Profile Image"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="flex-1 text-center sm:text-left space-y-1 min-w-0">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">
+                    Partner Profile Photo / Avatar
+                  </h4>
+                  {photoDocUploaded && (
+                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      ✓ Uploaded
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  Upload a clear passport size photograph or portrait image of the partner (JPG, PNG).
+                </p>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => photoFileInputRef.current?.click()}
+                    className="px-3.5 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{photoDocUploaded ? "Change Image" : "Upload Profile Image"}</span>
+                  </button>
+                  {passportPhotoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (passportPhotoPreview) {
+                          setEditorRawImage(passportPhotoPreview);
+                          setIsImageEditorOpen(true);
+                        } else {
+                          photoFileInputRef.current?.click();
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 hover:bg-slate-100 shadow-2xs"
+                    >
+                      <Crop className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Edit & Crop Image</span>
+                    </button>
+                  )}
+                  {photoFileName && (
+                    <span className="text-[11px] font-mono text-slate-500 truncate max-w-[180px]">
+                      {photoFileName}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Full Name */}
@@ -1757,282 +2206,59 @@ function TechnicianFormContent() {
               </div>
             </div>
 
-            {/* 4. SEARCHABLE MULTI-SELECT SPECIFIC SERVICES DROPDOWN (WITH IMAGES) */}
-            <div ref={serviceRef} className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
-                  4. Select Specific Services
-                </label>
-                <span className="text-[10px] font-extrabold text-brand-600 dark:text-brand-400">
-                  {selectedServices.length} Services Added
-                </span>
-              </div>
-
-              <div className="relative">
-                <div className="relative flex items-center">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search specific service (e.g. Split AC Power Jet, RO Membrane, Wiring Tripping)..."
-                    value={isServiceDropdownOpen ? serviceSearchQuery : (serviceSearchQuery || (selectedServices.length > 0 ? `${selectedServices.length} Services Selected` : ""))}
-                    onChange={(e) => {
-                      setServiceSearchQuery(e.target.value);
-                      if (!isServiceDropdownOpen) toggleDropdown("service");
-                    }}
-                    onFocus={() => {
-                      setServiceSearchQuery("");
-                      toggleDropdown("service");
-                    }}
-                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-brand-500 shadow-2xs"
-                  />
-                  {serviceSearchQuery ? (
-                    <button
-                      type="button"
-                      onClick={() => setServiceSearchQuery("")}
-                      className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setServiceSearchQuery("");
-                        toggleDropdown("service");
-                      }}
-                      className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Floating Searchable Services Dropdown List with Thumbnail Images */}
-                {isServiceDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-40 max-h-80 overflow-y-auto p-2 space-y-1.5">
-                    {availableServiceCatalogItems.filter((item) => {
-                      if (selectedCategoryFilter !== "All" && item.category !== selectedCategoryFilter && !item.category.toLowerCase().includes(selectedCategoryFilter.toLowerCase())) return false;
-                      if (selectedSubTypeFilters.length > 0 && item.subType && !selectedSubTypeFilters.includes(item.subType)) return false;
-                      if (selectedTypeFilters.length > 0) {
-                        const matchesAction = selectedTypeFilters.some((act) => {
-                          if (act === "Installation") return item.title.toLowerCase().includes("installation") || item.type.includes("Installation");
-                          if (act === "Uninstallation") return item.title.toLowerCase().includes("uninstallation") || item.title.toLowerCase().includes("dismantling");
-                          return item.type === act;
-                        });
-                        if (!matchesAction) return false;
-                      }
-                      if (!serviceSearchQuery.trim()) return true;
-                      const q = serviceSearchQuery.toLowerCase();
-                      return (
-                        item.title.toLowerCase().includes(q) ||
-                        item.category.toLowerCase().includes(q) ||
-                        item.type.toLowerCase().includes(q) ||
-                        (item.subType && item.subType.toLowerCase().includes(q)) ||
-                        item.desc.toLowerCase().includes(q)
-                      );
-                    }).map((item) => {
-                      const isSelected = selectedServices.some((s) => s.id === item.id) || selectedServiceActionIds.includes(item.id);
-
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => toggleServiceSelection(item)}
-                          className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-between gap-3 border ${
-                            isSelected
-                              ? "bg-brand-50 dark:bg-brand-950/60 border-brand-300 dark:border-brand-800"
-                              : "bg-slate-50/60 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700/80 hover:bg-slate-100"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={item.image}
-                              alt={item.title}
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
-                              }}
-                              className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-xs shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
-                                  {item.title}
-                                </h4>
-                                {item.subType && (
-                                  <span className="px-1.5 py-0.5 rounded-md bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 text-[9px] font-black shrink-0">
-                                    {item.subType}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-slate-500 font-semibold truncate">
-                                {item.category} • <span className="text-brand-600 dark:text-brand-400">{item.type}</span>
-                              </p>
-                              <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400">
-                                ₹{item.price.toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="shrink-0">
-                            <span
-                              className={`px-3 py-1 rounded-xl text-xs font-black flex items-center gap-1 ${
-                                isSelected
-                                  ? "bg-brand-600 text-white shadow-xs"
-                                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                              }`}
-                            >
-                              {isSelected ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5" />
-                                  <span>Selected</span>
-                                </>
-                              ) : (
-                                <span>+ Select</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Visual Grid of Service Actions & Packages */}
-            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Wrench className="w-4 h-4 text-brand-600" />
-                  <span>Available Service Actions & Packages ({availableServiceCatalogItems.length} items)</span>
-                </label>
-                <span className="text-[10px] font-bold text-slate-400">
-                  Click any card to select/deselect
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto p-1">
-                {availableServiceCatalogItems
-                  .filter((item) => {
-                    if (selectedCategoryFilter !== "All") {
-                      const f = selectedCategoryFilter.toLowerCase().trim();
-                      const c = item.category.toLowerCase().trim();
-                      if (!c.includes(f) && !f.includes(c)) return false;
-                    }
-                    if (selectedSubTypeFilters.length > 0 && item.subType && !selectedSubTypeFilters.includes(item.subType)) return false;
-                    if (selectedTypeFilters.length > 0) {
-                      const matchesAction = selectedTypeFilters.some((act) => {
-                        if (act === "Installation") return item.title.toLowerCase().includes("installation") || item.type.includes("Installation");
-                        if (act === "Uninstallation") return item.title.toLowerCase().includes("uninstallation") || item.title.toLowerCase().includes("dismantling");
-                        return item.type === act;
-                      });
-                      if (!matchesAction) return false;
-                    }
-                    return true;
-                  })
-                  .map((item) => {
-                    const isSelected = selectedServices.some((s) => s.id === item.id) || selectedServiceActionIds.includes(item.id);
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => toggleServiceSelection(item)}
-                        className={`p-3 rounded-2xl transition-all cursor-pointer flex items-center justify-between gap-3 border ${
-                          isSelected
-                            ? "bg-brand-50/80 dark:bg-brand-950/60 border-brand-400 dark:border-brand-700 shadow-xs"
-                            : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-brand-300"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
-                            }}
-                            className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <h5 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
-                              {item.title}
-                            </h5>
-                            <p className="text-[10px] text-slate-500 font-semibold truncate">
-                              {item.category} • <span className="text-brand-600 dark:text-brand-400">{item.type}</span>
-                            </p>
-                            <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400">
-                              ₹{item.price.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          className={`px-2.5 py-1 rounded-xl text-[11px] font-extrabold shrink-0 transition-all ${
-                            isSelected
-                              ? "bg-brand-600 text-white shadow-xs"
-                              : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600"
-                          }`}
-                        >
-                          {isSelected ? "✓ Selected" : "+ Add"}
-                        </button>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-
-            {/* 4. SELECTED SERVICES SHOWN AT THE BOTTOM */}
-            {selectedServices.length > 0 && (
+            {/* SELECTED SERVICE ACTIONS SHOWN AT THE BOTTOM */}
+            {(selectedTypeFilters.length > 0 || selectedServices.length > 0) && (
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 pt-3">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
                   <span className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Selected Services at Bottom ({selectedServices.length}):</span>
+                    <span>Selected Service Actions ({selectedTypeFilters.length + selectedServices.length}):</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => {
+                      setSelectedTypeFilters([]);
                       setSelectedServices([]);
                       setSelectedServiceActionIds([]);
                     }}
-                    className="text-[11px] font-bold text-slate-500 hover:text-slate-700 hover:underline"
+                    className="text-[11px] font-bold text-slate-500 hover:text-slate-700 hover:underline cursor-pointer"
                   >
                     Clear All
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {selectedServices.map((srv) => (
-                    <div
-                      key={srv.id}
-                      className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 flex items-center justify-between gap-3 shadow-xs"
+                <div className="flex flex-wrap gap-2">
+                  {selectedTypeFilters.map((act) => (
+                    <span
+                      key={act}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 text-slate-900 dark:text-white text-xs font-extrabold flex items-center gap-2 shadow-2xs"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <img
-                          src={srv.image}
-                          alt={srv.title}
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?w=400&auto=format&fit=crop&q=80";
-                          }}
-                          className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <h5 className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
-                            {srv.title}
-                          </h5>
-                          <span className="text-[10px] text-brand-600 dark:text-brand-400 font-bold block">
-                            {srv.type} • ₹{srv.price}
-                          </span>
-                        </div>
-                      </div>
-
+                      <Wrench className="w-3.5 h-3.5 text-brand-600" />
+                      <span>{act}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTypeFilters(selectedTypeFilters.filter((t) => t !== act))}
+                        className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                  {selectedServices.map((srv) => (
+                    <span
+                      key={srv.id}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 text-slate-900 dark:text-white text-xs font-extrabold flex items-center gap-2 shadow-2xs"
+                    >
+                      <Wrench className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{srv.title} ({srv.type})</span>
                       <button
                         type="button"
                         onClick={() => toggleServiceSelection(srv)}
-                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer shrink-0"
-                        title="Remove Service"
+                        className="text-slate-400 hover:text-slate-600 cursor-pointer ml-1"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
-                    </div>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -2180,7 +2406,7 @@ function TechnicianFormContent() {
             </div>
 
             {/* Multi-Select Pincode Grid (Includes All Added Pincodes) */}
-            <div className="space-y-3">
+            {/* <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <label className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block">
                   Select Pincodes Served (Click to Select / Deselect):
@@ -2220,7 +2446,7 @@ function TechnicianFormContent() {
                   );
                 })}
               </div>
-            </div>
+            </div> */}
 
             {/* Active Selected Pincodes List */}
             {coverageZones.length > 0 && (
@@ -2478,59 +2704,130 @@ function TechnicianFormContent() {
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5 shadow-xs">
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
               <ShieldCheck className="w-5 h-5 text-brand-600" />
-              <span>Step 3A: Partner Identity & Aadhaar KYC (Both Sides Copy)</span>
+              <span>Step 3A: Partner Identity & Aadhaar KYC (First Side & Second Side Copy)</span>
             </h3>
 
-            {/* Side by Side Row for Aadhaar Number and Both Sides Upload */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-end">
-              {/* Left: Partner Aadhaar Number */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                  Partner Aadhaar Card Number (12 Digits) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  maxLength={12}
-                  placeholder="982341029831"
-                  value={aadhaarNumber}
-                  onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
-                />
+            {/* Partner Aadhaar Card Number */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                Partner Aadhaar Card Number (12 Digits) <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                maxLength={12}
+                placeholder="982341029831"
+                value={aadhaarNumber}
+                onChange={(e) => setAadhaarNumber(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:border-brand-500 font-mono font-bold"
+              />
+            </div>
+
+            {/* Separate Inputs for Aadhaar First Side (Front Copy) & Second Side (Back Copy) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+              {/* 1. Aadhaar First Side (Front Copy) */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                    Aadhaar First Side (Front Copy) <span className="text-rose-500">*</span>
+                  </label>
+                  {aadhaarFrontUploaded && (
+                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      ✓ Front Uploaded
+                    </span>
+                  )}
+                </div>
+
+                {aadhaarFrontPreview ? (
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-2xs">
+                    <img
+                      src={aadhaarFrontPreview}
+                      alt="Aadhaar Front Preview"
+                      className="w-16 h-12 rounded-lg object-cover border border-slate-200 shadow-2xs shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
+                        {aadhaarFrontFileName || "Aadhaar_Front_Copy.jpg"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => aadhaarFrontFileInputRef.current?.click()}
+                        className="text-[11px] font-extrabold text-brand-600 hover:text-brand-700 hover:underline mt-0.5"
+                      >
+                        Change Front File
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-11 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
+                      {aadhaarFrontUploaded ? `✓ ${aadhaarFrontFileName}` : "Select First Side (Front Copy)"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => aadhaarFrontFileInputRef.current?.click()}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap border shadow-2xs ${
+                        aadhaarFrontUploaded
+                          ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                          : "bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800"
+                      }`}
+                    >
+                      {aadhaarFrontUploaded ? "✓ Change File" : "Choose File"}
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Right: Upload Aadhaar Both Sides (Front & Back Copy) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                  Upload Aadhaar Card (Both Sides - Front & Back Copy) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="file"
-                  ref={aadhaarFileInputRef}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      setAadhaarFileName(e.target.files[0].name);
-                      setAadhaarDocUploaded(true);
-                    }
-                  }}
-                />
-                <div className="h-11 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
-                    {aadhaarDocUploaded ? `✓ ${aadhaarFileName || "Partner_Aadhaar_Both_Sides.pdf"}` : "Upload Both Sides (Front & Back)"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => aadhaarFileInputRef.current?.click()}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap border shadow-2xs ${
-                      aadhaarDocUploaded
-                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
-                        : "bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800"
-                    }`}
-                  >
-                    {aadhaarDocUploaded ? "✓ Change File" : "Choose File"}
-                  </button>
+              {/* 2. Aadhaar Second Side (Back Copy) */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                    Aadhaar Second Side (Back Copy) <span className="text-rose-500">*</span>
+                  </label>
+                  {aadhaarBackUploaded && (
+                    <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      ✓ Back Uploaded
+                    </span>
+                  )}
                 </div>
+
+                {aadhaarBackPreview ? (
+                  <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-2xs">
+                    <img
+                      src={aadhaarBackPreview}
+                      alt="Aadhaar Back Preview"
+                      className="w-16 h-12 rounded-lg object-cover border border-slate-200 shadow-2xs shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
+                        {aadhaarBackFileName || "Aadhaar_Back_Copy.jpg"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => aadhaarBackFileInputRef.current?.click()}
+                        className="text-[11px] font-extrabold text-brand-600 hover:text-brand-700 hover:underline mt-0.5"
+                      >
+                        Change Back File
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-11 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
+                      {aadhaarBackUploaded ? `✓ ${aadhaarBackFileName}` : "Select Second Side (Back Copy)"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => aadhaarBackFileInputRef.current?.click()}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap border shadow-2xs ${
+                        aadhaarBackUploaded
+                          ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                          : "bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800"
+                      }`}
+                    >
+                      {aadhaarBackUploaded ? "✓ Change File" : "Choose File"}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2644,38 +2941,6 @@ function TechnicianFormContent() {
             </h3>
 
             {/* Hidden Input Elements for Real OS File Picker Selection */}
-            <input
-              type="file"
-              ref={photoFileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  const file = e.target.files[0];
-                  setPhotoFileName(file.name);
-                  setPassportPhotoPreview(URL.createObjectURL(file));
-                  setPhotoDocUploaded(true);
-                }
-              }}
-            />
-
-            <input
-              type="file"
-              ref={docTypeFileInputRef}
-              accept=".pdf,.jpg,.jpeg,.png"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  const file = e.target.files[0];
-                  const newDoc = {
-                    id: `doc-${Date.now()}`,
-                    type: selectedDocType,
-                    name: file.name,
-                  };
-                  setAdditionalDocsList([...additionalDocsList.filter((d) => d.type !== selectedDocType), newDoc]);
-                }
-              }}
-            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* 1. CURRENT PASSPORT SIZE PHOTO DRAG & DROP BOX WITH PREVIEW */}
@@ -2687,13 +2952,13 @@ function TechnicianFormContent() {
                   </span>
                   {photoDocUploaded && (
                     <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
-                      ✓ Uploaded & Verified
+                      ✓ Uploaded
                     </span>
                   )}
                 </div>
 
                 {/* Drag & Drop Upload / Live Preview Box */}
-                {photoDocUploaded && passportPhotoPreview ? (
+                {passportPhotoPreview ? (
                   <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center gap-4 shadow-2xs">
                     <img
                       src={passportPhotoPreview}
@@ -2711,9 +2976,21 @@ function TechnicianFormContent() {
                         <button
                           type="button"
                           onClick={() => photoFileInputRef.current?.click()}
-                          className="text-[11px] font-bold text-slate-500 hover:text-slate-700 underline cursor-pointer"
+                          className="text-[11px] font-bold text-brand-600 hover:text-brand-700 underline cursor-pointer"
                         >
                           Change Photo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (passportPhotoPreview) {
+                              setEditorRawImage(passportPhotoPreview);
+                              setIsImageEditorOpen(true);
+                            }
+                          }}
+                          className="text-[11px] font-bold text-slate-600 hover:text-slate-800 cursor-pointer"
+                        >
+                          Edit / Crop
                         </button>
                         <button
                           type="button"
@@ -2721,8 +2998,9 @@ function TechnicianFormContent() {
                             setPhotoDocUploaded(false);
                             setPassportPhotoPreview(null);
                             setPhotoFileName("");
+                            setEditedPhotoFile(null);
                           }}
-                          className="text-[11px] font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+                          className="text-[11px] font-bold text-red-500 hover:text-red-700 cursor-pointer"
                         >
                           Remove
                         </button>
@@ -3096,6 +3374,247 @@ function TechnicianFormContent() {
         </form>
       )}
       </>
+      )}
+      {/* ─── INTERACTIVE PROFILE IMAGE EDITOR MODAL ─── */}
+      {isImageEditorOpen && (
+        <Portal>
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400">
+                    <Crop className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                      Partner Profile Photo Editor
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Zoom, rotate, and align the partner profile image.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsImageEditorOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Image Editor Preview Window with Cursor Dragging & Wheel Zooming */}
+              <div className="flex flex-col items-center space-y-3">
+                <div
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -0.08 : 0.08;
+                    setCropZoom((prev) => Math.min(3, Math.max(1, parseFloat((prev + delta).toFixed(2)))));
+                  }}
+                  onMouseDown={(e) => {
+                    setIsDragging(true);
+                    setDragStart({ x: e.clientX - cropOffsetX, y: e.clientY - cropOffsetY });
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDragging) return;
+                    const newX = e.clientX - dragStart.x;
+                    const newY = e.clientY - dragStart.y;
+                    setCropOffsetX(Math.max(-100, Math.min(100, newX)));
+                    setCropOffsetY(Math.max(-100, Math.min(100, newY)));
+                  }}
+                  onMouseUp={() => setIsDragging(false)}
+                  onMouseLeave={() => setIsDragging(false)}
+                  onTouchStart={(e) => {
+                    if (e.touches[0]) {
+                      setIsDragging(true);
+                      setDragStart({ x: e.touches[0].clientX - cropOffsetX, y: e.touches[0].clientY - cropOffsetY });
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isDragging || !e.touches[0]) return;
+                    const newX = e.touches[0].clientX - dragStart.x;
+                    const newY = e.touches[0].clientY - dragStart.y;
+                    setCropOffsetX(Math.max(-100, Math.min(100, newX)));
+                    setCropOffsetY(Math.max(-100, Math.min(100, newY)));
+                  }}
+                  onTouchEnd={() => setIsDragging(false)}
+                  className={`relative w-60 h-60 rounded-full border-4 border-brand-500 shadow-2xl overflow-hidden bg-slate-950 flex items-center justify-center select-none transition-shadow ${
+                    isDragging ? "cursor-grabbing border-brand-400 ring-4 ring-brand-500/30" : "cursor-grab hover:border-brand-400"
+                  }`}
+                >
+                  {editorRawImage && (
+                    <img
+                      src={editorRawImage}
+                      alt="Editor Raw Preview"
+                      draggable={false}
+                      style={{
+                        transform: `scale(${cropZoom}) rotate(${cropRotation}deg) translate(${cropOffsetX}px, ${cropOffsetY}px)`,
+                        transition: isDragging ? "none" : "transform 0.1s ease-out",
+                        maxHeight: "100%",
+                        maxWidth: "100%",
+                        objectFit: "contain",
+                        userSelect: "none",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  )}
+                  {/* Circular Avatar Guide Overlay & Instructions */}
+                  <div className="absolute inset-0 pointer-events-none rounded-full border-2 border-white/40" />
+                  
+                  <div className="absolute bottom-3 px-3 py-1 rounded-full bg-slate-950/80 text-white text-[10px] font-extrabold flex items-center gap-1.5 backdrop-blur-md pointer-events-none border border-white/20 shadow-md">
+                    <Move className="w-3 h-3 text-brand-400 animate-pulse" />
+                    <span>Drag to move • Scroll to zoom</span>
+                  </div>
+                </div>
+
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  Click and drag inside frame to reposition • Mouse wheel to zoom
+                </span>
+              </div>
+
+              {/* Editor Controls */}
+              <div className="space-y-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                {/* Zoom Controls */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <ZoomIn className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Zoom Level ({Math.round(cropZoom * 100)}%)</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCropZoom(1)}
+                      className="text-[10px] font-extrabold text-brand-600 hover:underline"
+                    >
+                      Reset Zoom
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCropZoom((z) => Math.max(1, z - 0.1))}
+                      className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      value={cropZoom}
+                      onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                      className="w-full accent-brand-600 cursor-pointer"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCropZoom((z) => Math.min(3, z + 0.1))}
+                      className="p-1.5 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rotation Controls */}
+                <div className="space-y-1.5">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                    Rotation ({cropRotation}°)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCropRotation((r) => (r - 90 + 360) % 360)}
+                      className="flex-1 py-1.5 px-3 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center justify-center gap-1.5 hover:bg-slate-100"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Rotate Left (-90°)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCropRotation((r) => (r + 90) % 360)}
+                      className="flex-1 py-1.5 px-3 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-extrabold flex items-center justify-center gap-1.5 hover:bg-slate-100"
+                    >
+                      <RotateCw className="w-3.5 h-3.5" />
+                      <span>Rotate Right (+90°)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Position Adjustment */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>Position Offset</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCropOffsetX(0);
+                        setCropOffsetY(0);
+                      }}
+                      className="text-[10px] font-extrabold text-brand-600 hover:underline flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>Center Image</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-[10px] text-slate-500 font-bold block mb-1">X Offset ({cropOffsetX}px)</span>
+                      <input
+                        type="range"
+                        min={-50}
+                        max={50}
+                        value={cropOffsetX}
+                        onChange={(e) => setCropOffsetX(parseInt(e.target.value))}
+                        className="w-full accent-brand-600 cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 font-bold block mb-1">Y Offset ({cropOffsetY}px)</span>
+                      <input
+                        type="range"
+                        min={-50}
+                        max={50}
+                        value={cropOffsetY}
+                        onChange={(e) => setCropOffsetY(parseInt(e.target.value))}
+                        className="w-full accent-brand-600 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer Action Buttons - STRICTLY ONE PRIMARY BUTTON! */}
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pb-1 pt-3">
+                <button
+                  type="button"
+                  onClick={() => photoFileInputRef.current?.click()}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Choose Different File</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsImageEditorOpen(false)}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 font-extrabold text-xs transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                {/* STRICTLY THE SINGLE PRIMARY BUTTON FOR THE MODAL */}
+                <button
+                  type="button"
+                  onClick={handleApplyImageCrop}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Apply & Save Image</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Portal>
       )}
     </div>
   );

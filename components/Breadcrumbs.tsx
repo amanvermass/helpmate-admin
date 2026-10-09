@@ -1,9 +1,10 @@
 "use client";
 
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
-import { Suspense } from "react";
+import { getBookingDetailsApi } from "@/lib/api";
 
 const ROUTE_NAME_MAP: Record<string, string> = {
   bookings: "Bookings",
@@ -32,6 +33,30 @@ function BreadcrumbsContent() {
   const category = searchParams?.get("category");
   const segments = pathname.split("/").filter(Boolean);
 
+  const [bookingNumMap, setBookingNumMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    if ((segments[0] === "bookings" || segments[0] === "billing" || segments[0] === "settlements") && segments[1]) {
+      const bId = segments[1];
+      if (bId && !bookingNumMap[bId]) {
+        getBookingDetailsApi(bId)
+          .then((res) => {
+            if (isMounted && res && res.success && res.data) {
+              const bNum = res.data.bookingNumber || (res.data._id ? `BK-${res.data._id.slice(-6).toUpperCase()}` : null);
+              if (bNum) {
+                setBookingNumMap((prev) => ({ ...prev, [bId]: bNum }));
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, segments]);
+
   if (segments.length === 0) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 select-none">
@@ -47,11 +72,16 @@ function BreadcrumbsContent() {
     const isId = /^(HM|INV|cust|bk|tech|JOB)-/i.test(segment) || /^[0-9a-f-]{8,}$/i.test(segment);
     const href = `/${segments.slice(0, index + 1).join("/")}`;
     const mappedName = ROUTE_NAME_MAP[segment.toLowerCase()];
-    const formattedName = mappedName
+    
+    let formattedName = mappedName
       ? mappedName
       : isId
-      ? segment.toUpperCase()
+      ? (bookingNumMap[segment] || (segment.length === 24 ? `BK-${segment.slice(-6).toUpperCase()}` : segment.toUpperCase()))
       : segment.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+    if (segments[0] === "bookings" && index === 1 && bookingNumMap[segment]) {
+      formattedName = bookingNumMap[segment];
+    }
 
     // If segment is an ID and category param is present, insert Category link before ID
     if (isId && category) {

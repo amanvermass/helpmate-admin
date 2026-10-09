@@ -1219,9 +1219,23 @@ export async function getPackageDropdownApi(params?: string | {
   }
 }
 
-export function formatImageUrl(imgUrl?: string): string {
-  if (!imgUrl || typeof imgUrl !== "string") return "";
-  let trimmed = imgUrl.trim();
+export function formatImageUrl(imgUrl?: any): string {
+  if (!imgUrl) return "";
+  let rawStr = "";
+  if (typeof imgUrl === "string") {
+    rawStr = imgUrl;
+  } else if (typeof imgUrl === "object" && imgUrl !== null) {
+    rawStr =
+      imgUrl.passportPhotoUrl ||
+      imgUrl.url ||
+      imgUrl.imageUrl ||
+      imgUrl.objectName ||
+      imgUrl.location ||
+      imgUrl.path ||
+      "";
+  }
+  if (!rawStr || typeof rawStr !== "string") return "";
+  let trimmed = rawStr.trim();
   if (!trimmed) return "";
 
   // Data URLs (base64) and blob URLs don't need transformation
@@ -1754,10 +1768,27 @@ export async function getBookingsApi(
   }
 }
 
+export async function getBookingDashboardStatsApi() {
+  clearApiCache("getBookingDashboardStatsApi");
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/booking/dashboard-stats`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("getBookingDashboardStatsApi error:", error);
+    return { success: false, message: "Failed to fetch booking dashboard stats." };
+  }
+}
+
 export async function getBookingDetailsApi(id: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/booking/${id}`);
-    return await res.json();
+    let res = await authFetch(`${API_BASE_URL}/api/booking/${id}/details`);
+    if (!res.ok) {
+      res = await authFetch(`${API_BASE_URL}/api/booking/${id}`);
+    }
+    return await safeJsonResponse(res);
   } catch (error) {
     console.error("getBookingDetailsApi error:", error);
     return { success: false, message: "Failed to fetch booking details." };
@@ -2390,19 +2421,13 @@ export async function verifyGuarantorMobileOtpApi(mobile: string, otp: string) {
 function attachPartnerPhotoFields(formData: FormData, photo?: any) {
   if (!photo) return;
   if (typeof photo === "string") {
-    if (photo.trim()) {
-      if (!formData.has("passportPhoto")) formData.append("passportPhoto", photo.trim());
-      if (!formData.has("image")) formData.append("image", photo.trim());
-      if (!formData.has("profilePhoto")) formData.append("profilePhoto", photo.trim());
-      if (!formData.has("profileImage")) formData.append("profileImage", photo.trim());
-      if (!formData.has("avatar")) formData.append("avatar", photo.trim());
+    if (photo.trim() && !formData.has("passportPhoto")) {
+      formData.append("passportPhoto", photo.trim());
     }
   } else {
-    if (!formData.has("passportPhoto")) formData.append("passportPhoto", photo);
-    if (!formData.has("image")) formData.append("image", photo);
-    if (!formData.has("profilePhoto")) formData.append("profilePhoto", photo);
-    if (!formData.has("profileImage")) formData.append("profileImage", photo);
-    if (!formData.has("avatar")) formData.append("avatar", photo);
+    if (!formData.has("passportPhoto")) {
+      formData.append("passportPhoto", photo);
+    }
   }
 }
 
@@ -2415,10 +2440,10 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
 
     if (typeof FormData !== "undefined" && payload instanceof FormData) {
       bodyData = payload;
-      const doc = bodyData.get("verificationDocument");
-      if (!doc || (doc instanceof File && doc.size === 0)) {
-        bodyData.delete("verificationDocumentType");
+      const docs = bodyData.getAll("verificationDocument");
+      if (docs.length === 0 || (docs.length === 1 && docs[0] instanceof File && docs[0].size === 0)) {
         bodyData.delete("verificationDocument");
+        bodyData.delete("verificationDocuments");
       }
       const existingPhoto =
         bodyData.get("passportPhoto") ||
@@ -2467,9 +2492,21 @@ export async function createPartnerApi(payload: CreatePartnerPayload | FormData)
         attachPartnerPhotoFields(formData, photo);
       }
 
-      if (data.verificationDocumentType && data.verificationDocument) {
+      if (data.verificationDocumentType) {
         formData.append("verificationDocumentType", data.verificationDocumentType);
+      }
+      if (data.verificationDocumentTypes) {
+        formData.append("verificationDocumentTypes", typeof data.verificationDocumentTypes === "string" ? data.verificationDocumentTypes : JSON.stringify(data.verificationDocumentTypes));
+      }
+      if (data.verificationDocument) {
         formData.append("verificationDocument", data.verificationDocument);
+      }
+      if (data.verificationDocuments) {
+        if (Array.isArray(data.verificationDocuments)) {
+          data.verificationDocuments.forEach((doc: any) => formData.append("verificationDocuments", doc));
+        } else {
+          formData.append("verificationDocuments", data.verificationDocuments);
+        }
       }
 
       bodyData = formData;
@@ -2495,10 +2532,10 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
 
     if (typeof FormData !== "undefined" && payload instanceof FormData) {
       bodyData = payload;
-      const doc = bodyData.get("verificationDocument");
-      if (!doc || (doc instanceof File && doc.size === 0)) {
-        bodyData.delete("verificationDocumentType");
+      const docs = bodyData.getAll("verificationDocument");
+      if (docs.length === 0 || (docs.length === 1 && docs[0] instanceof File && docs[0].size === 0)) {
         bodyData.delete("verificationDocument");
+        bodyData.delete("verificationDocuments");
       }
       const existingPhoto =
         bodyData.get("passportPhoto") ||
@@ -2547,9 +2584,21 @@ export async function updatePartnerApi(id: string, payload: Partial<CreatePartne
         attachPartnerPhotoFields(formData, photo);
       }
 
-      if (data.verificationDocumentType && data.verificationDocument) {
+      if (data.verificationDocumentType) {
         formData.append("verificationDocumentType", data.verificationDocumentType);
+      }
+      if (data.verificationDocumentTypes) {
+        formData.append("verificationDocumentTypes", typeof data.verificationDocumentTypes === "string" ? data.verificationDocumentTypes : JSON.stringify(data.verificationDocumentTypes));
+      }
+      if (data.verificationDocument) {
         formData.append("verificationDocument", data.verificationDocument);
+      }
+      if (data.verificationDocuments) {
+        if (Array.isArray(data.verificationDocuments)) {
+          data.verificationDocuments.forEach((doc: any) => formData.append("verificationDocuments", doc));
+        } else {
+          formData.append("verificationDocuments", data.verificationDocuments);
+        }
       }
 
       bodyData = formData;
@@ -3289,9 +3338,29 @@ export async function deleteAdminApi(id: string) {
 }
 
 // ─── ADMIN INVOICE APIS ───
-export async function getAdminInvoiceApi(bookingId: string) {
+export async function getAdminInvoicesListApi(params?: { search?: string; status?: string; page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params?.search) query.append("search", params.search);
+  if (params?.status) query.append("status", params.status);
+  if (params?.page) query.append("page", params.page.toString());
+  if (params?.limit) query.append("limit", params.limit.toString());
+
+  const queryString = query.toString();
   try {
-    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices/${bookingId}`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices${queryString ? `?${queryString}` : ""}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await safeJsonResponse(res);
+  } catch (error) {
+    console.error("getAdminInvoicesListApi error:", error);
+    return { success: false, message: "Failed to fetch invoices list." };
+  }
+}
+
+export async function getAdminInvoiceApi(idOrBookingId: string) {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices/${idOrBookingId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -3302,9 +3371,9 @@ export async function getAdminInvoiceApi(bookingId: string) {
   }
 }
 
-export async function getAdminInvoicePdfBlobApi(bookingId: string): Promise<Blob | null> {
+export async function getAdminInvoicePdfBlobApi(idOrBookingId: string): Promise<Blob | null> {
   try {
-    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices/${bookingId}/pdf`, {
+    const res = await authFetch(`${API_BASE_URL}/api/admin/invoices/${idOrBookingId}/pdf`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

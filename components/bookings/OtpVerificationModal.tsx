@@ -69,7 +69,7 @@ export function OtpVerificationModal({
                 <span>Job Completion & Add-On Settlement</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Booking ID: <span className="font-mono font-bold text-slate-900 dark:text-white">{booking.id}</span> • Customer: <strong className="text-slate-800 dark:text-slate-200">{booking.customerName}</strong>
+                Booking No: <span className="font-mono font-bold text-slate-900 dark:text-white">{booking.bookingNumber || booking.id}</span> • Customer: <strong className="text-slate-800 dark:text-slate-200">{booking.customerName}</strong>
               </p>
             </div>
             <button

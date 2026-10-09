@@ -349,6 +349,7 @@ export interface Booking {
   jobId?: string; // Unique Job Tracking Code e.g. HM-JOB-8821
   bookingNumber?: string;
   customerId?: string;
+  customerBookingCount?: number;
   rawTimestamp?: number;
   rawBookingNumber?: number;
   rawId?: string;
@@ -385,6 +386,7 @@ export interface Booking {
   convenienceFee: number; // Fixed ₹49
   discountAmount?: number;
   couponCode?: string;
+  gst?: number;
   cgst: number; // 9%
   sgst: number; // 9%
   totalAmount: number;

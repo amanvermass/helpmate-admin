@@ -45,12 +45,15 @@ export default function InvoiceDetailPage() {
       setErrorMsg(null);
 
       try {
-        // 1. Try fetching invoice data via GET /api/admin/invoices/:bookingId
+        // 1. Try fetching invoice data via GET /api/admin/invoices/:id
         const invRes = await getAdminInvoiceApi(invId);
-        if (isMounted && invRes && invRes.success && invRes.data) {
-          setInvoiceData(invRes.data);
-          setIsLoading(false);
-          return;
+        if (isMounted && invRes) {
+          const rawData = invRes.data || invRes.invoice || (invRes._id || invRes.invoiceNumber || invRes.items || invRes.billing ? invRes : null);
+          if (rawData) {
+            setInvoiceData(rawData);
+            setIsLoading(false);
+            return;
+          }
         }
 
         // 2. If backend returns 404 or invoice not generated yet, try fetching booking details GET /api/booking/:id

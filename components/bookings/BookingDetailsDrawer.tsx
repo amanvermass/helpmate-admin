@@ -60,7 +60,7 @@ export function BookingDetailsDrawer({
   };
 
   const handleCopyId = () => {
-    navigator.clipboard.writeText(booking.id);
+    navigator.clipboard.writeText(booking.bookingNumber || booking.id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -86,7 +86,7 @@ export function BookingDetailsDrawer({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-black text-white bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded border border-white/20">
-                  {booking.id}
+                  {booking.bookingNumber || booking.id}
                 </span>
                 <button
                   type="button"
@@ -351,7 +351,7 @@ export function BookingDetailsDrawer({
             {activeTab === "invoice" && (
               <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-4 text-center">
                 <FileText className="w-10 h-10 text-brand-600 mx-auto" />
-                <h4 className="font-black text-slate-900 dark:text-white">GST Tax Invoice #{booking.id}</h4>
+                <h4 className="font-black text-slate-900 dark:text-white">GST Tax Invoice #{booking.bookingNumber || booking.id}</h4>
                 <p className="text-slate-500 text-[11px]">B2C Registered Tax Invoice · HelpMate Varanasi</p>
                 <button
                   type="button"

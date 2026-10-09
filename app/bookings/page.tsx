@@ -39,7 +39,7 @@ import { EditBookingModal } from "@/components/bookings/EditBookingModal";
 import { BookingDetailsDrawer } from "@/components/bookings/BookingDetailsDrawer";
 import { RescheduleBookingModal } from "@/components/bookings/RescheduleBookingModal";
 import { useRbac } from "@/context/RbacContext";
-import { getBookingCategoriesApi, getBookingsApi, completeBookingApi, ApiBookingCategoryStat } from "@/lib/api";
+import { getBookingCategoriesApi, getBookingsApi, completeBookingApi, getBookingDashboardStatsApi, ApiBookingCategoryStat } from "@/lib/api";
 
 export function mapApiBooking(b: any): Booking {
   const item0 = b.items?.[0];
@@ -48,24 +48,28 @@ export function mapApiBooking(b: any): Booking {
   const serviceActionName = item0?.serviceAction?.name || "";
   const pkgTitle = item0?.package?.name || item0?.package?.packageName || serviceActionName || "Service Package";
 
-  const originStr = (b.origin || "").toLowerCase();
+  const originStr = (b.bookingSource || b.origin || "").toLowerCase();
   const isOnline = originStr === "website" || originStr === "app";
-  const createdByStr = b.handledBy?.name
-    ? b.handledBy.name
-    : isOnline
-      ? "Customer Online"
-      : originStr === "admin"
-        ? "Super Admin (HQ)"
-        : b.origin || "Customer Online";
+  const createdByStr = b.createdBy?.name
+    ? b.createdBy.name
+    : b.handledBy?.name
+      ? b.handledBy.name
+      : isOnline
+        ? "Customer Online"
+        : originStr === "admin"
+          ? "Super Admin (HQ)"
+          : b.bookingSource || b.origin || "Customer Online";
 
-  const rawWorkingDate = b.workingDate ? b.workingDate.split("T")[0] : "";
+  const workingDateRaw = b.schedule?.bookingDate || b.workingDate || "";
+  const rawWorkingDate = workingDateRaw ? workingDateRaw.split("T")[0] : "";
   const formattedWorkingDate = rawWorkingDate
-    ? new Date(b.workingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    ? new Date(workingDateRaw).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : "Today";
 
-  const rawCallingDate = b.callingDate ? b.callingDate.split("T")[0] : "";
-  const formattedCallingDate = b.callingDate
-    ? new Date(b.callingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+  const callingDateRaw = b.callingDate || b.createdAt || "";
+  const rawCallingDate = callingDateRaw ? callingDateRaw.split("T")[0] : "";
+  const formattedCallingDate = callingDateRaw
+    ? new Date(callingDateRaw).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
     : "";
 
   const bookingIdDisplay = b.bookingNumber || (b._id ? `BK-${b._id.slice(-6).toUpperCase()}` : "BK-UNKNOWN");
@@ -74,7 +78,7 @@ export function mapApiBooking(b: any): Booking {
   const servicesList = (b.items || []).map((item: any, idx: number) => {
     const itemTitle = item.package?.name || item.package?.packageName || item.serviceAction?.name || "Service";
     return {
-      id: item.package?.id || item.package?._id || item.serviceAction?.id || String(idx),
+      id: item.package?.id || item.package?._id || item.serviceAction?.id || item._id || String(idx),
       serviceCode: `${bookingIdDisplay}-${String(idx + 1).padStart(2, "0")}`,
       title: itemTitle,
       price: item.totalPrice || item.unitPrice || item.package?.price || 0,
@@ -86,7 +90,7 @@ export function mapApiBooking(b: any): Booking {
 
   // Strictly map status from API response (b.bookingStatus || b.status)
   let status: BookingStatus = "Pending";
-  const rawStatus = b.bookingStatus || b.status || "";
+  const rawStatus = b.status || b.bookingStatus || "";
   const statusStr = rawStatus.toLowerCase().trim();
 
   if (statusStr === "completed") {
@@ -97,9 +101,9 @@ export function mapApiBooking(b: any): Booking {
     status = "Rejected";
   } else if (statusStr === "in_progress" || statusStr === "in progress" || statusStr === "on_the_way") {
     status = "In Progress";
-  } else if (statusStr === "assigned") {
+  } else if (statusStr === "assigned" || statusStr === "partner_assigned" || statusStr === "partner assigned") {
     status = "Assigned";
-  } else if (statusStr === "accepted" || statusStr === "partner_accepted") {
+  } else if (statusStr === "accepted" || statusStr === "partner_accepted" || statusStr === "partner accepted") {
     status = "Partner Accepted";
   } else if (statusStr === "pending") {
     status = "Pending";
@@ -111,19 +115,59 @@ export function mapApiBooking(b: any): Booking {
       .replace(/\b\w/g, (c: string) => c.toUpperCase()) as BookingStatus;
   }
 
-  const basePriceVal = item0?.totalPrice || item0?.unitPrice || item0?.package?.price || b.amount || 0;
-  const totalAmountVal = b.amount !== undefined ? b.amount : basePriceVal;
-
+  // Address mapping
+  const addrObj = b.address || b.serviceAddress || {};
   const fullAddress = [
-    b.serviceAddress?.serviceAddress,
-    b.serviceAddress?.landmark ? `Near ${b.serviceAddress.landmark}` : "",
-    b.serviceAddress?.localityName,
-    b.serviceAddress?.pincode,
+    addrObj.serviceAddress || addrObj.address,
+    addrObj.landmark ? `Near ${addrObj.landmark}` : "",
+    addrObj.localityName,
+    addrObj.pincode,
   ]
     .filter(Boolean)
     .join(", ") || "Varanasi, UP";
 
-  const rawCallingDateStr = b.callingDate || b.workingDate || b.createdAt || "";
+  // Financial / Billing mapping
+  const billingObj = b.billing || {};
+  const basePriceVal = billingObj.sellingPrice ?? billingObj.mrp ?? item0?.totalPrice ?? item0?.unitPrice ?? b.amount ?? 0;
+  const convenienceFeeVal = billingObj.platformFee ?? b.convenienceFee ?? 49;
+  const totalAmountVal = billingObj.totalAmount ?? b.amount ?? (basePriceVal + convenienceFeeVal);
+  const gstVal = billingObj.gst ?? (basePriceVal + convenienceFeeVal) * 0.18;
+  const cgstVal = Number((gstVal / 2).toFixed(2));
+  const sgstVal = Number((gstVal - cgstVal).toFixed(2));
+
+  const paymentObj = billingObj.payment || {};
+  const rawPayMethod = paymentObj.paymentMethod || b.paymentMethod || "";
+  const paymentMethodVal = rawPayMethod.toLowerCase() === "upi" ? "UPI" : rawPayMethod || (isOnline ? "Online" : "Cash on Service");
+  const paymentStatusVal = paymentObj.paymentStatus || (status === "Completed" ? "paid" : "pending");
+
+  // Partner / Assignment mapping
+  const assignmentObj = b.assignment || {};
+  const partnerObj =
+    (typeof assignmentObj.partnerId === "object" && assignmentObj.partnerId !== null ? assignmentObj.partnerId : null) ||
+    b.assignedPartner ||
+    b.partner ||
+    assignmentObj.partner ||
+    {};
+
+  const partnerNameVal =
+    partnerObj.name ||
+    partnerObj.partnerName ||
+    assignmentObj.partnerName ||
+    (typeof b.assignedPartner === "string" ? b.assignedPartner : undefined);
+
+  const partnerPhoneVal =
+    partnerObj.mobile ||
+    partnerObj.phone ||
+    assignmentObj.partnerPhone ||
+    (typeof assignmentObj.partnerId === "object" ? assignmentObj.partnerId?.mobile || assignmentObj.partnerId?.phone : undefined);
+
+  const partnerIdVal =
+    partnerObj._id ||
+    partnerObj.id ||
+    partnerObj.partnerId ||
+    (typeof assignmentObj.partnerId === "string" ? assignmentObj.partnerId : undefined);
+
+  const rawCallingDateStr = b.createdAt || b.workingDate || "";
   const rawTimestampVal = rawCallingDateStr ? new Date(rawCallingDateStr).getTime() : 0;
   const rawBookingNumVal = parseInt((b.bookingNumber || "").replace(/\D/g, ""), 10) || 0;
 
@@ -135,44 +179,47 @@ export function mapApiBooking(b: any): Booking {
     jobId: bookingIdDisplay,
     bookingNumber: b.bookingNumber || bookingIdDisplay,
     customerId: b.customer?.customerId || b.customer?._id,
+    customerBookingCount: b.customerBookingCount ?? b.customer?.bookingCount ?? undefined,
     createdBy: createdByStr,
     customerName: b.customer?.name || "Customer",
-    customerPhone: b.customer?.mobile || "",
+    customerPhone: b.customer?.mobile || b.customer?.phone || "",
     customerEmail: b.customer?.email || "",
     city: "Varanasi",
-    locality: b.serviceAddress?.localityName || "Varanasi Zone",
-    pincode: b.serviceAddress?.pincode || "221002",
+    locality: addrObj.localityName || "Varanasi Zone",
+    pincode: addrObj.pincode || "221002",
     address: fullAddress,
     serviceTitle: pkgTitle,
     serviceName: serviceActionName || pkgTitle,
     scheduledDate: formattedWorkingDate,
-    scheduledTime: b.time || "08:00 AM",
+    scheduledTime: b.schedule?.timeSlot || b.time || "12:00 PM",
     category: catName,
     subCategory: subCatName,
     packageTitle: pkgTitle,
     addons: (item0?.selectedAddons || []).map((a: any) => a.name || a.title || "Addon"),
     servicesList: servicesList,
     basePrice: basePriceVal,
-    convenienceFee: 49,
-    cgst: Math.round((totalAmountVal || 0) * 0.09),
-    sgst: Math.round((totalAmountVal || 0) * 0.09),
+    convenienceFee: convenienceFeeVal,
+    discountAmount: billingObj.discount || 0,
+    gst: gstVal,
+    cgst: cgstVal,
+    sgst: sgstVal,
     totalAmount: totalAmountVal,
     finalAmount: totalAmountVal,
     commissionAmount: Math.round(basePriceVal * 0.25),
     partnerEarnings: Math.round(basePriceVal * 0.75),
     invoiceType: "B2C",
-    paymentMethod: isOnline ? "Online" : "Cash on Service",
-    paymentStatus: status === "Completed" ? "Paid" : "Pending",
+    paymentMethod: paymentMethodVal,
+    paymentStatus: paymentStatusVal,
     status: status,
-    technicianId: b.assignedPartner?.partnerId || b.assignedPartner?._id || undefined,
-    technicianName: b.assignedPartner?.name || undefined,
-    technicianPhone: b.assignedPartner?.mobile || undefined,
+    technicianId: partnerIdVal,
+    technicianName: partnerNameVal,
+    technicianPhone: partnerPhoneVal,
     bookingDate: formattedCallingDate || formattedWorkingDate,
     callingDate: formattedCallingDate || rawCallingDate,
-    callingPerson: b.handledBy?.name || (isOnline ? "Online Direct" : "HQ Admin"),
-    handledBy: b.handledBy?.name || (isOnline ? "Website Direct" : "HQ Admin"),
+    callingPerson: b.createdBy?.name || b.handledBy?.name || (isOnline ? "Online Direct" : "HQ Admin"),
+    handledBy: b.createdBy?.name || b.handledBy?.name || (isOnline ? "Website Direct" : "HQ Admin"),
     date: formattedWorkingDate,
-    timeSlot: b.time || "08:00 AM",
+    timeSlot: b.schedule?.timeSlot || b.time || "12:00 PM",
   };
 }
 
@@ -275,6 +322,7 @@ function BookingsPageContent() {
   const initialCachedCats = getStoredModuleData<ApiBookingCategoryStat[]>("booking_categories");
   const [bookings, setBookings] = useState<Booking[]>(() => initialCachedBookings || []);
   const [apiCategories, setApiCategories] = useState<ApiBookingCategoryStat[]>(() => initialCachedCats || []);
+  const [dashboardStats, setDashboardStats] = useState<any | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(() => !initialCachedBookings || initialCachedBookings.length === 0);
 
   const updateBookingFilters = (newType?: string | null, newStatus?: string | null) => {
@@ -318,6 +366,11 @@ function BookingsPageContent() {
         setCachedModuleData(cacheKey, mappedList);
         setCachedModuleData("bookings", mappedList);
       }
+      getBookingDashboardStatsApi().then((statsRes) => {
+        if (statsRes && (statsRes.data || statsRes.success || statsRes.totalBookings || statsRes.total)) {
+          setDashboardStats(statsRes.data || statsRes);
+        }
+      }).catch(() => {});
     } catch (err) {
       console.error("Error refreshing bookings:", err);
     }
@@ -338,6 +391,11 @@ function BookingsPageContent() {
         if (isMounted && rawCatList.length > 0) {
           setApiCategories(rawCatList);
           setCachedModuleData("booking_categories", rawCatList);
+        }
+
+        const statsRes = await getBookingDashboardStatsApi();
+        if (isMounted && statsRes && (statsRes.data || statsRes.success || statsRes.totalBookings || statsRes.total)) {
+          setDashboardStats(statsRes.data || statsRes);
         }
       } catch (err) {
         console.error("Error loading categories:", err);
@@ -1024,6 +1082,12 @@ function BookingsPageContent() {
 
   const showTableView = Boolean(selectedCategory || bookingTypeParam || statusParam);
 
+  const totalCardCount = dashboardStats?.totalBookings ?? dashboardStats?.total ?? categoryBookings.length;
+  const unassignedCardCount = dashboardStats?.unassigned ?? dashboardStats?.waitingPartner ?? dashboardStats?.pending ?? categoryBookings.filter((b) => !b.technicianName).length;
+  const inProgressCardCount = dashboardStats?.inProgress ?? dashboardStats?.active ?? categoryBookings.filter((b) => b.status === "In Progress" || b.status === "Assigned").length;
+  const completedCardCount = dashboardStats?.completed ?? dashboardStats?.closed ?? categoryBookings.filter((b) => b.status === "Completed").length;
+  const cancelledCardCount = dashboardStats?.cancelled ?? dashboardStats?.rejected ?? categoryBookings.filter((b) => b.status === "Cancelled" || b.status === "Rejected").length;
+
   return (
     <div className="space-y-6">
       {isLoadingData ? (
@@ -1081,12 +1145,12 @@ function BookingsPageContent() {
                 <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
                   <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                     <span className="text-slate-400 font-bold text-[10px] block uppercase">Total Orders</span>
-                    <span className="text-base font-black text-slate-900 dark:text-white">{roleFilteredBookings.length}</span>
+                    <span className="text-base font-black text-slate-900 dark:text-white">{totalCardCount}</span>
                   </div>
                   <div className="p-3 rounded-xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60">
                     <span className="text-amber-600 dark:text-amber-400 font-bold text-[10px] block uppercase">Unassigned</span>
                     <span className="text-base font-black text-amber-600 dark:text-amber-400">
-                      {roleFilteredBookings.filter((b) => !b.technicianName).length} Open
+                      {unassignedCardCount} Open
                     </span>
                   </div>
                 </div>
@@ -1232,7 +1296,7 @@ function BookingsPageContent() {
                 )}
               </div>
               <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
-                {categoryBookings.length} Orders
+                {totalCardCount} Orders
               </h3>
             </button>
 
@@ -1254,7 +1318,7 @@ function BookingsPageContent() {
                 )}
               </div>
               <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">
-                {categoryBookings.filter((b) => !b.technicianName).length} Unassigned
+                {unassignedCardCount} Unassigned
               </h3>
             </button>
 
@@ -1276,7 +1340,7 @@ function BookingsPageContent() {
                 )}
               </div>
               <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
-                {categoryBookings.filter((b) => b.status === "In Progress" || b.status === "Assigned").length} Jobs
+                {inProgressCardCount} Jobs
               </h3>
             </button>
 
@@ -1298,7 +1362,7 @@ function BookingsPageContent() {
                 )}
               </div>
               <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                {categoryBookings.filter((b) => b.status === "Completed").length} Closed
+                {completedCardCount} Closed
               </h3>
             </button>
 
@@ -1320,7 +1384,7 @@ function BookingsPageContent() {
                 )}
               </div>
               <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mt-1">
-                {categoryBookings.filter((b) => b.status === "Cancelled" || b.status === "Rejected").length} Cancelled
+                {cancelledCardCount} Cancelled
               </h3>
             </button>
           </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { DataTable, Column } from "@/components/DataTable";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { initialTechnicians, Technician } from "@/lib/mockData";
-import { getPartnersApi, ApiPartner } from "@/lib/api";
+import { getPartnersApi, ApiPartner, formatImageUrl } from "@/lib/api";
 import {
   Star,
   CheckCircle2,
@@ -81,8 +81,13 @@ function mapApiPartnerToTechnician(item: any): Technician {
   const pincodeStr = item.pincode || (typeof pincodeObj === "object" ? pincodeObj?.pincode : "") || "221002";
 
   let categoryName = item.category || "";
-  if (!categoryName && typeof serviceActionObj === "object" && serviceActionObj?.serviceAction) {
-    categoryName = serviceActionObj.serviceAction;
+  if (!categoryName && Array.isArray(item.serviceActions) && item.serviceActions.length > 0) {
+    const actNames = item.serviceActions
+      .map((sa: any) => (typeof sa === "object" ? sa.serviceAction || sa.name : sa))
+      .filter(Boolean);
+    if (actNames.length > 0) {
+      categoryName = actNames.join(", ");
+    }
   }
   if (!categoryName) categoryName = "General Maintenance";
 
@@ -90,10 +95,24 @@ function mapApiPartnerToTechnician(item: any): Technician {
   const isAadhaarVerified = !!(aadhaarNum || item.aadhaarVerified);
   const isPoliceVerified = item.policeVerified !== undefined ? item.policeVerified : (item.onboardingStatus === "active" || item.status === "active");
 
+  const rawAvatar =
+    item.kyc?.passportPhotoUrl ||
+    item.kyc?.passportPhoto ||
+    item.profilePhoto ||
+    item.profileImage ||
+    item.avatar ||
+    item.image ||
+    (item._id ? `/api/media/partner/${item._id}/passport-photo` : "");
+
+  const formattedAvatar = formatImageUrl(rawAvatar);
+  const finalAvatar =
+    formattedAvatar ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name || "Partner")}`;
+
   return {
     id: item._id || item.partnerId || "",
     name: item.name || "Partner",
-    avatar: item.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name || "Partner")}`,
+    avatar: finalAvatar,
     role: item.designation || "Technician",
     category: categoryName,
     locality: localityName,
